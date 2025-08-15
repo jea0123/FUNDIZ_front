@@ -1,0 +1,188 @@
+import React, { useState } from 'react';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Search, Heart, User, Bell, Menu, X } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu';
+
+interface NavbarProps {
+  user: any;
+  userRole: 'user' | 'creator' | 'admin';
+  onNavigate: (page: string) => void;
+  onLogout: () => void;
+}
+
+export function Navbar({ user, userRole, onNavigate, onLogout }: NavbarProps) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  return (
+    <nav className="bg-white shadow-sm border-b">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          <div className="flex-shrink-0">
+            <button
+              onClick={() => onNavigate('main')}
+              className="text-2xl font-bold text-blue-600"
+            >
+              CrowdFund
+            </button>
+          </div>
+
+          <div className="hidden md:flex flex-1 max-w-md mx-8">
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                type="text"
+                placeholder="프로젝트, 크리에이터 검색"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+
+          <div className="hidden md:flex items-center space-x-4">
+            {user ? (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onNavigate('main')}
+                >
+                  프로젝트 둘러보기
+                </Button>
+                
+                {(userRole === 'creator' || userRole === 'admin') && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onNavigate('create')}
+                  >
+                    프로젝트 만들기
+                  </Button>
+                )}
+
+                {userRole === 'admin' && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onNavigate('admin')}
+                  >
+                    관리자
+                  </Button>
+                )}
+
+                <Button variant="ghost" size="sm">
+                  <Heart className="h-4 w-4" />
+                </Button>
+
+                <Button variant="ghost" size="sm">
+                  <Bell className="h-4 w-4" />
+                </Button>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="rounded-full">
+                      <User className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => onNavigate('mypage')}>
+                      마이페이지
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={onLogout}>
+                      로그아웃
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onNavigate('login')}
+                >
+                  로그인
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => onNavigate('register')}
+                >
+                  회원가입
+                </Button>
+              </>
+            )}
+          </div>
+
+          <div className="md:hidden">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
+          </div>
+        </div>
+
+        <div className="md:hidden pb-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              type="text"
+              placeholder="프로젝트, 크리에이터 검색"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+
+        {isMobileMenuOpen && (
+          <div className="md:hidden py-4 border-t">
+            <div className="flex flex-col space-y-2">
+              {user ? (
+                <>
+                  <Button variant="ghost" onClick={() => onNavigate('main')}>
+                    프로젝트 둘러보기
+                  </Button>
+                  {(userRole === 'creator' || userRole === 'admin') && (
+                    <Button variant="ghost" onClick={() => onNavigate('create')}>
+                      프로젝트 만들기
+                    </Button>
+                  )}
+                  {userRole === 'admin' && (
+                    <Button variant="ghost" onClick={() => onNavigate('admin')}>
+                      관리자
+                    </Button>
+                  )}
+                  <Button variant="ghost" onClick={() => onNavigate('mypage')}>
+                    마이페이지
+                  </Button>
+                  <Button variant="ghost" onClick={onLogout}>
+                    로그아웃
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="ghost" onClick={() => onNavigate('login')}>
+                    로그인
+                  </Button>
+                  <Button onClick={() => onNavigate('register')}>
+                    회원가입
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </nav>
+  );
+}

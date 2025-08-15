@@ -1,35 +1,63 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useState } from 'react';
+import { Navbar } from './components/Navbar';
+import { MainPage } from './components/MainPage';
+import { ProjectDetail } from './components/ProjectDetail';
+import { LoginPage } from './components/LoginPage';
+import { RegisterPage } from './components/RegisterPage';
+import { MyPage } from './components/MyPage';
+import { CreateProject } from './components/CreateProject';
+import { AdminDashboard } from './components/AdminDashboard';
 
-function App() {
-  const [count, setCount] = useState(0)
+type Page = 'main' | 'project' | 'login' | 'register' | 'mypage' | 'create' | 'admin';
+
+export default function App() {
+  const [currentPage, setCurrentPage] = useState<Page>('main');
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [user, setUser] = useState(null);
+  const [userRole, setUserRole] = useState<'user' | 'creator' | 'admin'>('user');
+
+  const handleNavigation = (page: Page, projectId?: string) => {
+    setCurrentPage(page);
+    if (projectId) {
+      setSelectedProjectId(projectId);
+    }
+  };
+
+  const handleLogin = (userData: any) => {
+    setUser(userData);
+    setCurrentPage('main');
+  };
+
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'main':
+        return <MainPage onNavigate={handleNavigation} />;
+      case 'project':
+        return <ProjectDetail projectId={selectedProjectId} onNavigate={handleNavigation} />;
+      case 'login':
+        return <LoginPage onLogin={handleLogin} onNavigate={handleNavigation} />;
+      case 'register':
+        return <RegisterPage onNavigate={handleNavigation} />;
+      case 'mypage':
+        return <MyPage user={user} userRole={userRole} onNavigate={handleNavigation} />;
+      case 'create':
+        return <CreateProject onNavigate={handleNavigation} />;
+      case 'admin':
+        return <AdminDashboard onNavigate={handleNavigation} />;
+      default:
+        return <MainPage onNavigate={handleNavigation} />;
+    }
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div className="min-h-screen bg-gray-50">
+      <Navbar
+        user={user}
+        userRole={userRole}
+        onNavigate={handleNavigation}
+        onLogout={() => setUser(null)}
+      />
+      {renderPage()}
+    </div>
+  );
 }
-
-export default App
