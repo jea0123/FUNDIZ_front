@@ -5,14 +5,10 @@ import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Checkbox } from './ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Textarea } from './ui/textarea';
 import { Mail, Lock, Eye, EyeOff, User, Phone } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-interface RegisterPageProps {
-  onNavigate: (page: string) => void;
-}
-
-export function RegisterPage({ onNavigate }: RegisterPageProps) {
+export function RegisterPage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -29,6 +25,7 @@ export function RegisterPage({ onNavigate }: RegisterPageProps) {
     marketing: false,
   });
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -55,7 +52,7 @@ export function RegisterPage({ onNavigate }: RegisterPageProps) {
     
     setTimeout(() => {
       alert('회원가입이 완료되었습니다. 이메일 인증을 확인해주세요.');
-      onNavigate('login');
+      navigate('/login');
       setIsLoading(false);
     }, 1000);
   };
@@ -87,7 +84,7 @@ export function RegisterPage({ onNavigate }: RegisterPageProps) {
             <CardDescription>
               이미 계정이 있으신가요?{' '}
               <button
-                onClick={() => onNavigate('login')}
+                onClick={() => navigate('/login')}
                 className="text-blue-600 hover:underline"
               >
                 로그인하기

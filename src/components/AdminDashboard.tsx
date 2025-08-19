@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Button } from "./ui/button";
 import {
   Card,
@@ -37,7 +37,6 @@ import {
   Cell,
 } from "recharts";
 import {
-  TrendingUp,
   Users,
   DollarSign,
   Package,
@@ -45,13 +44,8 @@ import {
   CheckCircle,
   XCircle,
   Eye,
-  MessageSquare,
   Flag,
 } from "lucide-react";
-
-interface AdminDashboardProps {
-  onNavigate: (page: string) => void;
-}
 
 const mockStats = {
   totalProjects: 1247,
@@ -121,11 +115,8 @@ const mockReports = [
   },
 ];
 
-export function AdminDashboard({
-  onNavigate,
-}: AdminDashboardProps) {
-  const [selectedPeriod, setSelectedPeriod] =
-    useState("6months");
+export function AdminDashboard() {
+  const [selectedPeriod, setSelectedPeriod] = useState("6months");
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("ko-KR", {

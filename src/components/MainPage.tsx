@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardFooter } from './ui/card';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
-import { Heart, Calendar, Users, Target } from 'lucide-react';
+import { Heart, Calendar, Users } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { useNavigate } from 'react-router-dom';
 
-interface MainPageProps {
-  onNavigate: (page: string, projectId?: string) => void;
-}
+// interface MainPageProps {
+//   onNavigate: (page: string, projectId?: string) => void;
+// }
 
 const categories = [
   { id: 'all', name: '전체' },
@@ -84,11 +85,13 @@ const mockProjects = [
   },
 ];
 
-export function MainPage({ onNavigate }: MainPageProps) {
+export function MainPage(
+  // { onNavigate }: MainPageProps
+) {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedSort, setSelectedSort] = useState('latest');
   const [likedProjects, setLikedProjects] = useState<Set<string>>(new Set());
-
+  const navigate = useNavigate();
   const filteredProjects = mockProjects.filter(
     project => selectedCategory === 'all' || project.category === selectedCategory
   );
@@ -159,7 +162,7 @@ export function MainPage({ onNavigate }: MainPageProps) {
                 src={project.image}
                 alt={project.title}
                 className="w-full h-48 object-cover cursor-pointer"
-                onClick={() => onNavigate('project', project.id)}
+                onClick={() => navigate(`/project/${project.id}`)}
               />
               <Button
                 variant="ghost"
@@ -184,7 +187,7 @@ export function MainPage({ onNavigate }: MainPageProps) {
               
               <h3 
                 className="font-semibold mb-2 line-clamp-2 cursor-pointer hover:text-blue-600"
-                onClick={() => onNavigate('project', project.id)}
+                onClick={() => navigate(`/project/${project.id}`)}
               >
                 {project.title}
               </h3>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Search, Heart, User, Bell, Menu, X } from 'lucide-react';
@@ -8,17 +8,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
+import { useNavigate } from 'react-router-dom';
 
 interface NavbarProps {
   user: any;
   userRole: 'user' | 'creator' | 'admin';
-  onNavigate: (page: string) => void;
   onLogout: () => void;
 }
 
-export function Navbar({ user, userRole, onNavigate, onLogout }: NavbarProps) {
+export function Navbar({ user, userRole, onLogout }: NavbarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <nav className="bg-white shadow-sm border-b">
@@ -26,7 +27,7 @@ export function Navbar({ user, userRole, onNavigate, onLogout }: NavbarProps) {
         <div className="flex justify-between items-center h-16">
           <div className="flex-shrink-0">
             <button
-              onClick={() => onNavigate('main')}
+              onClick={() => navigate('/')}
               className="text-2xl font-bold text-blue-600"
             >
               CrowdFund
@@ -52,7 +53,7 @@ export function Navbar({ user, userRole, onNavigate, onLogout }: NavbarProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => onNavigate('main')}
+                  onClick={() => navigate('/')}
                 >
                   프로젝트 둘러보기
                 </Button>
@@ -61,7 +62,7 @@ export function Navbar({ user, userRole, onNavigate, onLogout }: NavbarProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => onNavigate('create')}
+                    onClick={() => navigate('/create')}
                   >
                     프로젝트 만들기
                   </Button>
@@ -71,7 +72,7 @@ export function Navbar({ user, userRole, onNavigate, onLogout }: NavbarProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => onNavigate('admin')}
+                    onClick={() => navigate('/admin')}
                   >
                     관리자
                   </Button>
@@ -92,7 +93,7 @@ export function Navbar({ user, userRole, onNavigate, onLogout }: NavbarProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onNavigate('mypage')}>
+                    <DropdownMenuItem onClick={() => navigate('/mypage')}>
                       마이페이지
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={onLogout}>
@@ -106,13 +107,13 @@ export function Navbar({ user, userRole, onNavigate, onLogout }: NavbarProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => onNavigate('login')}
+                  onClick={() => navigate('/login')}
                 >
                   로그인
                 </Button>
                 <Button
                   size="sm"
-                  onClick={() => onNavigate('register')}
+                  onClick={() => navigate('/register')}
                 >
                   회원가입
                 </Button>
@@ -149,20 +150,20 @@ export function Navbar({ user, userRole, onNavigate, onLogout }: NavbarProps) {
             <div className="flex flex-col space-y-2">
               {user ? (
                 <>
-                  <Button variant="ghost" onClick={() => onNavigate('main')}>
+                  <Button variant="ghost" onClick={() => navigate('/')}>
                     프로젝트 둘러보기
                   </Button>
                   {(userRole === 'creator' || userRole === 'admin') && (
-                    <Button variant="ghost" onClick={() => onNavigate('create')}>
+                    <Button variant="ghost" onClick={() => navigate('/create')}>
                       프로젝트 만들기
                     </Button>
                   )}
                   {userRole === 'admin' && (
-                    <Button variant="ghost" onClick={() => onNavigate('admin')}>
+                    <Button variant="ghost" onClick={() => navigate('/admin')}>
                       관리자
                     </Button>
                   )}
-                  <Button variant="ghost" onClick={() => onNavigate('mypage')}>
+                  <Button variant="ghost" onClick={() => navigate('/mypage')}>
                     마이페이지
                   </Button>
                   <Button variant="ghost" onClick={onLogout}>
@@ -171,10 +172,10 @@ export function Navbar({ user, userRole, onNavigate, onLogout }: NavbarProps) {
                 </>
               ) : (
                 <>
-                  <Button variant="ghost" onClick={() => onNavigate('login')}>
+                  <Button variant="ghost" onClick={() => navigate('/login')}>
                     로그인
                   </Button>
-                  <Button onClick={() => onNavigate('register')}>
+                  <Button onClick={() => navigate('/register')}>
                     회원가입
                   </Button>
                 </>

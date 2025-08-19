@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
@@ -9,11 +9,11 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Heart, Package, Settings, CreditCard, MapPin, Bell } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { useNavigate } from 'react-router-dom';
 
 interface MyPageProps {
   user: any;
   userRole: 'user' | 'creator' | 'admin';
-  onNavigate: (page: string) => void;
 }
 
 const mockSupportedProjects = [
@@ -48,7 +48,7 @@ const mockWishlistProjects = [
   },
 ];
 
-export function MyPage({ user, userRole, onNavigate }: MyPageProps) {
+export function MyPage({ user, userRole }: MyPageProps) {
   const [editMode, setEditMode] = useState(false);
   const [profile, setProfile] = useState({
     name: user?.name || '홍길동',
@@ -56,6 +56,7 @@ export function MyPage({ user, userRole, onNavigate }: MyPageProps) {
     phone: '010-1234-5678',
     bio: '크라우드펀딩을 사랑하는 얼리어답터입니다.',
   });
+  const navigate = useNavigate();
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('ko-KR').format(amount);
@@ -151,7 +152,7 @@ export function MyPage({ user, userRole, onNavigate }: MyPageProps) {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => onNavigate(project.id)}
+                          onClick={() => navigate(`/project/${project.id}`)}
                         >
                           상세보기
                         </Button>
@@ -188,7 +189,7 @@ export function MyPage({ user, userRole, onNavigate }: MyPageProps) {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => onNavigate(project.id)}
+                            onClick={() => navigate(`/project/${project.id}`)}
                           >
                             상세보기
                           </Button>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { use, useState } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
@@ -9,12 +9,9 @@ import { Checkbox } from './ui/checkbox';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { Upload, Plus, X, Save, Send } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-interface CreateProjectProps {
-  onNavigate: (page: string) => void;
-}
-
-export function CreateProject({ onNavigate }: CreateProjectProps) {
+export function CreateProject() {
   const [currentStep, setCurrentStep] = useState(1);
   const [projectData, setProjectData] = useState({
     category: '',
@@ -57,6 +54,7 @@ export function CreateProject({ onNavigate }: CreateProjectProps) {
     { id: 'food', name: '푸드' },
     { id: 'culture', name: '문화/예술' },
   ];
+  const navigate = useNavigate();
 
   const handleInputChange = (field: string, value: string) => {
     setProjectData(prev => ({ ...prev, [field]: value }));
@@ -110,7 +108,7 @@ export function CreateProject({ onNavigate }: CreateProjectProps) {
 
   const handleSubmit = () => {
     alert('프로젝트가 심사를 위해 제출되었습니다.');
-    onNavigate('main');
+    navigate('/'); // Redirect to main page
   };
 
   const formatCurrency = (amount: string) => {

@@ -1,17 +1,12 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { Heart, Share2, Calendar, Users, Target, MapPin, MessageCircle, Star } from 'lucide-react';
+import { Heart, Share2, Calendar, Users, MessageCircle, Star } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
-
-interface ProjectDetailProps {
-  projectId: string | null;
-  onNavigate: (page: string) => void;
-}
 
 const mockProject = {
   id: '1',
@@ -81,7 +76,7 @@ const mockProject = {
   ],
 };
 
-export function ProjectDetail(props: ProjectDetailProps) {
+export function ProjectDetail() {
   const [selectedReward, setSelectedReward] = useState<number | null>(null);
   const [isLiked, setIsLiked] = useState(false);
 
