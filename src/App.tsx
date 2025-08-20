@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { Navbar } from './components/Navbar';
-import { MainPage } from './components/MainPage';
-import { ProjectDetail } from './components/ProjectDetail';
-import { LoginPage } from './components/LoginPage';
-import { RegisterPage } from './components/RegisterPage';
-import { MyPage } from './components/MyPage';
-import { CreateProject } from './components/CreateProject';
-import { AdminDashboard } from './components/AdminDashboard';
 import { Route, Routes } from 'react-router-dom';
+import { AdminDashboard } from './components/AdminDashboard';
+import { CreateProject } from './components/CreateProject';
+import { LoginPage } from './components/LoginPage';
+import { MainPage } from './components/MainPage';
+import { MyPage } from './components/MyPage';
+import { Navbar } from './components/Navbar';
+import { ProjectDetail } from './components/ProjectDetail';
+import { RegisterPage } from './components/RegisterPage';
 
 export default function App() {
   const [user, setUser] = useState(null);
