@@ -199,10 +199,6 @@ export function ProjectDetail() {
                                                 <p className="text-sm">정말 기대되는 프로젝트네요! 응원합니다.</p>
                                                 <div className="flex items-center space-x-2 mt-2">
                                                     <Button variant="ghost" size="sm">
-                                                        <Heart className="h-3 w-3 mr-1" />
-                                                        3
-                                                    </Button>
-                                                    <Button variant="ghost" size="sm">
                                                         <MessageCircle className="h-3 w-3 mr-1" />
                                                         답글
                                                     </Button>
