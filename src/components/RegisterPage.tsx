@@ -94,21 +94,6 @@ export function RegisterPage() {
 
                     <CardContent>
                         <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <Label htmlFor="name">이름 *</Label>
-                                <div className="relative">
-                                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                                    <Input
-                                        id="name"
-                                        type="text"
-                                        placeholder="이름을 입력하세요"
-                                        value={formData.name}
-                                        onChange={(e) => handleInputChange('name', e.target.value)}
-                                        className="pl-10"
-                                        required
-                                    />
-                                </div>
-                            </div>
 
                             <div>
                                 <Label htmlFor="email">이메일 *</Label>
@@ -120,6 +105,22 @@ export function RegisterPage() {
                                         placeholder="example@email.com"
                                         value={formData.email}
                                         onChange={(e) => handleInputChange('email', e.target.value)}
+                                        className="pl-10"
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <Label htmlFor="name">닉네임 *</Label>
+                                <div className="relative">
+                                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                                    <Input
+                                        id="name"
+                                        type="text"
+                                        placeholder="닉네임을 입력하세요"
+                                        value={formData.name}
+                                        onChange={(e) => handleInputChange('name', e.target.value)}
                                         className="pl-10"
                                         required
                                     />
@@ -186,20 +187,6 @@ export function RegisterPage() {
                                         required
                                     />
                                 </div>
-                            </div>
-
-                            <div>
-                                <Label htmlFor="userType">사용자 유형 *</Label>
-                                <Select onValueChange={(value: any) => handleInputChange('userType', value)}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="사용자 유형을 선택하세요" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="user">일반 사용자</SelectItem>
-                                        <SelectItem value="creator">크리에이터</SelectItem>
-                                        <SelectItem value="business">사업자</SelectItem>
-                                    </SelectContent>
-                                </Select>
                             </div>
 
                             <div className="space-y-3 pt-4">

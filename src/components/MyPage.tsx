@@ -115,10 +115,10 @@ export function MyPage({ user, userRole }: MyPageProps) {
 
                 <div className="lg:col-span-3">
                     <Tabs defaultValue="supported" className="w-full">
-                        <TabsList className="grid w-full grid-cols-4">
+                        <TabsList className="grid w-full grid-cols-3">
                             <TabsTrigger value="supported">후원한 프로젝트</TabsTrigger>
                             <TabsTrigger value="wishlist">찜한 프로젝트</TabsTrigger>
-                            <TabsTrigger value="profile">프로필 설정</TabsTrigger>
+                            {/* <TabsTrigger value="profile">프로필 설정</TabsTrigger> */}
                             <TabsTrigger value="notifications">알림</TabsTrigger>
                         </TabsList>
 

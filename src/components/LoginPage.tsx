@@ -27,7 +27,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                 id: '1',
                 name: '홍길동',
                 email: email,
-                role: 'user',
+                role: 'admin',
             };
             onLogin(userData);
             setIsLoading(false);
@@ -40,7 +40,9 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-md w-full space-y-8">
+            <div className="max-w-md w-full space-y-8"
+                style={{ marginBottom: '200px' }}
+            >
                 <div className="text-center">
                     <h2 className="text-3xl mb-2">로그인</h2>
                     <p className="text-gray-600">계정에 로그인하여 프로젝트를 후원해보세요</p>
@@ -119,7 +121,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                                         type="button"
                                         className="text-blue-600 hover:underline"
                                     >
-                                        비밀번호 찾기
+                                        아이디/비밀번호 찾기
                                     </button>
                                 </div>
                             </div>
@@ -135,7 +137,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                                 또는 다른 방법으로 로그인
                             </div>
 
-                            <div className="space-y-2">
+                            {/* <div className="space-y-2">
                                 <Button
                                     variant="outline"
                                     className="w-full"
@@ -184,7 +186,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                                     <span className="mr-2 font-bold">N</span>
                                     네이버로 로그인
                                 </Button>
-                            </div>
+                            </div> */}
                         </div>
                     </CardContent>
                 </Card>
