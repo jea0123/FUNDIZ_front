@@ -9,7 +9,7 @@ const axiosInstance = axios.create({
 
 const responseHandler = (response: AxiosResponse<any, any>) => {
     if (!response) return { status: 0, data: null };
-    return { status: response.status, data: response.data ?? null };
+    return { status: response.status, data: response.data.data ?? null };
 };
 
 const api = {
@@ -22,7 +22,8 @@ const api = {
 export const endpoints = {
     checkEmail: '/auth/checkEmail',
     checkNickname: '/auth/checkNickname',
-    signUp: '/auth/signUp'
+    signUp: '/auth/signUp',
+    signIn: '/auth/signIn'
 };
 
 export const getData = async (url: string) => {

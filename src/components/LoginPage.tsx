@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -6,6 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { Separator } from './ui/separator';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import type SignInRequestDto from '@/api/request/auth/SignInRequestDto.dto';
+import { endpoints, postData } from '@/api/apis';
+import { useCookies } from 'react-cookie';
 
 interface LoginPageProps {
     onLogin: (userData: any) => void;
@@ -16,23 +19,48 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [, setCookie] = useCookies();
     const navigate = useNavigate();
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading(true);
-
-        setTimeout(() => {
-            const userData = {
-                id: '1',
-                name: '홍길동',
-                email: email,
-                role: 'admin',
-            };
-            onLogin(userData);
+    const handleSubmit = async () => {
+        if (!email || !password) {
+            alert('이메일과 비밀번호를 모두 입력해주세요.');
+            return;
+        }
+        const requestBody: SignInRequestDto = { email, password };
+        try {
+            const response = await postData(endpoints.signIn, requestBody);
+            signInResponse(response);
+        } finally {
             setIsLoading(false);
-            navigate('/');
-        }, 1000);
+        }
+
+    };
+
+    const signInResponse = (response: any) => {
+        if (!response) {
+            alert('알 수 없는 오류가 발생했습니다.');
+            return;
+        }
+        const { status, data: token } = response;
+        if (status === 200 || status === 201) {
+            const [, payloadBase64] = token.split('.');
+            const { exp } = JSON.parse(atob(payloadBase64)) as { exp: number };
+            const expires = new Date(exp * 1000);
+            setCookie('accessToken', token, { path: '/', expires, sameSite: 'lax', secure: false });
+            alert('로그인에 성공했습니다.');
+            navigate('/', { replace: true });
+            return;
+        } else if (status === 400) {
+            alert('이메일 또는 비밀번호가 잘못되었습니다.');
+            return;
+        } else if (status === 0) {
+            alert('서버 응답이 없습니다. 잠시 후 다시 시도해주세요.');
+            return;
+        } else {
+            alert('로그인에 실패했습니다. 다시 시도해주세요.');
+            return;
+        }
     };
 
     return (
@@ -48,20 +76,17 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                         <CardTitle>이메일로 로그인</CardTitle>
                         <CardDescription>
                             아직 계정이 없으신가요?{' '}
-                            <button
-                                onClick={() => navigate('/register')}
-                                className="text-blue-600 hover:underline"
-                            >
+                            <button onClick={() => navigate('/register')} className="text-blue-600 hover:underline">
                                 회원가입하기
                             </button>
                         </CardDescription>
                     </CardHeader>
 
                     <CardContent>
-                        <form onSubmit={handleSubmit} className="space-y-4">
+                        <div onSubmit={handleSubmit} className="space-y-4">
                             <div>
                                 <Label htmlFor="email">이메일</Label>
-                                <div className="relative" style={{marginTop: '10px'}}>
+                                <div className="relative" style={{ marginTop: '10px' }}>
                                     <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                                     <Input
                                         id="email"
@@ -77,7 +102,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
                             <div>
                                 <Label htmlFor="password">비밀번호</Label>
-                                <div className="relative" style={{marginTop: '10px'}}>
+                                <div className="relative" style={{ marginTop: '10px' }}>
                                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                                     <Input
                                         id="password"
@@ -121,10 +146,10 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                                 </div>
                             </div>
 
-                            <Button type="submit" className="w-full" disabled={isLoading}>
+                            <Button type="submit" className="w-full" disabled={isLoading} onClick={handleSubmit}>
                                 {isLoading ? '로그인 중...' : '로그인'}
                             </Button>
-                        </form>
+                        </div>
 
                         <div className="mt-6">
                             <Separator className="my-4" />
