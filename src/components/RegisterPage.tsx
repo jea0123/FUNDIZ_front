@@ -4,8 +4,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Checkbox } from './ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Mail, Lock, Eye, EyeOff, User, Phone } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export function RegisterPage() {
@@ -72,7 +71,9 @@ export function RegisterPage() {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-md w-full space-y-8">
+            <div className="max-w-md w-full space-y-8"
+                style={{ marginBottom: '200px' }}
+            >
                 <div className="text-center">
                     <h2 className="text-3xl mb-2">회원가입</h2>
                     <p className="text-gray-600">크라우드펀딩 플랫폼에 오신 것을 환영합니다</p>
@@ -170,22 +171,6 @@ export function RegisterPage() {
                                     >
                                         {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                     </button>
-                                </div>
-                            </div>
-
-                            <div>
-                                <Label htmlFor="phone">휴대폰 번호 *</Label>
-                                <div className="relative">
-                                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                                    <Input
-                                        id="phone"
-                                        type="tel"
-                                        placeholder="010-0000-0000"
-                                        value={formData.phone}
-                                        onChange={(e) => handleInputChange('phone', e.target.value)}
-                                        className="pl-10"
-                                        required
-                                    />
                                 </div>
                             </div>
 

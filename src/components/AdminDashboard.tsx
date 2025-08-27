@@ -123,9 +123,9 @@ export function AdminDashboard() {
                     <TabsTrigger value="approvals">
                         프로젝트 승인
                     </TabsTrigger>
-                    <TabsTrigger value="reports">신고 관리</TabsTrigger>
-                    <TabsTrigger value="users">회원 관리</TabsTrigger>
+                    <TabsTrigger value="reports">회원 관리</TabsTrigger>
                     <TabsTrigger value="analytics">통계 분석</TabsTrigger>
+                    <TabsTrigger value="customer-center">고객센터</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="mt-6">

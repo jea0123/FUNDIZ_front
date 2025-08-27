@@ -8,6 +8,8 @@ import { MyPage } from './components/MyPage';
 import { Navbar } from './components/Navbar';
 import { ProjectDetail } from './components/ProjectDetail';
 import { RegisterPage } from './components/RegisterPage';
+import { CustomerCenterPage } from './components/CustomerCenter';
+import { AdminCS } from './components/AdminCS';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -24,6 +26,8 @@ export default function App() {
         <Route path='/mypage' element={<MyPage user={user} userRole={userRole} />} />
         <Route path='/create' element={<CreateProject />} />
         <Route path='/admin' element={<AdminDashboard />} />
+        <Route path='/cs' element={<CustomerCenterPage />} />
+        <Route path='/test2' element={<AdminCS />} />
       </Routes>
     </div>
   );
