@@ -6,11 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { Checkbox } from './ui/checkbox';
 import { Mail, Lock, Eye, EyeOff, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { postData } from '@/api/apis';
+import { endpoints, postData } from '@/api/apis';
 import type SignUpRequestDto from '@/api/request/auth/SignUpRequestDto.dto';
 
 export function RegisterPage() {
     const [formData, setFormData] = useState({ email: '', nickname: '', password: '', confirmPassword: '' });
+    const [emailChecked, setEmailChecked] = useState(false);
+    const [nicknameChecked, setNicknameChecked] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [agreements, setAgreements] = useState({ terms: false, privacy: false, marketing: false });
@@ -26,11 +28,29 @@ export function RegisterPage() {
     };
 
     const handleEmailDuplicateCheck = async () => {
-
+        const res = await postData(endpoints.checkEmail, { email: formData.email });
+        if (res.status === 200) {
+            alert('사용 가능한 이메일입니다.');
+            setEmailChecked(true);
+        } else if (res.status === 409) {
+            alert('이미 사용 중인 이메일입니다.');
+            setEmailChecked(false);
+        } else {
+            alert('다시 시도해주세요.');
+        }
     };
 
     const handleNicknameDuplicateCheck = async () => {
-
+        const res = await postData(endpoints.checkNickname, { nickname: formData.nickname });
+        if (res.status === 200) {
+            alert('사용 가능한 닉네임입니다.');
+            setNicknameChecked(true);
+        } else if (res.status === 409) {
+            alert('이미 사용 중인 닉네임입니다.');
+            setNicknameChecked(false);
+        } else {
+            alert('다시 시도해주세요.');
+        }
     };
 
     const handleSubmit = async () => {
@@ -46,19 +66,19 @@ export function RegisterPage() {
         setIsLoading(true);
         const requestData: SignUpRequestDto = { email: formData.email, nickname: formData.nickname, password: formData.password };
         try {
-            const res = await postData('/auth/signUp', requestData);
-            signUpResponse(res);
+            const response = await postData(endpoints.signUp, requestData);
+            signUpResponse(response);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const signUpResponse = (res: any) => {
-        if (!res) {
+    const signUpResponse = (response: any) => {
+        if (!response) {
             alert('알 수 없는 오류가 발생했습니다.');
             return;
         }
-        const { status } = res;
+        const { status } = response;
         if (status === 200 || status === 201) {
             alert('회원가입이 완료되었습니다.');
             navigate('/login', { replace: true });
@@ -75,7 +95,6 @@ export function RegisterPage() {
         }
     };
 
-
     const isFormValid = () => {
         return (
             formData.nickname &&
@@ -83,7 +102,9 @@ export function RegisterPage() {
             formData.password &&
             formData.confirmPassword &&
             agreements.terms &&
-            agreements.privacy
+            agreements.privacy &&
+            emailChecked &&
+            nicknameChecked
         );
     };
 
@@ -123,6 +144,7 @@ export function RegisterPage() {
                                         required
                                     />
                                     <Button type="button" className="absolute right-0 top-1/2 transform -translate-y-1/2 text-gray-400 bg-white border border-gray-300 rounded-md px-2 py-1 cursor-pointer"
+                                        variant="ghost"
                                         onClick={handleEmailDuplicateCheck}>
                                         중복 확인
                                     </Button>
@@ -143,6 +165,7 @@ export function RegisterPage() {
                                         required
                                     />
                                     <Button type="button" className="absolute right-0 top-1/2 transform -translate-y-1/2 text-gray-400 bg-white border border-gray-300 rounded-md px-2 py-1 cursor-pointer"
+                                        variant="ghost"
                                         onClick={handleNicknameDuplicateCheck}>
                                         중복 확인
                                     </Button>
