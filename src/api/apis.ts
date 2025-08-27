@@ -19,6 +19,12 @@ const api = {
     delete: (url: string) => axiosInstance.delete(url).then(responseHandler),
 };
 
+export const endpoints = {
+    checkEmail: '/auth/checkEmail',
+    checkNickname: '/auth/checkNickname',
+    signUp: '/auth/signUp'
+};
+
 export const getData = async (url: string) => {
     const response = await api.get(url);
     return response;
