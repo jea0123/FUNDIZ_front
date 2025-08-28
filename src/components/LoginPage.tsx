@@ -10,11 +10,7 @@ import type SignInRequestDto from '@/api/request/auth/SignInRequestDto.dto';
 import { endpoints, postData } from '@/api/apis';
 import { useCookies } from 'react-cookie';
 
-interface LoginPageProps {
-    onLogin: (userData: any) => void;
-}
-
-export function LoginPage({ onLogin }: LoginPageProps) {
+export function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);

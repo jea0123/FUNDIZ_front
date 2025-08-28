@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { AdminDashboard } from './components/AdminDashboard';
 import { CreateProject } from './components/CreateProject';
@@ -10,20 +10,37 @@ import { ProjectDetail } from './components/ProjectDetail';
 import { RegisterPage } from './components/RegisterPage';
 import { CustomerCenterPage } from './components/CustomerCenter';
 import { AdminCS } from './components/AdminCS';
+import { useLoginUserStore } from './store/LoginUserStore.store';
+import { useCookies } from 'react-cookie';
+import { endpoints, getData } from './api/apis';
 
 export default function App() {
-  const [user, setUser] = useState(null);
-  const [userRole, setUserRole] = useState<'user' | 'creator' | 'admin'>('user');
+  const { setLoginUser, resetLoginUser } = useLoginUserStore();
+  const [cookie] = useCookies();
+
+  useEffect(() => {
+    if (cookie.accessToken) {
+      getData(endpoints.getLoginUser, cookie.accessToken).then(getLoginUserResponse);
+    }
+  }, [cookie.accessToken]);
+
+  const getLoginUserResponse = (response: any) => {
+    if (response.status === 200) {
+      setLoginUser(response.data);
+    } else {
+      resetLoginUser();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar user={user} userRole={userRole} onLogout={() => setUser(null)} />
+      <Navbar />
       <Routes>
         <Route path='/' element={<MainPage />} />
         <Route path='/project/:id' element={<ProjectDetail />} />
         <Route path='/register' element={<RegisterPage />} />
-        <Route path='/login' element={<LoginPage onLogin={(userData) => { setUser(userData); setUserRole(userData.role); }} />} />
-        <Route path='/mypage' element={<MyPage user={user} userRole={userRole} />} />
+        <Route path='/login' element={<LoginPage />} />
+        <Route path='/mypage' element={<MyPage />} />
         <Route path='/create' element={<CreateProject />} />
         <Route path='/admin' element={<AdminDashboard />} />
         <Route path='/cs' element={<CustomerCenterPage />} />
