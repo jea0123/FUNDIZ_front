@@ -64,9 +64,9 @@ export function RegisterPage() {
             return;
         }
         setIsLoading(true);
-        const requestData: SignUpRequestDto = { email: formData.email, nickname: formData.nickname, password: formData.password };
+        const requestBody: SignUpRequestDto = { email: formData.email, nickname: formData.nickname, password: formData.password };
         try {
-            const response = await postData(endpoints.signUp, requestData);
+            const response = await postData(endpoints.signUp, requestBody);
             signUpResponse(response);
         } finally {
             setIsLoading(false);

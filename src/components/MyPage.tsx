@@ -10,11 +10,7 @@ import { Textarea } from './ui/textarea';
 import { Heart, Package, Settings, CreditCard, MapPin, Bell } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { useNavigate } from 'react-router-dom';
-
-interface MyPageProps {
-    user: any;
-    userRole: 'user' | 'creator' | 'admin';
-}
+import { useLoginUserStore } from '@/store/LoginUserStore.store';
 
 const mockSupportedProjects = [
     {
@@ -48,24 +44,19 @@ const mockWishlistProjects = [
     },
 ];
 
-export function MyPage({ user, userRole }: MyPageProps) {
+export function MyPage() {
     const [editMode, setEditMode] = useState(false);
-    const [profile, setProfile] = useState({
-        name: user?.name || '홍길동',
-        email: user?.email || 'hong@example.com',
-        phone: '010-1234-5678',
-        bio: '크라우드펀딩을 사랑하는 얼리어답터입니다.',
-    });
+    const { loginUser } = useLoginUserStore();
     const navigate = useNavigate();
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('ko-KR').format(amount);
     };
 
-    const handleProfileSave = () => {
-        setEditMode(false);
-        alert('프로필이 저장되었습니다.');
-    };
+    if (!loginUser) {
+        navigate('/login');
+        return;
+    }
 
     return (
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -75,12 +66,12 @@ export function MyPage({ user, userRole }: MyPageProps) {
                         <CardContent className="p-6 text-center">
                             <Avatar className="w-20 h-20 mx-auto mb-4">
                                 <AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100" />
-                                <AvatarFallback>{profile.name[0]}</AvatarFallback>
+                                <AvatarFallback>{loginUser.nickname}</AvatarFallback>
                             </Avatar>
-                            <h3 className="font-semibold mb-1">{profile.name}</h3>
-                            <p className="text-sm text-gray-500 mb-4">{profile.email}</p>
+                            <h3 className="font-semibold mb-1">{loginUser.nickname}</h3>
+                            <p className="text-sm text-gray-500 mb-4">{loginUser.email}</p>
                             <Badge variant="secondary">
-                                {userRole === 'creator' ? '크리에이터' : userRole === 'admin' ? '관리자' : '일반회원'}
+                                {loginUser.role === 'creator' ? '크리에이터' : loginUser.role === 'admin' ? '관리자' : '일반회원'}
                             </Badge>
                         </CardContent>
                     </Card>
@@ -118,7 +109,6 @@ export function MyPage({ user, userRole }: MyPageProps) {
                         <TabsList className="grid w-full grid-cols-3">
                             <TabsTrigger value="supported">후원한 프로젝트</TabsTrigger>
                             <TabsTrigger value="wishlist">찜한 프로젝트</TabsTrigger>
-                            {/* <TabsTrigger value="profile">프로필 설정</TabsTrigger> */}
                             <TabsTrigger value="notifications">알림</TabsTrigger>
                         </TabsList>
 
@@ -205,83 +195,6 @@ export function MyPage({ user, userRole }: MyPageProps) {
                         </TabsContent>
 
                         <TabsContent value="profile" className="mt-6">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>프로필 설정</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-6">
-                                    <div className="flex items-center space-x-4">
-                                        <Avatar className="w-20 h-20">
-                                            <AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100" />
-                                            <AvatarFallback>{profile.name[0]}</AvatarFallback>
-                                        </Avatar>
-                                        <div>
-                                            <Button variant="outline" size="sm">
-                                                프로필 사진 변경
-                                            </Button>
-                                            <p className="text-sm text-gray-500 mt-1">
-                                                JPG, PNG 파일을 업로드하세요. (최대 5MB)
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <Label htmlFor="name">이름</Label>
-                                            <Input
-                                                id="name"
-                                                value={profile.name}
-                                                onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                                                disabled={!editMode}
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="email">이메일</Label>
-                                            <Input
-                                                id="email"
-                                                type="email"
-                                                value={profile.email}
-                                                onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                                                disabled={!editMode}
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="phone">휴대폰 번호</Label>
-                                            <Input
-                                                id="phone"
-                                                value={profile.phone}
-                                                onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                                                disabled={!editMode}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <Label htmlFor="bio">자기소개</Label>
-                                        <Textarea
-                                            id="bio"
-                                            value={profile.bio}
-                                            onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                                            disabled={!editMode}
-                                            rows={3}
-                                        />
-                                    </div>
-
-                                    <div className="flex space-x-2">
-                                        {editMode ? (
-                                            <>
-                                                <Button onClick={handleProfileSave}>저장</Button>
-                                                <Button variant="outline" onClick={() => setEditMode(false)}>
-                                                    취소
-                                                </Button>
-                                            </>
-                                        ) : (
-                                            <Button onClick={() => setEditMode(true)}>편집</Button>
-                                        )}
-                                    </div>
-                                </CardContent>
-                            </Card>
-
                             <Card className="mt-6">
                                 <CardHeader>
                                     <CardTitle>계정 관리</CardTitle>

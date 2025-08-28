@@ -4,17 +4,22 @@ import { Input } from './ui/input';
 import { Search, Heart, User, Bell, Menu, X } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { useNavigate } from 'react-router-dom';
+import { useLoginUserStore } from '@/store/LoginUserStore.store';
+import { useCookies } from 'react-cookie';
 
-interface NavbarProps {
-    user: any;
-    userRole: 'user' | 'creator' | 'admin';
-    onLogout: () => void;
-}
-
-export function Navbar({ user, userRole, onLogout }: NavbarProps) {
+export function Navbar() {
     const [searchQuery, setSearchQuery] = useState('');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [ ,setCookie] = useCookies(['accessToken']);
+    const { loginUser, resetLoginUser } = useLoginUserStore();
     const navigate = useNavigate();
+
+    const logoutHandler = () => {
+        alert('로그아웃 되었습니다.');
+        navigate('/');
+        resetLoginUser();
+        setCookie('accessToken', '', { path: '/', expires: new Date() })
+    };
 
     return (
         <nav className="bg-white shadow-sm border-b">
@@ -43,13 +48,13 @@ export function Navbar({ user, userRole, onLogout }: NavbarProps) {
                     </div>
 
                     <div className="hidden md:flex items-center space-x-4">
-                        {user ? (
+                        {loginUser ? (
                             <>
                                 <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
                                     프로젝트 둘러보기
                                 </Button>
 
-                                {(userRole === 'creator' || userRole === 'admin') && (
+                                {(loginUser.role === 'creator' || loginUser.role === 'admin') && (
                                     <Button
                                         variant="ghost"
                                         size="sm"
@@ -59,7 +64,7 @@ export function Navbar({ user, userRole, onLogout }: NavbarProps) {
                                     </Button>
                                 )}
 
-                                {userRole === 'admin' && (
+                                {loginUser.role === 'admin' && (
                                     <Button
                                         variant="ghost"
                                         size="sm"
@@ -87,7 +92,7 @@ export function Navbar({ user, userRole, onLogout }: NavbarProps) {
                                         <DropdownMenuItem onClick={() => navigate('/mypage')}>
                                             마이페이지
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={onLogout}>
+                                        <DropdownMenuItem onClick={logoutHandler}>
                                             로그아웃
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
@@ -139,17 +144,17 @@ export function Navbar({ user, userRole, onLogout }: NavbarProps) {
                 {isMobileMenuOpen && (
                     <div className="md:hidden py-4 border-t">
                         <div className="flex flex-col space-y-2">
-                            {user ? (
+                            {loginUser ? (
                                 <>
                                     <Button variant="ghost" onClick={() => navigate('/')}>
                                         프로젝트 둘러보기
                                     </Button>
-                                    {(userRole === 'creator' || userRole === 'admin') && (
+                                    {(loginUser.role === 'creator' || loginUser.role === 'admin') && (
                                         <Button variant="ghost" onClick={() => navigate('/create')}>
                                             프로젝트 만들기
                                         </Button>
                                     )}
-                                    {userRole === 'admin' && (
+                                    {loginUser.role === 'admin' && (
                                         <Button variant="ghost" onClick={() => navigate('/admin')}>
                                             관리자
                                         </Button>
@@ -157,7 +162,7 @@ export function Navbar({ user, userRole, onLogout }: NavbarProps) {
                                     <Button variant="ghost" onClick={() => navigate('/mypage')}>
                                         마이페이지
                                     </Button>
-                                    <Button variant="ghost" onClick={onLogout}>
+                                    <Button variant="ghost" onClick={logoutHandler}>
                                         로그아웃
                                     </Button>
                                 </>
