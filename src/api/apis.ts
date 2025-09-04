@@ -28,7 +28,8 @@ export const endpoints = {
     checkNickname: '/auth/checkNickname',
     signUp: '/auth/signUp',
     signIn: '/auth/signIn',
-    getLoginUser: '/user/loginUser'
+    getLoginUser: '/user/loginUser',
+    getRecentTop10: '/project/recent-top10'
 };
 
 export const getData = async (url: string, accessToken?: string) => {
