@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
@@ -7,7 +7,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Heart, Share2, Calendar, Users, MessageCircle, Star } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import type { ProjectDetail } from '@/types/projects';
+import { endpoints, getData } from '@/api/apis';
+import { useParams } from 'react-router-dom';
+import type { Community } from '@/types/community';
 
+/*
 const mockProject = {
     id: '1',
     title: '혁신적인 스마트 홈 IoT 디바이스',
@@ -75,10 +80,42 @@ const mockProject = {
         },
     ],
 };
+*/
 
-export function ProjectDetail() {
+export function ProjectDetailPage() {
+    const { projectId } = useParams();
     const [selectedReward, setSelectedReward] = useState<number | null>(null);
     const [isLiked, setIsLiked] = useState(false);
+
+    const [project, setProject] = useState<ProjectDetail>();
+    const [community, setCommunity] = useState<Community[]>([]);
+    const [review, setReview] = useState<Community[]>([]);
+
+    useEffect(() => {
+        const projectData = async () => {
+            const response = await getData(endpoints.getProjectDetail(Number(projectId)));
+            if (response.status === 200) {
+                setProject(response.data);
+            }
+        };
+        const communityData = async () => {
+            const response = await getData(endpoints.getCommunity(Number(projectId)));
+            if (response.status === 200) {
+                setCommunity(response.data);
+            }
+        };
+        const reviewData = async () => {
+            const response = await getData(endpoints.getReview(Number(projectId)));
+            if (response.status === 200) {
+                setReview(response.data);
+            }
+        };
+        projectData();
+        communityData();
+        reviewData();
+    }, []);
+
+
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('ko-KR').format(amount);
@@ -98,14 +135,20 @@ export function ProjectDetail() {
         alert('링크가 복사되었습니다.');
     };
 
+    if (!projectId || !project) {
+        return (
+            <p>프로젝트가 없습니다.</p>
+        )
+    }
+
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2">
                     <div className="relative mb-6">
                         <ImageWithFallback
-                            src={mockProject.image}
-                            alt={mockProject.title}
+                            src={project.thumbnail}
+                            alt={project.title}
                             className="w-full h-96 object-cover rounded-lg"
                         />
                         <div className="absolute top-4 right-4 flex space-x-2">
@@ -116,7 +159,7 @@ export function ProjectDetail() {
                                 className={isLiked ? 'text-red-500' : ''}
                             >
                                 <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
-                                <span className="ml-1">{mockProject.likes}</span>
+                                {/* <span className="ml-1">{project.likeCnt}</span> */}
                             </Button>
                             <Button variant="secondary" size="sm" onClick={handleShare}>
                                 <Share2 className="h-4 w-4" />
@@ -126,26 +169,28 @@ export function ProjectDetail() {
 
                     <div className="mb-6">
                         <div className="flex flex-wrap gap-2 mb-3">
-                            <Badge variant="secondary">{mockProject.category}</Badge>
-                            {mockProject.tags.map((tag) => (
-                                <Badge key={tag} variant="outline">
-                                    {tag}
+                            <Badge variant="secondary">{project.subcategory.ctgrName}</Badge>
+                            {project.tagList.map((tag) => (
+                                <Badge key={tag.tagId} variant="outline">
+                                    {tag.tagName}
                                 </Badge>
                             ))}
                         </div>
-                        <h1 className="text-3xl mb-3">{mockProject.title}</h1>
-                        <p className="text-lg text-gray-600 mb-4">{mockProject.description}</p>
+                        <h1 className="text-3xl mb-3">{project.title}</h1>
 
                         <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
                             <Avatar>
-                                <AvatarImage src={mockProject.creator.avatar} />
-                                <AvatarFallback>{mockProject.creator.name[0]}</AvatarFallback>
+                                {/* //TODO: 창작자프로필이미지 */}
+                                {/* <AvatarImage src={mockProject.creator.avatar} /> */}
+                                {/* <AvatarFallback>{mockProject.creator.name[0]}</AvatarFallback> */}
                             </Avatar>
                             <div className="flex-1">
-                                <h4 className="font-semibold">{mockProject.creator.name}</h4>
+                                {/* //TODO: 창작자명 */}
+                                {/* <h4 className="font-semibold">{mockProject.creator.name}</h4> */}
                                 <p className="text-sm text-gray-600">
-                                    팔로워 {formatCurrency(mockProject.creator.followers)}명 ·
-                                    프로젝트 {mockProject.creator.projects}개
+                                    {/* //TODO: 팔로워 수, 프로젝트 수 */}
+                                    {/* 팔로워 {formatCurrency(mockProject.creator.followers)}명 · */}
+                                    {/* 프로젝트 {mockProject.creator.projects}개 */}
                                 </p>
                             </div>
                             <Button variant="outline" size="sm">
@@ -165,42 +210,46 @@ export function ProjectDetail() {
                         <TabsContent value="description" className="mt-6">
                             <div
                                 className="prose max-w-none"
-                                dangerouslySetInnerHTML={{ __html: mockProject.fullDescription }}
+                                dangerouslySetInnerHTML={{ __html: project.content }}
                             />
                         </TabsContent>
 
-                        <TabsContent value="updates" className="mt-6">
-                            <div className="space-y-4">
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle className="text-lg">프로젝트 진행 현황 업데이트</CardTitle>
-                                        <p className="text-sm text-gray-500">2024년 2월 15일</p>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <p>현재 목표 금액의 75%를 달성했습니다. 많은 후원에 감사드립니다!</p>
-                                    </CardContent>
-                                </Card>
-                            </div>
-                        </TabsContent>
+                        {project.newsList.map((news) => (
+                            <TabsContent value="updates" className="mt-6">
+                                <div className="space-y-4">
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle className="text-lg">{news.content}</CardTitle>
+                                            <p className="text-sm text-gray-500">{(news.createdAt).toLocaleString()}</p>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <p>{news.content}</p>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                            </TabsContent>
+                        ))}
 
+                        {community.map((cm) => (
                         <TabsContent value="community" className="mt-6">
                             <div className="space-y-4">
                                 <Card>
                                     <CardContent className="pt-6">
                                         <div className="flex items-start space-x-3">
                                             <Avatar className="w-8 h-8">
-                                                <AvatarFallback>김</AvatarFallback>
+                                                <AvatarFallback>{cm.profileImg}</AvatarFallback>
                                             </Avatar>
                                             <div className="flex-1">
                                                 <div className="flex items-center space-x-2 mb-1">
-                                                    <span className="font-medium">김후원</span>
-                                                    <span className="text-sm text-gray-500">2일 전</span>
+                                                    <span className="font-medium">{cm.nickname}</span>
+                                                    {/* //TODO: 현재 기준으로 며칠전 /utils 파일 */}
+                                                    {/* <span className="text-sm text-gray-500">2일 전</span> */}
                                                 </div>
-                                                <p className="text-sm">정말 기대되는 프로젝트네요! 응원합니다.</p>
+                                                <p className="text-sm">{cm.content}</p>
                                                 <div className="flex items-center space-x-2 mt-2">
                                                     <Button variant="ghost" size="sm">
                                                         <MessageCircle className="h-3 w-3 mr-1" />
-                                                        답글
+                                                        댓글
                                                     </Button>
                                                 </div>
                                             </div>
@@ -209,32 +258,36 @@ export function ProjectDetail() {
                                 </Card>
                             </div>
                         </TabsContent>
+                        ))}
 
+                        {review.map((rv) => (
                         <TabsContent value="reviews" className="mt-6">
                             <div className="space-y-4">
                                 <Card>
                                     <CardContent className="pt-6">
                                         <div className="flex items-start space-x-3">
                                             <Avatar className="w-8 h-8">
-                                                <AvatarFallback>이</AvatarFallback>
+                                                <AvatarFallback>{rv.nickname}</AvatarFallback>
                                             </Avatar>
                                             <div className="flex-1">
                                                 <div className="flex items-center space-x-2 mb-1">
-                                                    <span className="font-medium">이사용자</span>
+                                                    <span className="font-medium"></span>
                                                     <div className="flex items-center">
-                                                        {[...Array(5)].map((_, i) => (
+                                                        {[...Array(rv.rating)].map((_, i) => (
                                                             <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                                                         ))}
                                                     </div>
-                                                    <span className="text-sm text-gray-500">1주 전</span>
+                                                    {/* //TODO: 현재 기준으로 며칠전 /utils 파일 */}
+                                                    {/* <span className="text-sm text-gray-500">1주 전</span> */}
                                                 </div>
-                                                <p className="text-sm">제품 품질이 매우 우수하고 배송도 빨랐습니다.</p>
+                                                <p className="text-sm">{rv.content}</p>
                                             </div>
                                         </div>
                                     </CardContent>
                                 </Card>
                             </div>
                         </TabsContent>
+                        ))}
                     </Tabs>
                 </div>
 
@@ -246,16 +299,16 @@ export function ProjectDetail() {
                                     <div>
                                         <div className="flex justify-between items-center mb-2">
                                             <span className="text-2xl font-bold text-blue-600">
-                                                {calculateAchievementRate(mockProject.currentAmount, mockProject.targetAmount)}%
+                                                {calculateAchievementRate(project.currAmount, project.goalAmount)}%
                                             </span>
                                             <span className="text-sm text-gray-500">달성</span>
                                         </div>
-                                        <Progress value={calculateAchievementRate(mockProject.currentAmount, mockProject.targetAmount)} className="h-3 mb-3" />
+                                        <Progress value={calculateAchievementRate(project.currAmount, project.goalAmount)} className="h-3 mb-3" />
                                         <div className="text-xl font-bold">
-                                            {formatCurrency(mockProject.currentAmount)}원
+                                            {formatCurrency(project.currAmount)}원
                                         </div>
                                         <div className="text-sm text-gray-500">
-                                            목표 {formatCurrency(mockProject.targetAmount)}원
+                                            목표 {formatCurrency(project.goalAmount)}원
                                         </div>
                                     </div>
 
@@ -263,14 +316,15 @@ export function ProjectDetail() {
                                         <div className="text-center">
                                             <div className="flex items-center justify-center mb-1">
                                                 <Users className="h-4 w-4 mr-1" />
-                                                <span className="font-semibold">{mockProject.backers}</span>
+                                                <span className="font-semibold">{project.backerCnt}</span>
                                             </div>
                                             <div className="text-xs text-gray-500">후원자</div>
                                         </div>
                                         <div className="text-center">
                                             <div className="flex items-center justify-center mb-1">
                                                 <Calendar className="h-4 w-4 mr-1" />
-                                                <span className="font-semibold">{mockProject.daysLeft}</span>
+                                                {/* //TODO: 프로젝트 종료일까지 남은 일수 /utils 파일 */}
+                                                {/* <span className="font-semibold">{mockProject.daysLeft}</span> */}
                                             </div>
                                             <div className="text-xs text-gray-500">일 남음</div>
                                         </div>
@@ -279,15 +333,11 @@ export function ProjectDetail() {
                                     <div className="space-y-2 text-sm">
                                         <div className="flex justify-between">
                                             <span className="text-gray-500">펀딩 기간</span>
-                                            <span>{mockProject.startDate} ~ {mockProject.endDate}</span>
+                                            <span>{(project.startDate).toLocaleString()} ~ {(project.endDate).toLocaleString()}</span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="text-gray-500">결제일</span>
-                                            <span>{mockProject.paymentDate}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-gray-500">예상 발송</span>
-                                            <span>{mockProject.deliveryDate}</span>
+                                            <span>{(project.paymentDate).toLocaleString()}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -296,29 +346,30 @@ export function ProjectDetail() {
 
                         <div className="space-y-4">
                             <h3 className="text-lg font-semibold">리워드 선택</h3>
-                            {mockProject.rewards.map((reward) => (
+                            {project.rewardList.map((reward) => (
                                 <Card
-                                    key={reward.id}
-                                    className={`cursor-pointer transition-colors ${selectedReward === reward.id ? 'ring-2 ring-blue-500' : ''
+                                    key={reward.rewardId}
+                                    className={`cursor-pointer transition-colors ${selectedReward === reward.rewardId ? 'ring-2 ring-blue-500' : ''
                                         }`}
-                                    onClick={() => setSelectedReward(reward.id)}
+                                    onClick={() => setSelectedReward(reward.rewardId)}
                                 >
                                     <CardContent className="p-4">
                                         <div className="flex justify-between items-start mb-2">
                                             <span className="text-lg font-semibold">
-                                                {formatCurrency(reward.amount)}원
+                                                {formatCurrency(reward.price)}원
                                             </span>
-                                            {reward.limited && (
+                                            {reward.rewardCnt && (
                                                 <Badge variant="secondary" className="text-xs">
-                                                    한정 {reward.limited}개
+                                                    한정 {reward.rewardCnt}개
                                                 </Badge>
                                             )}
                                         </div>
-                                        <h4 className="font-medium mb-2">{reward.title}</h4>
-                                        <p className="text-sm text-gray-600 mb-3">{reward.description}</p>
+                                        <h4 className="font-medium mb-2">{reward.rewardName}</h4>
+                                        <p className="text-sm text-gray-600 mb-3">{reward.rewardContent}</p>
                                         <div className="flex justify-between items-center text-sm">
-                                            <span className="text-gray-500">{reward.backers}명 후원</span>
-                                            <span className="text-gray-500">예상 발송: {reward.estimated_delivery}</span>
+                                            {/* //TODo: 리워드당 후원자수 */}
+                                            {/* <span className="text-gray-500">{reward.backers}명 후원</span> */}
+                                            <span className="text-gray-500">예상 발송: {(reward.deliveryDate).toLocaleString()}</span>
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -330,7 +381,7 @@ export function ProjectDetail() {
                                 onClick={() => selectedReward && handleSupport(selectedReward)}
                                 disabled={!selectedReward}
                             >
-                                {selectedReward ? '이 리워드로 후원하기' : '리워드를 선택하세요'}
+                                {selectedReward ? '후원하기' : '리워드를 선택하세요'}
                             </Button>
                         </div>
                     </div>
