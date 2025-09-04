@@ -13,6 +13,7 @@ import { AdminCS } from './components/AdminCS';
 import { useLoginUserStore } from './store/LoginUserStore.store';
 import { useCookies } from 'react-cookie';
 import { endpoints, getData } from './api/apis';
+import Main from './views/Main';
 
 export default function App() {
   const { setLoginUser, resetLoginUser } = useLoginUserStore();
@@ -36,7 +37,7 @@ export default function App() {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <Routes>
-        <Route path='/' element={<MainPage />} />
+        <Route path='/' element={<Main />} />
         <Route path='/project/:id' element={<ProjectDetail />} />
         <Route path='/register' element={<RegisterPage />} />
         <Route path='/login' element={<LoginPage />} />
