@@ -33,6 +33,7 @@ export const endpoints = {
     getProjectDetail: (projectId: number) => `/project/${projectId}`,
     getCommunity: (projectId: number) => `/project/${projectId}/community`,
     getReview: (projectId: number) => `/project/${projectId}/review`,
+    getFeatured: '/project/featured',
 };
 
 export const getData = async (url: string, accessToken?: string) => {

@@ -30,6 +30,7 @@ export interface RecentTop10{
     thumbnail: string;
     currAmount: number;
     creatorName: string;
+    endDate: Date;
     percentNow: number;
     trendScore: number;
 }
@@ -54,4 +55,15 @@ export interface ProjectDetail {
     tagList: Tag[];
     rewardList: Reward[];
     newsList: News[];
+}
+
+export interface Featured{
+    projectId: number;
+    title: string;
+    creatorName: string;
+    thumbnail: string;
+    endDate: Date;
+    percentNow: number;
+    goalAmount: number;
+    score: number;
 }
