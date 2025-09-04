@@ -29,7 +29,8 @@ export const endpoints = {
     signUp: '/auth/signUp',
     signIn: '/auth/signIn',
     getLoginUser: '/user/loginUser',
-    getRecentTop10: '/project/recent-top10'
+    getRecentTop10: '/project/recent-top10',
+    getFeatured: '/project/featured',
 };
 
 export const getData = async (url: string, accessToken?: string) => {

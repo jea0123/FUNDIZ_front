@@ -1,23 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Heart, ChevronRight, ChevronLeft } from "lucide-react";
 import { endpoints, getData } from "@/api/apis";
-import type { RecentTop10 } from "@/types/projects";
+import type { Featured, RecentTop10 } from "@/types/projects";
+import { toWonPlus, getDaysLeft, toWon } from "@/utils/utils";
 
 export default function Main() {
-    const featured = useMemo(
-        () =>
-            Array.from({ length: 8 }).map((_, i) => ({
-                id: `feat-${i}`,
-                title: `주목 카드 타이틀 ${i + 1}`,
-                creator: "크리에이터",
-                percent: [50, 80, 90, 60, 88, 95, 70, 120][i % 8],
-                goal: ["300만", "900만", "4천만", "7천만", "2천만", "3천만", "3천만", "6천만"][i % 8],
-            })),
-        []
-    );
 
     const mdPick = useMemo(
         () =>
@@ -31,15 +20,25 @@ export default function Main() {
     );
 
     const [recentProjects, setRecentProjects] = useState<RecentTop10[]>([]);
+    const [featuredProjects, setFeaturedProjects] = useState<Featured[]>([]);
 
     useEffect(() => {
-        const fetchData = async () => {
+        const getRecentProjects = async () => {
             const response = await getData(endpoints.getRecentTop10);
             if (response.status === 200) {
                 setRecentProjects(response.data);
             }
         };
-        fetchData();
+
+        const getFeaturedProjects = async () => {
+            const response = await getData(endpoints.getFeatured);
+            if (response.status === 200) {
+                setFeaturedProjects(response.data);
+            }
+        };
+
+        getFeaturedProjects();
+        getRecentProjects();
     }, []);
 
     return (
@@ -49,7 +48,7 @@ export default function Main() {
                 <div className="space-y-8">
                     <Hero />
 
-                    <section className="space-y-4">
+                    <section className="space-y-4 mt-13">
                         <div className="flex items-end justify-between">
                             <div>
                                 <h3 className="text-lg font-semibold md:text-xl">주목할 만한 프로젝트</h3>
@@ -60,8 +59,8 @@ export default function Main() {
                             </Button>
                         </div>
                         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-                            {featured.map((it) => (
-                                <ProjectCard key={it.id} {...it} />
+                            {featuredProjects.map((it) => (
+                                <ProjectCard key={it.projectId} items={it} />
                             ))}
                         </div>
                     </section>
@@ -101,11 +100,6 @@ function Hero() {
 /* ------------------------------ Popular Sidebar -------------------------- */
 function PopularSidebar({ items }: { items: RecentTop10[] }) {
 
-    const toManwonPlus = (amount?: number) =>
-        typeof amount === "number"
-            ? (amount >= 10_000 ? `${Math.round(amount / 10_000)}만+ 원` : `${amount.toLocaleString()} 원`)
-            : "-";
-
     const top10 = useMemo(
         () => [...items].sort((a, b) => b.trendScore - a.trendScore).slice(0, 10),
         [items]
@@ -134,9 +128,10 @@ function PopularSidebar({ items }: { items: RecentTop10[] }) {
                                 <span className="truncate">{it.creatorName ?? "크리에이터"}</span>
                             </div>
                             <p className="line-clamp-2 text-sm font-medium leading-snug">{it.title}</p>
-                            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
-                                <span className="font-semibold text-red-600">{it.percentNow}% 달성</span>
-                                <span className="text-muted-foreground">{toManwonPlus(it.currAmount)}</span>
+                            <div className="mt-1 font-semibold text-red-600 flex flex-wrap gap-2 text-xs">{it.percentNow}% 달성</div>
+                            <div className="mt-1 flex flex-wrap gap-2 text-[10px] font-bold whitespace-nowrap h-[18px]">
+                                <div className="text-muted-foreground px-2 bg-[#f0f0f0]">{toWonPlus(it.currAmount)}</div>
+                                <div className="text-muted-foreground px-2 bg-[#f0f0f0]">{getDaysLeft(it.endDate)}일 남음</div>
                             </div>
                         </div>
                     </div>
@@ -147,34 +142,28 @@ function PopularSidebar({ items }: { items: RecentTop10[] }) {
 }
 
 /* ------------------------------- Project Card ---------------------------- */
-function ProjectCard({
-    title,
-    creator,
-    percent,
-    goal,
-}: {
-    title: string;
-    creator: string;
-    percent: number;
-    goal?: string;
-}) {
-    return (
-        <div className="overflow-hidden rounded-xl border">
-            <div className="relative aspect-[1] w-full bg-indigo-600/90 dark:bg-indigo-500">
-                <button aria-label="찜" className="absolute right-2 top-2 rounded-full bg-background/80 p-2 shadow">
-                    <Heart className="h-4 w-4" />
-                </button>
-            </div>
-            <div className="space-y-1 bg-muted px-4 py-3">
-                <p className="line-clamp-1 text-sm font-medium">{title}</p>
-                <p className="text-xs text-muted-foreground">{creator}</p>
-                <div className="flex items-center justify-between pt-1 text-xs">
-                    <Badge className="text-[10px]">{percent}% 달성</Badge>
-                    {goal && <span className="text-muted-foreground">목표 {goal} 원</span>}
+function ProjectCard({ items }: { items: Featured }) {
+
+    {
+        return (
+            <div className="overflow-hidden rounded-xl border">
+                <div className="relative aspect-[1] w-full">
+                    <img src={items.thumbnail} alt={items.title} className="h-full w-full object-cover" />
+                    <button aria-label="찜" className="absolute right-2 top-2 rounded-full bg-background/80 p-2 shadow">
+                        <Heart className="h-4 w-4" />
+                    </button>
+                </div>
+                <div className="space-y-1 bg-muted px-4 py-3">
+                    <p className="text-[11px] text-muted-foreground m-0">{items.creatorName}</p>
+                    <p className="line-clamp-1 text-[14px] font-medium leading-snug text-ellipsis m-0">{items.title}</p>
+                    <div className="flex items-center justify-between pt-1 text-xs">
+                        <div className="text-[14px] font-bold text-red-600 bg-none">{items.percentNow}% 달성</div>
+                        {items.goalAmount && <span className="text-muted-foreground px-2 bg-[#f0f0f0]">목표 {toWon(items.goalAmount)}</span>}
+                    </div>
                 </div>
             </div>
-        </div>
-    );
+        );
+    }
 }
 
 /* ------------------------------- MD Pick Rows ---------------------------- */
@@ -198,9 +187,9 @@ function MDPickRows({
                         <h4 className="text-base font-semibold">{title}</h4>
                     </div>
                     <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
-                        {row.map((it) => (
+                        {/* {row.map((it) => (
                             <ProjectCard key={it.id} {...it} />
-                        ))}
+                        ))} */}
                     </div>
                 </div>
             ))}
