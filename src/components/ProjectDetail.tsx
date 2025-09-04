@@ -11,6 +11,7 @@ import type { ProjectDetail } from '@/types/projects';
 import { endpoints, getData } from '@/api/apis';
 import { useParams } from 'react-router-dom';
 import type { Community } from '@/types/community';
+import { formatDate } from '@/utils/utils';
 
 /*
 const mockProject = {
@@ -121,10 +122,6 @@ export function ProjectDetailPage() {
         return new Intl.NumberFormat('ko-KR').format(amount);
     };
 
-    const calculateAchievementRate = (current: number, target: number) => {
-        return Math.round((current / target) * 100);
-    };
-
     const handleSupport = (rewardId: number) => {
         setSelectedReward(rewardId);
         alert('후원하기 페이지로 이동합니다.');
@@ -195,6 +192,9 @@ export function ProjectDetailPage() {
                             </div>
                             <Button variant="outline" size="sm">
                                 팔로우
+                            </Button>
+                            <Button variant="outline" size="sm">
+                                문의하기
                             </Button>
                         </div>
                     </div>
@@ -299,11 +299,11 @@ export function ProjectDetailPage() {
                                     <div>
                                         <div className="flex justify-between items-center mb-2">
                                             <span className="text-2xl font-bold text-blue-600">
-                                                {calculateAchievementRate(project.currAmount, project.goalAmount)}%
+                                                {project.percentNow}%
                                             </span>
                                             <span className="text-sm text-gray-500">달성</span>
                                         </div>
-                                        <Progress value={calculateAchievementRate(project.currAmount, project.goalAmount)} className="h-3 mb-3" />
+                                        <Progress value={project.percentNow} className="h-3 mb-3" />
                                         <div className="text-xl font-bold">
                                             {formatCurrency(project.currAmount)}원
                                         </div>
@@ -333,11 +333,11 @@ export function ProjectDetailPage() {
                                     <div className="space-y-2 text-sm">
                                         <div className="flex justify-between">
                                             <span className="text-gray-500">펀딩 기간</span>
-                                            <span>{(project.startDate).toLocaleString()} ~ {(project.endDate).toLocaleString()}</span>
+                                            <span>{formatDate(project.startDate)} ~ {formatDate(project.endDate)}</span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="text-gray-500">결제일</span>
-                                            <span>{(project.paymentDate).toLocaleString()}</span>
+                                            <span>{formatDate(project.paymentDate)}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -369,7 +369,7 @@ export function ProjectDetailPage() {
                                         <div className="flex justify-between items-center text-sm">
                                             {/* //TODo: 리워드당 후원자수 */}
                                             {/* <span className="text-gray-500">{reward.backers}명 후원</span> */}
-                                            <span className="text-gray-500">예상 발송: {(reward.deliveryDate).toLocaleString()}</span>
+                                            <span className="text-gray-500">예상 발송: {formatDate(reward.deliveryDate)}</span>
                                         </div>
                                     </CardContent>
                                 </Card>

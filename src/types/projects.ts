@@ -48,6 +48,7 @@ export interface ProjectDetail {
     projectStatus: string;
     backerCnt: number;
     viewCnt: number;
+    percentNow: number;
     paymentDate: Date;
 
     subcategory: Subcategory;

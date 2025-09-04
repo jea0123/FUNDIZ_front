@@ -20,3 +20,17 @@ export const getDaysLeft = (endDate: string | Date) => {
     const diffMs = end.getTime() - now.getTime();
     return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24))); // 음수면 0
 }
+
+export const formatDate = (date: string | Date) => {
+    const d = new Date(date);
+
+    if (isNaN(d.getTime())) {
+        console.log("잘못된 날짜 포맷");
+    }
+
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+}
