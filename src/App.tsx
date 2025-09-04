@@ -6,7 +6,6 @@ import { LoginPage } from './components/LoginPage';
 import { MainPage } from './components/MainPage';
 import { MyPage } from './components/MyPage';
 import { Navbar } from './components/Navbar';
-import { ProjectDetail } from './components/ProjectDetail';
 import { RegisterPage } from './components/RegisterPage';
 import { CustomerCenterPage } from './components/CustomerCenter';
 import { AdminCS } from './components/AdminCS';
@@ -14,6 +13,7 @@ import { useLoginUserStore } from './store/LoginUserStore.store';
 import { useCookies } from 'react-cookie';
 import { endpoints, getData } from './api/apis';
 import Main from './views/Main';
+import { ProjectDetailPage } from './components/ProjectDetail';
 
 export default function App() {
   const { setLoginUser, resetLoginUser } = useLoginUserStore();
@@ -38,7 +38,7 @@ export default function App() {
       <Navbar />
       <Routes>
         <Route path='/' element={<Main />} />
-        <Route path='/project/:id' element={<ProjectDetail />} />
+        <Route path='/project/:projectId' element={<ProjectDetailPage />} />
         <Route path='/register' element={<RegisterPage />} />
         <Route path='/login' element={<LoginPage />} />
         <Route path='/mypage' element={<MyPage />} />
