@@ -1,7 +1,7 @@
 export const toWonPlus = (amount?: number) => {
     if (amount === undefined) return "-";
-    if (amount >= 100_000_000) return `${Math.round(amount / 100_000_000)}억 원`;
-    if (amount >= 10_000) return `${Math.round(amount / 10_000)}만 원`;
+    if (amount >= 100_000_000) return `${Math.round(amount / 100_000_000)}억 원+`;
+    if (amount >= 10_000) return `${Math.round(amount / 10_000)}만 원+`;
     return `${amount.toLocaleString()} 원`;
 }
 

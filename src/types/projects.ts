@@ -65,6 +65,6 @@ export interface Featured{
     thumbnail: string;
     endDate: Date;
     percentNow: number;
-    goalAmount: number;
+    currAmount: number;
     score: number;
 }
