@@ -1,52 +1,55 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Heart, ChevronRight, ChevronLeft } from "lucide-react";
 import { endpoints, getData } from "@/api/apis";
-import type { Featured, RecentTop10 } from "@/types/projects";
+import type { Featured, RecentTop10, RecentView } from "@/types/projects";
 import { toWonPlus, getDaysLeft } from "@/utils/utils";
+import { useCookies } from "react-cookie";
+import { useNavigate } from "react-router-dom";
 
 export const img = "https://gongu.copyright.or.kr/gongu/wrt/cmmn/wrtFileImageView.do?wrtSn=9046601&filePath=L2Rpc2sxL25ld2RhdGEvMjAxNC8yMS9DTFM2L2FzYWRhbFBob3RvXzI0MTRfMjAxNDA0MTY=&thumbAt=Y&thumbSe=b_tbumb&wrtTy=10004";
 
 export default function Main() {
-
-    const mdPick = useMemo(
-        () =>
-            Array.from({ length: 15 }).map((_, i) => ({
-                id: `md-${i}`,
-                title: `MD Pick 카드 ${i + 1}`,
-                creator: "크리에이터",
-                percent: [83, 94, 120, 182, 88, 56, 213, 449][i % 8],
-            })),
-        []
-    );
-
+    const [cookie] = useCookies();
     const [recentProjects, setRecentProjects] = useState<RecentTop10[]>([]);
     const [featuredProjects, setFeaturedProjects] = useState<Featured[]>([]);
+    const [recentView, setRecentView] = useState<RecentView[]>([]);
+
+    const getRecentProjects = async () => {
+        const response = await getData(endpoints.getRecentTop10);
+        if (response.status === 200) {
+            setRecentProjects(response.data);
+        }
+    };
+
+    const getFeaturedProjects = async () => {
+        const response = await getData(endpoints.getFeatured);
+        if (response.status === 200) {
+            setFeaturedProjects(response.data);
+        }
+    };
+
+    const getRecentViewProjects = async () => {
+        const userId = 20; // 임시 userId
+        const response = await getData(endpoints.getRecentView(userId));
+        if (response.status === 200) {
+            setRecentView(response.data);
+        }
+    };
 
     useEffect(() => {
-        const getRecentProjects = async () => {
-            const response = await getData(endpoints.getRecentTop10);
-            if (response.status === 200) {
-                setRecentProjects(response.data);
-            }
-        };
-
-        const getFeaturedProjects = async () => {
-            const response = await getData(endpoints.getFeatured);
-            if (response.status === 200) {
-                setFeaturedProjects(response.data);
-            }
-        };
-
+        getRecentViewProjects();
         getFeaturedProjects();
         getRecentProjects();
     }, []);
 
     return (
-        <div className="mx-auto max-w-[1280px] px-4 py-6 space-y-10">
+        // TODO: max-w-[1160px] -> container
+        <div className="mx-auto max-w-[1160px] px-4 py-6 space-y-10">
             {/* 좌측: Hero + 주목할 만한 프로젝트 / 우측: 인기 프로젝트 사이드바 */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px] lg:items-start">
+            {/* TODO: gap-15 -> gap-?? */}
+            <div className="grid grid-cols-1 gap-15 lg:grid-cols-[1fr_320px] lg:items-start">
                 <div className="space-y-8">
                     <Hero />
 
@@ -60,7 +63,7 @@ export default function Main() {
                                 전체보기 <ChevronRight className="ml-1 h-4 w-4" />
                             </Button>
                         </div>
-                        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+                        <div className="grid grid-cols-2 gap-7 md:grid-cols-3 lg:grid-cols-4">
                             {featuredProjects.map((it) => (
                                 <ProjectCard key={it.projectId} items={it} />
                             ))}
@@ -73,8 +76,9 @@ export default function Main() {
 
             <Separator />
 
-            {/* MD Pick: 5개씩 나열 */}
-            <MDPickRows items={mdPick} perRow={5} title="MD Pick" />
+            {!cookie.accessToken && (
+                <RecentView items={recentView} title="최근 본 프로젝트" />
+            )}
         </div>
     );
 }
@@ -101,14 +105,20 @@ function Hero() {
 
 /* ------------------------------ Popular Sidebar -------------------------- */
 function PopularSidebar({ items }: { items: RecentTop10[] }) {
+    const navigate = useNavigate();
 
     const top10 = useMemo(
         () => [...items].sort((a, b) => b.trendScore - a.trendScore).slice(0, 10),
         [items]
     );
 
+    function onClickCard(projectId: number) {
+        navigate(`/project/${projectId}`);
+    }
+
     return (
-        <aside className="rounded-xl border bg-card p-4 h-full flex flex-col">
+        // TODO: pl-7 -> pl-??
+        <aside className="rounded-xl border bg-card p-4 pl-7 h-full flex flex-col">
             <div className="mb-3 flex items-center justify-between">
                 <h3 className="text-sm font-semibold">인기 프로젝트</h3>
                 <Button variant="ghost" className="h-6 px-1 text-xs">전체보기</Button>
@@ -117,11 +127,11 @@ function PopularSidebar({ items }: { items: RecentTop10[] }) {
 
             <div className="space-y-5">
                 {top10.map((it, idx) => (
-                    <div key={it.projectId} className="flex gap-3">
+                    <div key={it.projectId} className="flex gap-3 cursor-pointer" onClick={() => onClickCard(it.projectId)}>
                         {/* 썸네일 */}
-                        <div className="relative size-20 shrink-0 overflow-hidden rounded-md bg-muted">
-                            {/* <img src={it.thumbnail} className="h-full w-full object-cover" /> */}
-                            <img src={img} className="h-full w-full object-cover" />
+                        <div className="relative size-20 shrink-0 overflow-hidden rounded-lg bg-muted group">
+                            {/* <img src={it.thumbnail} className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-115" /> */}
+                            <img src={img} className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-115" />
                         </div>
 
                         {/* 정보 */}
@@ -144,14 +154,82 @@ function PopularSidebar({ items }: { items: RecentTop10[] }) {
     );
 }
 
+/* ------------------------------- Recent View ---------------------------- */
+export function RecentView({ items, title, perRow = 5, }: { items: RecentView[]; title?: string; perRow?: number; }) {
+    const pages = useMemo(() => chunk(items ?? [], perRow), [items, perRow]);
+    const [page, setPage] = useState(0);
+
+    const canPrev = page > 0;
+    const canNext = page < Math.max(pages.length - 1, 0);
+
+    const goPrev = useCallback(() => canPrev && setPage(p => p - 1), [canPrev]);
+    const goNext = useCallback(() => canNext && setPage(p => p + 1), [canNext]);
+
+    const wrapRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const el = wrapRef.current;
+        if (!el) return;
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === "ArrowLeft") goPrev();
+            if (e.key === "ArrowRight") goNext();
+        };
+        el.addEventListener("keydown", onKey);
+        return () => el.removeEventListener("keydown", onKey);
+    }, [goPrev, goNext]);
+
+    return (
+        <section className="space-y-4" ref={wrapRef} tabIndex={0}>
+            <div className="flex items-center justify-between">
+                <h4 className="text-base font-semibold">{title}</h4>
+                {pages.length > 1 && (
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">
+                            {page + 1} / {pages.length}
+                        </span>
+                        <Button size="icon" variant="secondary" className="h-7 w-7" onClick={goPrev} disabled={!canPrev} aria-label="이전">
+                            <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="secondary" className="h-7 w-7" onClick={goNext} disabled={!canNext} aria-label="다음">
+                            <ChevronRight className="h-4 w-4" />
+                        </Button>
+                    </div>
+                )}
+            </div>
+            {/* 슬라이더 */}
+            <div className="relative overflow-hidden">
+                <div className="flex transition-transform duration-300 ease-in-out" style={{ transform: `translateX(-${page * 100}%)` }}>
+                    {pages.map((group, idx) => (
+                        <div key={idx} className="w-full shrink-0 px-0">
+                            {/* TODO: gap-10 -> gap-?? */}
+                            <div className="grid grid-cols-2 gap-10 md:grid-cols-3 lg:grid-cols-5">
+                                {group.map((it) => (
+                                    <ProjectCard items={it} key={it.projectId} />
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </section>
+    );
+}
+
 /* ------------------------------- Project Card ---------------------------- */
-function ProjectCard({ items }: { items: Featured }) {
+function ProjectCard({ items }: { items: any; }) {
+    const navigate = useNavigate();
+
+    function onClickCard(projectId: number) {
+        navigate(`/project/${projectId}`);
+    }
+    if (!items) return
+        <></>;
     {
         return (
-            <div className="overflow-hidden">
-                <div className="relative aspect-[1] w-full">
-                        {/* <img src={items.thumbnail} alt={items.title} className="h-full w-full object-cover rounded-lg" /> */}
-                        <img src={img} alt={items.title} className="h-full w-full object-cover rounded-lg" />
+            <div className="overflow-hidden cursor-pointer" onClick={() => onClickCard(items.projectId)}>
+                <div className="relative aspect-[1] w-full overflow-hidden rounded-lg group">
+                    {/* <img src={items.thumbnail} alt={items.title} className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-115" /> */}
+                    <img src={img} alt={items.title} className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-115" />
                     <button aria-label="찜" className="absolute right-2 top-2 bg-transparent p-2">
                         <Heart className="h-4 w-4 text-white" />
                     </button>
@@ -172,33 +250,8 @@ function ProjectCard({ items }: { items: Featured }) {
     }
 }
 
-/* ------------------------------- MD Pick Rows ---------------------------- */
-function MDPickRows({
-    items,
-    perRow = 5,
-    title,
-}: {
-    items: { id: string; title: string; creator: string; percent: number }[];
-    perRow?: number;
-    title?: string;
-}) {
-    const rows: typeof items[] = [];
-    for (let i = 0; i < items.length; i += perRow) rows.push(items.slice(i, i + perRow));
-
-    return (
-        <section className="space-y-8">
-            {rows.map((row, idx) => (
-                <div key={`mdrow-${idx}`} className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <h4 className="text-base font-semibold">{title}</h4>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
-                        {/* {row.map((it) => (
-                            <ProjectCard key={it.id} {...it} />
-                        ))} */}
-                    </div>
-                </div>
-            ))}
-        </section>
-    );
+function chunk<T>(arr: T[], size: number) {
+    const out: T[][] = [];
+    for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+    return out;
 }

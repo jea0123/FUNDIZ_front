@@ -68,3 +68,14 @@ export interface Featured{
     currAmount: number;
     score: number;
 }
+
+export interface RecentView{
+    projectId: number;
+    title: string;
+    thumbnail: string;
+    currAmount: number;
+    creatorName: string;
+    endDate: Date;
+    percentNow: number;
+    viewedAt: Date;
+}

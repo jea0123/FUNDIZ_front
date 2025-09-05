@@ -45,17 +45,30 @@ export default function App() {
       <NavigatorRegistrar />
       <Navbar />
       <Routes>
+        <Route path='/' element={<MainPage />} />
+
+        <Route path='/auth'>
+          <Route path='register' element={<RegisterPage />} />
+          <Route path='login' element={<LoginPage />} />
+        </Route>
+
+        <Route path='/project'>
+          <Route path=':projectId' element={<ProjectDetailPage />} />
+          <Route path='create' element={<CreateProject />} />
+        </Route>
+
+        <Route path='/user'>
+          <Route path='mypage' element={<MyPage />} />
+        </Route>
+
+        <Route path='/admin'>
+          <Route path='dashboard' element={<AdminDashboard />} />
+          <Route path='cs' element={<CustomerCenterPage />} />
+          <Route path='test2' element={<AdminCS />} />
+        </Route>
+
         <Route path="/error" element={<ErrorPage />} />
         <Route path="*" element={<ErrorPage />} />
-        <Route path='/' element={<MainPage />} />
-        <Route path='/project/:projectId' element={<ProjectDetailPage />} />
-        <Route path='/register' element={<RegisterPage />} />
-        <Route path='/login' element={<LoginPage />} />
-        <Route path='/mypage' element={<MyPage />} />
-        <Route path='/create' element={<CreateProject />} />
-        <Route path='/admin' element={<AdminDashboard />} />
-        <Route path='/cs' element={<CustomerCenterPage />} />
-        <Route path='/test2' element={<AdminCS />} />
       </Routes>
     </div>
   );
