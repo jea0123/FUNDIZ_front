@@ -3,15 +3,18 @@ import './index.css'
 import App from './App.tsx'
 import { BrowserRouter } from 'react-router-dom';
 import { CookiesProvider } from 'react-cookie';
+import { Toaster } from 'sonner';
 
 const rootElement = document.getElementById('root');
+
 if (rootElement) {
   const root = createRoot(rootElement);
   root.render(
     <CookiesProvider>
-        <BrowserRouter>
+      <BrowserRouter>
+        <Toaster />
           <App />
-        </BrowserRouter>
+      </BrowserRouter>
     </CookiesProvider>
   );
 } else {
