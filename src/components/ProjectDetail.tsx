@@ -11,7 +11,7 @@ import type { ProjectDetail } from '@/types/projects';
 import { endpoints, getData } from '@/api/apis';
 import { useParams } from 'react-router-dom';
 import type { Community } from '@/types/community';
-import { formatDate } from '@/utils/utils';
+import { formatDate, getDaysLeft } from '@/utils/utils';
 
 /*
 const mockProject = {
@@ -220,7 +220,7 @@ export function ProjectDetailPage() {
                                     <Card>
                                         <CardHeader>
                                             <CardTitle className="text-lg">{news.content}</CardTitle>
-                                            <p className="text-sm text-gray-500">{(news.createdAt).toLocaleString()}</p>
+                                            <p className="text-sm text-gray-500">{formatDate(news.createdAt)}</p>
                                         </CardHeader>
                                         <CardContent>
                                             <p>{news.content}</p>
@@ -242,8 +242,7 @@ export function ProjectDetailPage() {
                                             <div className="flex-1">
                                                 <div className="flex items-center space-x-2 mb-1">
                                                     <span className="font-medium">{cm.nickname}</span>
-                                                    {/* //TODO: 현재 기준으로 며칠전 /utils 파일 */}
-                                                    {/* <span className="text-sm text-gray-500">2일 전</span> */}
+                                                    <span className="text-sm text-gray-500">{getDaysLeft(cm.createdAt)} 전</span>
                                                 </div>
                                                 <p className="text-sm">{cm.content}</p>
                                                 <div className="flex items-center space-x-2 mt-2">
@@ -277,8 +276,7 @@ export function ProjectDetailPage() {
                                                             <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                                                         ))}
                                                     </div>
-                                                    {/* //TODO: 현재 기준으로 며칠전 /utils 파일 */}
-                                                    {/* <span className="text-sm text-gray-500">1주 전</span> */}
+                                                    <span className="text-sm text-gray-500">{getDaysLeft(rv.createdAt)} 전</span>
                                                 </div>
                                                 <p className="text-sm">{rv.content}</p>
                                             </div>
@@ -323,8 +321,7 @@ export function ProjectDetailPage() {
                                         <div className="text-center">
                                             <div className="flex items-center justify-center mb-1">
                                                 <Calendar className="h-4 w-4 mr-1" />
-                                                {/* //TODO: 프로젝트 종료일까지 남은 일수 /utils 파일 */}
-                                                {/* <span className="font-semibold">{mockProject.daysLeft}</span> */}
+                                                <span className="font-semibold">{getDaysLeft(project.endDate)}</span>
                                             </div>
                                             <div className="text-xs text-gray-500">일 남음</div>
                                         </div>
