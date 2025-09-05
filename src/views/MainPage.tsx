@@ -45,9 +45,11 @@ export default function Main() {
     }, []);
 
     return (
+        // TODO: max-w-[1160px] -> container
         <div className="mx-auto max-w-[1160px] px-4 py-6 space-y-10">
             {/* 좌측: Hero + 주목할 만한 프로젝트 / 우측: 인기 프로젝트 사이드바 */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px] lg:items-start">
+            {/* TODO: gap-15 -> gap-?? */}
+            <div className="grid grid-cols-1 gap-15 lg:grid-cols-[1fr_320px] lg:items-start">
                 <div className="space-y-8">
                     <Hero />
 
@@ -115,7 +117,8 @@ function PopularSidebar({ items }: { items: RecentTop10[] }) {
     }
 
     return (
-        <aside className="rounded-xl border bg-card p-4 h-full flex flex-col">
+        // TODO: pl-7 -> pl-??
+        <aside className="rounded-xl border bg-card p-4 pl-7 h-full flex flex-col">
             <div className="mb-3 flex items-center justify-between">
                 <h3 className="text-sm font-semibold">인기 프로젝트</h3>
                 <Button variant="ghost" className="h-6 px-1 text-xs">전체보기</Button>
@@ -198,7 +201,8 @@ export function RecentView({ items, title, perRow = 5, }: { items: RecentView[];
                 <div className="flex transition-transform duration-300 ease-in-out" style={{ transform: `translateX(-${page * 100}%)` }}>
                     {pages.map((group, idx) => (
                         <div key={idx} className="w-full shrink-0 px-0">
-                            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+                            {/* TODO: gap-10 -> gap-?? */}
+                            <div className="grid grid-cols-2 gap-10 md:grid-cols-3 lg:grid-cols-5">
                                 {group.map((it) => (
                                     <ProjectCard items={it} key={it.projectId} />
                                 ))}
