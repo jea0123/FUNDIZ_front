@@ -6,6 +6,7 @@ import { endpoints, getData } from "@/api/apis";
 import type { Featured, RecentTop10, RecentView } from "@/types/projects";
 import { toWonPlus, getDaysLeft } from "@/utils/utils";
 import { useCookies } from "react-cookie";
+import { useNavigate } from "react-router-dom";
 
 export const img = "https://gongu.copyright.or.kr/gongu/wrt/cmmn/wrtFileImageView.do?wrtSn=9046601&filePath=L2Rpc2sxL25ld2RhdGEvMjAxNC8yMS9DTFM2L2FzYWRhbFBob3RvXzI0MTRfMjAxNDA0MTY=&thumbAt=Y&thumbSe=b_tbumb&wrtTy=10004";
 
@@ -44,7 +45,7 @@ export default function Main() {
     }, []);
 
     return (
-        <div className="mx-auto max-w-[1280px] px-4 py-6 space-y-10">
+        <div className="mx-auto max-w-[1160px] px-4 py-6 space-y-10">
             {/* 좌측: Hero + 주목할 만한 프로젝트 / 우측: 인기 프로젝트 사이드바 */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px] lg:items-start">
                 <div className="space-y-8">
@@ -60,7 +61,7 @@ export default function Main() {
                                 전체보기 <ChevronRight className="ml-1 h-4 w-4" />
                             </Button>
                         </div>
-                        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+                        <div className="grid grid-cols-2 gap-7 md:grid-cols-3 lg:grid-cols-4">
                             {featuredProjects.map((it) => (
                                 <ProjectCard key={it.projectId} items={it} />
                             ))}
@@ -102,11 +103,16 @@ function Hero() {
 
 /* ------------------------------ Popular Sidebar -------------------------- */
 function PopularSidebar({ items }: { items: RecentTop10[] }) {
+    const navigate = useNavigate();
 
     const top10 = useMemo(
         () => [...items].sort((a, b) => b.trendScore - a.trendScore).slice(0, 10),
         [items]
     );
+
+    function onClickCard(projectId: number) {
+        navigate(`/project/${projectId}`);
+    }
 
     return (
         <aside className="rounded-xl border bg-card p-4 h-full flex flex-col">
@@ -118,11 +124,11 @@ function PopularSidebar({ items }: { items: RecentTop10[] }) {
 
             <div className="space-y-5">
                 {top10.map((it, idx) => (
-                    <div key={it.projectId} className="flex gap-3">
+                    <div key={it.projectId} className="flex gap-3 cursor-pointer" onClick={() => onClickCard(it.projectId)}>
                         {/* 썸네일 */}
-                        <div className="relative size-20 shrink-0 overflow-hidden rounded-md bg-muted">
-                            {/* <img src={it.thumbnail} className="h-full w-full object-cover" /> */}
-                            <img src={img} className="h-full w-full object-cover" />
+                        <div className="relative size-20 shrink-0 overflow-hidden rounded-lg bg-muted group">
+                            {/* <img src={it.thumbnail} className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-115" /> */}
+                            <img src={img} className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-115" />
                         </div>
 
                         {/* 정보 */}
@@ -205,20 +211,21 @@ export function RecentView({ items, title, perRow = 5, }: { items: RecentView[];
     );
 }
 
-function chunk<T>(arr: T[], size: number) {
-    const out: T[][] = [];
-    for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
-    return out;
-}
-
 /* ------------------------------- Project Card ---------------------------- */
 function ProjectCard({ items }: { items: any; }) {
+    const navigate = useNavigate();
+
+    function onClickCard(projectId: number) {
+        navigate(`/project/${projectId}`);
+    }
+    if (!items) return
+        <></>;
     {
         return (
-            <div className="overflow-hidden">
-                <div className="relative aspect-[1] w-full">
-                    {/* <img src={items.thumbnail} alt={items.title} className="h-full w-full object-cover rounded-lg" /> */}
-                    <img src={img} alt={items.title} className="h-full w-full object-cover rounded-lg" />
+            <div className="overflow-hidden cursor-pointer" onClick={() => onClickCard(items.projectId)}>
+                <div className="relative aspect-[1] w-full overflow-hidden rounded-lg group">
+                    {/* <img src={items.thumbnail} alt={items.title} className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-115" /> */}
+                    <img src={img} alt={items.title} className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-115" />
                     <button aria-label="찜" className="absolute right-2 top-2 bg-transparent p-2">
                         <Heart className="h-4 w-4 text-white" />
                     </button>
@@ -237,4 +244,10 @@ function ProjectCard({ items }: { items: any; }) {
             </div>
         );
     }
+}
+
+function chunk<T>(arr: T[], size: number) {
+    const out: T[][] = [];
+    for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+    return out;
 }
