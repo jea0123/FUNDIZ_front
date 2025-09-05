@@ -4,7 +4,9 @@ import { Separator } from "@/components/ui/separator";
 import { Heart, ChevronRight, ChevronLeft } from "lucide-react";
 import { endpoints, getData } from "@/api/apis";
 import type { Featured, RecentTop10 } from "@/types/projects";
-import { toWonPlus, getDaysLeft, toWon } from "@/utils/utils";
+import { toWonPlus, getDaysLeft } from "@/utils/utils";
+
+export const img = "https://gongu.copyright.or.kr/gongu/wrt/cmmn/wrtFileImageView.do?wrtSn=9046601&filePath=L2Rpc2sxL25ld2RhdGEvMjAxNC8yMS9DTFM2L2FzYWRhbFBob3RvXzI0MTRfMjAxNDA0MTY=&thumbAt=Y&thumbSe=b_tbumb&wrtTy=10004";
 
 export default function Main() {
 
@@ -48,7 +50,7 @@ export default function Main() {
                 <div className="space-y-8">
                     <Hero />
 
-                    <section className="space-y-4 mt-13">
+                    <section className="space-y-4 mt-0">
                         <div className="flex items-end justify-between">
                             <div>
                                 <h3 className="text-lg font-semibold md:text-xl">주목할 만한 프로젝트</h3>
@@ -118,7 +120,8 @@ function PopularSidebar({ items }: { items: RecentTop10[] }) {
                     <div key={it.projectId} className="flex gap-3">
                         {/* 썸네일 */}
                         <div className="relative size-20 shrink-0 overflow-hidden rounded-md bg-muted">
-                            <img src={it.thumbnail} className="h-full w-full object-cover" />
+                            {/* <img src={it.thumbnail} className="h-full w-full object-cover" /> */}
+                            <img src={img} className="h-full w-full object-cover" />
                         </div>
 
                         {/* 정보 */}
@@ -143,22 +146,25 @@ function PopularSidebar({ items }: { items: RecentTop10[] }) {
 
 /* ------------------------------- Project Card ---------------------------- */
 function ProjectCard({ items }: { items: Featured }) {
-
     {
         return (
-            <div className="overflow-hidden rounded-xl border">
+            <div className="overflow-hidden">
                 <div className="relative aspect-[1] w-full">
-                    <img src={items.thumbnail} alt={items.title} className="h-full w-full object-cover" />
-                    <button aria-label="찜" className="absolute right-2 top-2 rounded-full bg-background/80 p-2 shadow">
-                        <Heart className="h-4 w-4" />
+                        {/* <img src={items.thumbnail} alt={items.title} className="h-full w-full object-cover rounded-lg" /> */}
+                        <img src={img} alt={items.title} className="h-full w-full object-cover rounded-lg" />
+                    <button aria-label="찜" className="absolute right-2 top-2 bg-transparent p-2">
+                        <Heart className="h-4 w-4 text-white" />
                     </button>
                 </div>
-                <div className="space-y-1 bg-muted px-4 py-3">
+                <div className="space-y-1 py-3">
                     <p className="text-[11px] text-muted-foreground m-0">{items.creatorName}</p>
                     <p className="line-clamp-1 text-[14px] font-medium leading-snug text-ellipsis m-0">{items.title}</p>
                     <div className="flex items-center justify-between pt-1 text-xs">
                         <div className="text-[14px] font-bold text-red-600 bg-none">{items.percentNow}% 달성</div>
-                        {items.goalAmount && <span className="text-muted-foreground px-2 bg-[#f0f0f0]">목표 {toWon(items.goalAmount)}</span>}
+                    </div>
+                    <div className="mt-1 flex flex-wrap gap-2 text-[10px] font-bold whitespace-nowrap h-[18px]">
+                        {items.endDate && <span className="text-muted-foreground px-2 bg-[#f0f0f0]">{getDaysLeft(items.endDate)}일 남음</span>}
+                        {items.currAmount && <span className="text-muted-foreground px-2 bg-[#f0f0f0]">{toWonPlus(items.currAmount)}</span>}
                     </div>
                 </div>
             </div>
