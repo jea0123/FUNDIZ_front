@@ -33,7 +33,6 @@ export default function Main() {
         const userId = 20; // 임시 userId
         const response = await getData(endpoints.getRecentView(userId));
         if (response.status === 200) {
-            console.log(response.data);
             setRecentView(response.data);
         }
     };
