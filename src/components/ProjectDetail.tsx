@@ -138,6 +138,9 @@ export function ProjectDetailPage() {
         )
     }
 
+    console.log(project);
+    
+
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -156,6 +159,7 @@ export function ProjectDetailPage() {
                                 className={isLiked ? 'text-red-500' : ''}
                             >
                                 <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
+                                {/* //TODO: 좋아요수 */}
                                 {/* <span className="ml-1">{project.likeCnt}</span> */}
                             </Button>
                             <Button variant="secondary" size="sm" onClick={handleShare}>
@@ -177,17 +181,14 @@ export function ProjectDetailPage() {
 
                         <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
                             <Avatar>
-                                {/* //TODO: 창작자프로필이미지 */}
-                                {/* <AvatarImage src={mockProject.creator.avatar} /> */}
-                                {/* <AvatarFallback>{mockProject.creator.name[0]}</AvatarFallback> */}
+                                <AvatarImage src={project.profileImg} />
+                                <AvatarFallback>{project.creatorName}</AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
-                                {/* //TODO: 창작자명 */}
-                                {/* <h4 className="font-semibold">{mockProject.creator.name}</h4> */}
+                                <h4 className="font-semibold">{project.creatorName}</h4>
                                 <p className="text-sm text-gray-600">
-                                    {/* //TODO: 팔로워 수, 프로젝트 수 */}
-                                    {/* 팔로워 {formatCurrency(mockProject.creator.followers)}명 · */}
-                                    {/* 프로젝트 {mockProject.creator.projects}개 */}
+                                    팔로워 {formatCurrency(project.followerCnt)}명 ·
+                                    프로젝트 {project.projectCnt}개
                                 </p>
                             </div>
                             <Button variant="outline" size="sm">
