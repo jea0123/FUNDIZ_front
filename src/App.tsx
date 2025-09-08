@@ -26,19 +26,19 @@ export default function App() {
     return null; // 렌더링 없음
   }
 
-  useEffect(() => {
+   useEffect(() => {
+    const getLoginUserResponse = (response: any) => {
+      if (response.status === 200) {
+        setLoginUser(response.data);
+      } else {
+        resetLoginUser();
+      }
+    };
+    
     if (cookie.accessToken) {
       getData(endpoints.getLoginUser, cookie.accessToken).then(getLoginUserResponse);
     }
   }, [cookie.accessToken]);
-
-  const getLoginUserResponse = (response: any) => {
-    if (response.status === 200) {
-      setLoginUser(response.data);
-    } else {
-      resetLoginUser();
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
