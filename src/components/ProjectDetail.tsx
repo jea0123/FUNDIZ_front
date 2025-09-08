@@ -159,8 +159,7 @@ export function ProjectDetailPage() {
                                 className={isLiked ? 'text-red-500' : ''}
                             >
                                 <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
-                                {/* //TODO: 좋아요수 */}
-                                {/* <span className="ml-1">{project.likeCnt}</span> */}
+                                <span className="ml-1">{project.likeCnt}</span>
                             </Button>
                             <Button variant="secondary" size="sm" onClick={handleShare}>
                                 <Share2 className="h-4 w-4" />
