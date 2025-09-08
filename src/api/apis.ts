@@ -1,4 +1,5 @@
 
+import { appNavigate } from '@/utils/navigator';
 import type { AxiosResponse } from 'axios';
 import axios from 'axios';
 
@@ -9,6 +10,10 @@ const axiosInstance = axios.create({
 
 const responseHandler = (response: AxiosResponse<any, any>) => {
     if (!response) return { status: 0, data: null };
+    if (response.status >= 400) {
+        appNavigate("/error", { state: { message: response.data, status: response.status } });
+        return { status: response.status, data: null };
+    }
     return { status: response.status, data: response.data.data ?? null };
 };
 
@@ -34,6 +39,7 @@ export const endpoints = {
     getCommunity: (projectId: number) => `/project/${projectId}/community`,
     getReview: (projectId: number) => `/project/${projectId}/review`,
     getFeatured: '/project/featured',
+    getRecentView: (userId: number) => `/user/recentViewProjects/${userId}`,
 };
 
 export const getData = async (url: string, accessToken?: string) => {

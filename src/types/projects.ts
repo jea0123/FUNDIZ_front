@@ -70,6 +70,17 @@ export interface Featured{
     thumbnail: string;
     endDate: Date;
     percentNow: number;
-    goalAmount: number;
+    currAmount: number;
     score: number;
+}
+
+export interface RecentView{
+    projectId: number;
+    title: string;
+    thumbnail: string;
+    currAmount: number;
+    creatorName: string;
+    endDate: Date;
+    percentNow: number;
+    viewedAt: Date;
 }

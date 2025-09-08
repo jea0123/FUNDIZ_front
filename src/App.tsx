@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Route, Routes, useNavigate } from 'react-router-dom';
 import { AdminDashboard } from './components/AdminDashboard';
 import { CreateProject } from './components/CreateProject';
 import { LoginPage } from './components/LoginPage';
-import { MainPage } from './components/MainPage';
 import { MyPage } from './components/MyPage';
 import { Navbar } from './components/Navbar';
 import { RegisterPage } from './components/RegisterPage';
@@ -12,12 +11,20 @@ import { AdminCS } from './components/AdminCS';
 import { useLoginUserStore } from './store/LoginUserStore.store';
 import { useCookies } from 'react-cookie';
 import { endpoints, getData } from './api/apis';
-import Main from './views/Main';
 import { ProjectDetailPage } from './components/ProjectDetail';
+import ErrorPage from './views/ErrorPage';
+import MainPage from './views/MainPage';
+import { setNavigator } from './utils/navigator';
 
 export default function App() {
   const { setLoginUser, resetLoginUser } = useLoginUserStore();
   const [cookie] = useCookies();
+
+  function NavigatorRegistrar() {
+    const navigate = useNavigate();
+    useEffect(() => setNavigator(navigate), [navigate]);
+    return null; // 렌더링 없음
+  }
 
   useEffect(() => {
     if (cookie.accessToken) {
@@ -35,17 +42,33 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <NavigatorRegistrar />
       <Navbar />
       <Routes>
-        <Route path='/' element={<Main />} />
-        <Route path='/project/:projectId' element={<ProjectDetailPage />} />
-        <Route path='/register' element={<RegisterPage />} />
-        <Route path='/login' element={<LoginPage />} />
-        <Route path='/mypage' element={<MyPage />} />
-        <Route path='/create' element={<CreateProject />} />
-        <Route path='/admin' element={<AdminDashboard />} />
-        <Route path='/cs' element={<CustomerCenterPage />} />
-        <Route path='/test2' element={<AdminCS />} />
+        <Route path='/' element={<MainPage />} />
+
+        <Route path='/auth'>
+          <Route path='register' element={<RegisterPage />} />
+          <Route path='login' element={<LoginPage />} />
+        </Route>
+
+        <Route path='/project'>
+          <Route path=':projectId' element={<ProjectDetailPage />} />
+          <Route path='create' element={<CreateProject />} />
+        </Route>
+
+        <Route path='/user'>
+          <Route path='mypage' element={<MyPage />} />
+        </Route>
+
+        <Route path='/admin'>
+          <Route path='dashboard' element={<AdminDashboard />} />
+          <Route path='cs' element={<CustomerCenterPage />} />
+          <Route path='test2' element={<AdminCS />} />
+        </Route>
+
+        <Route path="/error" element={<ErrorPage />} />
+        <Route path="*" element={<ErrorPage />} />
       </Routes>
     </div>
   );
