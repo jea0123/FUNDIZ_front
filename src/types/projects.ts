@@ -47,6 +47,7 @@ export interface ProjectDetail {
     thumbnail: string;
     projectStatus: string;
     backerCnt: number;
+    likeCnt: number;
     viewCnt: number;
     percentNow: number;
     paymentDate: Date;
