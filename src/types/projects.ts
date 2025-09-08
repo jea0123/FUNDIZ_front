@@ -51,6 +51,11 @@ export interface ProjectDetail {
     percentNow: number;
     paymentDate: Date;
 
+    creatorName: string;
+    followerCnt: number;
+    profileImg: string;
+    projectCnt: number;
+
     subcategory: Subcategory;
 
     tagList: Tag[];
