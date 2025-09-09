@@ -10,10 +10,10 @@ const axiosInstance = axios.create({
 
 const responseHandler = (response: AxiosResponse<any, any>) => {
     if (!response) return { status: 0, data: null };
-    if (response.status >= 400) {
-        appNavigate("/error", { state: { message: response.data, status: response.status } });
-        return { status: response.status, data: null };
-    }
+    // if (response.status >= 400) {
+    //     appNavigate("/error", { state: { message: response.data, status: response.status } });
+    //     return { status: response.status, data: null };
+    // }
     return { status: response.status, data: response.data.data ?? null };
 };
 
