@@ -13,16 +13,7 @@ export const img = "https://gongu.copyright.or.kr/gongu/wrt/cmmn/wrtFileImageVie
 
 export default function Main() {
     const [cookie] = useCookies();
-    const [recentProjects, setRecentProjects] = useState<RecentTop10[]>([]);
     const [featuredProjects, setFeaturedProjects] = useState<Featured[]>([]);
-    const [recentView, setRecentView] = useState<RecentView[]>([]);
-
-    const getRecentProjects = async () => {
-        const response = await getData(endpoints.getRecentTop10);
-        if (response.status === 200) {
-            setRecentProjects(response.data);
-        }
-    };
 
     const getFeaturedProjects = async () => {
         const response = await getData(endpoints.getFeatured);
@@ -31,18 +22,8 @@ export default function Main() {
         }
     };
 
-    const getRecentViewProjects = async () => {
-        const userId = 20; // 임시 userId
-        const response = await getData(endpoints.getRecentView(userId));
-        if (response.status === 200) {
-            setRecentView(response.data);
-        }
-    };
-
     useEffect(() => {
-        getRecentViewProjects();
         getFeaturedProjects();
-        getRecentProjects();
     }, []);
 
     return (
@@ -72,13 +53,13 @@ export default function Main() {
                     </section>
                 </div>
 
-                <PopularSidebar items={recentProjects} />
+                <PopularSidebar />
             </div>
 
             <Separator />
 
             {!cookie.accessToken && (
-                <RecentView items={recentView} title="최근 본 프로젝트" />
+                <RecentView title="최근 본 프로젝트" />
             )}
         </div>
     );
@@ -105,13 +86,21 @@ function Hero() {
 }
 
 /* ------------------------------ Popular Sidebar -------------------------- */
-function PopularSidebar({ items }: { items: RecentTop10[] }) {
+function PopularSidebar() {
     const navigate = useNavigate();
 
-    const top10 = useMemo(
-        () => [...items].sort((a, b) => b.trendScore - a.trendScore).slice(0, 10),
-        [items]
-    );
+    const [recentProjects, setRecentProjects] = useState<RecentTop10[]>([]);
+
+    const getRecentProjects = async () => {
+        const response = await getData(endpoints.getRecentTop10);
+        if (response.status === 200) {
+            setRecentProjects(response.data);
+        }
+    };
+
+    useEffect(() => {
+        getRecentProjects();
+    }, []);
 
     function onClickCard(projectId: number) {
         navigate(`/project/${projectId}`);
@@ -127,7 +116,8 @@ function PopularSidebar({ items }: { items: RecentTop10[] }) {
             <p className="mb-2 text-[11px] text-muted-foreground">{new Date().toLocaleString()} 기준</p>
 
             <div className="space-y-5">
-                {top10.map((it, idx) => (
+                {recentProjects.length == 0 && <p className="text-sm text-muted-foreground">인기 프로젝트이 없습니다.</p>}
+                {recentProjects.length > 0 && recentProjects.map((it, idx) => (
                     <div key={it.projectId} className="flex gap-3 cursor-pointer" onClick={() => onClickCard(it.projectId)}>
                         {/* 썸네일 */}
                         <div className="relative size-20 shrink-0 overflow-hidden rounded-lg bg-muted group">
@@ -156,9 +146,23 @@ function PopularSidebar({ items }: { items: RecentTop10[] }) {
 }
 
 /* ------------------------------- Recent View ---------------------------- */
-export function RecentView({ items, title, perRow = 5, }: { items: RecentView[]; title?: string; perRow?: number; }) {
-    const pages = useMemo(() => chunk(items ?? [], perRow), [items, perRow]);
+export function RecentView({ title, perRow = 5, }: { title?: string; perRow?: number; }) {
+    const [recentView, setRecentView] = useState<RecentView[]>([]);
+
+    const pages = useMemo(() => chunk(recentView ?? [], perRow), [recentView, perRow]);
     const [page, setPage] = useState(0);
+
+    const getRecentViewProjects = async () => {
+        const userId = 20; // 임시 userId
+        const response = await getData(endpoints.getRecentView(userId));
+        if (response.status === 200) {
+            setRecentView(response.data);
+        }
+    };
+
+    useEffect(() => {
+        getRecentViewProjects();
+    }, []);
 
     const canPrev = page > 0;
     const canNext = page < Math.max(pages.length - 1, 0);
@@ -224,7 +228,7 @@ function ProjectCard({ items }: { items: any; }) {
         navigate(`/project/${projectId}`);
     }
     if (!items) return
-        <></>;
+    <></>;
     {
         return (
             <div className="overflow-hidden cursor-pointer" onClick={() => onClickCard(items.projectId)}>
