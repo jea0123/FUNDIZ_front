@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Route, Routes, useNavigate } from 'react-router-dom';
-import { AdminDashboard } from './components/AdminDashboard';
+import { AdminDashboard } from './views/admin/AdminDashboard';
 import { CreateProject } from './components/CreateProject';
 import { LoginPage } from './components/LoginPage';
 import { MyPage } from './components/MyPage';
@@ -26,7 +26,7 @@ export default function App() {
     return null; // 렌더링 없음
   }
 
-   useEffect(() => {
+  useEffect(() => {
     const getLoginUserResponse = (response: any) => {
       if (response.status === 200) {
         setLoginUser(response.data);
@@ -34,7 +34,7 @@ export default function App() {
         resetLoginUser();
       }
     };
-    
+
     if (cookie.accessToken) {
       getData(endpoints.getLoginUser, cookie.accessToken).then(getLoginUserResponse);
     }
