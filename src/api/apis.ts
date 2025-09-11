@@ -40,6 +40,9 @@ export const endpoints = {
     getReview: (projectId: number) => `/project/${projectId}/review`,
     getFeatured: '/project/featured',
     getRecentView: (userId: number) => `/user/recentViewProjects/${userId}`,
+    getCategories: '/categories',
+    getAdminAnalytics: (period: string, metric: string) => `/admin/analytics?period=${period}&metric=${metric}`,
+    getCategorySuccess: (ctgrId: number) => `/admin/category-success?ctgrId=${ctgrId}`,
 };
 
 export const getData = async (url: string, accessToken?: string) => {
