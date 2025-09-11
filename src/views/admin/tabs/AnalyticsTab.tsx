@@ -1,117 +1,186 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ResponsiveContainer, CartesianGrid, XAxis, YAxis, Tooltip, Line, BarChart, Bar, PieChart, Pie, Cell, Legend, ComposedChart, Area, } from "recharts";
+import { endpoints, getData } from "@/api/apis";
+import type { Analytics, Category, SubcategorySuccess } from "@/types/admin";
 
-// -----------------------------
-// MOCK DATA
-// -----------------------------
-const MOCK_REVENUE_TREND = [
-    { name: "1월", 프로젝트: 65, 후원금: 1_200_000_000 },
-    { name: "2월", 프로젝트: 78, 후원금: 1_450_000_000 },
-    { name: "3월", 프로젝트: 92, 후원금: 1_680_000_000 },
-    { name: "4월", 프로젝트: 87, 후원금: 1_580_000_000 },
-    { name: "5월", 프로젝트: 105, 후원금: 1_820_000_000 },
-    { name: "6월", 프로젝트: 124, 후원금: 2_100_000_000 },
-];
-
-const MOCK_REWARD_SALES_TOP = [
-    { reward: "얼리버드 A", qty: 1240, revenue: 1240 * 35000 },
-    { reward: "스페셜 B", qty: 920, revenue: 920 * 55000 },
-    { reward: "프리미엄 C", qty: 610, revenue: 610 * 89000 },
-    { reward: "디지털 D", qty: 1880, revenue: 1880 * 9000 },
-    { reward: "번들 E", qty: 430, revenue: 430 * 129000 },
-];
-
-const MOCK_PAYMENT_METHODS = [
-    { method: "카드", value: 58 },
-    { method: "간편결제", value: 27 },
-    { method: "계좌이체", value: 10 },
-    { method: "기타", value: 5 },
-];
-
-const MOCK_CATEGORY_SUCCESS = [
-    { category: "테크", success: 72, fail: 28 },
-    { category: "디자인", success: 65, fail: 35 },
-    { category: "게임", success: 59, fail: 41 },
-    { category: "푸드", success: 77, fail: 23 },
-    { category: "음악", success: 62, fail: 38 },
-];
-
-// const MOCK_FUNNEL = {
-//     views: 1_200_000,
-//     likes: 210_500,
-//     backs: 38_200,
-//     paid: 35_100,
-// };
-
-const MOCK_RATING_BY_CATEGORY = [
-    { category: "테크", avgRating: 4.3 },
-    { category: "디자인", avgRating: 4.6 },
-    { category: "게임", avgRating: 4.1 },
-    { category: "푸드", avgRating: 4.4 },
-    { category: "음악", avgRating: 4.2 },
-];
-
-// -----------------------------
-// UTIL
-// -----------------------------
+// -------- utils --------
 const currency = (amount: number) =>
-    new Intl.NumberFormat("ko-KR", {
-        style: "currency",
-        currency: "KRW",
-        notation: "compact",
-        maximumFractionDigits: 1,
-    }).format(amount);
+    new Intl.NumberFormat("ko-KR", { style: "currency", currency: "KRW", notation: "compact", maximumFractionDigits: 1 }).format(amount ?? 0);
 
 const numberCompact = (n: number) =>
-    new Intl.NumberFormat("ko-KR", { notation: "compact", maximumFractionDigits: 1 }).format(n);
+    new Intl.NumberFormat("ko-KR", { notation: "compact", maximumFractionDigits: 1 }).format(n ?? 0);
 
-const percent = (v: number, fixed = 1) => `${v.toFixed(fixed)}%`;
+const shortenLabel = (s: string, max = 16) => (s && s.length > max ? s.slice(0, max - 1) + "…" : s);
 
-const PIE_COLORS = ["#6366F1", "#22C55E", "#F59E0B", "#EF4444", "#06B6D4", "#A855F7"]; // 파이 컬러 세트
+const percent = (v: number, fixed = 1) => `${(v ?? 0).toFixed(fixed)}%`;
 
-// 공통 카드 높이 상수 (한 눈에 들어오도록)의 압축 버전
-const HEIGHT_COMPACT = 260;  // 수익 분석 카드(축소)
-const HEIGHT_MIDDLE = 260;   // 중간 카드들 높이(동일)
-const HEIGHT_SMALL = 260;    // 하단 카드도 동일하게 맞춤
+const COLORS = {
+    blue: "#3B82F6",
+    green: "#10B981",
+    amber: "#F59E0B",
+    rose: "#F43F5E",
+    violet: "#8B5CF6",
+    cyan: "#06B6D4",
+    slate: "#64748B",
+};
 
+const HEIGHT = 260;
+
+// -------- component --------
 export function AnalyticsTab() {
-    const [selectedPeriod, setSelectedPeriod] = useState("6months");
-    const [categoryFilter, setCategoryFilter] = useState<string | "ALL">("ALL");
+    const [analytics, setAnalytics] = useState<Analytics | null>(null);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [selectedCtgr, setSelectedCtgr] = useState<number | null>(null);
+    const [subcatRows, setSubcatRows] = useState<SubcategorySuccess[] | null>(null);
 
-    // KPI 계산
+    const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+    const [loadingCategories, setLoadingCategories] = useState(false);
+    const [loadingSubcat, setLoadingSubcat] = useState(false);
+
+    // 기간 선택: 상단 우측
+    const [selectedPeriod, setSelectedPeriod] = useState<"all" | "1m" | "3m" | "6m" | "1y">("6m");
+    const periodLabel =
+        selectedPeriod === "all"
+            ? "전체기간"
+            : ({ "1m": "최근 1개월", "3m": "최근 3개월", "6m": "최근 6개월", "1y": "최근 1년" } as const)[selectedPeriod] ??
+            "최근 6개월";
+    const [metric, setMetric] = useState<'qty' | 'revenue'>('qty');
+
+    // cache for subcategory api
+    const subcatCache = useRef(new Map<number, SubcategorySuccess[]>());
+
+    // --- API helpers ---
+    const getAdminAnalytics = async () => {
+        const response = await getData(endpoints.getAdminAnalytics(selectedPeriod, metric));
+        if (response.status === 200) setAnalytics(response.data);
+    };
+
+    const getCategories = async () => {
+        const response = await getData(endpoints.getCategories);
+        if (response.status === 200) setCategories(response.data);
+    };
+
+    const getCategorySuccess = async (ctgrId: number) => {
+        const response = await getData(endpoints.getCategorySuccess(ctgrId));
+        if (response.status === 200) {
+            const rows = response.data ?? [];
+            setSubcatRows(rows);
+            return rows as SubcategorySuccess[];
+        }
+        return null;
+    };
+
+    // --- effects ---
+    // 기간 바뀔 때마다 전체 대시보드 데이터 갱신
+    useEffect(() => {
+        setLoadingAnalytics(true);
+        getAdminAnalytics().finally(() => setLoadingAnalytics(false));
+    }, [selectedPeriod, metric]);
+
+    // 카테고리 목록은 1회 로딩
+    useEffect(() => {
+        setLoadingCategories(true);
+        getCategories().finally(() => setLoadingCategories(false));
+    }, []);
+
+    // 첫 로딩 시 기본 선택(첫 번째 카테고리)
+    useEffect(() => {
+        if (categories.length && selectedCtgr == null) setSelectedCtgr(categories[0].ctgrId);
+    }, [categories, selectedCtgr]);
+
+    // 카테고리 선택 시 서브카테고리 성공률
+    useEffect(() => {
+        if (!selectedCtgr) {
+            setSubcatRows(null);
+            return;
+        }
+        const cached = subcatCache.current.get(selectedCtgr);
+        if (cached) {
+            setSubcatRows(cached);
+            return;
+        }
+        setLoadingSubcat(true);
+        getCategorySuccess(selectedCtgr)
+            .then((rows) => {
+                if (rows) subcatCache.current.set(selectedCtgr, rows);
+                else subcatCache.current.delete(selectedCtgr);
+            })
+            .finally(() => setLoadingSubcat(false));
+    }, [selectedCtgr]);
+
     const kpis = useMemo(() => {
-        const totalRevenue = MOCK_REVENUE_TREND.reduce((acc, d) => acc + d.후원금, 0);
-        const totalProjects = MOCK_REVENUE_TREND.reduce((acc, d) => acc + d.프로젝트, 0);
-        const platformFee = totalRevenue * 0.05;
-        const successRate = 68.3; // 예시
-        const avgPledge = 45230; // 예시
-        return { totalRevenue, totalProjects, platformFee, successRate, avgPledge };
-    }, [selectedPeriod]);
+        if (!analytics) return { totalRevenue: 0, platformFee: 0, successRate: 0, avgPledge: 0 };
+        return {
+            totalRevenue: analytics.kpi.totalBackingAmount,
+            platformFee: analytics.kpi.fee,
+            successRate: analytics.kpi.successRate,
+            avgPledge: analytics.kpi.backingAmountAvg,
+        };
+    }, [analytics]);
 
-    // 카테고리 필터 적용
-    const filteredCategorySuccess = useMemo(() => {
-        if (categoryFilter === "ALL") return MOCK_CATEGORY_SUCCESS;
-        return MOCK_CATEGORY_SUCCESS.filter((c) => c.category === categoryFilter);
-    }, [categoryFilter]);
+    const revenueTrendForChart = useMemo(() => analytics?.revenueTrends ?? [], [analytics]);
 
-    const filteredRatings = useMemo(() => {
-        if (categoryFilter === "ALL") return MOCK_RATING_BY_CATEGORY;
-        return MOCK_RATING_BY_CATEGORY.filter((c) => c.category === categoryFilter);
-    }, [categoryFilter]);
+    const rewardSalesTopForChart = useMemo(() => {
+        if (!analytics) return [] as { reward: string; qty: number; revenue: number }[];
+        return analytics.rewardSalesTops.map((d) => ({ reward: d.rewardName, qty: d.qty, revenue: d.revenue }));
+    }, [analytics]);
 
+    const paymentPie = useMemo(() => {
+        if (!analytics) return [] as { method: string; valuePct: number; cnt: number }[];
+        const total = analytics.paymentMethods.reduce((a, b) => a + (b?.cnt ?? 0), 0) || 1;
+        const label: Record<string, string> = { CARD: "카드", BANK_TRANSFER: "계좌이체", EASY_PAY: "간편결제", ETC: "기타" };
+        return analytics.paymentMethods.map((pm) => ({
+            method: label[pm.paymentMethod] ?? pm.paymentMethod,
+            valuePct: Number(((pm.cnt / total) * 100).toFixed(1)),
+            cnt: pm.cnt,
+        }));
+    }, [analytics]);
+
+    const subcatRate = useMemo(() => {
+        if (!subcatRows) return [] as { category: string; success: number; fail: number }[];
+        return subcatRows.map((r) => {
+            const total = (r.successCnt ?? 0) + (r.failCnt ?? 0);
+            const success = total ? Math.round((r.successCnt / total) * 100) : 0;
+            const fail = 100 - success;
+            return { category: r.categoryName, success, fail };
+        });
+    }, [subcatRows]);
+
+    const monthTick = (m: string) => (m?.includes("-") ? `${m.split("-")[1]}월` : m);
+
+    // --- render ---
     return (
         <div className="space-y-6">
-            {/* KPI 4개 (최상단) */}
+            {/* 상단 오른쪽 기간 선택 */}
+            <div className="flex items-center justify-end">
+                <Select value={selectedPeriod} onValueChange={(v) => setSelectedPeriod(v as any)}>
+                    <SelectTrigger className="w-40">
+                        <SelectValue placeholder="기간 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">전체</SelectItem>
+                        <SelectItem value="1m">최근 1개월</SelectItem>
+                        <SelectItem value="3m">최근 3개월</SelectItem>
+                        <SelectItem value="6m">최근 6개월</SelectItem>
+                        <SelectItem value="1y">최근 1년</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+
+            {/* KPI */}
             <div className="grid grid-cols-12 gap-6">
-                {[{ title: "총 후원금", value: currency(kpis.totalRevenue), sub: `기간: ${selectedPeriod}` },
-                { title: "플랫폼 수수료(5%)", value: currency(kpis.platformFee), sub: "정책 가정치" },
-                { title: "성공률", value: percent(kpis.successRate), sub: "전체 프로젝트 대비" },
-                { title: "평균 후원금", value: currency(kpis.avgPledge), sub: "후원자당 평균" },
+                {[
+                    { title: "총 후원금", value: currency(kpis.totalRevenue), sub: `기간: ${periodLabel}` },
+                    { title: "플랫폼 수수료(5%)", value: currency(kpis.platformFee), sub: "정책 가정치" },
+                    { title: "성공률", value: percent(kpis.successRate), sub: "전체 프로젝트 대비" },
+                    { title: "평균 후원금", value: currency(kpis.avgPledge), sub: "후원자당 평균" },
                 ].map((k, i) => (
                     <Card key={i} className="col-span-12 sm:col-span-6 lg:col-span-3">
-                        <CardHeader><CardTitle>{k.title}</CardTitle></CardHeader>
+                        <CardHeader>
+                            <CardTitle>{k.title}</CardTitle>
+                        </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{k.value}</div>
                             <p className="text-sm text-muted-foreground">{k.sub}</p>
@@ -120,181 +189,183 @@ export function AnalyticsTab() {
                 ))}
             </div>
 
-            {/* 2행: 수익 분석(축소) + 리워드 Top */}
+            {/* 수익 분석 + 리워드 Top */}
             <div className="grid grid-cols-12 gap-6">
-                {/* 수익 분석 (축소) */}
+                {/* 수익 분석 */}
                 <Card className="col-span-12 xl:col-span-6 shadow-sm">
-                    <CardHeader className="flex items-center justify-between">
+                    <CardHeader>
                         <CardTitle>수익 분석</CardTitle>
-                        <div className="flex gap-2">
-                            <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-                                <SelectTrigger className="w-36"><SelectValue placeholder="기간" /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="1month">최근 1개월</SelectItem>
-                                    <SelectItem value="3months">최근 3개월</SelectItem>
-                                    <SelectItem value="6months">최근 6개월</SelectItem>
-                                    <SelectItem value="1year">최근 1년</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
                     </CardHeader>
                     <CardContent>
-                        <ResponsiveContainer width="100%" height={HEIGHT_COMPACT}>
-                            <ComposedChart data={MOCK_REVENUE_TREND}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="name" />
-                                <YAxis yAxisId="left" />
-                                <YAxis yAxisId="right" orientation="right" />
-                                <Tooltip formatter={(value: unknown, name: unknown) => [
-                                    name === "후원금" ? currency(value as number) : (value as number),
-                                    name as string,
-                                ]} />
-                                <Legend />
-                                <Area yAxisId="left" type="monotone" dataKey="프로젝트" fill="#A5B4FC" stroke="#6366F1" />
-                                <Line yAxisId="right" type="monotone" dataKey="후원금" stroke="#22C55E" strokeWidth={2} />
-                            </ComposedChart>
-                        </ResponsiveContainer>
+                        {loadingAnalytics ? (
+                            <div className="text-sm text-muted-foreground">불러오는 중…</div>
+                        ) : (
+                            <ResponsiveContainer width="100%" height={HEIGHT}>
+                                <ComposedChart data={revenueTrendForChart}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis dataKey="month" tickFormatter={monthTick} />
+                                    <YAxis yAxisId="left" />
+                                    <YAxis yAxisId="right" orientation="right" />
+                                    <Tooltip
+                                        formatter={(value: unknown, name: unknown) => [
+                                            name === "revenue" ? currency(value as number) : (value as number),
+                                            name === "revenue" ? "후원금" : "프로젝트 수",
+                                        ]}
+                                    />
+                                    <Legend />
+                                    <Area
+                                        yAxisId="left"
+                                        type="monotone"
+                                        dataKey="projectCnt"
+                                        name="프로젝트 수"
+                                        fill={COLORS.blue}
+                                        stroke={COLORS.violet}
+                                    />
+                                    <Line yAxisId="right" type="monotone" dataKey="revenue" name="후원금" stroke={COLORS.green} strokeWidth={2} />
+                                </ComposedChart>
+                            </ResponsiveContainer>
+                        )}
                     </CardContent>
                 </Card>
 
                 {/* 리워드 Top N */}
                 <Card className="col-span-12 xl:col-span-6">
                     <CardHeader className="flex items-center justify-between">
-                        <CardTitle>인기 리워드 Top 5</CardTitle>
+                        <CardTitle>플랫폼 인기 리워드 Top 5 ({metric === 'revenue' ? '매출 기준' : '수량 기준'})</CardTitle>
+                        <Select value={metric} onValueChange={(v) => setMetric(v as 'qty' | 'revenue')}>
+                            <SelectTrigger className="w-28">
+                                <SelectValue placeholder="기준" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="qty">수량 기준</SelectItem>
+                                <SelectItem value="revenue">매출 기준</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </CardHeader>
                     <CardContent>
-                        <ResponsiveContainer width="100%" height={HEIGHT_MIDDLE}>
-                            <BarChart data={MOCK_REWARD_SALES_TOP} layout="vertical" margin={{ left: 24 }}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis type="number" tickFormatter={(v) => numberCompact(v as number)} />
-                                <YAxis type="category" dataKey="reward" />
-                                <Tooltip formatter={(value: unknown, name: unknown) => [
-                                    name === "revenue" ? currency(value as number) : numberCompact(value as number),
-                                    name === "qty" ? "수량" : "매출",
-                                ]} />
-                                <Legend />
-                                <Bar dataKey="qty" name="수량" fill="#06B6D4" radius={[4, 4, 0, 0]} />
-                                <Bar dataKey="revenue" name="매출" fill="#F59E0B" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
+                        {loadingAnalytics ? (
+                            <div className="text-sm text-muted-foreground">불러오는 중…</div>
+                        ) : (
+                            <ResponsiveContainer width="100%" height={HEIGHT}>
+                                <BarChart data={rewardSalesTopForChart} layout="vertical" margin={{ left: 24 }}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    {/* 매출(금액) 축 - 아래 */}
+                                    <XAxis
+                                        type="number"
+                                        xAxisId="revenueAxis"
+                                        tickFormatter={(v) => numberCompact(v as number)}
+                                    />
+                                    {/* 수량 축 - 위 (작은 정수 범위) */}
+                                    <XAxis
+                                        type="number"
+                                        xAxisId="qtyAxis"
+                                        orientation="top"
+                                        domain={[0, (dataMax: number) => Math.max(dataMax, 5)]}
+                                        tickFormatter={(v) => `${v}`}
+                                    />
+                                    <YAxis
+                                        type="category"
+                                        dataKey="reward"
+                                        width={50}
+                                        tickLine={false}
+                                        tick={{ fontSize: 12 }}
+                                        interval={0}
+                                        tickFormatter={(v) => shortenLabel(String(v), 10)}
+                                    />
+                                    <Tooltip
+                                        labelFormatter={(label) => String(label)}
+                                        formatter={(value: any, _name: string, payload: any) => {
+                                            const key = payload?.dataKey; // 'qty' | 'revenue'
+                                            const isRevenue = key === 'revenue';
+                                            return [
+                                                isRevenue ? currency(value) : numberCompact(value),
+                                                isRevenue ? '매출' : '수량',
+                                            ];
+                                        }}
+                                    />
+                                    <Legend />
+                                    {/* 수량 막대 → 위쪽 축 */}
+                                    <Bar dataKey="qty" xAxisId="qtyAxis" name="수량" fill={COLORS.cyan} radius={[4, 4, 0, 0]} />
+                                    {/* 매출 막대 → 아래쪽 축 */}
+                                    <Bar dataKey="revenue" xAxisId="revenueAxis" name="매출" fill={COLORS.amber} radius={[4, 4, 0, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        )}
                     </CardContent>
                 </Card>
             </div>
 
-            {/* 3행: 결제수단 + 카테고리 성공률 + 평균 평점 */}
+            {/* 결제 수단 분포 + 카테고리(→서브카테고리) 성공률 */}
             <div className="grid grid-cols-12 gap-6">
                 {/* 결제 수단 분포 */}
-                <Card className="col-span-12 xl:col-span-4">
-                    <CardHeader><CardTitle>결제 수단 분포</CardTitle></CardHeader>
+                <Card className="col-span-12 xl:col-span-6">
+                    <CardHeader>
+                        <CardTitle>결제 수단 분포</CardTitle>
+                    </CardHeader>
                     <CardContent>
-                        <ResponsiveContainer width="100%" height={HEIGHT_MIDDLE}>
-                            <PieChart>
-                                <Pie data={MOCK_PAYMENT_METHODS} dataKey="value" nameKey="method" outerRadius={100} label>
-                                    {MOCK_PAYMENT_METHODS.map((_, index) => (
-                                        <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip formatter={(v: unknown) => [`${v}%`, "비중"]} />
-                                <Legend />
-                            </PieChart>
-                        </ResponsiveContainer>
+                        {loadingAnalytics ? (
+                            <div className="text-sm text-muted-foreground">불러오는 중…</div>
+                        ) : (
+                            <ResponsiveContainer width="100%" height={HEIGHT}>
+                                <PieChart>
+                                    <Pie data={paymentPie} dataKey="valuePct" nameKey="method" outerRadius={100} label>
+                                        {paymentPie.map((_, i) => (
+                                            <Cell key={`cell-${i}`} fill={[COLORS.blue, COLORS.green, COLORS.amber, COLORS.rose][i % 4]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip
+                                        formatter={(v: unknown, _n: unknown, payload: any) => [
+                                            `${v}% (${(payload?.payload?.cnt ?? 0).toLocaleString()}건)`,
+                                            "비중",
+                                        ]}
+                                    />
+                                    <Legend />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        )}
                     </CardContent>
                 </Card>
 
-                {/* 카테고리 성공률 */}
-                <Card className="col-span-12 xl:col-span-4">
+                {/* 카테고리 선택 → 서브카테고리 성공률 */}
+                <Card className="col-span-12 xl:col-span-6">
                     <CardHeader className="flex items-center justify-between">
                         <CardTitle>카테고리별 성공률</CardTitle>
-                        <Select value={categoryFilter} onValueChange={(v) => setCategoryFilter(v as any)}>
-                            <SelectTrigger className="w-36"><SelectValue placeholder="카테고리" /></SelectTrigger>
+                        <Select value={selectedCtgr?.toString() ?? ""} onValueChange={(v) => setSelectedCtgr(Number(v))}>
+                            <SelectTrigger className="w-48">
+                                <SelectValue placeholder={loadingCategories ? "카테고리 로딩…" : "카테고리 선택"} />
+                            </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="ALL">전체</SelectItem>
-                                {MOCK_CATEGORY_SUCCESS.map((c) => (
-                                    <SelectItem key={c.category} value={c.category}>{c.category}</SelectItem>
+                                {categories.map((c) => (
+                                    <SelectItem key={c.ctgrId} value={String(c.ctgrId)}>
+                                        {c.ctgrName}
+                                    </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
                     </CardHeader>
                     <CardContent>
-                        <ResponsiveContainer width="100%" height={HEIGHT_MIDDLE}>
-                            <BarChart data={filteredCategorySuccess}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="category" />
-                                <YAxis />
-                                <Tooltip formatter={(v: unknown, n: unknown) => [percent(v as number, 0), n as string]} />
-                                <Legend />
-                                <Bar dataKey="success" name="성공률" stackId="a" fill="#22C55E" />
-                                <Bar dataKey="fail" name="실패율" stackId="a" fill="#EF4444" />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                </Card>
-
-                {/* 카테고리별 평균 평점 */}
-                <Card className="col-span-12 xl:col-span-4">
-                    <CardHeader className="flex items-center justify-between">
-                        <CardTitle>카테고리별 평균 평점</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <ResponsiveContainer width="100%" height={HEIGHT_MIDDLE}>
-                            <BarChart data={filteredRatings}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="category" />
-                                <YAxis domain={[0, 5]} />
-                                <Tooltip formatter={(v: unknown) => [Number(v).toFixed(2), "평점"]} />
-                                <Bar dataKey="avgRating" name="평균 평점" fill="#6366F1" radius={[6, 6, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
+                        {loadingSubcat ? (
+                            <div className="text-sm text-muted-foreground">불러오는 중…</div>
+                        ) : subcatRate.length > 0 ? (
+                            <ResponsiveContainer width="100%" height={HEIGHT}>
+                                <BarChart data={subcatRate}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis dataKey="category" />
+                                    <YAxis />
+                                    <Tooltip formatter={(v: unknown, n: unknown) => [`${v}%`, n as string]} />
+                                    <Legend />
+                                    <Bar dataKey="success" name="성공률(%)" stackId="a" fill={COLORS.green} />
+                                    <Bar dataKey="fail" name="실패율(%)" stackId="a" fill={COLORS.rose} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="text-sm text-muted-foreground">
+                                {selectedCtgr ? "해당 카테고리의 서브카테고리가 없습니다." : "카테고리를 선택하세요."}
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>
-
-            {/* 4행: 전환 퍼널 (가로 12칸) */}
-            {/* <div className="grid grid-cols-12 gap-6">
-                <Card className="col-span-12">
-                    <CardHeader><CardTitle>관심 → 후원 전환 퍼널</CardTitle></CardHeader>
-                    <CardContent>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="rounded-2xl border p-4">
-                                <div className="text-sm text-muted-foreground">조회수</div>
-                                <div className="text-xl font-semibold">{numberCompact(MOCK_FUNNEL.views)}</div>
-                            </div>
-                            <div className="rounded-2xl border p-4">
-                                <div className="text-sm text-muted-foreground">좋아요</div>
-                                <div className="text-xl font-semibold">{numberCompact(MOCK_FUNNEL.likes)}</div>
-                                <div className="text-xs text-muted-foreground">조회 → 좋아요 전환 {percent((MOCK_FUNNEL.likes / MOCK_FUNNEL.views) * 100, 1)}</div>
-                            </div>
-                            <div className="rounded-2xl border p-4">
-                                <div className="text-sm text-muted-foreground">후원 시도</div>
-                                <div className="text-xl font-semibold">{numberCompact(MOCK_FUNNEL.backs)}</div>
-                                <div className="text-xs text-muted-foreground">좋아요 → 후원 시도 {percent((MOCK_FUNNEL.backs / MOCK_FUNNEL.likes) * 100, 1)}</div>
-                            </div>
-                            <div className="rounded-2xl border p-4">
-                                <div className="text-sm text-muted-foreground">결제 완료</div>
-                                <div className="text-xl font-semibold">{numberCompact(MOCK_FUNNEL.paid)}</div>
-                                <div className="text-xs text-muted-foreground">시도 → 결제 {percent((MOCK_FUNNEL.paid / MOCK_FUNNEL.backs) * 100, 1)}</div>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div> */}
         </div>
     );
 }
-
-// -----------------------------
-// 간단한 런타임 테스트 유틸
-// -----------------------------
-export function __test__kpi(totalRevenueSample = MOCK_REVENUE_TREND): { fee: number; projects: number } {
-    const total = totalRevenueSample.reduce((a, d) => a + d.후원금, 0);
-    const projects = totalRevenueSample.reduce((a, d) => a + d.프로젝트, 0);
-    return { fee: Math.round(total * 0.05), projects };
-}
-
-// export function __test__funnelRate(v = MOCK_FUNNEL) {
-//     return {
-//         likeRate: Number(((v.likes / v.views) * 100).toFixed(1)),
-//         backRate: Number(((v.backs / v.likes) * 100).toFixed(1)),
-//         payRate: Number(((v.paid / v.backs) * 100).toFixed(1)),
-//     };
-// }
