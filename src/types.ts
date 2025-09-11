@@ -5,6 +5,6 @@ export type LoginUser = {
     profileImg: string;
     joinedAt: Date;
     followCnt: number;
-    isCreator: String;
+    isCreator: string;
     role: 'user' | 'creator' | 'admin';
 };
