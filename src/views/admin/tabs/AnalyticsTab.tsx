@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ResponsiveContainer, CartesianGrid, XAxis, YAxis, Tooltip, Line, BarChart, Bar, PieChart, Pie, Cell, Legend, ComposedChart, Area, } from "recharts";
 import { endpoints, getData } from "@/api/apis";
-import type { Analytics, Category, SubcategorySuccess } from "@/types/admin";
+import type { Analytics, Category, RewardSalesTop, SubcategorySuccess } from "@/types/admin";
 
 // -------- utils --------
 const currency = (amount: number) =>
@@ -34,10 +34,12 @@ export function AnalyticsTab() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [selectedCtgr, setSelectedCtgr] = useState<number | null>(null);
     const [subcatRows, setSubcatRows] = useState<SubcategorySuccess[] | null>(null);
+    const [rewardSalesTops, setRewardSalesTops] = useState<RewardSalesTop[]>([]);
 
     const [loadingAnalytics, setLoadingAnalytics] = useState(false);
     const [loadingCategories, setLoadingCategories] = useState(false);
     const [loadingSubcat, setLoadingSubcat] = useState(false);
+    const [loadingRewardTop, setLoadingRewardTop] = useState(false);
 
     // 기간 선택: 상단 우측
     const [selectedPeriod, setSelectedPeriod] = useState<"all" | "1m" | "3m" | "6m" | "1y">("6m");
@@ -54,12 +56,22 @@ export function AnalyticsTab() {
     // --- API helpers ---
     const getAdminAnalytics = async () => {
         const response = await getData(endpoints.getAdminAnalytics(selectedPeriod, metric));
-        if (response.status === 200) setAnalytics(response.data);
+        if (response.status === 200) {
+            setAnalytics(response.data);
+            setRewardSalesTops((response.data as Analytics).rewardSalesTops ?? []);
+        }
     };
 
     const getCategories = async () => {
         const response = await getData(endpoints.getCategories);
         if (response.status === 200) setCategories(response.data);
+    };
+
+    const getRewardSalesTop = async () => {
+        setLoadingRewardTop(true);
+        const response = await getData(endpoints.getRewardSalesTop(selectedPeriod, metric));
+        if (response.status === 200) setRewardSalesTops(response.data ?? []);
+        setLoadingRewardTop(false);
     };
 
     const getCategorySuccess = async (ctgrId: number) => {
@@ -72,12 +84,10 @@ export function AnalyticsTab() {
         return null;
     };
 
-    // --- effects ---
-    // 기간 바뀔 때마다 전체 대시보드 데이터 갱신
     useEffect(() => {
         setLoadingAnalytics(true);
         getAdminAnalytics().finally(() => setLoadingAnalytics(false));
-    }, [selectedPeriod, metric]);
+    }, [selectedPeriod]);
 
     // 카테고리 목록은 1회 로딩
     useEffect(() => {
@@ -89,6 +99,12 @@ export function AnalyticsTab() {
     useEffect(() => {
         if (categories.length && selectedCtgr == null) setSelectedCtgr(categories[0].ctgrId);
     }, [categories, selectedCtgr]);
+
+
+    useEffect(() => {
+        setLoadingRewardTop(true);
+        getRewardSalesTop().finally(() => setLoadingRewardTop(false));
+    }, [metric, selectedPeriod]);
 
     // 카테고리 선택 시 서브카테고리 성공률
     useEffect(() => {
@@ -123,9 +139,9 @@ export function AnalyticsTab() {
     const revenueTrendForChart = useMemo(() => analytics?.revenueTrends ?? [], [analytics]);
 
     const rewardSalesTopForChart = useMemo(() => {
-        if (!analytics) return [] as { reward: string; qty: number; revenue: number }[];
-        return analytics.rewardSalesTops.map((d) => ({ reward: d.rewardName, qty: d.qty, revenue: d.revenue }));
-    }, [analytics]);
+        if (!rewardSalesTops) return [] as { reward: string; qty: number; revenue: number }[];
+        return rewardSalesTops.map((d) => ({ reward: d.rewardName, qty: d.qty, revenue: d.revenue }));
+    }, [rewardSalesTops]);
 
     const paymentPie = useMemo(() => {
         if (!analytics) return [] as { method: string; valuePct: number; cnt: number }[];
@@ -243,7 +259,7 @@ export function AnalyticsTab() {
                         </Select>
                     </CardHeader>
                     <CardContent>
-                        {loadingAnalytics ? (
+                        {loadingAnalytics || loadingRewardTop ? (
                             <div className="text-sm text-muted-foreground">불러오는 중…</div>
                         ) : (
                             <ResponsiveContainer width="100%" height={HEIGHT}>
