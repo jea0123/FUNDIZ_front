@@ -5,25 +5,25 @@ export interface Analytics {
         successRate: number;
         backingAmountAvg: number;
     };
-    revenueTrends: revenueTrends[];
-    rewardSalesTops: rewardSalesTop[];
-    paymentMethods: paymentMethod[];
+    revenueTrends: RevenueTrends[];
+    rewardSalesTops: RewardSalesTop[];
+    paymentMethods: PaymentMethod[];
     categorySuccesses: SubcategorySuccess[];
 };
 
-export interface revenueTrends {
+export interface RevenueTrends {
     month: string;
     projectCnt: number;
     revenue: number;
 }
 
-export interface rewardSalesTop {
+export interface RewardSalesTop {
     rewardName: string;
     qty: number;
     revenue: number;
 }
 
-export interface paymentMethod {
+export interface PaymentMethod {
     paymentMethod: "CARD" | "BANK_TRANSFER" | "EASY_PAY" | "ETC";
     cnt: number;
 }
