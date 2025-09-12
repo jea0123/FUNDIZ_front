@@ -1,4 +1,4 @@
-export interface Subcategory {
+export interface SubcategoryDto {
     ctgrId: number;
     ctgrName: string;
     subctgrId: number;

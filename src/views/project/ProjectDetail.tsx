@@ -1,122 +1,58 @@
 import { useEffect, useState } from 'react';
-import { Button } from './ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Badge } from './ui/badge';
-import { Progress } from './ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Heart, Share2, Calendar, Users, MessageCircle, Star } from 'lucide-react';
-import { ImageWithFallback } from './figma/ImageWithFallback';
 import type { ProjectDetail } from '@/types/projects';
 import { endpoints, getData } from '@/api/apis';
 import { useParams } from 'react-router-dom';
 import type { Community } from '@/types/community';
 import { formatDate, getDaysLeft } from '@/utils/utils';
-
-/*
-const mockProject = {
-    id: '1',
-    title: '혁신적인 스마트 홈 IoT 디바이스',
-    description: '집안의 모든 기기를 하나로 연결하는 스마트 허브로, 음성 인식과 AI 기술을 활용하여 더 스마트한 생활을 제공합니다.',
-    fullDescription: `
-    <h2>프로젝트 소개</h2>
-    <p>이 프로젝트는 가정의 모든 IoT 기기를 하나로 연결하는 혁신적인 스마트 허브입니다.</p>
-    
-    <h3>주요 기능</h3>
-    <ul>
-      <li>음성 인식을 통한 기기 제어</li>
-      <li>스마트폰 앱을 통한 원격 제어</li>
-      <li>에너지 사용량 모니터링</li>
-      <li>보안 시스템 연동</li>
-    </ul>
-
-    <h3>기술 사양</h3>
-    <p>Wi-Fi 6, Bluetooth 5.0, Zigbee 3.0 지원으로 다양한 기기와 호환됩니다.</p>
-  `,
-    category: '테크/가전',
-    image: 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=800',
-    creator: {
-        name: '테크노베이션',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
-        followers: 1234,
-        projects: 3,
-    },
-    targetAmount: 10000000,
-    currentAmount: 7500000,
-    backers: 234,
-    daysLeft: 15,
-    likes: 142,
-    tags: ['IoT', '스마트홈', '혁신기술'],
-    startDate: '2024-01-15',
-    endDate: '2024-03-15',
-    paymentDate: '2024-03-16',
-    deliveryDate: '2024-06-01',
-    rewards: [
-        {
-            id: 1,
-            amount: 50000,
-            title: '얼리버드 특가',
-            description: '스마트 허브 1개 + 전용 앱',
-            backers: 89,
-            limited: 100,
-            estimated_delivery: '2024-06-01',
-        },
-        {
-            id: 2,
-            amount: 80000,
-            title: '스탠다드 패키지',
-            description: '스마트 허브 1개 + 센서 3개 + 전용 앱',
-            backers: 112,
-            limited: null,
-            estimated_delivery: '2024-06-01',
-        },
-        {
-            id: 3,
-            amount: 150000,
-            title: '프리미엄 패키지',
-            description: '스마트 허브 2개 + 센서 10개 + 프리미엄 앱 + 설치 서비스',
-            backers: 33,
-            limited: 50,
-            estimated_delivery: '2024-06-15',
-        },
-    ],
-};
-*/
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
+import { Progress } from '@/components/ui/progress';
 
 export function ProjectDetailPage() {
     const { projectId } = useParams();
-    const [selectedReward, setSelectedReward] = useState<number | null>(null);
-    const [isLiked, setIsLiked] = useState(false);
 
     const [project, setProject] = useState<ProjectDetail>();
+    const [selectedReward, setSelectedReward] = useState<number | null>(null);
     const [community, setCommunity] = useState<Community[]>([]);
     const [review, setReview] = useState<Community[]>([]);
+    const [isLiked, setIsLiked] = useState(false);
+    
+    const [loadingProject, setLoadingProject] = useState(false);
+    const [loadingCommunity, setLoadingCommunity] = useState(false);
+    const [loadingReview, setLoadingReview] = useState(false);
+
+    const projectData = async () => {
+        setLoadingProject(true);
+        const response = await getData(endpoints.getProjectDetail(Number(projectId)));
+        if (response.status === 200) {
+            setProject(response.data);
+        }
+    };
+    const communityData = async () => {
+        setLoadingCommunity(true);
+        const response = await getData(endpoints.getCommunity(Number(projectId)));
+        if (response.status === 200) {
+            setCommunity(response.data);
+        }
+    };
+    const reviewData = async () => {
+        setLoadingReview(true);
+        const response = await getData(endpoints.getReview(Number(projectId)));
+        if (response.status === 200) {
+            setReview(response.data);
+        }
+    };
 
     useEffect(() => {
-        const projectData = async () => {
-            const response = await getData(endpoints.getProjectDetail(Number(projectId)));
-            if (response.status === 200) {
-                setProject(response.data);
-            }
-        };
-        const communityData = async () => {
-            const response = await getData(endpoints.getCommunity(Number(projectId)));
-            if (response.status === 200) {
-                setCommunity(response.data);
-            }
-        };
-        const reviewData = async () => {
-            const response = await getData(endpoints.getReview(Number(projectId)));
-            if (response.status === 200) {
-                setReview(response.data);
-            }
-        };
-        projectData();
-        communityData();
-        reviewData();
+        projectData().finally(() => setLoadingProject(false));
+        communityData().finally(() => setLoadingCommunity(false));
+        reviewData().finally(() => setLoadingReview(false));
     }, []);
-
-
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('ko-KR').format(amount);
@@ -132,14 +68,11 @@ export function ProjectDetailPage() {
         alert('링크가 복사되었습니다.');
     };
 
-    if (!projectId || !project) {
+    if (!projectId || !project || loadingProject || loadingCommunity || loadingReview) {
         return (
-            <p>프로젝트가 없습니다.</p>
+            <p>불러오는 중…</p>
         )
     }
-
-    console.log(project);
-    
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -214,78 +147,91 @@ export function ProjectDetailPage() {
                             />
                         </TabsContent>
 
-                        {project.newsList.map((news) => (
-                            <TabsContent value="updates" className="mt-6">
-                                <div className="space-y-4">
-                                    <Card>
-                                        <CardHeader>
-                                            <CardTitle className="text-lg">{news.content}</CardTitle>
-                                            <p className="text-sm text-gray-500">{formatDate(news.createdAt)}</p>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <p>{news.content}</p>
-                                        </CardContent>
-                                    </Card>
-                                </div>
-                            </TabsContent>
-                        ))}
-
-                        {community.map((cm) => (
-                        <TabsContent value="community" className="mt-6">
-                            <div className="space-y-4">
-                                <Card>
-                                    <CardContent className="pt-6">
-                                        <div className="flex items-start space-x-3">
-                                            <Avatar className="w-8 h-8">
-                                                <AvatarFallback>{cm.profileImg}</AvatarFallback>
-                                            </Avatar>
-                                            <div className="flex-1">
-                                                <div className="flex items-center space-x-2 mb-1">
-                                                    <span className="font-medium">{cm.nickname}</span>
-                                                    <span className="text-sm text-gray-500">{getDaysLeft(cm.createdAt)} 전</span>
-                                                </div>
-                                                <p className="text-sm">{cm.content}</p>
-                                                <div className="flex items-center space-x-2 mt-2">
-                                                    <Button variant="ghost" size="sm">
-                                                        <MessageCircle className="h-3 w-3 mr-1" />
-                                                        댓글
-                                                    </Button>
-                                                </div>
-                                            </div>
+                        <TabsContent value="updates">
+                            {project.newsList.length == 0 ? (
+                                <div className="text-sm text-muted-foreground">게시글이 존재하지 않습니다.</div>
+                            ) : (
+                                <>
+                                    {project.newsList.map((news) => (
+                                        <div className="space-y-4 mt-6">
+                                            <Card>
+                                                <CardHeader>
+                                                    <CardTitle className="text-lg">{news.content}</CardTitle>
+                                                    <p className="text-sm text-gray-500">{formatDate(news.createdAt)}</p>
+                                                </CardHeader>
+                                                <CardContent>
+                                                    <p>{news.content}</p>
+                                                </CardContent>
+                                            </Card>
                                         </div>
-                                    </CardContent>
-                                </Card>
-                            </div>
+                                    ))}
+                                </>)}
                         </TabsContent>
-                        ))}
 
-                        {review.map((rv) => (
-                        <TabsContent value="reviews" className="mt-6">
-                            <div className="space-y-4">
-                                <Card>
-                                    <CardContent className="pt-6">
-                                        <div className="flex items-start space-x-3">
-                                            <Avatar className="w-8 h-8">
-                                                <AvatarFallback>{rv.nickname}</AvatarFallback>
-                                            </Avatar>
-                                            <div className="flex-1">
-                                                <div className="flex items-center space-x-2 mb-1">
-                                                    <span className="font-medium"></span>
-                                                    <div className="flex items-center">
-                                                        {[...Array(rv.rating)].map((_, i) => (
-                                                            <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                                                        ))}
+                        <TabsContent value="community">
+                            {community.length == 0 ? (
+                                <div className="text-sm text-muted-foreground">게시글이 존재하지 않습니다.</div>
+                            ) : (<>
+                                {community.map((cm) => (
+                                    <div className="space-y-4 mt-6">
+                                        <Card>
+                                            <CardContent className="pt-6">
+                                                <div className="flex items-start space-x-3">
+                                                    <Avatar className="w-8 h-8">
+                                                        <AvatarFallback>{cm.profileImg}</AvatarFallback>
+                                                    </Avatar>
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center space-x-2 mb-1">
+                                                            <span className="font-medium">{cm.nickname}</span>
+                                                            <span className="text-sm text-gray-500">{getDaysLeft(cm.createdAt)} 전</span>
+                                                        </div>
+                                                        <p className="text-sm">{cm.cmContent}</p>
+                                                        <div className="flex items-center space-x-2 mt-2">
+                                                            <Button variant="ghost" size="sm">
+                                                                <MessageCircle className="h-3 w-3 mr-1" />
+                                                                댓글
+                                                            </Button>
+                                                        </div>
                                                     </div>
-                                                    <span className="text-sm text-gray-500">{getDaysLeft(rv.createdAt)} 전</span>
                                                 </div>
-                                                <p className="text-sm">{rv.content}</p>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </div>
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+                                ))}
+                            </>)}
                         </TabsContent>
-                        ))}
+
+                        <TabsContent value="reviews">
+                            {review.length == 0 ? (
+                                <div className="text-sm text-muted-foreground">게시글이 존재하지 않습니다.</div>
+                            ) : (<>
+                                {review.map((rv) => (
+                                    <div className="space-y-4 mt-6">
+                                        <Card>
+                                            <CardContent className="pt-6">
+                                                <div className="flex items-start space-x-3">
+                                                    <Avatar className="w-8 h-8">
+                                                        <AvatarFallback>{rv.nickname}</AvatarFallback>
+                                                    </Avatar>
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center space-x-2 mb-1">
+                                                            <span className="font-medium"></span>
+                                                            <div className="flex items-center">
+                                                                {[...Array(rv.rating)].map((_, i) => (
+                                                                    <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                                                ))}
+                                                            </div>
+                                                            <span className="text-sm text-gray-500">{getDaysLeft(rv.createdAt)} 전</span>
+                                                        </div>
+                                                        <p className="text-sm">{rv.cmContent}</p>
+                                                    </div>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+                                ))}
+                            </>)}
+                        </TabsContent>
                     </Tabs>
                 </div>
 

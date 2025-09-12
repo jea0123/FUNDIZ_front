@@ -4,7 +4,7 @@ export interface Community {
     cmId: number;
     nickname: string;
     profileImg: string;
-    content: string;
+    cmContent: string;
     rating: number;
     createdAt: Date;
     code: string;

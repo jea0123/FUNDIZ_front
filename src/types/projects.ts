@@ -1,6 +1,6 @@
 import type { News } from "./news";
-import type { Reward } from "./reward";
-import type { Subcategory } from "./subcategory";
+import type { Reward, RewardCreateRequestDto } from "./reward";
+import type { SubcategoryDto } from "./subcategory";
 import type { Tag } from "./tag";
 
 export interface Project {
@@ -57,7 +57,7 @@ export interface ProjectDetail {
     profileImg: string;
     projectCnt: number;
 
-    subcategory: Subcategory;
+    subcategory: SubcategoryDto;
 
     tagList: Tag[];
     rewardList: Reward[];
@@ -84,4 +84,26 @@ export interface RecentView{
     endDate: Date;
     percentNow: number;
     viewedAt: Date;
+}
+
+export interface ProjectCreateRequestDto {
+    projectId: number;
+    subctgrId: number;
+    creatorId: number;
+
+    title: string;
+    content: string;
+    thumbnail: string;
+    goalAmount: number;
+    startDate: Date;
+    endDate: Date;
+
+    tagList: string[];
+
+    rewardList: RewardCreateRequestDto[];
+
+    creatorName: string;
+    businessNum: string;
+    email: string;
+    phone: string;
 }

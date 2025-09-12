@@ -43,6 +43,8 @@ export const endpoints = {
     getCategories: '/categories',
     getAdminAnalytics: (period: string, metric: string) => `/admin/analytics?period=${period}&metric=${metric}`,
     getCategorySuccess: (ctgrId: number) => `/admin/category-success?ctgrId=${ctgrId}`,
+    createProject: '/project',
+    getSubcategories: '/subcategories',
 };
 
 export const getData = async (url: string, accessToken?: string) => {
