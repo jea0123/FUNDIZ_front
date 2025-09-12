@@ -35,6 +35,9 @@ export const endpoints = {
     signIn: '/auth/signIn',
     getLoginUser: '/user/loginUser',
     getRecentTop10: '/project/recent-top10',
+    getMypage: (userId : number) => `/user/me/userPage/${userId}`,
+    getBackingList: (userId: number)=>`/user/me/backingPage/${userId}`,
+    getLikedList: (userId: number) => `/user/me/likedList/${userId}`,
     getProjectDetail: (projectId: number) => `/project/${projectId}`,
     getCommunity: (projectId: number) => `/project/${projectId}/community`,
     getReview: (projectId: number) => `/project/${projectId}/review`,
@@ -45,6 +48,7 @@ export const endpoints = {
     getCategorySuccess: (ctgrId: number) => `/admin/category-success?ctgrId=${ctgrId}`,
     createProject: '/project',
     getSubcategories: '/subcategories',
+    getRewardSalesTop: (period: string, metric: string) => `/admin/reward-sales-top?period=${period}&metric=${metric}`,
 };
 
 export const getData = async (url: string, accessToken?: string) => {
