@@ -1,119 +1,203 @@
-import { useState } from 'react';
-import { Button } from './ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Textarea } from './ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Checkbox } from './ui/checkbox';
-import { Badge } from './ui/badge';
-import { Progress } from './ui/progress';
+import { useEffect, useState } from 'react';
 import { Upload, Plus, X, Save, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Progress } from '@/components/ui/progress';
+import type { ProjectCreateRequestDto } from '@/types/projects';
+import { endpoints, getData, postData } from '@/api/apis';
+import type { RewardCreateRequestDto } from '@/types/reward';
+import type { SubcategoryDto } from '@/types/subcategory';
+import { formatDate } from '@/utils/utils';
+
+const STEPS = [
+    { id: 1, title: '프로젝트 정보', description: '기본 정보 입력' },
+    { id: 2, title: '펀딩 설정', description: '목표 금액 및 기간 설정' },
+    { id: 3, title: '리워드 설계', description: '후원자 리워드 구성' },
+    { id: 4, title: '정책 및 정보', description: '환불 정책 및 크리에이터 정보' },
+    { id: 5, title: '검토 및 제출', description: '최종 검토 후 심사 요청' },
+];
+
+const formatCurrency = (amount: string) => {
+    const num = parseInt(amount.replace(/[^0-9]/g, ''));
+    return new Intl.NumberFormat('ko-KR').format(num);
+};
 
 export function CreateProject() {
-    const [currentStep, setCurrentStep] = useState(1);
-    const [projectData, setProjectData] = useState({
-        category: '',
-        title: '',
-        description: '',
-        thumbnail: '',
-        tags: [] as string[],
-        targetAmount: '',
-        startDate: '',
-        endDate: '',
-        deliveryDate: '',
-        rewards: [] as any[],
-        refundPolicy: '',
-        asPolicy: '',
-        creatorName: '',
-        creatorEmail: '',
-        creatorPhone: '',
-    });
-
-    const [newTag, setNewTag] = useState('');
-    const [newReward, setNewReward] = useState({
-        amount: '',
-        title: '',
-        description: '',
-        quantity: '',
-    });
-
-    const steps = [
-        { id: 1, title: '프로젝트 정보', description: '기본 정보 입력' },
-        { id: 2, title: '펀딩 설정', description: '목표 금액 및 기간 설정' },
-        { id: 3, title: '리워드 설계', description: '후원자 리워드 구성' },
-        { id: 4, title: '정책 및 정보', description: '환불 정책 및 크리에이터 정보' },
-        { id: 5, title: '검토 및 제출', description: '최종 검토 후 심사 요청' },
-    ];
-
-    const categories = [
-        { id: 'tech', name: '테크/가전/리빙' },
-        { id: 'fashion', name: '패션/뷰티' },
-        { id: 'character', name: '캐릭터/굿즈/디자인' },
-        { id: 'food', name: '푸드' },
-        { id: 'culture', name: '문화/예술' },
-    ];
     const navigate = useNavigate();
 
-    const handleInputChange = (field: string, value: string) => {
-        setProjectData(prev => ({ ...prev, [field]: value }));
+    const [currentStep, setCurrentStep] = useState(1);
+    const [isLoading, setIsLoading] = useState(false);
+
+    //리워드 임시 id
+    type RewardForm = RewardCreateRequestDto & { tempId: string };
+
+    //서버 전송용
+    const [project, setProject] = useState<ProjectCreateRequestDto>({
+        projectId: 0,
+        creatorId: 0,
+        subctgrId: 0,
+        title: "",
+        content: "",
+        thumbnail: "",
+        goalAmount: 0,
+        startDate: new Date(),
+        endDate: new Date(),
+        tagList: [],
+        rewardList: [],
+        creatorName: "",
+        businessNum: "",
+        email: "",
+        phone: ""
+    });
+
+    const [rewardList, setRewardList] = useState<RewardForm[]>([]);
+    const [subcategories, setSubcategories] = useState<SubcategoryDto[]>([]);
+
+    const [newTag, setNewTag] = useState('');
+    const [newReward, setNewReward] = useState<RewardCreateRequestDto>({
+        rewardName: '',
+        price: 0,
+        rewardContent: '',
+        deliveryDate: new Date(),
+        rewardCnt: 0,
+        isPosting: 'N'
+    });
+
+    const getSubcategories = async () => {
+        const response = await getData(endpoints.getSubcategories);
+        if (response.status === 200) setSubcategories(response.data.subcategoryList);
+        console.log(response);
     };
 
-    const addTag = () => {
-        if (newTag && projectData.tags.length < 10 && !projectData.tags.includes(newTag)) {
-            setProjectData(prev => ({
-                ...prev,
-                tags: [...prev.tags, newTag]
-            }));
-            setNewTag('');
-        }
-    };
+    useEffect(() => {
+        getSubcategories();
+    }, []);
 
-    const removeTag = (tagToRemove: string) => {
-        setProjectData(prev => ({
+    const handleInputChange = (key: keyof ProjectCreateRequestDto, value: any) =>
+        setProject(prev => ({
             ...prev,
-            tags: prev.tags.filter(tag => tag !== tagToRemove)
+            [key]: key === 'subctgrId' || key === 'goalAmount' ? Number(value) : value
+        }));
+
+    //리워드 임시 id 생성
+    const genId = () => Math.random().toString(36).slice(2, 10);
+
+    //태그 추가
+    const addTag = (tag: string) => {
+        const trimmedTag = tag.trim();
+        if (!trimmedTag) return; //빈 문자열 체크
+        setProject(prev => {
+            const next = Array.from(new Set([...(prev.tagList || []), trimmedTag])); // 중복 체크
+            if (next.length > 10) return prev; // 최대 10개
+            return { ...prev, tagList: next };
+        });
+    };
+
+    //태그 삭제 (태그 이름 기준)
+    const removeTag = (tag: string) => {
+        setProject(prev => ({
+            ...prev,
+            tagList: (prev.tagList || []).filter(t => t !== tag)
         }));
     };
 
+    //리워드 추가
     const addReward = () => {
-        if (newReward.amount && newReward.title) {
-            setProjectData(prev => ({
-                ...prev,
-                rewards: [...prev.rewards, { ...newReward, id: Date.now() }]
-            }));
-            setNewReward({ amount: '', title: '', description: '', quantity: '' });
+        const rewardWithId: RewardForm = { ...newReward, tempId: genId() };
+        setRewardList(prev => [...prev, rewardWithId]);
+    };
+
+    //리워드 삭제
+    const removeReward = (tempId: string) => {
+        setRewardList(prev => prev.filter(r => r.tempId !== tempId));
+    };
+
+    const nextStep = () => currentStep < STEPS.length && setCurrentStep(currentStep + 1);
+
+    const prevStep = () => currentStep > 1 && setCurrentStep(currentStep - 1);
+
+    const createProjectResponse = (response: any) => {
+        if (!response) {
+            alert('알 수 없는 오류가 발생했습니다.');
+            return;
+        }
+        const { status } = response;
+        if (status === 200 || status === 201) {
+            alert('프로젝트가 심사를 위해 제출되었습니다.');
+            navigate('/');
+            return;
+        } else if (status === 400) {
+            alert('입력한 정보가 올바르지 않습니다. 다시 확인해주세요.');
+            return;
+        } else if (status === 0) {
+            alert('서버 응답이 없습니다. 잠시 후 다시 시도해주세요.');
+            return;
+        } else {
+            alert('프로젝트 제출에 실패했습니다. 다시 시도해주세요.');
+            return;
         }
     };
 
-    const removeReward = (rewardId: number) => {
-        setProjectData(prev => ({
-            ...prev,
-            rewards: prev.rewards.filter(reward => reward.id !== rewardId)
-        }));
+    //리워드 유효성 검사
+    const isValidReward = (reward: RewardCreateRequestDto) => {
+        return (
+            reward.rewardName.trim().length > 0 &&
+            reward.price > 0 &&
+            reward.rewardContent.trim().length > 0 &&
+            reward.deliveryDate instanceof Date &&
+            !isNaN(reward.deliveryDate.getTime()) &&
+            (reward.isPosting === 'Y' || reward.isPosting === 'N')
+        );
     };
 
-    const nextStep = () => {
-        if (currentStep < steps.length) {
-            setCurrentStep(currentStep + 1);
+    const submit = async () => {
+        //필수 입력 항목 검사
+        if (!project.title || !project.content || !project.thumbnail || project.goalAmount <= 0 ||
+            !project.startDate || !project.endDate || project.tagList.length === 0 || project.rewardList.length === 0) {
+            alert('필수 입력 항목을 모두 채워주세요.');
+            return;
         }
-    };
 
-    const prevStep = () => {
-        if (currentStep > 1) {
-            setCurrentStep(currentStep - 1);
+        //날짜 유효성 검사
+        const start = new Date(project.startDate);
+        const end = new Date(project.endDate);
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+            alert('프로젝트 시작일과 종료일을 올바르게 입력해주세요.');
+            return;
         }
-    };
+        if (start > end) {
+            alert('프로젝트 시작일은 종료일보다 이전이어야 합니다.');
+            return;
+        }
 
-    const handleSubmit = () => {
-        alert('프로젝트가 심사를 위해 제출되었습니다.');
-        navigate('/'); // Redirect to main page
-    };
+        //리워드 유효성 검사
+        const invalid = rewardList.find(r => !isValidReward(r));
+        if (invalid) {
+            alert('리워드 정보를 올바르게 입력해주세요.');
+            return;
+        }
 
-    const formatCurrency = (amount: string) => {
-        const num = parseInt(amount.replace(/[^0-9]/g, ''));
-        return new Intl.NumberFormat('ko-KR').format(num);
+        //서버 전송용 payload 구성
+        //리워드 tempId 제거
+        const payload: ProjectCreateRequestDto = {
+            ...project,
+            rewardList: rewardList.map(({ tempId, ...rest }) => rest)
+        };
+
+        setIsLoading(true);
+        try {
+            const response = await postData(endpoints.createProject, payload);
+            createProjectResponse(response);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const renderStep = () => {
@@ -123,14 +207,19 @@ export function CreateProject() {
                     <div className="space-y-6">
                         <div>
                             <Label htmlFor="category">카테고리 *</Label>
-                            <Select onValueChange={(value: any) => handleInputChange('category', value)}>
+                            <Select
+                                value={project.subctgrId ? String(project.subctgrId) : undefined}
+                                onValueChange={(value) =>
+                                    setProject(prev => ({ ...prev, subctgrId: Number(value) }))
+                                }
+                            >
                                 <SelectTrigger>
-                                    <SelectValue placeholder="카테고리를 선택하세요" />
+                                    <SelectValue placeholder="서브카테고리를 선택하세요" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {categories.map(category => (
-                                        <SelectItem key={category.id} value={category.id}>
-                                            {category.name}
+                                    {subcategories?.map(sc => (
+                                        <SelectItem key={sc.subctgrId} value={String(sc.subctgrId)}>
+                                            {sc.subctgrName}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -142,21 +231,22 @@ export function CreateProject() {
                             <Input
                                 id="title"
                                 placeholder="프로젝트 제목을 입력하세요"
-                                value={projectData.title}
+                                value={project.title}
                                 onChange={(e) => handleInputChange('title', e.target.value)}
                                 maxLength={50}
                             />
                             <p className="text-sm text-gray-500 mt-1">
-                                {projectData.title.length}/50자
+                                {project.title.length}/50자
                             </p>
                         </div>
 
+                        {/* TODO: 프로젝트 간단 설명
                         <div>
                             <Label htmlFor="description">프로젝트 설명 *</Label>
                             <Textarea
                                 id="description"
                                 placeholder="프로젝트에 대한 간단한 설명을 입력하세요"
-                                value={projectData.description}
+                                value={project.description}
                                 onChange={(e) => handleInputChange('description', e.target.value)}
                                 rows={4}
                                 maxLength={200}
@@ -165,6 +255,7 @@ export function CreateProject() {
                                 {projectData.description.length}/200자
                             </p>
                         </div>
+                        */}
 
                         <div>
                             <Label>썸네일 이미지 *</Label>
@@ -187,14 +278,24 @@ export function CreateProject() {
                                     placeholder="태그 입력"
                                     value={newTag}
                                     onChange={(e) => setNewTag(e.target.value)}
-                                    onKeyPress={(e) => e.key === 'Enter' && addTag()}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            addTag(newTag);
+                                            setNewTag('');
+                                        }
+                                    }}
                                 />
-                                <Button type="button" onClick={addTag} variant="outline">
+                                <Button
+                                    type="button"
+                                    onClick={() => { addTag(newTag); setNewTag(''); }}
+                                    variant="outline"
+                                >
                                     추가
                                 </Button>
                             </div>
                             <div className="flex flex-wrap gap-2">
-                                {projectData.tags.map((tag) => (
+                                {project.tagList.map((tag) => (
                                     <Badge key={tag} variant="secondary" className="cursor-pointer">
                                         {tag}
                                         <X
@@ -212,18 +313,18 @@ export function CreateProject() {
                 return (
                     <div className="space-y-6">
                         <div>
-                            <Label htmlFor="targetAmount">목표 금액 *</Label>
+                            <Label htmlFor="goalAmount">목표 금액 *</Label>
                             <Input
-                                id="targetAmount"
+                                id="goalAmount"
                                 placeholder="목표 금액을 입력하세요"
-                                value={projectData.targetAmount}
+                                value={project.goalAmount}
                                 onChange={(e) => {
                                     const value = e.target.value.replace(/[^0-9]/g, '');
-                                    handleInputChange('targetAmount', value);
+                                    handleInputChange('goalAmount', value);
                                 }}
                             />
                             <p className="text-sm text-gray-500 mt-1">
-                                {projectData.targetAmount && `${formatCurrency(projectData.targetAmount)}원`}
+                                {project.goalAmount && `${formatCurrency(project.goalAmount.toString())}원`}
                             </p>
                         </div>
 
@@ -233,7 +334,7 @@ export function CreateProject() {
                                 <Input
                                     id="startDate"
                                     type="date"
-                                    value={projectData.startDate}
+                                    value={project.startDate.toDateString()}
                                     onChange={(e) => handleInputChange('startDate', e.target.value)}
                                 />
                             </div>
@@ -242,24 +343,26 @@ export function CreateProject() {
                                 <Input
                                     id="endDate"
                                     type="date"
-                                    value={projectData.endDate}
+                                    value={project.endDate.toDateString()}
                                     onChange={(e) => handleInputChange('endDate', e.target.value)}
                                 />
                             </div>
                         </div>
 
+                        {/* TODO: 예상 발송 시작일
                         <div>
                             <Label htmlFor="deliveryDate">예상 발송 시작일 *</Label>
                             <Input
                                 id="deliveryDate"
                                 type="date"
-                                value={projectData.deliveryDate}
+                                value={project.deliveryDate.toDateString}
                                 onChange={(e) => handleInputChange('deliveryDate', e.target.value)}
                             />
                             <p className="text-sm text-gray-500 mt-1">
                                 펀딩 성공 시 리워드를 발송할 예상 날짜입니다.
                             </p>
                         </div>
+                        */}
 
                         <Card>
                             <CardHeader>
@@ -279,9 +382,9 @@ export function CreateProject() {
                                         <span>총 수수료</span>
                                         <span>8%</span>
                                     </div>
-                                    {projectData.targetAmount && (
+                                    {project.goalAmount && (
                                         <div className="mt-2 p-2 bg-blue-50 rounded">
-                                            <p>목표 달성 시 예상 수익: {formatCurrency((parseInt(projectData.targetAmount) * 0.92).toString())}원</p>
+                                            <p>목표 달성 시 예상 수익: {formatCurrency((project.goalAmount * 0.92).toString())}원</p>
                                         </div>
                                     )}
                                 </div>
@@ -303,8 +406,8 @@ export function CreateProject() {
                                             <Input
                                                 id="rewardAmount"
                                                 placeholder="10000"
-                                                value={newReward.amount}
-                                                onChange={(e) => setNewReward({ ...newReward, amount: e.target.value })}
+                                                value={newReward.price}
+                                                onChange={(e) => setNewReward({ ...newReward, price: Number(e.target.value) })}
                                             />
                                         </div>
                                         <div>
@@ -312,8 +415,8 @@ export function CreateProject() {
                                             <Input
                                                 id="rewardQuantity"
                                                 placeholder="100"
-                                                value={newReward.quantity}
-                                                onChange={(e) => setNewReward({ ...newReward, quantity: e.target.value })}
+                                                value={newReward.rewardCnt}
+                                                onChange={(e) => setNewReward({ ...newReward, rewardCnt: Number(e.target.value) })}
                                             />
                                         </div>
                                     </div>
@@ -322,8 +425,8 @@ export function CreateProject() {
                                         <Input
                                             id="rewardTitle"
                                             placeholder="얼리버드 패키지"
-                                            value={newReward.title}
-                                            onChange={(e) => setNewReward({ ...newReward, title: e.target.value })}
+                                            value={newReward.rewardName}
+                                            onChange={(e) => setNewReward({ ...newReward, rewardName: e.target.value })}
                                         />
                                     </div>
                                     <div>
@@ -331,10 +434,31 @@ export function CreateProject() {
                                         <Textarea
                                             id="rewardDescription"
                                             placeholder="리워드 구성품과 혜택을 설명하세요"
-                                            value={newReward.description}
-                                            onChange={(e) => setNewReward({ ...newReward, description: e.target.value })}
+                                            value={newReward.rewardContent}
+                                            onChange={(e) => setNewReward({ ...newReward, rewardContent: e.target.value })}
                                             rows={3}
                                         />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="deliveryDate">배송 시작 예정일 *</Label>
+                                        <Input
+                                            id="deliveryDate"
+                                            type="date"
+                                            value={formatDate(newReward.deliveryDate)}
+                                            onChange={(e) => setNewReward({ ...newReward, deliveryDate: new Date(e.target.value) })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="isPosting">배송 필요 여부 *</Label>
+                                        <select
+                                            id="isPosting"
+                                            className="border rounded w-full p-2"
+                                            value={newReward.isPosting}
+                                            onChange={(e) => setNewReward({ ...newReward, isPosting: e.target.value })}
+                                        >
+                                            <option value="Y">배송 필요</option>
+                                            <option value="N">배송 불필요</option>
+                                        </select>
                                     </div>
                                     <Button onClick={addReward} className="w-full">
                                         <Plus className="h-4 w-4 mr-2" />
@@ -347,26 +471,26 @@ export function CreateProject() {
                         <div>
                             <h3 className="text-lg font-semibold mb-4">추가된 리워드</h3>
                             <div className="space-y-4">
-                                {projectData.rewards.map((reward) => (
-                                    <Card key={reward.id}>
+                                {rewardList.map((reward) => (
+                                    <Card key={reward.tempId}>
                                         <CardContent className="p-4">
                                             <div className="flex justify-between items-start">
                                                 <div className="flex-1">
                                                     <div className="flex items-center space-x-2 mb-2">
                                                         <span className="text-lg font-semibold">
-                                                            {formatCurrency(reward.amount)}원
+                                                            {formatCurrency(reward.price.toString())}원
                                                         </span>
-                                                        {reward.quantity && (
-                                                            <Badge variant="secondary">한정 {reward.quantity}개</Badge>
+                                                        {reward.rewardCnt > 0 && (
+                                                            <Badge variant="secondary">한정 {reward.rewardCnt}개</Badge>
                                                         )}
                                                     </div>
-                                                    <h4 className="font-medium mb-1">{reward.title}</h4>
-                                                    <p className="text-sm text-gray-600">{reward.description}</p>
+                                                    <h4 className="font-medium mb-1">{reward.rewardName}</h4>
+                                                    <p className="text-sm text-gray-600">{reward.rewardContent}</p>
                                                 </div>
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    onClick={() => removeReward(reward.id)}
+                                                    onClick={() => removeReward(reward.tempId)}
                                                 >
                                                     <X className="h-4 w-4" />
                                                 </Button>
@@ -374,7 +498,7 @@ export function CreateProject() {
                                         </CardContent>
                                     </Card>
                                 ))}
-                                {projectData.rewards.length === 0 && (
+                                {project.rewardList.length === 0 && (
                                     <p className="text-center text-gray-500 py-8">
                                         아직 추가된 리워드가 없습니다.
                                     </p>
@@ -387,6 +511,7 @@ export function CreateProject() {
             case 4:
                 return (
                     <div className="space-y-6">
+                        {/* TODO: 환불 및 A/S 정책
                         <div>
                             <Label htmlFor="refundPolicy">환불 정책 *</Label>
                             <Textarea
@@ -411,38 +536,49 @@ export function CreateProject() {
                                 rows={3}
                             />
                         </div>
+                        */}
 
                         <Card>
                             <CardHeader>
-                                <CardTitle>크리에이터 정보</CardTitle>
+                                <CardTitle>창작자 정보</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div>
-                                    <Label htmlFor="creatorName">크리에이터명 *</Label>
+                                    <Label htmlFor="creatorName">창작자명 *</Label>
                                     <Input
                                         id="creatorName"
                                         placeholder="개인명 또는 단체명"
-                                        value={projectData.creatorName}
+                                        value={project.creatorName}
                                         onChange={(e) => handleInputChange('creatorName', e.target.value)}
                                     />
                                 </div>
                                 <div>
-                                    <Label htmlFor="creatorEmail">문의 이메일 *</Label>
+                                    <Label htmlFor="businessNum">사업자등록번호 *</Label>
                                     <Input
-                                        id="creatorEmail"
-                                        type="email"
-                                        placeholder="contact@example.com"
-                                        value={projectData.creatorEmail}
-                                        onChange={(e) => handleInputChange('creatorEmail', e.target.value)}
+                                        id="businessNum"
+                                        placeholder="000-00-00000"
+                                        value={project.businessNum}
+                                        onChange={(e) => handleInputChange('businessNum', e.target.value)}
+                                        inputMode="numeric"
                                     />
                                 </div>
                                 <div>
-                                    <Label htmlFor="creatorPhone">문의 전화번호 *</Label>
+                                    <Label htmlFor="email">문의 이메일 *</Label>
                                     <Input
-                                        id="creatorPhone"
+                                        id="email"
+                                        type="email"
+                                        placeholder="contact@example.com"
+                                        value={project.email}
+                                        onChange={(e) => handleInputChange('email', e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="phone">문의 전화번호 *</Label>
+                                    <Input
+                                        id="phone"
                                         placeholder="010-0000-0000"
-                                        value={projectData.creatorPhone}
-                                        onChange={(e) => handleInputChange('creatorPhone', e.target.value)}
+                                        value={project.phone}
+                                        onChange={(e) => handleInputChange('phone', e.target.value)}
                                     />
                                 </div>
                             </CardContent>
@@ -461,29 +597,29 @@ export function CreateProject() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <h4 className="font-medium text-gray-700">카테고리</h4>
-                                        <p>{categories.find(c => c.id === projectData.category)?.name || '-'}</p>
+                                        <p>{subcategories.find(sc => sc.subctgrId === project.subctgrId)?.subctgrName || '-'}</p>
                                     </div>
                                     <div>
                                         <h4 className="font-medium text-gray-700">목표 금액</h4>
-                                        <p>{projectData.targetAmount ? formatCurrency(projectData.targetAmount) + '원' : '-'}</p>
+                                        <p>{project.goalAmount ? formatCurrency(project.goalAmount.toString()) + '원' : '-'}</p>
                                     </div>
                                     <div>
                                         <h4 className="font-medium text-gray-700">펀딩 기간</h4>
-                                        <p>{projectData.startDate && projectData.endDate ?
-                                            `${projectData.startDate} ~ ${projectData.endDate}` : '-'}</p>
+                                        <p>{project.startDate && project.endDate ?
+                                            `${project.startDate instanceof Date ? formatDate(project.startDate) : project.startDate} ~ ${project.endDate instanceof Date ? formatDate(project.endDate) : project.endDate}` : '-'}</p>
                                     </div>
                                     <div>
                                         <h4 className="font-medium text-gray-700">리워드 개수</h4>
-                                        <p>{projectData.rewards.length}개</p>
+                                        <p>{project.rewardList.length}개</p>
                                     </div>
                                 </div>
                                 <div>
                                     <h4 className="font-medium text-gray-700">프로젝트 제목</h4>
-                                    <p>{projectData.title || '-'}</p>
+                                    <p>{project.title || '-'}</p>
                                 </div>
                                 <div>
-                                    <h4 className="font-medium text-gray-700">크리에이터</h4>
-                                    <p>{projectData.creatorName || '-'}</p>
+                                    <h4 className="font-medium text-gray-700">창작자</h4>
+                                    <p>{project.creatorName || '-'}</p>
                                 </div>
                             </CardContent>
                         </Card>
@@ -516,28 +652,45 @@ export function CreateProject() {
         }
     };
 
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="text-center">
+                    <div className="loader mb-4"></div>
+                    <p className="text-gray-600">프로젝트를 제출하는 중입니다...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="mb-8">
                 <h1 className="text-3xl mb-6">프로젝트 만들기</h1>
                 <div className="flex items-center justify-between mb-4">
-                    {steps.map((step, index) => (
+                    {STEPS.map((step: { id: number; title: string; description: string }, index: number) => (
                         <div key={step.id} className="flex items-center">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${currentStep >= step.id ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
-                                }`}>
+                            <div
+                                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                                    currentStep >= step.id ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
+                                }`}
+                            >
                                 {step.id}
                             </div>
-                            {index < steps.length - 1 && (
-                                <div className={`w-16 h-1 mx-2 ${currentStep > step.id ? 'bg-blue-600' : 'bg-gray-200'
-                                    }`} />
+                            {index < STEPS.length - 1 && (
+                                <div
+                                    className={`w-16 h-1 mx-2 ${
+                                        currentStep > step.id ? 'bg-blue-600' : 'bg-gray-200'
+                                    }`}
+                                />
                             )}
                         </div>
                     ))}
                 </div>
-                <Progress value={(currentStep / steps.length) * 100} className="h-2" />
+                <Progress value={(currentStep / STEPS.length) * 100} className="h-2" />
                 <div className="mt-4">
-                    <h2 className="text-xl font-semibold">{steps[currentStep - 1].title}</h2>
-                    <p className="text-gray-600">{steps[currentStep - 1].description}</p>
+                    <h2 className="text-xl font-semibold">{STEPS[currentStep - 1].title}</h2>
+                    <p className="text-gray-600">{STEPS[currentStep - 1].description}</p>
                 </div>
             </div>
 
@@ -560,12 +713,12 @@ export function CreateProject() {
                         <Save className="h-4 w-4 mr-2" />
                         임시저장
                     </Button>
-                    {currentStep < steps.length ? (
+                    {currentStep < STEPS.length ? (
                         <Button onClick={nextStep}>
                             다음
                         </Button>
                     ) : (
-                        <Button onClick={handleSubmit}>
+                        <Button onClick={submit}>
                             <Send className="h-4 w-4 mr-2" />
                             심사 요청
                         </Button>

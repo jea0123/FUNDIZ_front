@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Route, Routes, useNavigate } from 'react-router-dom';
 import { AdminDashboard } from './views/admin/AdminDashboard';
-import { CreateProject } from './components/CreateProject';
+import { CreateProject } from './views/project/CreateProject';
 import { LoginPage } from './components/LoginPage';
 import { MyPage } from './components/MyPage';
 import { Navbar } from './components/Navbar';
@@ -11,7 +11,7 @@ import { AdminCS } from './components/AdminCS';
 import { useLoginUserStore } from './store/LoginUserStore.store';
 import { useCookies } from 'react-cookie';
 import { endpoints, getData } from './api/apis';
-import { ProjectDetailPage } from './components/ProjectDetail';
+import { ProjectDetailPage } from './views/project/ProjectDetail';
 import ErrorPage from './views/ErrorPage';
 import MainPage from './views/MainPage';
 import { setNavigator } from './utils/navigator';
