@@ -102,7 +102,8 @@ export function ProjectDetailPage() {
 
                     <div className="mb-6">
                         <div className="flex flex-wrap gap-2 mb-3">
-                            <Badge variant="secondary">{project.subcategory.ctgrName}</Badge>
+                            <Badge variant="secondary">{project.ctgrName}</Badge>
+                            <Badge variant="secondary">{project.subctgrName}</Badge>
                             {project.tagList.map((tag) => (
                                 <Badge key={tag.tagId} variant="outline">
                                     {tag.tagName}

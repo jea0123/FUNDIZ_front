@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Upload, Plus, X, Save, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Label } from '@/components/ui/label';
@@ -10,11 +10,11 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
-import type { ProjectCreateRequestDto } from '@/types/projects';
+import type { ProjectCreateRequestDto, Subcategory } from '@/types/projects';
 import { endpoints, getData, postData } from '@/api/apis';
 import type { RewardCreateRequestDto } from '@/types/reward';
-import type { SubcategoryDto } from '@/types/subcategory';
 import { formatDate } from '@/utils/utils';
+import type { Category } from '@/types/admin';
 
 const STEPS = [
     { id: 1, title: '프로젝트 정보', description: '기본 정보 입력' },
@@ -26,7 +26,7 @@ const STEPS = [
 
 const formatCurrency = (amount: string) => {
     const num = parseInt(amount.replace(/[^0-9]/g, ''));
-    return new Intl.NumberFormat('ko-KR').format(num);
+    return new Intl.NumberFormat('ko-KR').format(isNaN(num) ? 0 : num);
 };
 
 export function CreateProject() {
@@ -41,8 +41,9 @@ export function CreateProject() {
     //서버 전송용
     const [project, setProject] = useState<ProjectCreateRequestDto>({
         projectId: 0,
-        creatorId: 0,
+        ctgrId: 0,
         subctgrId: 0,
+        creatorId: 0,
         title: "",
         content: "",
         thumbnail: "",
@@ -56,10 +57,31 @@ export function CreateProject() {
         email: "",
         phone: ""
     });
+    
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
+
+    const ko = useMemo(() => new Intl.Collator('ko', { sensitivity: 'base', numeric: true }), []);
+
+    //카테고리 선택에 따른 세부카테고리 필터링 및 정렬
+    const sortedSubcategories = useMemo(() => {
+        return subcategories
+            .filter(sc => sc.ctgrId === project.ctgrId)
+            .slice()
+            .sort((a, b) => {
+                const an = a.subctgrName ?? '';
+                const bn = b.subctgrName ?? '';
+                const aNum = /^\d/.test(an);
+                const bNum = /^\d/.test(bn);
+
+                if (aNum !== bNum) return aNum ? 1 : -1; //숫자로 시작하면 문자 뒤로
+                const cmp = ko.compare(an, bn); //한글/영어는 사전순 정렬
+                if (cmp !== 0) return cmp;
+                return Number(a.subctgrId) - Number(b.subctgrId); //같으면 id 오름차순
+            });
+    }, [subcategories, project.ctgrId, ko]);
 
     const [rewardList, setRewardList] = useState<RewardForm[]>([]);
-    const [subcategories, setSubcategories] = useState<SubcategoryDto[]>([]);
-
     const [newTag, setNewTag] = useState('');
     const [newReward, setNewReward] = useState<RewardCreateRequestDto>({
         rewardName: '',
@@ -67,18 +89,37 @@ export function CreateProject() {
         rewardContent: '',
         deliveryDate: new Date(),
         rewardCnt: 0,
-        isPosting: 'N'
+        isPosting: 'Y'
     });
 
-    const getSubcategories = async () => {
-        const response = await getData(endpoints.getSubcategories);
-        if (response.status === 200) setSubcategories(response.data.subcategoryList);
-        console.log(response);
+    const projectData = async () => {
+        setIsLoading(true);
+        try {
+            const [catRes, subRes] = await Promise.all([
+                getData(endpoints.getCategories),
+                getData(endpoints.getSubcategories)
+            ]);
+
+            const catData = catRes?.data;
+            const subData = subRes?.data;
+
+            const cats = Array.isArray(catData) ? catData : [];
+            const subs = Array.isArray(subData) ? subData : [];
+
+            setCategories(cats);
+            setSubcategories(subs);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     useEffect(() => {
-        getSubcategories();
+        projectData();
     }, []);
+
+    const categoryMap = useMemo(() => {
+        return new Map(categories.map(c => [c.ctgrId, c.ctgrName]));
+    }, [categories]);
 
     const handleInputChange = (key: keyof ProjectCreateRequestDto, value: any) =>
         setProject(prev => ({
@@ -160,8 +201,14 @@ export function CreateProject() {
     const submit = async () => {
         //필수 입력 항목 검사
         if (!project.title || !project.content || !project.thumbnail || project.goalAmount <= 0 ||
-            !project.startDate || !project.endDate || project.tagList.length === 0 || project.rewardList.length === 0) {
+            !project.startDate || !project.endDate) {
             alert('필수 입력 항목을 모두 채워주세요.');
+            return;
+        }
+
+        //리워드 존재 여부 검사
+        if (rewardList.length === 0) {
+            alert('최소 하나 이상의 리워드를 추가해주세요.');
             return;
         }
 
@@ -184,11 +231,10 @@ export function CreateProject() {
             return;
         }
 
-        //서버 전송용 payload 구성
-        //리워드 tempId 제거
+        //서버 전송용 payload 구성 (tempId 제거)
         const payload: ProjectCreateRequestDto = {
             ...project,
-            rewardList: rewardList.map(({ tempId, ...rest }) => rest)
+            rewardList: rewardList.map(({ tempId: _ , ...rest }) => rest)
         };
 
         setIsLoading(true);
@@ -204,20 +250,46 @@ export function CreateProject() {
         switch (currentStep) {
             case 1:
                 return (
-                    <div className="space-y-6">
-                        <div>
+                    <>
+                    <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-x-2 gap-y-2">
+                        <div className="min-w-0">
                             <Label htmlFor="category">카테고리 *</Label>
+                            <Select
+                                value={project.ctgrId ? String(project.ctgrId) : undefined}
+                                onValueChange={(value) =>
+                                    setProject(prev => ({ ...prev, ctgrId: Number(value), subctgrId: 0 }))
+                                }
+                            >
+                                <SelectTrigger id="category" className="w-full">
+                                    <SelectValue placeholder="카테고리 선택" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {categories.length === 0 && !isLoading && (
+                                        <div className="p-4 text-sm text-gray-500">카테고리 정보를 불러올 수 없습니다.</div>
+                                    )}
+                                    {categories.map(c => (
+                                        <SelectItem key={c.ctgrId} value={String(c.ctgrId)}>
+                                            {c.ctgrName}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="min-w-0">
+                            <Label htmlFor="subcategory">세부카테고리 *</Label>
                             <Select
                                 value={project.subctgrId ? String(project.subctgrId) : undefined}
                                 onValueChange={(value) =>
                                     setProject(prev => ({ ...prev, subctgrId: Number(value) }))
                                 }
+                                disabled={!project.ctgrId}
                             >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="서브카테고리를 선택하세요" />
+                                <SelectTrigger id="subcategory" className="w-full">
+                                    <SelectValue placeholder="세부카테고리 선택" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {subcategories?.map(sc => (
+                                    {sortedSubcategories.map(sc => (
                                         <SelectItem key={sc.subctgrId} value={String(sc.subctgrId)}>
                                             {sc.subctgrName}
                                         </SelectItem>
@@ -225,7 +297,9 @@ export function CreateProject() {
                                 </SelectContent>
                             </Select>
                         </div>
+                    </div>
 
+                    <div className="space-y-6 mt-6">
                         <div>
                             <Label htmlFor="title">프로젝트 제목 *</Label>
                             <Input
@@ -240,25 +314,8 @@ export function CreateProject() {
                             </p>
                         </div>
 
-                        {/* TODO: 프로젝트 간단 설명
                         <div>
-                            <Label htmlFor="description">프로젝트 설명 *</Label>
-                            <Textarea
-                                id="description"
-                                placeholder="프로젝트에 대한 간단한 설명을 입력하세요"
-                                value={project.description}
-                                onChange={(e) => handleInputChange('description', e.target.value)}
-                                rows={4}
-                                maxLength={200}
-                            />
-                            <p className="text-sm text-gray-500 mt-1">
-                                {projectData.description.length}/200자
-                            </p>
-                        </div>
-                        */}
-
-                        <div>
-                            <Label>썸네일 이미지 *</Label>
+                            <Label>대표 이미지 *</Label>
                             <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                                 <Upload className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                                 <p className="text-gray-500 mb-2">이미지를 드래그하거나 클릭하여 업로드</p>
@@ -307,6 +364,7 @@ export function CreateProject() {
                             </div>
                         </div>
                     </div>
+                    </>
                 );
 
             case 2:
@@ -323,7 +381,7 @@ export function CreateProject() {
                                     handleInputChange('goalAmount', value);
                                 }}
                             />
-                            <p className="text-sm text-gray-500 mt-1">
+                            <p className="mt-2 text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded-md inline-block">
                                 {project.goalAmount && `${formatCurrency(project.goalAmount.toString())}원`}
                             </p>
                         </div>
@@ -334,8 +392,8 @@ export function CreateProject() {
                                 <Input
                                     id="startDate"
                                     type="date"
-                                    value={project.startDate.toDateString()}
-                                    onChange={(e) => handleInputChange('startDate', e.target.value)}
+                                    value={formatDate(project.startDate)}
+                                    onChange={(e) => handleInputChange('startDate', new Date(e.target.value))}
                                 />
                             </div>
                             <div>
@@ -343,26 +401,11 @@ export function CreateProject() {
                                 <Input
                                     id="endDate"
                                     type="date"
-                                    value={project.endDate.toDateString()}
-                                    onChange={(e) => handleInputChange('endDate', e.target.value)}
+                                    value={formatDate(project.endDate)}
+                                    onChange={(e) => handleInputChange('endDate', new Date(e.target.value))}
                                 />
                             </div>
                         </div>
-
-                        {/* TODO: 예상 발송 시작일
-                        <div>
-                            <Label htmlFor="deliveryDate">예상 발송 시작일 *</Label>
-                            <Input
-                                id="deliveryDate"
-                                type="date"
-                                value={project.deliveryDate.toDateString}
-                                onChange={(e) => handleInputChange('deliveryDate', e.target.value)}
-                            />
-                            <p className="text-sm text-gray-500 mt-1">
-                                펀딩 성공 시 리워드를 발송할 예상 날짜입니다.
-                            </p>
-                        </div>
-                        */}
 
                         <Card>
                             <CardHeader>
@@ -450,15 +493,18 @@ export function CreateProject() {
                                     </div>
                                     <div>
                                         <Label htmlFor="isPosting">배송 필요 여부 *</Label>
-                                        <select
-                                            id="isPosting"
-                                            className="border rounded w-full p-2"
+                                        <Select
                                             value={newReward.isPosting}
-                                            onChange={(e) => setNewReward({ ...newReward, isPosting: e.target.value })}
+                                            onValueChange={(value) => setNewReward({ ...newReward, isPosting: value as 'Y' | 'N' })}
                                         >
-                                            <option value="Y">배송 필요</option>
-                                            <option value="N">배송 불필요</option>
-                                        </select>
+                                            <SelectTrigger id="isPosting" className="w-full">
+                                                <SelectValue placeholder="배송 필요 여부 선택" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Y">배송 필요</SelectItem>
+                                                <SelectItem value="N">배송 불필요</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                     <Button onClick={addReward} className="w-full">
                                         <Plus className="h-4 w-4 mr-2" />
@@ -511,33 +557,6 @@ export function CreateProject() {
             case 4:
                 return (
                     <div className="space-y-6">
-                        {/* TODO: 환불 및 A/S 정책
-                        <div>
-                            <Label htmlFor="refundPolicy">환불 정책 *</Label>
-                            <Textarea
-                                id="refundPolicy"
-                                placeholder="환불 정책을 입력하세요"
-                                value={projectData.refundPolicy}
-                                onChange={(e) => handleInputChange('refundPolicy', e.target.value)}
-                                rows={4}
-                            />
-                            <p className="text-sm text-gray-500 mt-1">
-                                후원자를 위한 환불 조건과 절차를 명시해주세요.
-                            </p>
-                        </div>
-
-                        <div>
-                            <Label htmlFor="asPolicy">A/S 정책 (선택)</Label>
-                            <Textarea
-                                id="asPolicy"
-                                placeholder="A/S 정책을 입력하세요"
-                                value={projectData.asPolicy}
-                                onChange={(e) => handleInputChange('asPolicy', e.target.value)}
-                                rows={3}
-                            />
-                        </div>
-                        */}
-
                         <Card>
                             <CardHeader>
                                 <CardTitle>창작자 정보</CardTitle>
@@ -576,7 +595,7 @@ export function CreateProject() {
                                     <Label htmlFor="phone">문의 전화번호 *</Label>
                                     <Input
                                         id="phone"
-                                        placeholder="010-0000-0000"
+                                        placeholder="010-1234-5678"
                                         value={project.phone}
                                         onChange={(e) => handleInputChange('phone', e.target.value)}
                                     />
@@ -597,7 +616,14 @@ export function CreateProject() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <h4 className="font-medium text-gray-700">카테고리</h4>
-                                        <p>{subcategories.find(sc => sc.subctgrId === project.subctgrId)?.subctgrName || '-'}</p>
+                                        <p>
+                                            {(() => {
+                                                const sub = subcategories.find(sc => sc.subctgrId === project.subctgrId);
+                                                if (!sub) return "-";
+                                                const ctgrName = categoryMap.get(sub.ctgrId) || '기타';
+                                                return `${ctgrName} > ${sub.subctgrName}`;
+                                            })()}
+                                        </p>
                                     </div>
                                     <div>
                                         <h4 className="font-medium text-gray-700">목표 금액</h4>
@@ -654,12 +680,7 @@ export function CreateProject() {
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center h-64">
-                <div className="text-center">
-                    <div className="loader mb-4"></div>
-                    <p className="text-gray-600">프로젝트를 제출하는 중입니다...</p>
-                </div>
-            </div>
+            <p>불러오는 중…</p>
         );
     }
 

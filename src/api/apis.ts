@@ -47,7 +47,7 @@ export const endpoints = {
     getAdminAnalytics: (period: string, metric: string) => `/admin/analytics?period=${period}&metric=${metric}`,
     getCategorySuccess: (ctgrId: number) => `/admin/category-success?ctgrId=${ctgrId}`,
     createProject: '/project',
-    getSubcategories: '/subcategories',
+    getSubcategories: '/categories/subcategories',
     getRewardSalesTop: (period: string, metric: string) => `/admin/reward-sales-top?period=${period}&metric=${metric}`,
 };
 

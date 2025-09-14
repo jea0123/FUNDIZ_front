@@ -1,6 +1,5 @@
 import type { News } from "./news";
 import type { Reward, RewardCreateRequestDto } from "./reward";
-import type { SubcategoryDto } from "./subcategory";
 import type { Tag } from "./tag";
 
 export interface Project {
@@ -38,6 +37,8 @@ export interface RecentTop10{
 export interface ProjectDetail {
     projectId: number;
     creatorId: number;
+    subctgrId: number;
+
     title: string;
     goalAmount: number;
     currAmount: number;
@@ -49,15 +50,17 @@ export interface ProjectDetail {
     backerCnt: number;
     likeCnt: number;
     viewCnt: number;
+
     percentNow: number;
+    projectCnt: number;
     paymentDate: Date;
 
     creatorName: string;
     followerCnt: number;
     profileImg: string;
-    projectCnt: number;
 
-    subcategory: SubcategoryDto;
+    ctgrName: string;
+    subctgrName: string;
 
     tagList: Tag[];
     rewardList: Reward[];
@@ -88,6 +91,7 @@ export interface RecentView{
 
 export interface ProjectCreateRequestDto {
     projectId: number;
+    ctgrId: number; //프론트에서만 사용
     subctgrId: number;
     creatorId: number;
 
@@ -106,4 +110,10 @@ export interface ProjectCreateRequestDto {
     businessNum: string;
     email: string;
     phone: string;
+}
+
+export interface Subcategory {
+    subctgrId: number;
+    ctgrId: number;
+    subctgrName: string;
 }
