@@ -1,4 +1,6 @@
-export interface Backing{
+import type { AddrAddRequest } from "./address";
+
+export interface MyPageBacking{
     backingId :number;
     userId : number;
     amount : number;
@@ -6,21 +8,21 @@ export interface Backing{
     backingStatus : string;
 }
 
-export interface Backingdetail{
-    backingReward:BackingReward;
+export interface BackingMyPageDetail{
+    backingReward:BackingMyPageReward;
     price : number;
     quantity: number;
-    backing: Backing;
+    backing: MyPageBacking;
 }
 
-export interface BackingReward{
+export interface BackingMyPageReward{
     rewardId :number;
     rewardName : string;
     deliveryDate : Date | null;
-    backingProject : BackingProject;
+    backingProject : BackingMyPageProject;
 }
 
-export interface BackingProject{
+export interface BackingMyPageProject{
     projectId: number;
     thumbnail: string;
     title: string;
@@ -29,3 +31,19 @@ export interface BackingProject{
     endDate: Date;
     projectStatus: string;
 }
+
+export interface BackingRequest{
+    userId : number;
+    backingRewardList: BackingRewardList[];
+    addrId : number;
+    newAddress?: AddrAddRequest;
+}
+
+export interface BackingRewardList{
+    rewardId : number;
+    rewardName : string;
+    price : number;
+    quantity : number;
+    deliveryDate : Date | null;
+}
+
