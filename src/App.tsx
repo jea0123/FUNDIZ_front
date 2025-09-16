@@ -15,6 +15,7 @@ import { ProjectDetailPage } from './views/project/ProjectDetail';
 import ErrorPage from './views/ErrorPage';
 import MainPage from './views/MainPage';
 import { setNavigator } from './utils/navigator';
+import { ProjectsPage } from './views/project/ProjectsPage';
 
 export default function App() {
   const { setLoginUser, resetLoginUser } = useLoginUserStore();
@@ -53,6 +54,9 @@ export default function App() {
         </Route>
 
         <Route path='/project'>
+          <Route index element={<ProjectsPage />} />
+          <Route path='category/:ctgrId' element={<ProjectsPage />} />
+          <Route path='category/:ctgrId/:subctgrId' element={<ProjectsPage />} />
           <Route path=':projectId' element={<ProjectDetailPage />} />
           <Route path='create' element={<CreateProject />} />
         </Route>
