@@ -49,6 +49,7 @@ export const endpoints = {
     createProject: '/project',
     getSubcategories: '/categories/subcategories',
     getRewardSalesTop: (period: string, metric: string) => `/admin/reward-sales-top?period=${period}&metric=${metric}`,
+    getProjectPage: '/project/search',
 };
 
 export const getData = async (url: string, accessToken?: string) => {

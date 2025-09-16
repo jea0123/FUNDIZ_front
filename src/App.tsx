@@ -14,6 +14,7 @@ import { ProjectDetailPage } from './views/project/ProjectDetail';
 import ErrorPage from './views/ErrorPage';
 import MainPage from './views/MainPage';
 import { setNavigator } from './utils/navigator';
+import { ProjectsPage } from './views/project/ProjectsPage';
 
 const AdminDashboard = lazy(() => import('./views/admin/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
 
@@ -54,10 +55,13 @@ export default function App() {
             <Route path='login' element={<LoginPage />} />
           </Route>
 
-          <Route path='/project'>
-            <Route path=':projectId' element={<ProjectDetailPage />} />
-            <Route path='create' element={<CreateProject />} />
-          </Route>
+        <Route path='/project'>
+          <Route index element={<ProjectsPage />} />
+          <Route path='category/:ctgrId' element={<ProjectsPage />} />
+          <Route path='category/:ctgrId/:subctgrId' element={<ProjectsPage />} />
+          <Route path=':projectId' element={<ProjectDetailPage />} />
+          <Route path='create' element={<CreateProject />} />
+        </Route>
 
           <Route path='/user'>
             <Route path='mypage' element={<MyPage />} />
