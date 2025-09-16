@@ -1,6 +1,5 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react'
 import { Route, Routes, useNavigate } from 'react-router-dom';
-import { AdminDashboard } from './views/admin/AdminDashboard';
 import { CreateProject } from './views/project/CreateProject';
 import { LoginPage } from './components/LoginPage';
 import { MyPage } from './components/MyPage';
@@ -16,6 +15,8 @@ import ErrorPage from './views/ErrorPage';
 import MainPage from './views/MainPage';
 import { setNavigator } from './utils/navigator';
 import { ProjectsPage } from './views/project/ProjectsPage';
+
+const AdminDashboard = lazy(() => import('./views/admin/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
 
 export default function App() {
   const { setLoginUser, resetLoginUser } = useLoginUserStore();
@@ -42,16 +43,17 @@ export default function App() {
   }, [cookie.accessToken]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <NavigatorRegistrar />
-      <Navbar />
-      <Routes>
-        <Route path='/' element={<MainPage />} />
+    <Suspense fallback={<div>Loading...</div>}>
+      <div className="min-h-screen bg-gray-50">
+        <NavigatorRegistrar />
+        <Navbar />
+        <Routes>
+          <Route path='/' element={<MainPage />} />
 
-        <Route path='/auth'>
-          <Route path='register' element={<RegisterPage />} />
-          <Route path='login' element={<LoginPage />} />
-        </Route>
+          <Route path='/auth'>
+            <Route path='register' element={<RegisterPage />} />
+            <Route path='login' element={<LoginPage />} />
+          </Route>
 
         <Route path='/project'>
           <Route index element={<ProjectsPage />} />
@@ -61,19 +63,20 @@ export default function App() {
           <Route path='create' element={<CreateProject />} />
         </Route>
 
-        <Route path='/user'>
-          <Route path='mypage' element={<MyPage />} />
-        </Route>
+          <Route path='/user'>
+            <Route path='mypage' element={<MyPage />} />
+          </Route>
 
-        <Route path='/admin'>
-          <Route path='dashboard' element={<AdminDashboard />} />
-          <Route path='cs' element={<CustomerCenterPage />} />
-          <Route path='test2' element={<AdminCS />} />
-        </Route>
+          <Route path='/admin'>
+            <Route path='dashboard' element={<AdminDashboard />} />
+            <Route path='cs' element={<CustomerCenterPage />} />
+            <Route path='test2' element={<AdminCS />} />
+          </Route>
 
-        <Route path="/error" element={<ErrorPage />} />
-        <Route path="*" element={<ErrorPage />} />
-      </Routes>
-    </div>
+          <Route path="/error" element={<ErrorPage />} />
+          <Route path="*" element={<ErrorPage />} />
+        </Routes>
+      </div>
+    </Suspense>
   );
 }

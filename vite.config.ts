@@ -11,4 +11,11 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  css: {
+    devSourcemap: false,   // CSS 소스맵 끄기 → dev 로딩 가벼워짐(특히 Firefox)
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query'],
+    esbuildOptions: { target: 'es2020' },
+  },
 })
