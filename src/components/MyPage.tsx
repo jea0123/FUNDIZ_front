@@ -16,8 +16,9 @@ import { endpoints, getData } from '@/api/apis';
 import type { LoginUser } from '@/types';
 //import { set } from 'date-fns';
 //import { useParams } from 'react-router-dom';
-import type { Backingdetail } from '@/types/backing';
+import type { BackingMyPageDetail } from '@/types/backing';
 import type { LikedDetail } from '@/types/liked';
+
 
 // const mockSupportedProjects = [
 //     {
@@ -58,7 +59,7 @@ export function MyPage() {
     const navigate = useNavigate();
     const[loginUser, setLoginUser] = useState<LoginUser>();
     //const[projects, setProjects] =useState<ProjectDetail[]>();
-    const[backingProjects, setBackingProjects] = useState<Backingdetail[]>();
+    const[backingProjects, setBackingProjects] = useState<BackingMyPageDetail[]>();
     const[likedProjects, setLikedProjects] = useState<LikedDetail[]>();
 
     useEffect(()=> {
@@ -190,7 +191,7 @@ export function MyPage() {
                                                     <h4 className="font-medium mb-1">{backingList.backingReward.backingProject.title}</h4>
                                                     <p className="text-sm text-gray-600 mb-2">{backingList.backingReward.rewardName}</p>
                                                     <div className="flex items-center space-x-4 text-sm">
-                                                        <span>후원금액: {formatCurrency(backingList.backing.amount)}원</span>
+                                                        <span>후원금액: {formatCurrency(backingList.price)}원</span>
                                                         <Badge
                                                             variant={backingList.backing.backingStatus=== 'PENDING' ? 'default' : 'secondary'}
                                                         >
