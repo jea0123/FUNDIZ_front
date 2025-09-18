@@ -1,12 +1,11 @@
 import React, { useState } from "react";
-import { Megaphone, HelpCircle, MessageCircle, Paperclip, Send } from "lucide-react";
+import { Megaphone, MessageCircle, Paperclip, Send } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -31,25 +30,6 @@ export function CustomerCenterPage() {
     const pageSize = 5;
     const paged = notices.slice((page - 1) * pageSize, page * pageSize);
     const pageCount = Math.ceil(notices.length / pageSize);
-
-    const [faqOpen, setFaqOpen] = useState<string | undefined>(undefined);
-    const faqs = [
-        {
-            id: "F-1",
-            q: "후원 취소/환불은 어떻게 하나요?",
-            a: "프로젝트 종료 전에는 결제 예정 금액 취소가 가능하며, 종료 후에는 크리에이터 정책에 따라 환불이 진행됩니다."
-        },
-        {
-            id: "F-2",
-            q: "리워드 배송 조회는 어디서 하나요?",
-            a: "마이페이지 > 주문/결제에서 각 주문의 배송 단계를 확인할 수 있습니다."
-        },
-        {
-            id: "F-3",
-            q: "계정/보안 관련 문의는 어디로?",
-            a: "고객센터 1:1 문의에서 “계정/보안” 분류로 접수해 주세요."
-        }
-    ];
 
     const [tickets, setTickets] = useState([
         { id: "T-240801", category: "결제/영수증", title: "영수증 재발행 부탁드립니다", status: "답변완료", createdAt: "2025-08-01" },
@@ -97,9 +77,8 @@ export function CustomerCenterPage() {
                 </div>
 
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-                    <TabsList className="grid grid-cols-4 w-full md:w-auto">
+                    <TabsList className="grid grid-cols-3 w-full md:w-auto">
                         <TabsTrigger value="notice" className="flex items-center gap-1"><Megaphone className="w-4 h-4" /> 공지사항</TabsTrigger>
-                        <TabsTrigger value="faq" className="flex items-center gap-1"><HelpCircle className="w-4 h-4" /> 자주하는 질문</TabsTrigger>
                         <TabsTrigger value="ticket" className="flex items-center gap-1"><MessageCircle className="w-4 h-4" /> 1:1 문의</TabsTrigger>
                         <TabsTrigger value="report" className="flex items-center gap-1"><MessageCircle className="w-4 h-4" /> 신고하기</TabsTrigger>
                     </TabsList>
@@ -139,25 +118,6 @@ export function CustomerCenterPage() {
                                         <Button variant="outline" size="sm" disabled={page === pageCount} onClick={() => setPage(p => Math.min(pageCount, p + 1))}>다음</Button>
                                     </div>
                                 </div>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-
-                    <TabsContent value="faq">
-                        <Card>
-                            <CardHeader className="flex items-center justify-between">
-                                <CardTitle className="flex items-center gap-2"><HelpCircle className="w-5 h-5" /> 자주하는 질문</CardTitle>
-                                <span className="text-sm text-zinc-500">총 {faqs.length}건</span>
-                            </CardHeader>
-                            <CardContent>
-                                <Accordion type="single" collapsible value={faqOpen} onValueChange={setFaqOpen}>
-                                    {faqs.map(f => (
-                                        <AccordionItem key={f.id} value={f.id}>
-                                            <AccordionTrigger className="text-left">{f.q}</AccordionTrigger>
-                                            <AccordionContent className="text-zinc-600 text-sm leading-relaxed">{f.a}</AccordionContent>
-                                        </AccordionItem>
-                                    ))}
-                                </Accordion>
                             </CardContent>
                         </Card>
                     </TabsContent>
@@ -287,7 +247,6 @@ export function runCustomerCenterPageTests() {
         hasComponent: typeof dummyPage === 'function',
         initialTab: 'notice',
         noticesCount: 12,
-        faqsCount: 3,
         ticketsCount: 2,
         reportsCount: 1
     };
