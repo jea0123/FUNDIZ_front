@@ -2,6 +2,7 @@
 import { appNavigate } from '@/utils/navigator';
 import type { AxiosResponse } from 'axios';
 import axios from 'axios';
+import { use } from 'react';
 
 const axiosInstance = axios.create({
     baseURL: 'http://localhost:9099/api/v1',
@@ -29,13 +30,14 @@ const api = {
 };
 
 export const endpoints = {
-    checkEmail: '/auth/checkEmail',
-    checkNickname: '/auth/checkNickname',
+    checkEmail: '/auth/checkEmail',    checkNickname: '/auth/checkNickname',
     signUp: '/auth/signUp',
     signIn: '/auth/signIn',
     getLoginUser: '/user/loginUser',
     getRecentTop10: '/project/recent-top10',
     getMypage: (userId : number) => `/user/me/userPage/${userId}`,
+    getAddressList: (userId: number) =>  `/shipping/${userId}/list`,
+    createAddress: (userId: number) => `/shipping/${userId}/add`,
     getBackingList: (userId: number)=>`/Backing/me/backingPage/${userId}`,
     getBackingDetail: (userId: number, projectId: number, rewardId: number) => `/Backing/me/backingPage/${userId}/project/${projectId}/reward/${rewardId}`,
     getLikedList: (userId: number) => `/user/me/likedList/${userId}`,
