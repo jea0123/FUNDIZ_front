@@ -10,7 +10,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 
-export function CustomerCenterPage() {
+export function CSPage() {
     const [activeTab, setActiveTab] = useState("notice");
 
     const [notices] = useState(
