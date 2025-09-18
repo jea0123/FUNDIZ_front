@@ -73,6 +73,8 @@ export default function App() {
             <Route path='test2' element={<AdminCS />} />
           </Route>
 
+          <Route path="/cs" element={<CSPage />} />
+
           <Route path="/error" element={<ErrorPage />} />
           <Route path="*" element={<ErrorPage />} />
         </Routes>
