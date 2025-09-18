@@ -55,6 +55,7 @@ export const endpoints = {
     getSubcategories: '/categories/subcategories',
     getRewardSalesTop: (period: string, metric: string) => `/admin/reward-sales-top?period=${period}&metric=${metric}`,
     getProjectPage: '/project/search',
+    getNotice: 'cs/notice',
 };
 
 export const getData = async (url: string, accessToken?: string) => {

@@ -15,6 +15,7 @@ import ErrorPage from './views/ErrorPage';
 import MainPage from './views/MainPage';
 import { setNavigator } from './utils/navigator';
 import { ProjectsPage } from './views/project/ProjectsPage';
+import { CSPage } from './views/cs/CSPage';
 
 const AdminDashboard = lazy(() => import('./views/admin/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
 
@@ -72,6 +73,8 @@ export default function App() {
             <Route path='cs' element={<CustomerCenterPage />} />
             <Route path='test2' element={<AdminCS />} />
           </Route>
+
+          <Route path="/cs" element={<CSPage />} />
 
           <Route path="/error" element={<ErrorPage />} />
           <Route path="*" element={<ErrorPage />} />
