@@ -39,37 +39,6 @@ import type {
   AddrUpdateRequest,
   AddressResponse,
 } from "@/types/address";
-// const mockSupportedProjects = [
-//     {
-//         id: '1',
-//         title: '혁신적인 스마트 홈 IoT 디바이스',
-//         image: 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=200',
-//         amount: 80000,
-//         reward: '스탠다드 패키지',
-//         status: '진행중',
-//         date: '2024-02-01',
-//     },
-//     {
-//         id: '2',
-//         title: '친환경 대나무 패션 액세서리',
-//         image: 'https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=200',
-//         amount: 45000,
-//         reward: '베이직 세트',
-//         status: '발송완료',
-//         date: '2024-01-15',
-//     },
-// ];
-
-// const mockWishlistProjects = [
-//     {
-//         id: '3',
-//         title: '귀여운 동물 캐릭터 굿즈 세트',
-//         image: 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=200',
-//         creator: '큐티팩토리',
-//         daysLeft: 8,
-//         achievementRate: 140,
-//     },
-// ];
 
 export function MyPage() {
   const [editMode, setEditMode] = useState(false);
@@ -88,6 +57,7 @@ export function MyPage() {
     recipientPhone: "",
     isDefault: "N",
   });
+  const [activeTab, setActiveTab] = useState("supported"); // 왼쪽 버튼 클릭 시 오른쪽 탭 제어
   const [backingProjects, setBackingProjects] =
     useState<BackingMyPageDetail[]>();
   const [likedProjects, setLikedProjects] = useState<LikedDetail[]>();
@@ -189,143 +159,19 @@ export function MyPage() {
           </Card>
 
           <div className="mt-6 space-y-2">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="ghost" className="w-full justify-start">
-                  <Package className="mr-2 h-4 w-4" />
-                  후원한 프로젝트
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>후원한 프로젝트</DialogTitle>
-                  <DialogDescription>후원한 프로젝트</DialogDescription>
-                </DialogHeader>
-                <div className="mt-4 max-h-[500px] overflow-y-auto space-y-4 mt-4">
-                  {backingProjects && backingProjects.length > 0 ? (
-                    backingProjects.map((backing) => (
-                      <div
-                        key={backing.backingReward.backingProject.projectId}
-                        className="flex items-center space-x-4 p-3 border rounded-lg"
-                      >
-                        {/* 썸네일 */}
-                        <ImageWithFallback
-                          src={backing.backingReward.backingProject.thumbnail}
-                          alt={backing.backingReward.backingProject.title}
-                          className="w-14 h-14 object-cover rounded"
-                        />
+            <Button variant="ghost" className="w-full justify-start"
+              onClick={() => setActiveTab("supported")}>
+                <Package className="mr-2 h-4 w-4"/>
+                후원한 프로젝트
+              </Button>
 
-                        {/* 프로젝트 정보 */}
-                        <div className="flex-1">
-                          <h4 className="font-medium">
-                            {backing.backingReward.backingProject.title}
-                          </h4>
-                          <p className="text-sm text-gray-600">
-                            {backing.backingReward.rewardName}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            후원금액: {formatCurrency(backing.price)}원
-                          </p>
-                          <p className="text-xs text-gray-400">
-                            배송 예정일:{" "}
-                            {backing.backingReward.deliveryDate
-                              ? new Date(backing.backingReward.deliveryDate)
-                                  .toISOString()
-                                  .split("T")[0]
-                              : "미정"}
-                          </p>
-                        </div>
-
-                        {/* 버튼 */}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() =>
-                            navigate(
-                              `/project/${backing.backingReward.backingProject.projectId}`
-                            )
-                          }
-                        >
-                          상세보기
-                        </Button>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-gray-500 text-center">
-                      후원한 프로젝트가 없습니다.
-                    </p>
-                  )}
-                </div>
-              </DialogContent>
-            </Dialog>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="ghost" className="w-full justify-start">
-                  <Heart className="mr-2 h-4 w-4" />
-                  찜한 프로젝트
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>찜한 프로젝트</DialogTitle>
-                </DialogHeader>
-                <div className="mt-4 max-h-[500px] overflow-y-auto space-y-4 mt-4">
-                  {likedProjects && likedProjects.length > 0 ? (
-                    likedProjects.map((liked,index) => (
-                      <div
-                        key={`${liked.projectId}-${index}`}
-                        className="flex items-center space-x-4 p-3 border rounded-lg"
-                      >
-                        {/* 썸네일 */}
-                        <ImageWithFallback
-                          src={liked.thumbnail}
-                          alt={liked.title}
-                          className="w-14 h-14 object-cover rounded"
-                        />
-
-                        {/* 프로젝트 정보 */}
-                        <div className="flex-1">
-                          <h4 className="font-medium">{liked.title}</h4>
-                          <p className="text-sm text-gray-600">
-                            by {liked.creatorName}
-                          </p>
-                          <div className="flex items-center gap-3 text-sm text-gray-500">
-                            <span>
-                              달성률:{" "}
-                              {(
-                                (liked.currAmount / liked.goalAmount) *
-                                100
-                              ).toFixed(1)}
-                              %
-                            </span>
-                            <span>{4}일 남음</span>
-                          </div>
-                        </div>
-
-                        {/* 버튼 */}
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() =>
-                              navigate(`/project/${liked.projectId}`)
-                            }
-                          >
-                            상세보기
-                          </Button>
-                          <Button size="sm">후원하기</Button>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-gray-500 text-center">
-                      찜한 프로젝트가 없습니다.
-                    </p>
-                  )}
-                </div>
-              </DialogContent>
-            </Dialog>
-
+              <Button variant="ghost" className="w-full justify-start"
+              onClick={() => setActiveTab("wishlist")}>
+                <Heart className="mr-2 h-4 w-4" />
+                찜한 프로젝트
+              </Button>
+                  
+            
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="ghost" className="w-full justify-start">
@@ -645,33 +491,18 @@ export function MyPage() {
               </DialogContent>
             </Dialog>
 
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="ghost" className="w-full justify-start">
-                  <Bell className="mr-2 h-4 w-4" />
-                  알림 설정
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>알림 설정</DialogTitle>
-                </DialogHeader>
-                <div className="mt-4 max-h-[400px] overflow-y-auto space-y-4">
-                  {/* 알림 설정 내용 */}
-                </div>
-              </DialogContent>
-            </Dialog>
+            <Button variant="ghost" className="w-full justify-start"
+              onClick={() => setActiveTab("notifications")}>
+                <Bell className="mr-2 h-4 w-4"/>
+                알림
+              </Button>
           </div>
         </div>
 
+        {/* 오른쪽 탭 */}
         <div className="lg:col-span-3">
-          <Tabs defaultValue="supported" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="supported">후원한 프로젝트</TabsTrigger>
-              <TabsTrigger value="wishlist">찜한 프로젝트</TabsTrigger>
-              <TabsTrigger value="notifications">알림</TabsTrigger>
-            </TabsList>
-
+          <Tabs value={activeTab} className="w-full">
+            {/* 후원한 프로젝트 */}
             <TabsContent value="supported" className="mt-6">
               <Card>
                 <CardHeader>
@@ -755,6 +586,7 @@ export function MyPage() {
               </Card>
             </TabsContent>
 
+            {/* 찜한 프로젝트 */}
             <TabsContent value="wishlist" className="mt-6">
               <Card>
                 <CardHeader>
@@ -812,28 +644,7 @@ export function MyPage() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="profile" className="mt-6">
-              <Card className="mt-6">
-                <CardHeader>
-                  <CardTitle>계정 관리</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Button variant="outline" className="w-full">
-                    비밀번호 변경
-                  </Button>
-                  <Button variant="outline" className="w-full">
-                    배송지 관리
-                  </Button>
-                  <Button variant="outline" className="w-full">
-                    결제 수단 관리
-                  </Button>
-                  <Button variant="destructive" className="w-full">
-                    회원 탈퇴
-                  </Button>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
+            {/* 알림 설정 */}
             <TabsContent value="notifications" className="mt-6">
               <Card>
                 <CardHeader>
@@ -884,3 +695,5 @@ export function MyPage() {
     </div>
   );
 }
+
+        
