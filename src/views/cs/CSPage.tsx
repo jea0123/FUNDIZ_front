@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Megaphone, MessageCircle, Paperclip, Send } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,25 +9,28 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import type { Notice } from '@/types/notice';
+import { formatDate } from '@/utils/utils';
+import { endpoints, getData } from "@/api/apis";
 
 export function CSPage() {
     const [activeTab, setActiveTab] = useState("notice");
 
-    const [notices] = useState(
-        Array.from({ length: 12 }).map((_, i) => ({
-            id: `N-${1000 + i}`,
-            title:
-                i % 3 === 0
-                    ? "[점검] 결제 시스템 정기 점검 안내"
-                    : i % 3 === 1
-                        ? "배송 관련 자주 묻는 질문 모음"
-                        : "신규 카테고리 오픈 알림",
-            createdAt: `2025-07-${(i % 28 + 1).toString().padStart(2, "0")}`,
-            pinned: i < 2
-        }))
-    );
+    const [notices, setNotices] = useState<Notice[]>([]);
+
+    const getNotices = async () => {
+        const response = await getData(endpoints.getNotices);
+        if (response.status === 200) {
+            setNotices(response.data);
+        }
+    };
+
+    useEffect(() => {
+            getNotices();
+        }, []);
+
     const [page, setPage] = useState(1);
-    const pageSize = 5;
+    const pageSize = 10;
     const paged = notices.slice((page - 1) * pageSize, page * pageSize);
     const pageCount = Math.ceil(notices.length / pageSize);
 
@@ -95,20 +98,25 @@ export function CSPage() {
                                         <TableRow>
                                             <TableHead className="w-24">번호</TableHead>
                                             <TableHead>제목</TableHead>
+                                            <TableHead className="w-24">조회수</TableHead>
                                             <TableHead className="w-40">등록일</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {paged.map((n, idx) => (
-                                            <TableRow key={n.id}>
-                                                <TableCell>{(page - 1) * pageSize + idx + 1}</TableCell>
-                                                <TableCell>
-                                                    <span className={n.pinned ? "font-semibold text-zinc-900" : "text-zinc-700"}>{n.title}</span>
-                                                    {n.pinned && <Badge variant="secondary" className="ml-2 align-middle">중요</Badge>}
-                                                </TableCell>
-                                                <TableCell className="text-zinc-500">{n.createdAt}</TableCell>
+                                        {notices.length == 0 ? (
+                                            <TableRow>
+                                                <TableCell>게시글이 존재하지 않습니다.</TableCell>
+                                            </TableRow>
+                                        ) : (<>
+                                        {paged.map((ntc) => (
+                                            <TableRow key={ntc.noticeId}>
+                                                <TableCell>{ntc.noticeId}</TableCell>
+                                                <TableCell><a href={`/cs/notice/${ntc.noticeId}`}>{ntc.title}</a></TableCell>
+                                                <TableCell>{ntc.viewCnt}</TableCell>
+                                                <TableCell className="text-zinc-500">{formatDate(ntc.createdAt)}</TableCell>
                                             </TableRow>
                                         ))}
+                                        </>)}
                                     </TableBody>
                                 </Table>
                                 <div className="mt-4 flex items-center justify-between">
@@ -116,6 +124,7 @@ export function CSPage() {
                                     <div className="flex items-center gap-2">
                                         <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>이전</Button>
                                         <Button variant="outline" size="sm" disabled={page === pageCount} onClick={() => setPage(p => Math.min(pageCount, p + 1))}>다음</Button>
+                                        <Button variant="outline" size="sm"><a href={`/cs/notice/add`}>글쓰기</a></Button>
                                     </div>
                                 </div>
                             </CardContent>
@@ -241,8 +250,8 @@ export function CSPage() {
     );
 }
 
-export function runCustomerCenterPageTests() {
-    const dummyPage = CustomerCenterPage;
+export function runCSPageTests() {
+    const dummyPage = CSPage;
     return {
         hasComponent: typeof dummyPage === 'function',
         initialTab: 'notice',
