@@ -14,12 +14,13 @@ import {
   CreditCard,
   MapPin,
   Bell,
+  TrendingUpDown,
 } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useNavigate } from "react-router-dom";
 //import { useLoginUserStore } from '@/store/LoginUserStore.store';
 //import { endpoints } from '@/api/apis';
-import { endpoints, getData, postData } from "@/api/apis";
+import { endpoints, getData, postData, deleteData, putData } from "@/api/apis";
 import type { LoginUser } from "@/types";
 //import { set } from 'date-fns';
 //import { useParams } from 'react-router-dom';
@@ -57,10 +58,48 @@ export function MyPage() {
     recipientPhone: "",
     isDefault: "N",
   });
+
+  const [addrEdit, setAddrEdit] = useState<AddrUpdateRequest>({
+    addrId: 0,
+    userId: 4,
+    addrName: "",
+    recipient: "",
+    postalCode: "",
+    roadAddr: "",
+    detailAddr: "",
+    recipientPhone: "",
+    isDefault: "N",
+  });
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+
   const [activeTab, setActiveTab] = useState("supported"); // 왼쪽 버튼 클릭 시 오른쪽 탭 제어
   const [backingProjects, setBackingProjects] =
     useState<BackingMyPageDetail[]>();
   const [likedProjects, setLikedProjects] = useState<LikedDetail[]>();
+
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedAddrId, setSelectedAddrId] = useState<number | null>(null);
+
+  const MypageAddrDelete = async (addrId: number) => {
+    const response = await deleteData(endpoints.deleteAddress(4, addrId), {});
+    if (response.status === 200) {
+      alert("배송지가 삭제되었습니다.");
+
+      const addrResponse = await getData(endpoints.getAddressList(4));
+      if (addrResponse.status === 200) {
+        setAddressList(addrResponse.data);
+      }
+      setIsDeleteDialogOpen(false);
+      setSelectedAddrId(null);
+
+      return true;
+    } else {
+      alert("배송지 삭제 실패");
+      return false;
+    }
+  };
 
   const MypageAddrAdd = async (newAddr: AddrAddRequest) => {
     const response = await postData(endpoints.createAddress(4), newAddr);
@@ -71,8 +110,34 @@ export function MyPage() {
       if (addrResponse.status === 200) {
         setAddressList(addrResponse.data);
       }
+      return true;
+      setIsAddDialogOpen(false);
     } else {
       alert("배송지 추가 실패");
+      return false;
+    }
+  };
+
+  const MyPageAddrUpdate = async (
+    addrId: number,
+    updateAddr: AddrUpdateRequest
+  ) => {
+    const response = await putData(
+      endpoints.updateAddress(4, addrId),
+      updateAddr
+    );
+    if (response.status === 200) {
+      alert("배송지가 수정되었습니다.");
+
+      const addrResponse = await getData(endpoints.getAddressList(4));
+      if (addrResponse.status === 200) {
+        setAddressList(addrResponse.data);
+      }
+      setIsEditDialogOpen(false);
+      return true;
+    } else {
+      alert("배송지 수정 실패");
+      return false;
     }
   };
 
@@ -159,19 +224,24 @@ export function MyPage() {
           </Card>
 
           <div className="mt-6 space-y-2">
-            <Button variant="ghost" className="w-full justify-start"
-              onClick={() => setActiveTab("supported")}>
-                <Package className="mr-2 h-4 w-4"/>
-                후원한 프로젝트
-              </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+              onClick={() => setActiveTab("supported")}
+            >
+              <Package className="mr-2 h-4 w-4" />
+              후원한 프로젝트
+            </Button>
 
-              <Button variant="ghost" className="w-full justify-start"
-              onClick={() => setActiveTab("wishlist")}>
-                <Heart className="mr-2 h-4 w-4" />
-                찜한 프로젝트
-              </Button>
-                  
-            
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+              onClick={() => setActiveTab("wishlist")}
+            >
+              <Heart className="mr-2 h-4 w-4" />
+              찜한 프로젝트
+            </Button>
+
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="ghost" className="w-full justify-start">
@@ -253,7 +323,7 @@ export function MyPage() {
                 {/* 배송지 추후 수정예정 */}
                 <div className="mt-4 max-h-[400px] overflow-y-auto space-y-4">
                   {addrList && addrList.length > 0 ? (
-                    addrList.map((addr,index) => (
+                    addrList.map((addr, index) => (
                       <div
                         key={`${addr.addrId}-${index}`}
                         className="p-4 border rounded-lg flex items-start justify-between"
@@ -282,9 +352,12 @@ export function MyPage() {
                           </Button>
 
                           {/* 수정 버튼 (모달) */}
-                          <Dialog>
+                          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                             <DialogTrigger asChild>
-                              <Button size="sm" variant="outline">
+                              <Button size="sm" variant="outline" onClick={()=> {
+                                setAddrEdit(addr);
+                                setIsEditDialogOpen(true);
+                              }}>
                                 수정
                               </Button>
                             </DialogTrigger>
@@ -302,8 +375,9 @@ export function MyPage() {
                                   </label>
                                   <input
                                     type="text"
-                                    defaultValue={addr.addrName}
+                                    value={addrEdit.addrName}
                                     className="w-full border p-2 rounded"
+                                    onChange={(e) =>setAddrEdit({...addrEdit, addrName: e.target.value})}
                                   />
                                 </div>
                                 <div>
@@ -312,8 +386,9 @@ export function MyPage() {
                                   </label>
                                   <input
                                     type="text"
-                                    defaultValue={addr.recipient}
+                                    value={addrEdit.recipient}
                                     className="w-full border p-2 rounded"
+                                    onChange={(e) =>setAddrEdit({...addrEdit, recipient: e.target.value})}
                                   />
                                 </div>
                                 <div>
@@ -322,8 +397,9 @@ export function MyPage() {
                                   </label>
                                   <input
                                     type="text"
-                                    defaultValue={addr.postalCode}
+                                    value={addrEdit.postalCode}
                                     className="w-full border p-2 rounded"
+                                    onChange={(e) => setAddrEdit({...addrEdit, postalCode: e.target.value})}
                                   />
                                 </div>
                                 <div>
@@ -332,8 +408,9 @@ export function MyPage() {
                                   </label>
                                   <input
                                     type="text"
-                                    defaultValue={addr.roadAddr}
+                                    value={addrEdit.roadAddr}
                                     className="w-full border p-2 rounded"
+                                    onChange={(e)=> setAddrEdit({...addrEdit, roadAddr: e.target.value})}
                                   />
                                 </div>
                                 <div>
@@ -342,8 +419,9 @@ export function MyPage() {
                                   </label>
                                   <input
                                     type="text"
-                                    defaultValue={addr.detailAddr}
+                                    value={addrEdit.detailAddr}
                                     className="w-full border p-2 rounded"
+                                    onChange={(e)=> setAddrEdit({...addrEdit, detailAddr:e.target.value})}
                                   />
                                 </div>
 
@@ -353,8 +431,9 @@ export function MyPage() {
                                   </label>
                                   <input
                                     type="text"
-                                    defaultValue={addr.recipientPhone}
+                                    value={addrEdit.recipientPhone}
                                     className="w-full border p-2 rounded"
+                                    onChange={(e)=>setAddrEdit({...addrEdit, recipientPhone:e.target.value})}
                                   />
                                 </div>
 
@@ -365,11 +444,33 @@ export function MyPage() {
                                   </label>
                                   <div className="flext gap-6">
                                     <label className="flex items-center gap-2">
-                                      <input type="radio" name="isDefaualt" value = "Y" checked={addrAdd.isDefault === "Y"} onChange={(e)=> setAddrAdd({...addrAdd, isDefault: e.target.value})}/>
+                                      <input
+                                        type="radio"
+                                        name="isDefaualt"
+                                        value="Y"
+                                        checked={addrEdit.isDefault === "Y"}
+                                        onChange={(e) =>
+                                          setAddrEdit({
+                                            ...addrEdit,
+                                            isDefault: e.target.value,
+                                          })
+                                        }
+                                      />
                                       기본 배송지
                                     </label>
-                                    <label className ="flex items-center gap-2">
-                                      <input type="radio" name="isDefaualt" value = "N" checked={addrAdd.isDefault === "N"} onChange={(e)=> setAddrAdd({...addrAdd, isDefault: e.target.value})}/>
+                                    <label className="flex items-center gap-2">
+                                      <input
+                                        type="radio"
+                                        name="isDefaualt"
+                                        value="N"
+                                        checked={addrEdit.isDefault === "N"}
+                                        onChange={(e) =>
+                                          setAddrEdit({
+                                            ...addrEdit,
+                                            isDefault: e.target.value,
+                                          })
+                                        }
+                                      />
                                       보조 배송지
                                     </label>
                                   </div>
@@ -380,13 +481,24 @@ export function MyPage() {
                                 <DialogClose asChild>
                                   <Button variant="outline">취소</Button>
                                 </DialogClose>
-                                <Button onClick={() => {
-                                  if(!addrAdd.addrName || !addrAdd.recipient || !addrAdd.postalCode || !addrAdd.roadAddr || !addrAdd.detailAddr || !addrAdd.recipientPhone){ 
-                                    alert("모든 항목을 입력해주세요.");
-                                    return; 
-                                  }
-                                  MypageAddrAdd(addrAdd);
-                                }}>저장</Button>
+                                <Button
+                                  onClick={() => {
+                                    if (
+                                      !addrEdit.addrName ||
+                                      !addrEdit.recipient ||
+                                      !addrEdit.postalCode ||
+                                      !addrEdit.roadAddr ||
+                                      !addrEdit.detailAddr ||
+                                      !addrEdit.recipientPhone
+                                    ) {
+                                      alert("모든 항목을 입력해주세요.");
+                                      return;
+                                    }
+                                    MyPageAddrUpdate(addrEdit.addrId,addrEdit);
+                                  }}
+                                >
+                                  저장
+                                </Button>
                               </div>
                             </DialogContent>
                           </Dialog>
@@ -406,8 +518,22 @@ export function MyPage() {
                                 </DialogDescription>
                               </DialogHeader>
                               <div className="mt-4 flex justify-end gap-2">
-                                <Button variant="outline">취소</Button>
-                                <Button variant="destructive">삭제</Button>
+                                <DialogClose asChild>
+                                  <Button variant="outline">취소</Button>
+                                </DialogClose>
+                                <Button
+                                  variant="destructive"
+                                  onClick={async () => {
+                                    const result = await MypageAddrDelete(
+                                      addr.addrId
+                                    );
+                                    if (result) {
+                                      setIsDeleteDialogOpen(false);
+                                    }
+                                  }}
+                                >
+                                  삭제
+                                </Button>
                               </div>
                             </DialogContent>
                           </Dialog>
@@ -423,7 +549,10 @@ export function MyPage() {
 
                 {/* 하단 추가 버튼 (모달) */}
                 <div className="mt-4">
-                  <Dialog>
+                  <Dialog
+                    open={isAddDialogOpen}
+                    onOpenChange={setIsAddDialogOpen}
+                  >
                     <DialogTrigger asChild>
                       <Button className="w-full">배송지 추가</Button>
                     </DialogTrigger>
@@ -439,26 +568,68 @@ export function MyPage() {
                           type="text"
                           placeholder="배송지 이름"
                           className="w-full border p-2 rounded"
+                          value={addrAdd.addrName}
+                          onChange={(e) =>
+                            setAddrAdd({ ...addrAdd, addrName: e.target.value })
+                          }
                         />
                         <input
                           type="text"
                           placeholder="받는 사람"
                           className="w-full border p-2 rounded"
+                          value={addrAdd.recipient}
+                          onChange={(e) =>
+                            setAddrAdd({
+                              ...addrAdd,
+                              recipient: e.target.value,
+                            })
+                          }
                         />
                         <input
                           type="text"
                           placeholder="연락처"
                           className="w-full border p-2 rounded"
+                          value={addrAdd.recipientPhone}
+                          onChange={(e) =>
+                            setAddrAdd({
+                              ...addrAdd,
+                              recipientPhone: e.target.value,
+                            })
+                          }
                         />
+                        <input
+                          type="text"
+                          placeholder="우편번호"
+                          className="w-full border p-2 rounded"
+                          value={addrAdd.postalCode}
+                          onChange={(e) =>
+                            setAddrAdd({
+                              ...addrAdd,
+                              postalCode: e.target.value,
+                            })
+                          }
+                        />
+
                         <input
                           type="text"
                           placeholder="도로명 주소"
                           className="w-full border p-2 rounded"
+                          value={addrAdd.roadAddr}
+                          onChange={(e) =>
+                            setAddrAdd({ ...addrAdd, roadAddr: e.target.value })
+                          }
                         />
                         <input
                           type="text"
                           placeholder="상세 주소"
                           className="w-full border p-2 rounded"
+                          value={addrAdd.detailAddr}
+                          onChange={(e) =>
+                            setAddrAdd({
+                              ...addrAdd,
+                              detailAddr: e.target.value,
+                            })
+                          }
                         />
                       </div>
                       <div className="mt-4 flex justify-end gap-2">
@@ -466,7 +637,7 @@ export function MyPage() {
                           <Button variant="outline">취소</Button>
                         </DialogClose>
                         <Button
-                          onClick={() => {
+                          onClick={async () => {
                             if (
                               !addrAdd.addrName ||
                               !addrAdd.recipient ||
@@ -479,7 +650,19 @@ export function MyPage() {
                               alert("모든 항목을 입력해주세요.");
                               return;
                             }
-                            MypageAddrAdd(addrAdd!);
+                            const result = await MypageAddrAdd(addrAdd);
+                            if (result) {
+                              setAddrAdd({
+                                addrName: "",
+                                recipient: "",
+                                postalCode: "",
+                                roadAddr: "",
+                                detailAddr: "",
+                                recipientPhone: "",
+                                isDefault: "N",
+                              });
+                              setIsAddDialogOpen(false);
+                            }
                           }}
                         >
                           추가
@@ -491,11 +674,14 @@ export function MyPage() {
               </DialogContent>
             </Dialog>
 
-            <Button variant="ghost" className="w-full justify-start"
-              onClick={() => setActiveTab("notifications")}>
-                <Bell className="mr-2 h-4 w-4"/>
-                알림
-              </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+              onClick={() => setActiveTab("notifications")}
+            >
+              <Bell className="mr-2 h-4 w-4" />
+              알림
+            </Button>
           </div>
         </div>
 
@@ -598,7 +784,7 @@ export function MyPage() {
                   <div className="space-y-4">
                     {likedProjects?.map((likedList) => (
                       <div
-                        key={likedList.userId}
+                        key={likedList.projectId}
                         className="flex items-center space-x-4 p-4 border rounded-lg"
                       >
                         <ImageWithFallback
@@ -695,5 +881,3 @@ export function MyPage() {
     </div>
   );
 }
-
-        
