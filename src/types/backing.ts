@@ -47,3 +47,30 @@ export interface BackingRewardList{
     deliveryDate : Date | null;
 }
 
+export interface BackingPrepare {
+  userId: number;
+  nickname: string;
+  email: string;
+
+  creatorId: number;
+  creatorName: string;
+  profileImg: string;
+
+  projectId: number;
+  title: string;
+  thumbnail: string;
+
+  addrId: number;
+  addrName: string;
+  recipient: string;
+  postalCode: string;
+  roadAddr: string;
+  detailAddr: string;
+  recipientPhone: string;
+  isDefault: string;
+
+  rewardId: number;
+  rewardName: string;
+  price: number;
+  deliveryDate: string;
+}

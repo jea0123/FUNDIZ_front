@@ -48,7 +48,7 @@ export function MyPage() {
   const navigate = useNavigate();
   const [loginUser, setLoginUser] = useState<LoginUser>();
   //const[projects, setProjects] =useState<ProjectDetail[]>();
-  const [addrList, setAddressList] = useState<AddressResponse[]>();
+  const [addrList, setAddressList] = useState<AddressResponse[]>();11
   const [addrAdd, setAddrAdd] = useState<AddrAddRequest>({
     addrName: "",
     recipient: "",
