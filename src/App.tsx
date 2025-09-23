@@ -17,6 +17,7 @@ import { setNavigator } from './utils/navigator';
 import { ProjectsPage } from './views/project/ProjectsPage';
 import { CSPage } from './views/cs/CSPage';
 import { NoticeDetailPage } from './views/cs/NoticeDetail';
+import { AdminCSBackup } from './components/AdminCS copy';
 
 const AdminDashboard = lazy(() => import('./views/admin/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
 
@@ -73,6 +74,7 @@ export default function App() {
             <Route path='dashboard' element={<AdminDashboard />} />
             <Route path='cs' element={<CustomerCenterPage />} />
             <Route path='test2' element={<AdminCS />} />
+            <Route path='test3' element={<AdminCSBackup />} />
           </Route>
 
           <Route path="/cs">

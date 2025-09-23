@@ -74,9 +74,6 @@ export function CSPage() {
             <div className="mx-auto max-w-6xl px-5 py-8">
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl md:text-3xl font-bold text-zinc-900">고객센터</h1>
-                    <div className="hidden md:flex items-center gap-2">
-                        <Input placeholder="키워드 검색" className="w-64" />
-                    </div>
                 </div>
 
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
@@ -124,7 +121,6 @@ export function CSPage() {
                                     <div className="flex items-center gap-2">
                                         <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>이전</Button>
                                         <Button variant="outline" size="sm" disabled={page === pageCount} onClick={() => setPage(p => Math.min(pageCount, p + 1))}>다음</Button>
-                                        <Button variant="outline" size="sm"><a href={`/cs/notice/add`}>글쓰기</a></Button>
                                     </div>
                                 </div>
                             </CardContent>
