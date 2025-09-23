@@ -35,9 +35,6 @@ export function NoticeDetailPage() {
             <div className="mx-auto max-w-6xl px-5 py-8">
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl md:text-3xl font-bold text-zinc-900">고객센터</h1>
-                    <div className="hidden md:flex items-center gap-2">
-                        <Input placeholder="키워드 검색" className="w-64" />
-                    </div>
                 </div>
 
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
