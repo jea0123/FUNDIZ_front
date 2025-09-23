@@ -221,7 +221,7 @@ export function RecentView({ title, perRow = 5, }: { title?: string; perRow?: nu
 }
 
 /* ------------------------------- Project Card ---------------------------- */
-function ProjectCard({ items }: { items: any; }) {
+export function ProjectCard({ items }: { items: any; }) {
     const navigate = useNavigate();
 
     function onClickCard(projectId: number) {
