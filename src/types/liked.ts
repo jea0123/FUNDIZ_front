@@ -9,6 +9,7 @@ export interface LikedDetail{
     projectId: number;
     createdAt : Date;
 
+    creatorId : number;
     creatorName: string;
 
     title: string;
