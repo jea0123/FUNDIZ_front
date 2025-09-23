@@ -17,6 +17,7 @@ import { setNavigator } from './utils/navigator';
 import { CSPage } from './views/cs/CSPage';
 import { NoticeDetailPage } from './views/cs/NoticeDetail';
 import ProjectsAllPage, { ProjectByCategoryPage, ProjectBySubcategoryPage } from './views/project/ProjectAllPage';
+import { FundingPage } from './components/FundingPage';
 
 const AdminDashboard = lazy(() => import('./views/admin/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
 
@@ -63,6 +64,11 @@ export default function App() {
           <Route path='category/:ctgrId/:subctgrId' element={<ProjectBySubcategoryPage />} />
           <Route path=':projectId' element={<ProjectDetailPage />} />
           <Route path='create' element={<CreateProject />} />
+          <Route path=':projectId/backing' element={<FundingPage onBackClick={function (): void {
+              throw new Error('Function not implemented.');
+            } } onCompleteClick={function (): void {
+              throw new Error('Function not implemented.');
+            } } />} />
         </Route>
 
           <Route path='/user'>
@@ -73,6 +79,7 @@ export default function App() {
             <Route path='dashboard' element={<AdminDashboard />} />
             <Route path='cs' element={<CustomerCenterPage />} />
             <Route path='test2' element={<AdminCS />} />
+            <Route path='test3' element={<AdminCSBackup />} />
           </Route>
 
           <Route path="/cs">

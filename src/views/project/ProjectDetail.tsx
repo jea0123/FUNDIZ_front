@@ -12,8 +12,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
 import { Progress } from '@/components/ui/progress';
+import { useNavigate } from 'react-router-dom';
 
 export function ProjectDetailPage() {
+    const navigate = useNavigate();
     const { projectId } = useParams();
 
     const [project, setProject] = useState<ProjectDetail>();
@@ -59,8 +61,10 @@ export function ProjectDetailPage() {
     };
 
     const handleSupport = (rewardId: number) => {
+        if(!projectId)
+            return;
         setSelectedReward(rewardId);
-        alert('후원하기 페이지로 이동합니다.');
+        navigate(`/project/${projectId}/backing?rewardId=${rewardId}`)
     };
 
     const handleShare = () => {
