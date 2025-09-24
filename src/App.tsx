@@ -61,7 +61,7 @@ export default function App() {
         <Route path='/project'>
           <Route index element={<ProjectsAllPage />} />
           <Route path='category/:ctgrId' element={<ProjectByCategoryPage />} />
-          <Route path='category/:ctgrId/:subctgrId' element={<ProjectBySubcategoryPage />} />
+          <Route path='category/:ctgrId/subcategory/:subctgrId' element={<ProjectBySubcategoryPage />} />
           <Route path=':projectId' element={<ProjectDetailPage />} />
           <Route path='create' element={<CreateProject />} />
           <Route path=':projectId/backing' element={<FundingPage onBackClick={function (): void {
@@ -79,7 +79,6 @@ export default function App() {
             <Route path='dashboard' element={<AdminDashboard />} />
             <Route path='cs' element={<CustomerCenterPage />} />
             <Route path='test2' element={<AdminCS />} />
-            <Route path='test3' element={<AdminCSBackup />} />
           </Route>
 
           <Route path="/cs">

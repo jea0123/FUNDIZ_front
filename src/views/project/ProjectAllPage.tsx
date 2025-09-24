@@ -210,9 +210,9 @@ export function ProjectByCategoryPage() {
 }
 
 export function ProjectBySubcategoryPage() {
-    const { categoryId: catStr, subcategoryId: subStr } = useParams();
-    const categoryId = catStr ? Number(catStr) : undefined;
-    const subcategoryId = subStr ? Number(subStr) : undefined;
+    const { ctgrId, subctgrId } = useParams();
+    const categoryId = ctgrId ? Number(ctgrId) : undefined;
+    const subcategoryId = subctgrId ? Number(subctgrId) : undefined;
 
     if (!categoryId || !subcategoryId) return null;
 
