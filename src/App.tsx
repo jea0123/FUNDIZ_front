@@ -79,7 +79,6 @@ export default function App() {
             <Route path='dashboard' element={<AdminDashboard />} />
             <Route path='cs' element={<CustomerCenterPage />} />
             <Route path='test2' element={<AdminCS />} />
-            <Route path='test3' element={<AdminCSBackup />} />
           </Route>
 
           <Route path="/cs">
