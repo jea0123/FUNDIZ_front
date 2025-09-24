@@ -1,3 +1,4 @@
+import type { SortKey } from "@/views/project/components/SortBar";
 import type { News } from "./news";
 import type { Reward, RewardCreateRequestDto } from "./reward";
 import type { Tag } from "./tag";
@@ -117,3 +118,33 @@ export interface Subcategory {
     ctgrId: number;
     subctgrName: string;
 }
+
+export interface SearchProject {
+    keyword?: string;
+    ctgrId?: number;
+    subctgrId?: number;
+    sort?: SortKey;
+    // activeOnly?: boolean;
+
+    //프론트전용 추가
+    page?: number;
+    size?: number;
+}
+
+export interface PageResult<T> {
+    items: T[];
+    page: number;
+    size: number
+    perGroup: number;
+
+    totalElements: number;
+    totalPages: number;
+
+    hasPrev: boolean;
+    hasNext: boolean;
+    prevPage: number;
+    nextPage: number;
+
+    groupStart: number;
+    groupEnd: number;
+};

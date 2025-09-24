@@ -56,9 +56,13 @@ export const endpoints = {
     createProject: '/project',
     getSubcategories: '/categories/subcategories',
     getRewardSalesTop: (period: string, metric: string) => `/admin/reward-sales-top?period=${period}&metric=${metric}`,
-    getProjectPage: '/project/search',
+    getProjectAllPage: (page: number, size: number, ctgrId: number, subctgrId: number) => `/project/search?page=${page}&size=${size}&ctgrId=${ctgrId}&subctgrId=${subctgrId}`,
     getNotices: '/cs/notice',
     getNoticeDetail: (noticeId: number) => `/cs/notice/${noticeId}`,
+    getInquiries: '/cs/inquiry',
+    getInqDetail: (inqId: number) => `/cs/inquiry/${inqId}`, 
+    getReports: '/cs/report',
+    getReportDetail: (reportId: number) => `/cs/report/${reportId}`, 
 };
 
 export const getData = async (url: string, accessToken?: string) => {

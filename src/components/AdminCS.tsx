@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { Megaphone, HelpCircle, MessageCircle, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,35 +41,13 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { endpoints, getData } from "@/api/apis";
+import type { Notice } from '@/types/notice';
+import { formatDate } from '@/utils/utils';
+import type { Inquiry } from "@/types/inquiry";
 
 // ========= 공용 타입 (DB 스키마 기반) =========
-export type Notice = {
-    noticeId: number;
-    adId: number;
-    title: string;
-    content: string;
-    viewCnt: number;
-    createdAt: string;
-    updatedAt: string;
-    isDeleted: 'Y' | 'N';
-    deletedAt?: string | null;
-    files: FileMeta[];
-};
 
-export type Inquiry = {
-    inqId: number;
-    userId: number;
-    adId: number;
-    title: string;
-    content: string;
-    createdAt: string;
-    isCanceled: 'Y' | 'N';
-    canceledAt?: string | null;
-    ctgr: 'NORMAL' | 'PAYMENT' | 'DELIVERY' | 'ACCOUNT';
-    isAnswer: 'Y' | 'N';
-    files: FileMeta[];
-    replies: Reply[];
-};
 
 export type Reply = {
     replyId: number;
@@ -109,24 +87,27 @@ export type FileMeta = {
 export function AdminCS() {
     const [tab, setTab] = useState("notice");
 
-    const [notices, setNotices] = useState<Notice[]>([
-        {
-            noticeId: 1001, adId: 1, title: '정기 점검 안내', content: '8/30 02:00~04:00',
-            viewCnt: 23, createdAt: '2025-08-20', updatedAt: '2025-08-20', isDeleted: 'N', deletedAt: null,
-            files: [
-                { fileId: 9001, fileName: '점검상세.pdf', filePath: '/files/9001', fileSize: '120KB', fileType: 'application/pdf', fileExt: 'pdf', createdAt: '2025-08-20', isDeleted: 'N', deletedAt: null, code: 'NTC' }
-            ]
-        },
-        {
-            noticeId: 1002, adId: 1, title: '카테고리 오픈', content: '테크 · 리빙',
-            viewCnt: 5, createdAt: '2025-08-18', updatedAt: '2025-08-18', isDeleted: 'N', deletedAt: null,
-            files: []
-        }
-    ]);
+    const [notices, setNotices] = useState<Notice[]>([]);
+    
+        const getNotices = async () => {
+            const response = await getData(endpoints.getNotices);
+            if (response.status === 200) {
+                setNotices(response.data);
+            }
+        };
+    
+        useEffect(() => {
+                getNotices();
+            }, []);
 
+        const [page, setPage] = useState(1);
+        const pageSize = 10;
+        const paged = notices.slice((page - 1) * pageSize, page * pageSize);
+        const pageCount = Math.ceil(notices.length / pageSize);
+        
     const [noticeOpen, setNoticeOpen] = useState(false);
     const [editingNotice, setEditingNotice] = useState<Partial<Notice> | null>(null);
-    const openNewNotice = () => { setEditingNotice({ title: '', content: '', files: [] }); setNoticeOpen(true); };
+    const openNewNotice = () => { setEditingNotice({ title: '', content: '' }); setNoticeOpen(true); };
     const openEditNotice = (n: Notice) => { setEditingNotice({ ...n }); setNoticeOpen(true); };
     const saveNotice = () => {
         if (!editingNotice || !editingNotice.title?.trim() || !editingNotice.content?.trim()) return;
@@ -136,65 +117,56 @@ export function AdminCS() {
             const newId = Math.floor(Math.random() * 1e6);
             const now = new Date().toISOString().slice(0, 10);
             setNotices(prev => [{
-                noticeId: newId, adId: 1, title: editingNotice.title!, content: editingNotice.content!, viewCnt: 0,
-                createdAt: now, updatedAt: now, isDeleted: 'N', deletedAt: null, files: (editingNotice.files as FileMeta[]) ?? []
+                noticeId : number,
+    adId: number,
+    title : string,
+    content : string,
+    viewCnt : number,
+    createdAt : Date
             }, ...prev]);
         }
         setNoticeOpen(false); setEditingNotice(null);
     };
 
-    type Faq = { faqId: number; adId: number; title: string; content: string; createdAt: string; updateAt: string; isDeleted: 'Y' | 'N'; deletedAt?: string | null };
-    const [faqs, setFaqs] = useState<Faq[]>([
-        { faqId: 1, adId: 1, title: '환불 규정은?', content: '종료 전 취소 가능, 종료 후 정책에 따름', createdAt: '2025-08-10', updateAt: '2025-08-10', isDeleted: 'N' },
-        { faqId: 2, adId: 1, title: '배송 조회는?', content: '마이페이지 > 주문/결제에서 확인', createdAt: '2025-08-11', updateAt: '2025-08-11', isDeleted: 'N' }
-    ]);
-    const [faqOpen, setFaqOpen] = useState(false);
-    const [editingFaq, setEditingFaq] = useState<Partial<Faq> | null>(null);
-    const openNewFaq = () => { setEditingFaq({ title: '', content: '' }); setFaqOpen(true); };
-    const openEditFaq = (f: Faq) => { setEditingFaq({ ...f }); setFaqOpen(true); };
-    const saveFaq = () => {
-        if (!editingFaq || !editingFaq.title?.trim() || !editingFaq.content?.trim()) return;
-        if (editingFaq.faqId) {
-            const now = new Date().toISOString().slice(0, 10);
-            setFaqs(prev => prev.map(f => f.faqId === editingFaq.faqId ? { ...(f as Faq), title: editingFaq.title!, content: editingFaq.content!, updateAt: now } : f));
-        } else {
-            const id = Math.floor(Math.random() * 1e6);
-            const now = new Date().toISOString().slice(0, 10);
-            setFaqs(prev => [{ faqId: id, adId: 1, title: editingFaq.title!, content: editingFaq.content!, createdAt: now, updateAt: now, isDeleted: 'N' }, ...prev]);
-        }
-        setFaqOpen(false); setEditingFaq(null);
-    };
+    const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+    
+        const getInquiries = async () => {
+            const response = await getData(endpoints.getInquiries);
+            if (response.status === 200) {
+                setInquiries(response.data);
+            }
+        };
+    
+        useEffect(() => {
+                getInquiries();
+            }, []);
 
-    const [inquiries, setInquiries] = useState<Inquiry[]>([
-        {
-            inqId: 7001, userId: 11, adId: 1, title: '영수증 재발행 부탁드립니다', content: '세부 내역 포함해서 부탁드립니다',
-            createdAt: '2025-08-01', isCanceled: 'N', canceledAt: null, ctgr: 'PAYMENT', isAnswer: 'N',
-            files: [{ fileId: 9101, fileName: '영수증.jpg', filePath: '/files/9101', fileSize: '340KB', fileExt: 'jpg', createdAt: '2025-08-01', isDeleted: 'N', deletedAt: null, code: 'INQ' }],
-            replies: []
-        },
-        {
-            inqId: 7002, userId: 12, adId: 1, title: '주소를 잘못 입력했어요', content: '배송지 변경 가능할까요?',
-            createdAt: '2025-07-26', isCanceled: 'N', canceledAt: null, ctgr: 'DELIVERY', isAnswer: 'Y',
-            files: [],
-            replies: [{ replyId: 5001, userId: 1, content: '배송 시작 전에는 변경 가능합니다.', isSecret: 'N', createdAt: '2025-07-26', updatedAt: null, isDeleted: 'N', deletedAt: null }]
-        }
-    ]);
+    const pagedinq = inquiries.slice((page - 1) * pageSize, page * pageSize);
+    const pageinqCount = Math.ceil(inquiries.length / pageSize);
+
     const [openInquiry, setOpenInquiry] = useState<string | undefined>(undefined);
-    const addReply = (inqId: number, reply: Omit<Reply, 'replyId' | 'createdAt' | 'isDeleted'>) => {
-        setInquiries(prev => prev.map(i => i.inqId === inqId ? {
-            ...i,
-            isAnswer: 'Y',
-            replies: [{ replyId: Math.floor(Math.random() * 1e6), createdAt: new Date().toISOString().slice(0, 10), isDeleted: 'N', ...reply }, ...i.replies]
-        } : i));
-    };
     const setInquiryStatus = (inqId: number, answered: 'Y' | 'N') => setInquiries(prev => prev.map(i => i.inqId === inqId ? { ...i, isAnswer: answered } : i));
 
-    const [reports, setReports] = useState<Report[]>([
-        { reportId: 3001, userId: 21, target: 900, reason: '허위 배송정보 의심', reportDate: '2025-08-12', reportStatus: 'RECEIVED', reportType: '사기 의심', files: [{ fileId: 9301, fileName: '증빙.png', filePath: '/files/9301', fileSize: '220KB', fileExt: 'png', createdAt: '2025-08-12', isDeleted: 'N', deletedAt: null, code: 'RPT' }] }
-    ]);
-    const [reportFilter, setReportFilter] = useState<'전체' | 'RECEIVED' | 'PROCESSING' | 'DONE'>('전체');
+    const [reports, setReports] = useState<Report[]>([]);
+    
+        const getReports = async () => {
+            const response = await getData(endpoints.getReports);
+            if (response.status === 200) {
+                setReports(response.data);
+            }
+        };
+    
+        useEffect(() => {
+                getReports();
+            }, []);
+
+
+    const [reportFilter, setReportFilter] = useState<'전체' | 'RECEIVED' | 'UNDER_REVIEW' | 'COMPLETED'>('전체');
     const filteredReports = useMemo(() => reports.filter(r => reportFilter === '전체' ? true : r.reportStatus === reportFilter), [reports, reportFilter]);
     const updateReportStatus = (id: number, status: Report['reportStatus']) => setReports(prev => prev.map(r => r.reportId === id ? { ...r, reportStatus: status } : r));
+
+    const pagedrpt = filteredReports.slice((page - 1) * pageSize, page * pageSize);
+    const pagerptCount = Math.ceil(filteredReports.length / pageSize);
 
     return (
         <div className="min-h-screen bg-zinc-50">
@@ -207,9 +179,8 @@ export function AdminCS() {
                 </div>
 
                 <Tabs value={tab} onValueChange={setTab} className="mt-6">
-                    <TabsList className="grid grid-cols-4 w-full md:w-auto">
+                    <TabsList className="grid grid-cols-3 w-full md:w-auto">
                         <TabsTrigger value="notice" className="flex items-center gap-1"><Megaphone className="w-4 h-4" /> 공지 관리</TabsTrigger>
-                        <TabsTrigger value="faq" className="flex items-center gap-1"><HelpCircle className="w-4 h-4" /> FAQ 관리</TabsTrigger>
                         <TabsTrigger value="inquiry" className="flex items-center gap-1"><MessageCircle className="w-4 h-4" /> 문의 내역</TabsTrigger>
                         <TabsTrigger value="report" className="flex items-center gap-1"><MessageCircle className="w-4 h-4" /> 신고 내역</TabsTrigger>
                     </TabsList>
@@ -218,30 +189,21 @@ export function AdminCS() {
                         <Card>
                             <CardHeader className="flex items-center justify-between">
                                 <CardTitle>공지사항</CardTitle>
-                                <div className="flex items-center gap-2">
-                                    <Button variant="outline" onClick={openNewNotice}>등록</Button>
-                                </div>
                             </CardHeader>
                             <CardContent>
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead>제목</TableHead>
-                                            <TableHead className="w-24">첨부</TableHead>
                                             <TableHead className="w-40">작성일</TableHead>
                                             <TableHead className="w-48">작업</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {notices.map(n => (
+                                        {paged.map(n => (
                                             <TableRow key={n.noticeId}>
-                                                <TableCell className="font-medium">{n.title}</TableCell>
-                                                <TableCell>
-                                                    {n.files.length > 0 ? (
-                                                        <span className="inline-flex items-center gap-1 text-zinc-700"><Paperclip className="w-4 h-4" /> {n.files.length}</span>
-                                                    ) : <span className="text-zinc-400">-</span>}
-                                                </TableCell>
-                                                <TableCell className="text-zinc-500">{n.createdAt}</TableCell>
+                                                <TableCell className="font-medium"><a href={`/cs/notice/${n.noticeId}`}>{n.title}</a></TableCell>
+                                                <TableCell className="text-zinc-500">{formatDate(n.createdAt)}</TableCell>
                                                 <TableCell>
                                                     <div className="flex gap-2">
                                                         <Button size="sm" variant="outline" onClick={() => openEditNotice(n)}>수정</Button>
@@ -252,42 +214,14 @@ export function AdminCS() {
                                         ))}
                                     </TableBody>
                                 </Table>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-
-                    <TabsContent value="faq">
-                        <Card>
-                            <CardHeader className="flex items-center justify-between">
-                                <CardTitle>자주하는질문</CardTitle>
-                                <div className="flex items-center gap-2">
-                                    <Button variant="outline" onClick={openNewFaq}>등록</Button>
+                                <div className="mt-4 flex items-center justify-between">
+                                    <span className="text-xs text-zinc-500">{page}/{pageCount} 페이지</span>
+                                    <div className="flex items-center gap-2">
+                                        <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>이전</Button>
+                                        <Button variant="outline" size="sm" disabled={page === pageCount} onClick={() => setPage(p => Math.min(pageCount, p + 1))}>다음</Button>
+                                        <Button variant="outline" size="sm" onClick={openNewNotice}>글쓰기</Button>
+                                    </div>
                                 </div>
-                            </CardHeader>
-                            <CardContent>
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>제목</TableHead>
-                                            <TableHead>내용</TableHead>
-                                            <TableHead className="w-48">작업</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {faqs.map(f => (
-                                            <TableRow key={f.faqId}>
-                                                <TableCell className="font-medium">{f.title}</TableCell>
-                                                <TableCell className="text-zinc-600">{f.content}</TableCell>
-                                                <TableCell>
-                                                    <div className="flex gap-2">
-                                                        <Button size="sm" variant="outline" onClick={() => openEditFaq(f)}>수정</Button>
-                                                        <Button size="sm" variant="destructive" onClick={() => setFaqs(prev => prev.filter(x => x.faqId !== f.faqId))}>삭제</Button>
-                                                    </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
                             </CardContent>
                         </Card>
                     </TabsContent>
@@ -296,47 +230,42 @@ export function AdminCS() {
                         <Card>
                             <CardHeader><CardTitle>문의 내역</CardTitle></CardHeader>
                             <CardContent>
+                                <Table className="grid grid-cols-12 gap-2 w-full items-center">
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>사유</TableHead>
+                                            <TableHead className="col-span-5">제목</TableHead>
+                                            <TableHead className="col-span-2">상태</TableHead>
+                                            <TableHead className="col-span-3">등록일</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                </Table>
                                 <Accordion type="single" collapsible value={openInquiry} onValueChange={setOpenInquiry}>
-                                    {inquiries.map(inq => (
+                                    {pagedinq.map(inq => (
                                         <AccordionItem key={inq.inqId} value={String(inq.inqId)}>
                                             <AccordionTrigger>
                                                 <div className="grid grid-cols-12 gap-2 w-full items-center">
                                                     <div className="col-span-5 font-medium truncate">{inq.title}</div>
-                                                    <div className="col-span-2"><Badge variant={inq.isAnswer === 'Y' ? "default" : "secondary"}>{inq.isAnswer === 'Y' ? "답변완료" : "미답변"}</Badge></div>
                                                     <div className="col-span-2"><Badge variant="secondary">{inq.ctgr}</Badge></div>
-                                                    <div className="col-span-3 text-xs text-zinc-500">{inq.createdAt}</div>
+                                                    <div className="col-span-3 text-xs text-zinc-500">{formatDate(inq.createdAt)}</div>
                                                 </div>
                                             </AccordionTrigger>
                                             <AccordionContent>
                                                 <div className="rounded-xl border border-zinc-200 p-4 bg-white">
                                                     <p className="text-sm text-zinc-700 whitespace-pre-wrap">{inq.content}</p>
-                                                    {inq.files.length > 0 && (
-                                                        <div className="mt-3 flex flex-wrap gap-2">
-                                                            {inq.files.map(f => (
-                                                                <div key={f.fileId} className="border rounded p-2">
-                                                                    <img src={f.filePath} alt={f.fileName} className="max-h-40 object-contain" />
-                                                                    <p className="text-xs text-zinc-500 mt-1">{f.fileName}</p>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                    <div className="mt-4">
-                                                        <p className="font-medium">댓글 {inq.replies.length}개</p>
-                                                        <ul className="mt-2 space-y-2">
-                                                            {inq.replies.map(r => (
-                                                                <li key={r.replyId} className="rounded-lg border p-2">
-                                                                    <p className="text-sm text-zinc-800">{r.content}</p>
-                                                                    <p className="text-[11px] text-zinc-500 mt-1">{r.createdAt} {r.isSecret === 'Y' && '(비밀)'}</p>
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                        <ReplyComposer onSubmit={(payload) => addReply(inq.inqId, payload)} />
-                                                    </div>
+                            
                                                 </div>
                                             </AccordionContent>
                                         </AccordionItem>
                                     ))}
                                 </Accordion>
+                                <div className="mt-4 flex items-center justify-between">
+                                    <span className="text-xs text-zinc-500">{page}/{pageinqCount} 페이지</span>
+                                    <div className="flex items-center gap-2">
+                                        <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>이전</Button>
+                                        <Button variant="outline" size="sm" disabled={page === pageCount} onClick={() => setPage(p => Math.min(pageCount, p + 1))}>다음</Button>
+                                    </div>
+                                </div>
                             </CardContent>
                         </Card>
                     </TabsContent>
@@ -350,9 +279,9 @@ export function AdminCS() {
                                         <SelectTrigger className="w-40"><SelectValue placeholder="상태 필터" /></SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="전체">전체</SelectItem>
-                                            <SelectItem value="RECEIVED">RECEIVED</SelectItem>
-                                            <SelectItem value="PROCESSING">PROCESSING</SelectItem>
-                                            <SelectItem value="DONE">DONE</SelectItem>
+                                            <SelectItem value="RECEIVED">접수</SelectItem>
+                                            <SelectItem value="UNDER_REVIEW">검토중</SelectItem>
+                                            <SelectItem value="COMPLETED">완료</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -365,30 +294,24 @@ export function AdminCS() {
                                             <TableHead className="w-36">유형</TableHead>
                                             <TableHead className="w-28">신고자</TableHead>
                                             <TableHead className="w-28">대상</TableHead>
-                                            <TableHead className="w-24">첨부</TableHead>
                                             <TableHead className="w-40">상태</TableHead>
                                             <TableHead className="w-32">신고일</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {filteredReports.map(r => (
+                                        {pagedrpt.map(r => (
                                             <TableRow key={r.reportId}>
                                                 <TableCell className="font-medium">{r.reason}</TableCell>
                                                 <TableCell>{r.reportType}</TableCell>
                                                 <TableCell>UID {r.userId}</TableCell>
                                                 <TableCell>TID {r.target}</TableCell>
                                                 <TableCell>
-                                                    {r.files.length > 0 ? (
-                                                        <span className="inline-flex items-center gap-1 text-zinc-700"><Paperclip className="w-4 h-4" /> {r.files.length}</span>
-                                                    ) : <span className="text-zinc-400">-</span>}
-                                                </TableCell>
-                                                <TableCell>
                                                     <Select value={r.reportStatus} onValueChange={(v) => updateReportStatus(r.reportId, v as Report['reportStatus'])}>
                                                         <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
                                                         <SelectContent>
-                                                            <SelectItem value="RECEIVED">RECEIVED</SelectItem>
-                                                            <SelectItem value="PROCESSING">PROCESSING</SelectItem>
-                                                            <SelectItem value="DONE">DONE</SelectItem>
+                                                            <SelectItem value="RECEIVED">접수</SelectItem>
+                                                            <SelectItem value="UNDER_REVIEW">검토중</SelectItem>
+                                                            <SelectItem value="COMPLETED">완료</SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                 </TableCell>
@@ -397,6 +320,13 @@ export function AdminCS() {
                                         ))}
                                     </TableBody>
                                 </Table>
+                                <div className="mt-4 flex items-center justify-between">
+                                    <span className="text-xs text-zinc-500">{page}/{pagerptCount} 페이지</span>
+                                    <div className="flex items-center gap-2">
+                                        <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>이전</Button>
+                                        <Button variant="outline" size="sm" disabled={page === pageCount} onClick={() => setPage(p => Math.min(pageCount, p + 1))}>다음</Button>
+                                    </div>
+                                </div>
                             </CardContent>
                         </Card>
                     </TabsContent>
@@ -433,28 +363,6 @@ export function AdminCS() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-
-            <Dialog open={faqOpen} onOpenChange={setFaqOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{editingFaq?.faqId ? 'FAQ 수정' : 'FAQ 등록'}</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                        <div>
-                            <Label className="mb-1 block">제목</Label>
-                            <Input value={editingFaq?.title ?? ''} onChange={e => setEditingFaq(p => p ? { ...p, title: e.target.value } : p)} placeholder="제목" />
-                        </div>
-                        <div>
-                            <Label className="mb-1 block">내용</Label>
-                            <Textarea value={editingFaq?.content ?? ''} onChange={e => setEditingFaq(p => p ? { ...p, content: e.target.value } : p)} rows={6} placeholder="내용" />
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setFaqOpen(false)}>취소</Button>
-                        <Button onClick={saveFaq}>저장</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
         </div>
     );
 }
@@ -481,6 +389,6 @@ export function runAdminCSTests() {
     const cmp = AdminCS();
     return {
         hasComponent: typeof cmp === 'function',
-        tabs: ['notice', 'faq', 'inquiry', 'report']
+        tabs: ['notice', 'inquiry', 'report']
     };
 }
