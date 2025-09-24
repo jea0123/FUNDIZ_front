@@ -119,16 +119,15 @@ export interface Subcategory {
     subctgrName: string;
 }
 
-export interface SearchProject {
+export interface SearchProjectParams {
+    //프론트전용 추가
+    page: number;
+    size: number;
+
     keyword?: string;
     ctgrId?: number;
     subctgrId?: number;
     sort?: SortKey;
-    // activeOnly?: boolean;
-
-    //프론트전용 추가
-    page?: number;
-    size?: number;
 }
 
 export interface PageResult<T> {

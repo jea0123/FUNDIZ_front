@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import type { Category } from "@/types/admin";
-import type { Featured, SearchProject, Subcategory } from "@/types/projects";
+import type { Featured, PageResult, SearchProjectParams, Subcategory } from "@/types/projects";
 import { endpoints, getData } from "@/api/apis";
 import type { SortKey } from "./components/SortBar";
 import { ProjectCard } from "../MainPage";
@@ -11,48 +11,38 @@ import CategoryChips from "./components/CategoryChips";
 import SortBar from "./components/SortBar";
 import SubcategoryTabs from "./components/SubcategoryTabs";
 
-// 프런트 정렬키 → 백엔드 dto.sort 매핑
-const SORT_MAP: Record<SortKey, "recent" | "liked" | "amount" | "deadline" | "percent" | "view"> = {
-    recent: "recent",
-    liked: "liked",
-    amount: "amount",
-    deadline: "deadline",
-    percent: "percent",
-    view: "view",
-};
-
 /* ------------------------------ Common hook ------------------------------ */
 
 function useCatalogData() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
 
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        const [catRes, subRes] = await Promise.all([
-            getData(endpoints.getCategories),
-            getData(endpoints.getSubcategories)
-        ]);
+    useEffect(() => {
+        let alive = true;
+        (async () => {
+            try {
+            const [catRes, subRes] = await Promise.all([
+                getData(endpoints.getCategories),
+                getData(endpoints.getSubcategories)
+            ]);
 
-        const catData = catRes?.data;
-        const subData = subRes?.data;
+            const catData = catRes?.data;
+            const subData = subRes?.data;
 
-        const cats = Array.isArray(catData) ? catData : [];
-        const subs = Array.isArray(subData) ? subData : [];
+            const cats = Array.isArray(catData) ? catData : [];
+            const subs = Array.isArray(subData) ? subData : [];
 
-        if (!alive) return;
-        setCategories(cats);
-        setSubcategories(subs);
-      } catch {
-        // 상단 필터 UI만 비어보이게 두기
-      }
-    })();
-    return () => {
-      alive = false;
-    };
-  }, []);
+            if (!alive) return;
+            setCategories(cats);
+            setSubcategories(subs);
+            } catch {
+            // 상단 필터 UI만 비어보이게 두기
+            }
+        })();
+        return () => {
+            alive = false;
+        };
+    }, []);
 
   return { categories, subcategories };
 }
@@ -60,73 +50,62 @@ function useCatalogData() {
 function useQueryState() {
     const [searchParams, setSearchParams] = useSearchParams();
 
-    const sort = (searchParams.get("sort") as SortKey) || "recent";
+    //URL -> 상태 동기화
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-    const size = Math.max(1, parseInt(searchParams.get("size") || "10", 10));
+    const size = Math.max(1, parseInt(searchParams.get("size") || "20", 20));
     const keyword = searchParams.get("keyword") || "";
+    const sort = (searchParams.get("sort") as SortKey) || "recent";
 
+    //상태 -> URL 동기화
     const setParam = (k: string, v?: string) => {
         const next = new URLSearchParams(searchParams);
 
-        if (v && v.length) {
-            next.set(k, v);
-        } else {
-            next.delete(k);
-        }
+        if (v && v.length) next.set(k, v);
+        else next.delete(k);
+
         setSearchParams(next, { replace: true });
     };
 
-    const setSort = (s: SortKey) => setParam("sort", s);
     const setPage = (p: number) => setParam("page", String(p));
     const setSize = (s: number) => setParam("size", String(s));
     const setKeyword = (k: string) => { setParam("keyword", k); setParam("page", "1"); };
+    const setSort = (s: SortKey) => { setParam("sort", s); setParam("page", "1"); };
 
-    return { sort, page, size, keyword, setSort, setPage, setSize, setKeyword };
+    return { page, size, keyword, sort, setPage, setSize, setKeyword, setSort };
 }
 
-function useProject(dto: SearchProject & { page: number; size: number; sort: SortKey; }) {
+function useProject(params: SearchProjectParams) {
     const [items, setItems] = useState<Featured[]>([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<boolean>(false);
 
-    const { keyword, sort = "recent", page = 1, size = 10 } = dto;
-
-    const { ctgrId, subctgrId } = useParams();
+    const url = useMemo(() => { return endpoints.searchProject(params); }, [params]);
 
     useEffect(() => {
-        const controller = new AbortController();
+        let cancel = false;
 
-        async function run() {
-            setLoading(true);
-            setError(false);
+        (async () => {
             try {
-                const param = new URLSearchParams();
-                if (keyword && keyword.trim()) param.set("keyword", keyword.trim());
-                if (ctgrId !== undefined && ctgrId !== null && !Number.isNaN(ctgrId)) param.set("ctgrId", String(ctgrId));
-                if (subctgrId !== undefined && subctgrId != null && !Number.isNaN(subctgrId)) param.set("subctgrId", String(subctgrId));
-                param.set("sort", SORT_MAP[sort]);
-                param.set("page", String(page));
-                param.set("size", String(size));
+                setLoading(true);
+                setError(false);
 
-                console.log("[useProject] query", Object.fromEntries(param.entries()));
+                const { status, data } = await getData(url);
 
-                const url = `/project/search?${param.toString()}`;
-                const res = await getData(url);
-                const list = Array.isArray(res.data?.items) ? res.data.items : [];
-                setItems(list);
-                setTotal(res.data?.totalElements ?? list.length);
-                } catch (err: any) {
-                    if (err?.name !== "CanceledError") setError(err);
-                } finally {
-                    setLoading(false);
+                if (cancel) return;
+                if (status !== 200) throw new Error("조회 실패");
+
+                setItems(Array.isArray(data.items) ? data.items : []);
+                setTotal(typeof data.totalElements === "number" ? data.totalElements : 0);
+            } catch (err: any) {
+                if (cancel) return;
+                setError(true);
+            } finally {
+                if (!cancel) setLoading(false);
             }
-        }
-
-        run();
-    
-        return () => controller.abort();
-    }, [keyword, ctgrId, subctgrId, sort, page, size]);
+        })();
+        return () => { cancel = true; };
+    }, [url]);
 
     return { items, total, loading, error };
 }
@@ -162,15 +141,15 @@ function ProjectGrid({ items }: { items: Featured[] }) {
 
 /* --------------------------------- Pages --------------------------------- */
 
-export function ProjectAllPage() {
+export default function ProjectAllPage() {
     const { categories, subcategories } = useCatalogData();
     const { sort, page, size, keyword, setSort, setPage } = useQueryState();
-    const { items, total, loading, error } = useProject({ sort, page, size, keyword });
+    const { items, total, loading, error } = useProject({ page, size, keyword, sort });
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <Crumbs categories={categories} subcategories={subcategories} />
-            <CategoryChips categories={categories} activeCategoryId="all" />
+            <CategoryChips categories={categories} activeCatId="all" />
             <SortBar value={sort} onChange={setSort} total={total} />
 
             {loading && <p className="text-gray-500">불러오는 중…</p>}
@@ -183,21 +162,20 @@ export function ProjectAllPage() {
 }
 
 export function ProjectByCategoryPage() {
-    const { ctgrId } = useParams();
-    const categoryId = ctgrId ? Number(ctgrId) : undefined;
-    console.log("[CategoryPage] categoryId=", categoryId);
+    const { ctgrId: catParam } = useParams();
+    const ctgrId = catParam ? Number(catParam) : undefined;
     
-    if (!categoryId) return null;
+    if (!ctgrId) return null;
 
     const { categories, subcategories } = useCatalogData();
     const { sort, page, size, keyword, setSort, setPage } = useQueryState();
-    const { items, total, loading, error } = useProject({ sort, page, size, keyword, ctgrId: categoryId });
+    const { items, total, loading, error } = useProject({ page, size, keyword, sort, ctgrId });
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <Crumbs categories={categories} subcategories={subcategories} />
-            <CategoryChips categories={categories} activeCategoryId={categoryId} />
-            <SubcategoryTabs categoryId={categoryId} subcategories={subcategories} activeSubId="all" />
+            <Crumbs categories={categories} subcategories={subcategories} ctgrId={ctgrId} />
+            <CategoryChips categories={categories} activeCatId={ctgrId} />
+            <SubcategoryTabs ctgrId={ctgrId} subcategories={subcategories} activeSubId="all" />
             <SortBar value={sort} onChange={setSort} total={total} />
 
             {loading && <p className="text-gray-500">불러오는 중…</p>}
@@ -210,21 +188,21 @@ export function ProjectByCategoryPage() {
 }
 
 export function ProjectBySubcategoryPage() {
-    const { ctgrId, subctgrId } = useParams();
-    const categoryId = ctgrId ? Number(ctgrId) : undefined;
-    const subcategoryId = subctgrId ? Number(subctgrId) : undefined;
+    const { ctgrId: catParam, subctgrId: subParam } = useParams();
+    const ctgrId = catParam ? Number(catParam) : undefined;
+    const subctgrId = subParam ? Number(subParam) : undefined;
 
-    if (!categoryId || !subcategoryId) return null;
+    if (!ctgrId || !subctgrId) return null;
 
     const { categories, subcategories } = useCatalogData();
     const { sort, page, size, keyword, setSort, setPage } = useQueryState();
-    const { items, total, loading, error } = useProject({ sort, page, size, keyword, ctgrId: categoryId, subctgrId: subcategoryId });
+    const { items, total, loading, error } = useProject({ page, size, keyword, sort, ctgrId, subctgrId});
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <Crumbs categories={categories} subcategories={subcategories} categoryId={categoryId} subcategoryId={subcategoryId} />
-            <CategoryChips categories={categories} activeCategoryId={categoryId} />
-            <SubcategoryTabs categoryId={categoryId} subcategories={subcategories} activeSubId={subcategoryId} />
+            <Crumbs categories={categories} subcategories={subcategories} ctgrId={ctgrId} subctgrId={subctgrId} />
+            <CategoryChips categories={categories} activeCatId={ctgrId} />
+            <SubcategoryTabs ctgrId={ctgrId} subcategories={subcategories} activeSubId={subctgrId} />
             <SortBar value={sort} onChange={setSort} total={total} />
 
             {loading && <p className="text-gray-500">불러오는 중…</p>}
@@ -235,5 +213,3 @@ export function ProjectBySubcategoryPage() {
         </div>
     );
 }
-
-export default ProjectAllPage;
