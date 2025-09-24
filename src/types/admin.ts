@@ -38,3 +38,27 @@ export interface Category {
     ctgrId: number;
     ctgrName: string;
 }
+
+export interface ReviewListDto {
+    projectId: string;
+    title: string;
+    creatorName: string;
+    ctgrName: string;
+    subctgrName: string;
+    goalAmount: number;
+    startDate: Date;
+    endDate: Date;
+    projectStatus: string;
+    requestedAt: Date;
+}
+
+export interface SearchProjectVerifyDto {
+    //프론트전용 추가
+    page: number;
+    size: number;
+
+    projectStatus: string;
+    fromDate: Date;
+    toDate: Date;
+    rangeType: string;
+}

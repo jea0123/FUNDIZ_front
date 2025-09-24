@@ -17,7 +17,7 @@ export function AdminDashboard() {
             <Tabs defaultValue="overview" className="w-full">
                 <TabsList className="grid w-full grid-cols-6">
                     <TabsTrigger value="overview">대시보드</TabsTrigger>
-                    <TabsTrigger value="approvals">프로젝트 승인</TabsTrigger>
+                    <TabsTrigger value="approvals">프로젝트 심사</TabsTrigger>
                     <TabsTrigger value="reports">신고 관리</TabsTrigger>
                     <TabsTrigger value="users">회원 관리</TabsTrigger>
                     <TabsTrigger value="analytics">통계 분석</TabsTrigger>
