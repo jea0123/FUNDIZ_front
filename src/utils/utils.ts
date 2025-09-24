@@ -52,16 +52,16 @@ export const getDaysLeft = (date: string | Date) => {
     return `0일`;
 }
 
-// export const formatDate = (date: string | Date) => {
-//     const d = new Date(date);
+export const formatDate = (date: string | Date) => {
+    const d = new Date(date);
 
-//     if (isNaN(d.getTime())) {
-//         console.log("잘못된 날짜 포맷");
-//     }
+    if (isNaN(d.getTime())) {
+        console.log("잘못된 날짜 포맷");
+    }
 
-//     const year = d.getFullYear();
-//     const month = String(d.getMonth() + 1).padStart(2, "0");
-//     const day = String(d.getDate()).padStart(2, "0");
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
 
-//     return `${year}-${month}-${day}`;
-// }
+    return `${year}-${month}-${day}`;
+}
