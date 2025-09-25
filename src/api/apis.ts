@@ -59,10 +59,15 @@ export const endpoints = {
     getProjectAllPage: (page: number, size: number, ctgrId: number, subctgrId: number) => `/project/search?page=${page}&size=${size}&ctgrId=${ctgrId}&subctgrId=${subctgrId}`,
     getNotices: '/cs/notice',
     getNoticeDetail: (noticeId: number) => `/cs/notice/${noticeId}`,
+    addNotice: '/cs/notice/add',
+    updateNotice: (noticeId: number) => `/cs/notice/update/${noticeId}`,
+    deleteNotice: (noticeId: number) => `/cs/notice/delete/${noticeId}`,
     getInquiries: '/cs/inquiry',
-    getInqDetail: (inqId: number) => `/cs/inquiry/${inqId}`, 
+    getInqDetail: (inqId: number) => `/cs/inquiry/${inqId}`,
+    addInquiry: (userId: number) => `/cs/inquiry/${userId}/add`,
     getReports: '/cs/report',
-    getReportDetail: (reportId: number) => `/cs/report/${reportId}`, 
+    getReportDetail: (reportId: number) => `/cs/report/${reportId}`,
+    addReport: (userId: number) => `/cs/report/${userId}/add`, 
 };
 
 export const getData = async (url: string, accessToken?: string) => {

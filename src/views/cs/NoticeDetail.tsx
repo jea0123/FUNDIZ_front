@@ -34,16 +34,10 @@ export function NoticeDetailPage() {
         <div className="min-h-screen bg-zinc-50">
             <div className="mx-auto max-w-6xl px-5 py-8">
                 <div className="flex items-center justify-between">
-                    <h1 className="text-2xl md:text-3xl font-bold text-zinc-900">고객센터</h1>
+                    <h1 className="text-2xl md:text-3xl font-bold text-zinc-900"><a href="/cs">고객센터</a></h1>
                 </div>
 
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-                    <TabsList className="grid grid-cols-3 w-full md:w-auto">
-                        <TabsTrigger value="notice" className="flex items-center gap-1"><Megaphone className="w-4 h-4" /> 공지사항</TabsTrigger>
-                        <TabsTrigger value="ticket" className="flex items-center gap-1"><MessageCircle className="w-4 h-4" /> 1:1 문의</TabsTrigger>
-                        <TabsTrigger value="report" className="flex items-center gap-1"><MessageCircle className="w-4 h-4" /> 신고하기</TabsTrigger>
-                    </TabsList>
-
                     <TabsContent value="notice">
                         <Card>
                             <CardHeader className="flex items-center justify-between">
