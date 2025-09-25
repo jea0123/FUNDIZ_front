@@ -1,4 +1,6 @@
 
+import type { SearchProjectVerify } from '@/types/admin';
+import type { SearchProjectParams } from '@/types/projects';
 import { appNavigate } from '@/utils/navigator';
 import type { AxiosResponse } from 'axios';
 import axios from 'axios';
@@ -29,8 +31,17 @@ const api = {
     delete: (url: string, accessToken?: string) => axiosInstance.delete(url, authorization(accessToken)).then(responseHandler),
 };
 
+const toQueryString = (params: Record<string, unknown>) => {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && v !== "") query.append(k, String(v));
+    });
+    return query.toString();
+};
+
 export const endpoints = {
-    checkEmail: '/auth/checkEmail',    checkNickname: '/auth/checkNickname',
+    checkEmail: '/auth/checkEmail',
+    checkNickname: '/auth/checkNickname',
     signUp: '/auth/signUp',
     signIn: '/auth/signIn',
     getLoginUser: '/user/loginUser',
@@ -56,13 +67,16 @@ export const endpoints = {
     createProject: '/project',
     getSubcategories: '/categories/subcategories',
     getRewardSalesTop: (period: string, metric: string) => `/admin/reward-sales-top?period=${period}&metric=${metric}`,
-    getProjectAllPage: (page: number, size: number, ctgrId: number, subctgrId: number) => `/project/search?page=${page}&size=${size}&ctgrId=${ctgrId}&subctgrId=${subctgrId}`,
+    searchProject: (p: SearchProjectParams) => `/project/search?${toQueryString({ page: p.page, size: p.size, keyword: p.keyword, ctgrId: p.ctgrId, subctgrId: p.subctgrId, sort: p.sort })}`,
     getNotices: '/cs/notice',
     getNoticeDetail: (noticeId: number) => `/cs/notice/${noticeId}`,
     getInquiries: '/cs/inquiry',
-    getInqDetail: (inqId: number) => `/cs/inquiry/${inqId}`, 
+    getInqDetail: (inqId: number) => `/cs/inquiry/${inqId}`,
     getReports: '/cs/report',
-    getReportDetail: (reportId: number) => `/cs/report/${reportId}`, 
+    getReportDetail: (reportId: number) => `/cs/report/${reportId}`,
+    getProjectVerifyList: (p: SearchProjectVerify) => `/admin/verify?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
+    approveProject: (projectId: number) => `/admin/verify/approve/${projectId}`,
+    rejectProject: (projectId: number) => `/admin/verify/reject/${projectId}`,
 };
 
 export const getData = async (url: string, accessToken?: string) => {

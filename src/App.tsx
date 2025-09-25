@@ -17,7 +17,12 @@ import { setNavigator } from './utils/navigator';
 import { CSPage } from './views/cs/CSPage';
 import { NoticeDetailPage } from './views/cs/NoticeDetail';
 import ProjectsAllPage, { ProjectByCategoryPage, ProjectBySubcategoryPage } from './views/project/ProjectAllPage';
+
 import { FundingPage } from './views/backing/backingPage';
+
+
+import FundingLoader from './components/FundingLoader';
+
 
 const AdminDashboard = lazy(() => import('./views/admin/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
 
@@ -46,7 +51,7 @@ export default function App() {
   }, [cookie.accessToken]);
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<FundingLoader />}>
       <div className="min-h-screen bg-gray-50">
         <NavigatorRegistrar />
         <Navbar />
@@ -58,18 +63,18 @@ export default function App() {
             <Route path='login' element={<LoginPage />} />
           </Route>
 
-        <Route path='/project'>
-          <Route index element={<ProjectsAllPage />} />
-          <Route path='category/:ctgrId' element={<ProjectByCategoryPage />} />
-          <Route path='category/:ctgrId/:subctgrId' element={<ProjectBySubcategoryPage />} />
-          <Route path=':projectId' element={<ProjectDetailPage />} />
-          <Route path='create' element={<CreateProject />} />
-          <Route path=':projectId/backing' element={<FundingPage onBackClick={function (): void {
+          <Route path='/project'>
+            <Route index element={<ProjectsAllPage />} />
+            <Route path='category/:ctgrId' element={<ProjectByCategoryPage />} />
+            <Route path='category/:ctgrId/subcategory/:subctgrId' element={<ProjectBySubcategoryPage />} />
+            <Route path=':projectId' element={<ProjectDetailPage />} />
+            <Route path='create' element={<CreateProject />} />
+            <Route path=':projectId/backing' element={<FundingPage onBackClick={function (): void {
               throw new Error('Function not implemented.');
-            } } onCompleteClick={function (): void {
+            }} onCompleteClick={function (): void {
               throw new Error('Function not implemented.');
-            } } />} />
-        </Route>
+            }} />} />
+          </Route>
 
           <Route path='/user'>
             <Route path='mypage' element={<MyPage />} />
@@ -88,6 +93,7 @@ export default function App() {
 
           <Route path="/error" element={<ErrorPage />} />
           <Route path="*" element={<ErrorPage />} />
+          {/* <Route path="/loading" element={<FundingLoader />} /> */}
         </Routes>
       </div>
     </Suspense>

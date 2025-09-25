@@ -38,3 +38,28 @@ export interface Category {
     ctgrId: number;
     ctgrName: string;
 }
+
+export interface ProjectVerifyList {
+    projectId: number;
+    title: string;
+    creatorName: string;
+    ctgrName: string;
+    subctgrName: string;
+    goalAmount: number;
+    startDate: Date;
+    endDate: Date;
+    projectStatus: string;
+    requestedAt: Date;
+}
+
+export interface SearchProjectVerify {
+    page: number;
+    size: number;
+
+    projectStatus?: string;
+    rangeType?: string;
+}
+
+export interface RejectRequestDto {
+    rejectedReason: string;
+}

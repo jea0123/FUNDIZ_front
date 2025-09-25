@@ -297,8 +297,7 @@ export function ProjectDetailPage() {
                             {project.rewardList.map((reward) => (
                                 <Card
                                     key={reward.rewardId}
-                                    className={`cursor-pointer transition-colors ${selectedReward === reward.rewardId ? 'ring-2 ring-blue-500' : ''
-                                        }`}
+                                    className={`cursor-pointer transition-colors ${selectedReward === reward.rewardId ? 'ring-2 ring-blue-500' : ''}`}
                                     onClick={() => setSelectedReward(reward.rewardId)}
                                 >
                                     <CardContent className="p-4">
