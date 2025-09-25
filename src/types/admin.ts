@@ -39,8 +39,8 @@ export interface Category {
     ctgrName: string;
 }
 
-export interface ReviewListDto {
-    projectId: string;
+export interface ProjectVerifyList {
+    projectId: number;
     title: string;
     creatorName: string;
     ctgrName: string;
@@ -52,13 +52,14 @@ export interface ReviewListDto {
     requestedAt: Date;
 }
 
-export interface SearchProjectVerifyDto {
-    //프론트전용 추가
+export interface SearchProjectVerify {
     page: number;
     size: number;
 
-    projectStatus: string;
-    fromDate: Date;
-    toDate: Date;
-    rangeType: string;
+    projectStatus?: string;
+    rangeType?: string;
+}
+
+export interface RejectRequestDto {
+    rejectedReason: string;
 }
