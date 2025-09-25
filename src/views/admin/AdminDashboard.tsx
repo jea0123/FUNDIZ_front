@@ -5,32 +5,54 @@ import { UsersTab } from "./tabs/UsersTab";
 import { AnalyticsTab } from "./tabs/AnalyticsTab";
 import { CustomerCenterTab } from "./tabs/CustomerCenterTab";
 import { OverviewTab } from "./tabs/OverviewTab";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { ClipboardList } from "lucide-react";
 
 export function AdminDashboard() {
+    const [activeTab, setActiveTab] = useState("overview");
+
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="mb-8">
+        <div className="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="mb-2">
                 <h1 className="text-3xl mb-2">관리자 대시보드</h1>
                 <p className="text-gray-600">플랫폼 운영 현황을 확인하고 관리하세요</p>
             </div>
 
-            <Tabs defaultValue="overview" className="w-full">
-                <TabsList className="grid w-full grid-cols-6">
-                    <TabsTrigger value="overview">대시보드</TabsTrigger>
-                    <TabsTrigger value="approvals">프로젝트 심사</TabsTrigger>
-                    <TabsTrigger value="reports">신고 관리</TabsTrigger>
-                    <TabsTrigger value="users">회원 관리</TabsTrigger>
-                    <TabsTrigger value="analytics">통계 분석</TabsTrigger>
-                    <TabsTrigger value="customer-center">고객센터</TabsTrigger>
-                </TabsList>
+            <div className="flex items-start gap-6">
+                <div className="w-56 shrink-0 border-r border-gray-200 pr-2 mt-6 space-y-2">
+                    <Button variant="ghost" className="w-full justify-start" onClick={() => setActiveTab("overview")}>
+                        <ClipboardList className="mr-2 h-4 w-4" /> 대시보드
+                    </Button>
+                    <Button variant="ghost" className="w-full justify-start" onClick={() => setActiveTab("approvals")}>
+                        <ClipboardList className="mr-2 h-4 w-4" /> 프로젝트 심사
+                    </Button>
+                    <Button variant="ghost" className="w-full justify-start" onClick={() => setActiveTab("projects")}>
+                        <ClipboardList className="mr-2 h-4 w-4" /> 프로젝트 목록
+                    </Button>
+                    <Button variant="ghost" className="w-full justify-start" onClick={() => setActiveTab("reports")}>
+                        <ClipboardList className="mr-2 h-4 w-4" /> 신고 관리
+                    </Button>
+                    <Button variant="ghost" className="w-full justify-start" onClick={() => setActiveTab("users")}>
+                        <ClipboardList className="mr-2 h-4 w-4" /> 회원 관리
+                    </Button>
+                    <Button variant="ghost" className="w-full justify-start" onClick={() => setActiveTab("analytics")}>
+                        <ClipboardList className="mr-2 h-4 w-4" /> 통계 분석
+                    </Button>
+                    <Button variant="ghost" className="w-full justify-start" onClick={() => setActiveTab("customer-center")}>
+                        <ClipboardList className="mr-2 h-4 w-4" /> 고객센터
+                    </Button>
+                </div>
 
-                <TabsContent value="overview" className="mt-6"><OverviewTab /></TabsContent>
-                <TabsContent value="approvals" className="mt-6"><ApprovalsTab /></TabsContent>
-                <TabsContent value="reports" className="mt-6"><ReportsTab /></TabsContent>
-                <TabsContent value="users" className="mt-6"><UsersTab /></TabsContent>
-                <TabsContent value="analytics" className="mt-6"><AnalyticsTab /></TabsContent>
-                <TabsContent value="customer-center" className="mt-6"><CustomerCenterTab /></TabsContent>
-            </Tabs>
+                <Tabs value={activeTab} className="flex-1 min-w-0 mt-6">
+                    <TabsContent value="overview"><OverviewTab /></TabsContent>
+                    <TabsContent value="approvals"><ApprovalsTab /></TabsContent>
+                    <TabsContent value="reports"><ReportsTab /></TabsContent>
+                    <TabsContent value="users"><UsersTab /></TabsContent>
+                    <TabsContent value="analytics"><AnalyticsTab /></TabsContent>
+                    <TabsContent value="customer-center"><CustomerCenterTab /></TabsContent>
+                </Tabs>
+            </div>
         </div>
     );
 }

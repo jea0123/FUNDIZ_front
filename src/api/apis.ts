@@ -1,4 +1,5 @@
 
+import type { SearchProjectVerify } from '@/types/admin';
 import type { SearchProjectParams } from '@/types/projects';
 import { appNavigate } from '@/utils/navigator';
 import type { AxiosResponse } from 'axios';
@@ -39,7 +40,8 @@ const toQueryString = (params: Record<string, unknown>) => {
 };
 
 export const endpoints = {
-    checkEmail: '/auth/checkEmail',    checkNickname: '/auth/checkNickname',
+    checkEmail: '/auth/checkEmail',
+    checkNickname: '/auth/checkNickname',
     signUp: '/auth/signUp',
     signIn: '/auth/signIn',
     getLoginUser: '/user/loginUser',
@@ -72,7 +74,9 @@ export const endpoints = {
     getInqDetail: (inqId: number) => `/cs/inquiry/${inqId}`,
     getReports: '/cs/report',
     getReportDetail: (reportId: number) => `/cs/report/${reportId}`,
-    getReviewList: (page: number, size: number) => `/admin/review?page=${page}&size=${size}`,
+    getProjectVerifyList: (p: SearchProjectVerify) => `/admin/verify?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
+    approveProject: (projectId: number) => `/admin/verify/approve/${projectId}`,
+    rejectProject: (projectId: number) => `/admin/verify/reject/${projectId}`,
 };
 
 export const getData = async (url: string, accessToken?: string) => {

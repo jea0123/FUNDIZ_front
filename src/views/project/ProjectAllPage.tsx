@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import type { Category } from "@/types/admin";
-import type { Featured, PageResult, SearchProjectParams, Subcategory } from "@/types/projects";
+import type { Featured, SearchProjectParams, Subcategory } from "@/types/projects";
 import { endpoints, getData } from "@/api/apis";
 import type { SortKey } from "./components/SortBar";
 import { ProjectCard } from "../MainPage";
@@ -52,7 +52,7 @@ function useQueryState() {
 
     //URL -> 상태 동기화
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-    const size = Math.max(1, parseInt(searchParams.get("size") || "20", 20));
+    const size = Math.max(1, parseInt(searchParams.get("size") || "20", 10));
     const keyword = searchParams.get("keyword") || "";
     const sort = (searchParams.get("sort") as SortKey) || "recent";
 
@@ -80,7 +80,9 @@ function useProject(params: SearchProjectParams) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<boolean>(false);
 
-    const url = useMemo(() => { return endpoints.searchProject(params); }, [params]);
+    const url = useMemo(() => {
+        return endpoints.searchProject(params);
+    }, [params]);
 
     useEffect(() => {
         let cancel = false;
@@ -113,15 +115,15 @@ function useProject(params: SearchProjectParams) {
 /* ------------------------------ UI component ------------------------------ */
 
 function Pagination({ page, size, total, onPage }: { page: number; size: number; total: number; onPage: (p: number) => void }) {
-  const lastPage = Math.max(1, Math.ceil(total / size));
+    const lastPage = Math.max(1, Math.ceil(total / size));
 
-  return (
-    <div className="flex items-center justify-center gap-2 mt-8">
-      <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onPage(page - 1)}>이전</Button>
-      <span className="text-sm text-gray-600">{page} / {lastPage}</span>
-      <Button variant="outline" size="sm" disabled={page >= lastPage} onClick={() => onPage(page + 1)}>다음</Button>
-    </div>
-  );
+    return (
+        <div className="flex items-center justify-center gap-2 mt-6">
+        <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onPage(page - 1)}>이전</Button>
+        <span className="text-sm text-gray-600">{page} / {lastPage}</span>
+        <Button variant="outline" size="sm" disabled={page >= lastPage} onClick={() => onPage(page + 1)}>다음</Button>
+        </div>
+    );
 }
 
 function ProjectGrid({ items }: { items: Featured[] }) {
