@@ -77,6 +77,7 @@ export const endpoints = {
     getProjectVerifyList: (p: SearchProjectVerify) => `/admin/verify?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
     approveProject: (projectId: number) => `/admin/verify/approve/${projectId}`,
     rejectProject: (projectId: number) => `/admin/verify/reject/${projectId}`,
+    getProjectVerifyDetail: (projectId: number) => `/admin/verify/${projectId}`,
 };
 
 export const getData = async (url: string, accessToken?: string) => {

@@ -314,6 +314,7 @@ export function CreateProject() {
                             </p>
                         </div>
 
+                        {/* TODO: 첨부파일 필요 */}
                         <div>
                             <Label>대표 이미지 *</Label>
                             <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
@@ -545,6 +546,7 @@ export function CreateProject() {
                                     </Card>
                                 ))}
                                 {project.rewardList.length === 0 && (
+                                    // TODO: 리워드 추가되어도 보이는 문제
                                     <p className="text-center text-gray-500 py-8">
                                         아직 추가된 리워드가 없습니다.
                                     </p>
@@ -665,6 +667,7 @@ export function CreateProject() {
                         </Card>
 
                         <div className="flex items-center space-x-2">
+                            {/* TODO: 체크 검증 */}
                             <Checkbox id="agree" />
                             <label htmlFor="agree" className="text-sm">
                                 프로젝트 등록 약관 및 정책에 동의합니다. *
