@@ -84,8 +84,8 @@ export function InquiryAdminTab() {
     const setInquiryStatus = (inqId: number, answered: 'Y' | 'N') => setInquiries(prev => prev.map(i => i.inqId === inqId ? { ...i, isAnswer: answered } : i));
 
     return (
-        <div className="min-h-screen bg-zinc-50">
-            <div className="mx-auto max-w-7xl px-5 py-8">
+        <div>
+            <div>
                         <Card>
                             <CardHeader><CardTitle>문의 내역</CardTitle></CardHeader>
                             <CardContent>
