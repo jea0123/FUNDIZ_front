@@ -73,8 +73,8 @@ export function ReportsAdminTab() {
     const pagerptCount = Math.ceil(filteredReports.length / pageSize);
 
     return (
-        <div className="min-h-screen bg-zinc-50">
-            <div className="mx-auto max-w-7xl px-5 py-8">
+        <div>
+            <div>
                         <Card>
                             <CardHeader className="flex items-center justify-between">
                                 <CardTitle>신고 내역</CardTitle>

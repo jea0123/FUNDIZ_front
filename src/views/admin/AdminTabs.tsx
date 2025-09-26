@@ -2,9 +2,10 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useSearchParams } from "react-router-dom";
 import { OverviewTab } from "./tabs/OverviewTab";
 import { ApprovalsTab } from "./tabs/ApprovalsTab";
-import { ReportsTab } from "./tabs/ReportsTab";
+import { ReportsAdminTab } from "./tabs/ReportsAdminTab";
 import { UsersTab } from "./tabs/UsersTab";
 import { AnalyticsTab } from "./tabs/AnalyticsTab";
+import { InquiryAdminTab } from "./tabs/InquiryAdminTab";
 import { CustomerCenterTab } from "./tabs/CustomerCenterTab";
 
 export function AdminTabs() {
@@ -21,13 +22,14 @@ export function AdminTabs() {
             className="w-full"
         >
             <TabsContent value="overview"><OverviewTab /></TabsContent>
-            <TabsContent value="approvals"><ApprovalsTab /></TabsContent>
             {/* TODO: 프로젝트 목록 페이지 만들고 주석 풀기 */}
             {/* <TabsContent value="projects"><ProjectsTab /></TabsContent> */}
-            <TabsContent value="reports"><ReportsTab /></TabsContent>
-            <TabsContent value="users"><UsersTab /></TabsContent>
+            <TabsContent value="approvals"><ApprovalsTab /></TabsContent>
             <TabsContent value="analytics"><AnalyticsTab /></TabsContent>
-            <TabsContent value="customer-center"><CustomerCenterTab /></TabsContent>
+            <TabsContent value="users"><UsersTab /></TabsContent>
+            <TabsContent value="reports"><ReportsAdminTab /></TabsContent>
+            <TabsContent value="inquiry"><InquiryAdminTab /></TabsContent>
+            {/* <TabsContent value="notice"><NoticeAdminTab /></TabsContent> (미완성)*/}
         </Tabs>
     );
 }

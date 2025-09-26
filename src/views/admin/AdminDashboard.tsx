@@ -1,15 +1,6 @@
-
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
-import { ApprovalsTab } from "./tabs/ApprovalsTab";
 //import { ProjectsTab } from "./tabs/ProjectsTab";
-import { ReportsTab } from "./tabs/ReportsTab";
-import { UsersTab } from "./tabs/UsersTab";
-import { AnalyticsTab } from "./tabs/AnalyticsTab";
-import { CustomerCenterTab } from "./tabs/CustomerCenterTab";
-import { OverviewTab } from "./tabs/OverviewTab";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { ClipboardList, SearchCheck, LayoutList, Siren, Users, ChartColumnBig, Headset } from "lucide-react";
+import { ClipboardList, SearchCheck, LayoutList, Siren, Users, ChartColumnBig, NotebookPen, MessagesSquare, Megaphone, Pencil } from "lucide-react";
+
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 
 export function AdminDashboard() {
@@ -19,7 +10,7 @@ export function AdminDashboard() {
 
     const linkCls = (isActive: boolean) =>
         `w-full justify-start px-3 py-2 rounded-md text-left flex items-center gap-2
-        ${isActive ? "bg-gray-100 text-black" : "text-gray-700 hover:bg-gray-50"}`;
+        ${isActive ? "bg-gray-00 text-black" : "text-gray-700 hover:bg-gray-50"}`;
 
     return (
         <div className="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -34,23 +25,29 @@ export function AdminDashboard() {
                     <NavLink to="/admin?tab=overview" className={({ isActive }) => linkCls(isActive)}>
                         <ClipboardList className="mr-2 h-4 w-4" /> 대시보드
                     </NavLink>
-                    <NavLink to="/admin?tab=approvals" className={({ isActive }) => linkCls(isActive || approvalsIsActive)}>
-                        <SearchCheck className="mr-2 h-4 w-4" /> 프로젝트 심사
-                    </NavLink>
                     <NavLink to="/admin?tab=projects" className={({ isActive }) => linkCls(isActive)}>
                         <LayoutList className="mr-2 h-4 w-4" /> 프로젝트 목록
                     </NavLink>
-                    <NavLink to="/admin?tab=reports" className={({ isActive }) => linkCls(isActive)}>
-                        <Siren className="mr-2 h-4 w-4" /> 신고 관리
-                    </NavLink>
-                    <NavLink to="/admin?tab=users" className={({ isActive }) => linkCls(isActive)}>
-                        <Users className="mr-2 h-4 w-4" /> 회원 관리
+                    <NavLink to="/admin?tab=approvals" className={({ isActive }) => linkCls(isActive || approvalsIsActive)}>
+                        <SearchCheck className="mr-2 h-4 w-4" /> 프로젝트 심사
                     </NavLink>
                     <NavLink to="/admin?tab=analytics" className={({ isActive }) => linkCls(isActive)}>
                         <ChartColumnBig className="mr-2 h-4 w-4" /> 통계 분석
                     </NavLink>
-                    <NavLink to="/admin?tab=customer-center" className={({ isActive }) => linkCls(isActive)}>
-                        <Headset className="mr-2 h-4 w-4" /> 고객센터
+                    <NavLink to="/admin?tab=users" className={({ isActive }) => linkCls(isActive)}>
+                        <Users className="mr-2 h-4 w-4" /> 회원 관리
+                    </NavLink>
+                    <NavLink to="/admin?tab=reports" className={({ isActive }) => linkCls(isActive)}>
+                        <Siren className="mr-2 h-4 w-4" /> 신고 관리
+                    </NavLink>
+                    <NavLink to="/admin?tab=inquiry" className={({ isActive }) => linkCls(isActive)}>
+                        <MessagesSquare className="mr-2 h-4 w-4" /> 문의 내역
+                    </NavLink>
+                    <NavLink to="/admin?tab=notice" className={({ isActive }) => linkCls(isActive)}>
+                        <Megaphone className="mr-2 h-4 w-4" /> 공지사항 관리
+                    </NavLink>
+                    <NavLink to="/admin?tab=noticeadd" className={({ isActive }) => linkCls(isActive)}>
+                        <NotebookPen className="mr-2 h-4 w-4" /> 공지사항 등록
                     </NavLink>
                 </nav>
 
