@@ -3,7 +3,7 @@ import { Route, Routes, useNavigate } from 'react-router-dom';
 import { CreateProject } from './views/creator/CreateProject';
 import { LoginPage } from './components/LoginPage';
 import { MyPage } from './views/user/MyPage';
-import { Navbar } from './components/Navbar';
+import { Navbar, Footer } from './components/Navbar';
 import { RegisterPage } from './components/RegisterPage';
 import { CustomerCenterPage } from './components/CustomerCenter';
 import { useLoginUserStore } from './store/LoginUserStore.store';
@@ -94,6 +94,7 @@ export default function App() {
           <Route path="*" element={<ErrorPage />} />
           {/* <Route path="/loading" element={<FundingLoader />} /> */}
         </Routes>
+        <Footer />
       </div>
     </Suspense>
   );
