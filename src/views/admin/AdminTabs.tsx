@@ -6,7 +6,7 @@ import { ReportsAdminTab } from "./tabs/ReportsAdminTab";
 import { UsersTab } from "./tabs/UsersTab";
 import { AnalyticsTab } from "./tabs/AnalyticsTab";
 import { InquiryAdminTab } from "./tabs/InquiryAdminTab";
-import { CustomerCenterTab } from "./tabs/CustomerCenterTab";
+import { NoticeAdminTab } from "./tabs/NoticeAdminTab";
 
 export function AdminTabs() {
     const [sp, setSp] = useSearchParams();
@@ -29,7 +29,7 @@ export function AdminTabs() {
             <TabsContent value="users"><UsersTab /></TabsContent>
             <TabsContent value="reports"><ReportsAdminTab /></TabsContent>
             <TabsContent value="inquiry"><InquiryAdminTab /></TabsContent>
-            {/* <TabsContent value="notice"><NoticeAdminTab /></TabsContent> (미완성)*/}
+            <TabsContent value="notice"><NoticeAdminTab /></TabsContent>
         </Tabs>
     );
 }

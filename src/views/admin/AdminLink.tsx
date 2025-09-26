@@ -47,7 +47,7 @@ export function AdminLink() {
         <ClipboardList className="mr-2 h-4 w-4" /> 문의 내역
     </NavLink>
 
-    <NavLink to={`${base}?tab=customer-center`} className={linkCls}>
-        <ClipboardList className="mr-2 h-4 w-4" /> 고객센터
+    <NavLink to={`${base}?tab=notice`} className={linkCls}>
+        <ClipboardList className="mr-2 h-4 w-4" /> 공지사항 관리
     </NavLink>
 </nav>
