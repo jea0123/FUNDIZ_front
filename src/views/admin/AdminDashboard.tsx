@@ -56,6 +56,7 @@ export function AdminDashboard() {
 
                 <div className="flex-1 min-w-0 mt-6">
                     <Outlet />
+                </div>
 
             </div>
         </div>

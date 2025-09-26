@@ -16,7 +16,7 @@ import { setNavigator } from './utils/navigator';
 import { CSPage } from './views/cs/CSPage';
 import { NoticeDetailPage } from './views/cs/NoticeDetail';
 import ProjectsAllPage, { ProjectByCategoryPage, ProjectBySubcategoryPage } from './views/project/ProjectAllPage';
-import { FundingPage } from './components/FundingPage';
+import { FundingPage } from './views/backing/backingPage';
 import { AdminCS } from './views/admin/AdminCS';
 import FundingLoader from './components/FundingLoader';
 import { ApprovalDetail } from './views/admin/tabs/ApprovalDetail';
