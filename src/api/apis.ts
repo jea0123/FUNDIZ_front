@@ -1,4 +1,6 @@
 
+import type { SearchProjectVerify } from '@/types/admin';
+import type { SearchProjectParams } from '@/types/projects';
 import { appNavigate } from '@/utils/navigator';
 import type { AxiosResponse } from 'axios';
 import axios from 'axios';
@@ -29,23 +31,32 @@ const api = {
     delete: (url: string, accessToken?: string) => axiosInstance.delete(url, authorization(accessToken)).then(responseHandler),
 };
 
+const toQueryString = (params: Record<string, unknown>) => {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && v !== "") query.append(k, String(v));
+    });
+    return query.toString();
+};
+
 export const endpoints = {
-    checkEmail: '/auth/checkEmail',    checkNickname: '/auth/checkNickname',
+    checkEmail: '/auth/checkEmail',
+    checkNickname: '/auth/checkNickname',
     signUp: '/auth/signUp',
     signIn: '/auth/signIn',
     getLoginUser: '/user/loginUser',
     getRecentTop10: '/project/recent-top10',
-    getMypage: (userId : number) => `/user/me/userPage/${userId}`,
+    getMypage: (userId : number) => `/user/userPage/${userId}`,
     getAddressList: (userId: number) =>  `/shipping/${userId}/list`,
     updateAddress: (userId: number, addrId: number) => `/shipping/${userId}/update/${addrId}`,
     createAddress: (userId: number) => `/shipping/${userId}/add`,
     deleteAddress: (userId: number, addrId: number)=> `/shipping/${userId}/delete/${addrId}`,
-    getBackingList: (userId: number)=>`/Backing/me/backingPage/${userId}`,
-    getBackingDetail: (userId: number, projectId: number, rewardId: number) => `/Backing/me/backingPage/${userId}/project/${projectId}/reward/${rewardId}`,
-    getLikedList: (userId: number) => `/user/me/likedList/${userId}`,
+    getBackingList: (userId: number)=>`/Backing/page/${userId}`,
+    getBackingDetail: (userId: number, projectId: number, rewardId: number) => `/Backing/page/${userId}/project/${projectId}/reward/${rewardId}`,
+    getLikedList: (userId: number) => `/user/likedList/${userId}`,
     getProjectDetail: (projectId: number) => `/project/${projectId}`,
-    getQnAList: (userId: number) => `/user/me/QnAList/${userId}`,
-    getQnAListDetail: (userId: number, projectId: number)=> `/user/me/QnAListDetail/${userId}/project/${projectId}`,
+    getQnAList: (userId: number) => `/user/QnAList/${userId}`,
+    getQnAListDetail: (userId: number, projectId: number)=> `/user/QnAListDetail/${userId}/project/${projectId}`,
     getCommunity: (projectId: number) => `/project/${projectId}/community`,
     getReview: (projectId: number) => `/project/${projectId}/review`,
     getFeatured: '/project/featured',
@@ -56,7 +67,7 @@ export const endpoints = {
     createProject: '/project',
     getSubcategories: '/categories/subcategories',
     getRewardSalesTop: (period: string, metric: string) => `/admin/reward-sales-top?period=${period}&metric=${metric}`,
-    getProjectAllPage: (page: number, size: number, ctgrId: number, subctgrId: number) => `/project/search?page=${page}&size=${size}&ctgrId=${ctgrId}&subctgrId=${subctgrId}`,
+    searchProject: (p: SearchProjectParams) => `/project/search?${toQueryString({ page: p.page, size: p.size, keyword: p.keyword, ctgrId: p.ctgrId, subctgrId: p.subctgrId, sort: p.sort })}`,
     getNotices: '/cs/notice',
     getNoticeDetail: (noticeId: number) => `/cs/notice/${noticeId}`,
     addNotice: '/cs/notice/add',
@@ -68,6 +79,10 @@ export const endpoints = {
     getReports: '/cs/report',
     getReportDetail: (reportId: number) => `/cs/report/${reportId}`,
     addReport: (userId: number) => `/cs/report/${userId}/add`, 
+    getProjectVerifyList: (p: SearchProjectVerify) => `/admin/verify?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
+    approveProject: (projectId: number) => `/admin/verify/approve/${projectId}`,
+    rejectProject: (projectId: number) => `/admin/verify/reject/${projectId}`,
+    getProjectVerifyDetail: (projectId: number) => `/admin/verify/${projectId}`,
 };
 
 export const getData = async (url: string, accessToken?: string) => {

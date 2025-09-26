@@ -1,8 +1,8 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { Route, Routes, useNavigate } from 'react-router-dom';
-import { CreateProject } from './views/project/CreateProject';
+import { CreateProject } from './views/creator/CreateProject';
 import { LoginPage } from './components/LoginPage';
-import { MyPage } from './components/MyPage';
+import { MyPage } from './views/user/MyPage';
 import { Navbar } from './components/Navbar';
 import { RegisterPage } from './components/RegisterPage';
 import { CustomerCenterPage } from './components/CustomerCenter';
@@ -18,6 +18,9 @@ import { NoticeDetailPage } from './views/cs/NoticeDetail';
 import ProjectsAllPage, { ProjectByCategoryPage, ProjectBySubcategoryPage } from './views/project/ProjectAllPage';
 import { FundingPage } from './components/FundingPage';
 import { AdminCS } from './views/admin/AdminCS';
+import FundingLoader from './components/FundingLoader';
+import { ApprovalDetail } from './views/admin/tabs/ApprovalDetail';
+import { AdminTabs } from './views/admin/AdminTabs';
 
 const AdminDashboard = lazy(() => import('./views/admin/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
 
@@ -46,7 +49,7 @@ export default function App() {
   }, [cookie.accessToken]);
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<FundingLoader />}>
       <div className="min-h-screen bg-gray-50">
         <NavigatorRegistrar />
         <Navbar />
@@ -58,25 +61,26 @@ export default function App() {
             <Route path='login' element={<LoginPage />} />
           </Route>
 
-        <Route path='/project'>
-          <Route index element={<ProjectsAllPage />} />
-          <Route path='category/:ctgrId' element={<ProjectByCategoryPage />} />
-          <Route path='category/:ctgrId/:subctgrId' element={<ProjectBySubcategoryPage />} />
-          <Route path=':projectId' element={<ProjectDetailPage />} />
-          <Route path='create' element={<CreateProject />} />
-          <Route path=':projectId/backing' element={<FundingPage onBackClick={function (): void {
+          <Route path='/project'>
+            <Route index element={<ProjectsAllPage />} />
+            <Route path='category/:ctgrId' element={<ProjectByCategoryPage />} />
+            <Route path='category/:ctgrId/subcategory/:subctgrId' element={<ProjectBySubcategoryPage />} />
+            <Route path=':projectId' element={<ProjectDetailPage />} />
+            <Route path='create' element={<CreateProject />} />
+            <Route path=':projectId/backing' element={<FundingPage onBackClick={function (): void {
               throw new Error('Function not implemented.');
-            } } onCompleteClick={function (): void {
+            }} onCompleteClick={function (): void {
               throw new Error('Function not implemented.');
-            } } />} />
-        </Route>
+            }} />} />
+          </Route>
 
           <Route path='/user'>
             <Route path='mypage' element={<MyPage />} />
           </Route>
 
-          <Route path='/admin'>
-            <Route path='dashboard' element={<AdminDashboard />} />
+          <Route path='/admin' element={<AdminDashboard />}>
+            <Route index element={<AdminTabs />} />
+            <Route path='verify/:projectId' element={<ApprovalDetail />} />
             <Route path='cs' element={<CustomerCenterPage />} />
             <Route path='test2' element={<AdminCS />} />
           </Route>
@@ -88,6 +92,7 @@ export default function App() {
 
           <Route path="/error" element={<ErrorPage />} />
           <Route path="*" element={<ErrorPage />} />
+          {/* <Route path="/loading" element={<FundingLoader />} /> */}
         </Routes>
       </div>
     </Suspense>

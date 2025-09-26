@@ -1,3 +1,6 @@
+import type { Reward } from "./reward";
+import type { Tag } from "./tag";
+
 export interface Analytics {
     kpi: {
         totalBackingAmount: number;
@@ -37,4 +40,55 @@ export interface SubcategorySuccess {
 export interface Category {
     ctgrId: number;
     ctgrName: string;
+}
+
+export interface ProjectVerifyList {
+    projectId: number;
+    title: string;
+    creatorName: string;
+    ctgrName: string;
+    subctgrName: string;
+    goalAmount: number;
+    startDate: Date;
+    endDate: Date;
+    projectStatus: string;
+    requestedAt: Date;
+}
+
+export interface SearchProjectVerify {
+    page: number;
+    size: number;
+
+    projectStatus?: string;
+    rangeType?: string;
+}
+
+export interface RejectRequestDto {
+    rejectedReason: string;
+}
+
+export interface ProjectVerifyDetail {
+    projectId: number;
+    creatorId: number;
+    title: string;
+    content: string;
+    thumbnail: string
+    goalAmount: number;
+    startDate: Date;
+    endDate: Date;
+    projectStatus: string;
+    requestedAt: Date;
+
+    ctgrId: number;
+    ctgrName: string;
+    subctgrId: number;
+    subctgrName: string;
+
+    creatorName: string;
+    businessNumb: string;
+    email: string;
+    phone: string;
+
+    tagList: Tag[];
+    rewardList: Reward[];
 }
