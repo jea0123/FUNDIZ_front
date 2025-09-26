@@ -1,4 +1,6 @@
+//import { ProjectsTab } from "./tabs/ProjectsTab";
 import { ClipboardList, SearchCheck, LayoutList, Siren, Users, ChartColumnBig, NotebookPen, MessagesSquare, Megaphone, Pencil } from "lucide-react";
+
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 
 export function AdminDashboard() {
@@ -8,7 +10,7 @@ export function AdminDashboard() {
 
     const linkCls = (isActive: boolean) =>
         `w-full justify-start px-3 py-2 rounded-md text-left flex items-center gap-2
-        ${isActive ? "bg-gray-100 text-black" : "text-gray-700 hover:bg-gray-50"}`;
+        ${isActive ? "bg-gray-00 text-black" : "text-gray-700 hover:bg-gray-50"}`;
 
     return (
         <div className="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-8">

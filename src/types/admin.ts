@@ -85,7 +85,7 @@ export interface ProjectVerifyDetail {
     subctgrName: string;
 
     creatorName: string;
-    businessNumb: string;
+    businessNum: string;
     email: string;
     phone: string;
 
