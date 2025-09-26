@@ -1,12 +1,12 @@
 import { endpoints, getData, postData } from "@/api/apis";
 import FundingLoader from "@/components/FundingLoader";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import type { ProjectVerifyDetail, ProjectVerifyList } from "@/types/admin";
+import type { ProjectVerifyDetail } from "@/types/admin";
 import { formatDate } from "@/utils/utils";
-import { CheckCircle, Eye, XCircle } from "lucide-react";
+import { CheckCircle, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
