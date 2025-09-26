@@ -5,7 +5,6 @@ import { LoginPage } from './components/LoginPage';
 import { MyPage } from './views/user/MyPage';
 import { Navbar, Footer } from './components/Navbar';
 import { RegisterPage } from './components/RegisterPage';
-import { CustomerCenterPage } from './components/CustomerCenter';
 import { useLoginUserStore } from './store/LoginUserStore.store';
 import { useCookies } from 'react-cookie';
 import { endpoints, getData } from './api/apis';
@@ -17,7 +16,6 @@ import { CSPage } from './views/cs/CSPage';
 import { NoticeDetailPage } from './views/cs/NoticeDetail';
 import ProjectsAllPage, { ProjectByCategoryPage, ProjectBySubcategoryPage } from './views/project/ProjectAllPage';
 import { FundingPage } from './views/backing/backingPage';
-import { AdminCS } from './views/admin/AdminCS';
 import FundingLoader from './components/FundingLoader';
 import { ApprovalDetail } from './views/admin/tabs/ApprovalDetail';
 import { AdminTabs } from './views/admin/AdminTabs';
@@ -81,8 +79,6 @@ export default function App() {
           <Route path='/admin' element={<AdminDashboard />}>
             <Route index element={<AdminTabs />} />
             <Route path='verify/:projectId' element={<ApprovalDetail />} />
-            <Route path='cs' element={<CustomerCenterPage />} />
-            <Route path='test2' element={<AdminCS />} />
           </Route>
 
           <Route path="/cs">
