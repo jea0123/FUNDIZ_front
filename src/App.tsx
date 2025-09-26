@@ -6,7 +6,6 @@ import { MyPage } from './views/user/MyPage';
 import { Navbar } from './components/Navbar';
 import { RegisterPage } from './components/RegisterPage';
 import { CustomerCenterPage } from './components/CustomerCenter';
-import { AdminCS } from './components/AdminCS';
 import { useLoginUserStore } from './store/LoginUserStore.store';
 import { useCookies } from 'react-cookie';
 import { endpoints, getData } from './api/apis';
@@ -17,14 +16,11 @@ import { setNavigator } from './utils/navigator';
 import { CSPage } from './views/cs/CSPage';
 import { NoticeDetailPage } from './views/cs/NoticeDetail';
 import ProjectsAllPage, { ProjectByCategoryPage, ProjectBySubcategoryPage } from './views/project/ProjectAllPage';
-
-import { FundingPage } from './views/backing/backingPage';
-
-
+import { FundingPage } from './components/FundingPage';
+import { AdminCS } from './views/admin/AdminCS';
 import FundingLoader from './components/FundingLoader';
 import { ApprovalDetail } from './views/admin/tabs/ApprovalDetail';
 import { AdminTabs } from './views/admin/AdminTabs';
-
 
 const AdminDashboard = lazy(() => import('./views/admin/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
 
