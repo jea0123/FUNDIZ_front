@@ -1,6 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { Route, Routes, useNavigate } from 'react-router-dom';
-import { CreateProject } from './views/creator/CreateProject';
 import { LoginPage } from './components/LoginPage';
 import { MyPage } from './views/user/MyPage';
 import { Navbar, Footer } from './components/Navbar';
@@ -19,6 +18,7 @@ import { FundingPage } from './views/backing/backingPage';
 import FundingLoader from './components/FundingLoader';
 import { ApprovalDetail } from './views/admin/tabs/ApprovalDetail';
 import { AdminTabs } from './views/admin/AdminTabs';
+import CreateProject from './views/creator/CreateProject';
 
 const AdminDashboard = lazy(() => import('./views/admin/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
 
