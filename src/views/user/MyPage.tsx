@@ -329,7 +329,8 @@ export function MyPage() {
               </DialogContent>
             </Dialog>
 
-            <SavedAddressModal triggerText="배송지 관리" onSelectAddress={(address) => {
+            {/* 모드에 따라 배송지 출력화면 다르게 */}
+            <SavedAddressModal mode="mypage" triggerText="배송지 관리" onSelectAddress={(address) => {
               console.log("선택된 주소 : " , address);
             }}
             />

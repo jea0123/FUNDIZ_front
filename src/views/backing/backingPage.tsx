@@ -223,7 +223,7 @@ export function FundingPage() {
                 <CardTitle>배송지 선택</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <SavedAddressModal onSelect={setShippingAddress} />
+                <SavedAddressModal mode="backing" onSelect={setShippingAddress} />
 
                 {shippingAddress ? (
                   <div className="text-sm p-3 border rounded-lg">
