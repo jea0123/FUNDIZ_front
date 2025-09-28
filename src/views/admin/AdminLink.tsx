@@ -31,16 +31,16 @@ export function AdminLink() {
         <ClipboardList className="mr-2 h-4 w-4" /> 프로젝트 목록
     </NavLink>
 
-    <NavLink to={`${base}?tab=analytics`} className={linkCls}>
-        <ClipboardList className="mr-2 h-4 w-4" /> 통계 분석
+    <NavLink to={`${base}?tab=reports`} className={linkCls}>
+        <ClipboardList className="mr-2 h-4 w-4" /> 신고 관리
     </NavLink>
 
     <NavLink to={`${base}?tab=users`} className={linkCls}>
         <ClipboardList className="mr-2 h-4 w-4" /> 회원 관리
     </NavLink>
 
-    <NavLink to={`${base}?tab=reports`} className={linkCls}>
-        <ClipboardList className="mr-2 h-4 w-4" /> 신고 관리
+    <NavLink to={`${base}?tab=analytics`} className={linkCls}>
+        <ClipboardList className="mr-2 h-4 w-4" /> 통계 분석
     </NavLink>
 
     <NavLink to={`${base}?tab=inquiry`} className={linkCls}>
