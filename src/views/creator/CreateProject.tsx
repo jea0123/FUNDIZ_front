@@ -7,7 +7,7 @@ import { endpoints, getData, postData } from '@/api/apis';
 import type { RewardCreateRequestDto } from '@/types/reward';
 import type { Category } from '@/types/admin';
 import FundingLoader from '@/components/FundingLoader';
-import { Stepper } from './components/stepper';
+import { Stepper } from './components/Stepper';
 import { Steps } from './components/Steps';
 
 const normalizeName = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();

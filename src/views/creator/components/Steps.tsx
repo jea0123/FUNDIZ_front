@@ -10,8 +10,8 @@ import type { Category } from "@/types/admin";
 import type { ProjectCreateRequestDto, Subcategory } from "@/types/projects";
 import type { RewardCreateRequestDto } from "@/types/reward";
 import { formatDate } from "@/utils/utils";
-import { Plus, Upload, X } from "lucide-react";
-import { useState } from "react";
+import { Plus, Trash, Truck, Upload, X } from "lucide-react";
+import { useRef, useState } from "react";
 
 const formatCurrency = (amount: string) =>
     new Intl.NumberFormat("ko-KR").format(parseInt(amount || "0", 10) || 0);
@@ -34,6 +34,8 @@ export function Steps(props: {
     const {
         step, project, setProject, categories, subcategories, rewardList, newReward, setNewReward, addReward, removeReward, agree = false, setAgree, agreeError
     } = props;
+
+    const businessDocRef = useRef<HTMLInputElement>(null);
 
     if (step === 1) {
         return (
@@ -87,16 +89,18 @@ export function Steps(props: {
                     <p className="text-sm text-gray-500 mt-1">{project.title.length}/50자</p>
                 </div>
 
-                {/* TODO: 첨부파일 필요 */}
+                {/* TODO: 첨부파일 업로드 기능 추가 */}
                 <div>
                     <Label>대표 이미지 *</Label>
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                         <Upload className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                         <p className="text-gray-500 mb-2">이미지를 드래그하거나 클릭하여 업로드</p>
                         <Button variant="outline" size="sm">파일 선택</Button>
-                        <p className="text-xs text-gray-400 mt-2">권장 크기: 1200x800px, 최대 5MB (JPG, PNG)</p>
+                        <p className="text-xs text-gray-400 mt-2">권장 크기: 1200x800px, 최대 4MB (JPG, PNG)</p>
                     </div>
                 </div>
+
+                {/* TODO: 프로젝트 내용 단락 추가 */}
 
                 <TagEditor
                     tags={project.tagList}
@@ -229,10 +233,10 @@ export function Steps(props: {
 
                 <div>
                     <h3 className="text-lg font-semibold mb-4">추가된 리워드</h3>
-                    <div className="space-y-4">
+                    <div className="space-y-2">
                         {rewardList.map((r) => (
                             <Card key={r.tempId}>
-                                <CardContent className="p-4">
+                                <CardContent className="">
                                     <div className="flex justify-between items-start">
                                         <div className="flex-1">
                                             <div className="flex items-center space-x-2 mb-2">
@@ -241,6 +245,17 @@ export function Steps(props: {
                                             </div>
                                             <h4 className="font-medium mb-1">{r.rewardName}</h4>
                                             <p className="text-sm text-gray-600">{r.rewardContent}</p>
+                                            <div className="mt-2 text-sm text-gray-700">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="mr-1">{formatDate(r.deliveryDate)}</span>
+                                                    <Truck className="h-4 w-4" />
+                                                    {r.isPosting === "Y" ? (
+                                                        <Badge>배송 필요</Badge>
+                                                    ) : (
+                                                        <Badge variant="outline">배송 불필요</Badge>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
                                         <Button variant="ghost" size="sm" onClick={() => removeReward(r.tempId)}>
                                             <X className="h-4 w-4" />
@@ -284,6 +299,54 @@ export function Steps(props: {
                                 onChange={(e) => setProject(prev => ({ ...prev, businessNum: e.target.value }))}
                                 inputMode="numeric"
                             />
+                        </div>
+                        {/* TODO: 사업자 서류첨부 업로드 기능 추가 */}
+                        <div>
+                            <Label htmlFor="businessDoc">사업자 관련 서류 (PDF/JPG/PNG) *</Label>
+                            <Input
+                                ref={businessDocRef}
+                                id="businessDoc"
+                                type="file"
+                                accept="application/pdf,image/*"
+                                className="hidden"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0] ?? null;
+                                    setProject((prev) => ({ ...prev, businessDoc: file }));
+                                }}
+                            />
+                            <div className="mt-2 flex items-center gap-2 w-full min-w-0">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 px-3 hover:bg-gray-100"
+                                    onClick={() => businessDocRef.current?.click()}
+                                >
+                                    <Upload className="h-4 w-4 mr-1" /> 파일 선택
+                                </Button>
+                                <div className="flex-1 min-w-0">
+                                    <span className="block text-sm text-gray-700 truncate">
+                                        {project.businessDoc ? project.businessDoc.name : "선택된 파일 없음"}
+                                    </span>
+                                </div>
+                                {project.businessDoc && (
+                                    <Button
+                                        type="button"
+                                        variant="destructive"
+                                        size="sm"
+                                        className="h-8 px-3"
+                                        onClick={() => {
+                                            if (businessDocRef.current) businessDocRef.current.value = "";
+                                            setProject((prev) => ({ ...prev, businessDoc: null }));
+                                        }}
+                                    >
+                                        <Trash className="h-4 w-4 mr-1" /> 삭제
+                                    </Button>
+                                )}
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                                • 최대 4GB (권장 50MB 이하)
+                            </p>
                         </div>
                         <div>
                             <Label htmlFor="email">문의 이메일 *</Label>
@@ -389,8 +452,6 @@ function TagEditor({
   const [value, setValue] = useState("");
   const add = () => { onAdd(value); setValue(""); };
 
-  // useState import 필요
-  // (상단 import에 `useState` 추가하세요)
   return (
     <div>
       <Label>검색 태그 (최대 10개)</Label>

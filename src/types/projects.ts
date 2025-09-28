@@ -92,7 +92,7 @@ export interface RecentView{
 
 export interface ProjectCreateRequestDto {
     projectId: number;
-    ctgrId: number; //프론트에서만 사용
+    ctgrId: number; //프런트 전용
     subctgrId: number;
     creatorId: number;
 
@@ -109,6 +109,7 @@ export interface ProjectCreateRequestDto {
 
     creatorName: string;
     businessNum: string;
+    businessDoc?: File | null; //프런트 전용
     email: string;
     phone: string;
 }

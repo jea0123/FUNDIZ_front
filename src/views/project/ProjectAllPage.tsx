@@ -57,32 +57,33 @@ function useQueryState() {
     const sort = (searchParams.get("sort") as SortKey) || "recent";
 
     //상태 -> URL 동기화
-    const setParam = (k: string, v?: string) => {
+    const setParam = (patch: Record<string, string | undefined>) => {
         const next = new URLSearchParams(searchParams);
-
-        if (v && v.length) next.set(k, v);
-        else next.delete(k);
-
+        Object.entries(patch).forEach(([k, v]) => {
+            if (v && v.length) next.set(k, v);
+            else next.delete(k);
+        });
         setSearchParams(next, { replace: true });
     };
 
-    const setPage = (p: number) => setParam("page", String(p));
-    const setSize = (s: number) => setParam("size", String(s));
-    const setKeyword = (k: string) => { setParam("keyword", k); setParam("page", "1"); };
-    const setSort = (s: SortKey) => { setParam("sort", s); setParam("page", "1"); };
+    const setPage = (p: number) => setParam({ page: String(p) });
+    const setSize = (s: number) => setParam({ size: String(s) });
+    const setKeyword = (k: string) => { setParam({ keyword: k || undefined, page: "1" }); };
+    const setSort = (s: SortKey) => { setParam({ sort: s, page: "1" }); };
 
     return { page, size, keyword, sort, setPage, setSize, setKeyword, setSort };
 }
 
 function useProject(params: SearchProjectParams) {
+    const { page, size, keyword, sort, ctgrId, subctgrId } = params;
     const [items, setItems] = useState<Featured[]>([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<boolean>(false);
 
     const url = useMemo(() => {
-        return endpoints.searchProject(params);
-    }, [params]);
+        return endpoints.searchProject({ page, size, keyword, sort, ctgrId, subctgrId });
+    }, [page, size, keyword, sort, ctgrId, subctgrId]);
 
     useEffect(() => {
         let cancel = false;
@@ -166,12 +167,12 @@ export default function ProjectAllPage() {
 export function ProjectByCategoryPage() {
     const { ctgrId: catParam } = useParams();
     const ctgrId = catParam ? Number(catParam) : undefined;
-    
-    if (!ctgrId) return null;
 
     const { categories, subcategories } = useCatalogData();
     const { sort, page, size, keyword, setSort, setPage } = useQueryState();
     const { items, total, loading, error } = useProject({ page, size, keyword, sort, ctgrId });
+    
+    if (!ctgrId) return null;
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -194,11 +195,11 @@ export function ProjectBySubcategoryPage() {
     const ctgrId = catParam ? Number(catParam) : undefined;
     const subctgrId = subParam ? Number(subParam) : undefined;
 
-    if (!ctgrId || !subctgrId) return null;
-
     const { categories, subcategories } = useCatalogData();
     const { sort, page, size, keyword, setSort, setPage } = useQueryState();
     const { items, total, loading, error } = useProject({ page, size, keyword, sort, ctgrId, subctgrId});
+
+    if (!ctgrId || !subctgrId) return null;
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

@@ -22,12 +22,12 @@ export function AdminTabs() {
             className="w-full"
         >
             <TabsContent value="overview"><OverviewTab /></TabsContent>
+            <TabsContent value="approvals"><ApprovalsTab /></TabsContent>
             {/* TODO: 프로젝트 목록 페이지 만들고 주석 풀기 */}
             {/* <TabsContent value="projects"><ProjectsTab /></TabsContent> */}
-            <TabsContent value="approvals"><ApprovalsTab /></TabsContent>
-            <TabsContent value="analytics"><AnalyticsTab /></TabsContent>
-            <TabsContent value="users"><UsersTab /></TabsContent>
             <TabsContent value="reports"><ReportsAdminTab /></TabsContent>
+            <TabsContent value="users"><UsersTab /></TabsContent>
+            <TabsContent value="analytics"><AnalyticsTab /></TabsContent>
             <TabsContent value="inquiry"><InquiryAdminTab /></TabsContent>
             <TabsContent value="notice"><NoticeAdminTab /></TabsContent>
         </Tabs>
