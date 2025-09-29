@@ -51,6 +51,7 @@ export const endpoints = {
     updateAddress: (userId: number, addrId: number) => `/shipping/${userId}/update/${addrId}`,
     createAddress: (userId: number) => `/shipping/${userId}/add`,
     deleteAddress: (userId: number, addrId: number)=> `/shipping/${userId}/delete/${addrId}`,
+    setAddressDefault: (userId: number, addrId: number)=>`/shipping/${userId}/defaultAddr/${addrId}`,
     getBackingList: (userId: number)=>`/Backing/page/${userId}`,
     getBackingDetail: (userId: number, projectId: number, rewardId: number) => `/Backing/page/${userId}/project/${projectId}/reward/${rewardId}`,
     getLikedList: (userId: number) => `/user/likedList/${userId}`,
