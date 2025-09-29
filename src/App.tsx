@@ -19,6 +19,7 @@ import FundingLoader from './components/FundingLoader';
 import { ApprovalDetail } from './views/admin/tabs/ApprovalDetail';
 import { AdminTabs } from './views/admin/AdminTabs';
 import CreateProject from './views/creator/CreateProject';
+import { CreatorPage } from './views/creator/CreatorPage';
 
 const AdminDashboard = lazy(() => import('./views/admin/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
 
@@ -73,8 +74,13 @@ export default function App() {
           </Route>
 
           <Route path='/user'>
-            <Route path='mypage' element={<MyPage />} />
+            <Route path='Mypage' element={<MyPage />} />
           </Route>
+
+            
+          <Route path='/creator'>
+            <Route path='mypage' element={<CreatorPage />} />
+          </Route> 
 
           <Route path='/admin' element={<AdminDashboard />}>
             <Route index element={<AdminTabs />} />

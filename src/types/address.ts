@@ -19,7 +19,7 @@ export interface AddrUpdateRequest{
     roadAddr : string;
     detailAddr : string;
     recipientPhone : string;
-    isDefault : string;
+
 }
 
 export interface AddressResponse{
@@ -32,4 +32,9 @@ export interface AddressResponse{
     detailAddr : string;
     recipientPhone : string;
     isDefault : string;
+}
+export interface resetDefaultAddr{
+    addrId : number;
+    userId : number;
+    isDefault :string;
 }
