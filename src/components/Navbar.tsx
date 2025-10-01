@@ -21,6 +21,12 @@ export function Navbar() {
         setCookie('accessToken', '', { path: '/', expires: new Date() })
     };
 
+    const searchKeyHandler = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && searchQuery.trim() !== '') {
+            navigate(`/project/search?keyword=${encodeURIComponent(searchQuery.trim())}`);
+        }
+    };
+
     return (
         <nav className="bg-white shadow-sm border-b">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -40,8 +46,9 @@ export function Navbar() {
                             <Input
                                 type="text"
                                 placeholder="프로젝트, 크리에이터 검색"
-                                value={searchQuery}
+                                // value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
+                                onKeyDown={searchKeyHandler}
                                 className="pl-10"
                             />
                         </div>
@@ -134,8 +141,9 @@ export function Navbar() {
                         <Input
                             type="text"
                             placeholder="프로젝트, 크리에이터 검색"
-                            value={searchQuery}
+                            // value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
+                            onKeyDown={searchKeyHandler}
                             className="pl-10"
                         />
                     </div>

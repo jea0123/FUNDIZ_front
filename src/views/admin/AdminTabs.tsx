@@ -7,6 +7,7 @@ import { UsersTab } from "./tabs/UsersTab";
 import { AnalyticsTab } from "./tabs/AnalyticsTab";
 import { InquiryAdminTab } from "./tabs/InquiryAdminTab";
 import { NoticeAdminTab } from "./tabs/NoticeAdminTab";
+import { ProjectsTab } from "./tabs/ProjectsTab";
 
 export function AdminTabs() {
     const [sp, setSp] = useSearchParams();
@@ -23,8 +24,7 @@ export function AdminTabs() {
         >
             <TabsContent value="overview"><OverviewTab /></TabsContent>
             <TabsContent value="approvals"><ApprovalsTab /></TabsContent>
-            {/* TODO: 프로젝트 목록 페이지 만들고 주석 풀기 */}
-            {/* <TabsContent value="projects"><ProjectsTab /></TabsContent> */}
+            <TabsContent value="projects"><ProjectsTab /></TabsContent>
             <TabsContent value="reports"><ReportsAdminTab /></TabsContent>
             <TabsContent value="users"><UsersTab /></TabsContent>
             <TabsContent value="analytics"><AnalyticsTab /></TabsContent>

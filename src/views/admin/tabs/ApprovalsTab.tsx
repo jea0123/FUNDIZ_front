@@ -9,16 +9,17 @@ import { formatDate } from "@/utils/utils";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import FundingLoader from "@/components/FundingLoader";
+import { Pagination } from "@/views/project/ProjectAllPage";
 
 /* ------------------------------ Common hook ------------------------------ */
 
-function useQueryState() {
+export function useQueryState() {
     const [searchParams, setSearchParams] = useSearchParams();
 
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
     const size = Math.max(1, parseInt(searchParams.get("size") || "5", 10));
     const rangeType = searchParams.get("rangeType") || "";
-    const projectStatus = searchParams.get("projectStatus") || "VERIFYING";
+    const projectStatus = searchParams.get("projectStatus") || "";
 
     const setParam = (k: string, v?: string) => {
         const next = new URLSearchParams(searchParams);
@@ -146,20 +147,6 @@ function ApprovalCard({ project, projectData }: { project: ProjectVerifyList; pr
             </DialogContent>
         </Dialog>
         </>
-    );
-}
-
-/* ------------------------------ UI component ------------------------------ */
-
-function Pagination({ page, size, total, onPage }: { page: number; size: number; total: number; onPage: (p: number) => void }) {
-    const lastPage = Math.max(1, Math.ceil(total / size));
-
-    return (
-        <div className="flex items-center justify-center gap-2 mt-6">
-            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onPage(page - 1)}>이전</Button>
-            <span className="text-sm text-gray-600">{page} / {lastPage}</span>
-            <Button variant="outline" size="sm" disabled={page >= lastPage} onClick={() => onPage(page + 1)}>다음</Button>
-        </div>
     );
 }
 

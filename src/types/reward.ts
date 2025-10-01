@@ -31,3 +31,10 @@ export interface RewardUpdateRequestDto {
     isPosting: string;
     remain: number;
 }
+
+export interface CartItem {
+    rewardId: number;
+    rewardName: string;
+    price: number;
+    remain: number;
+}

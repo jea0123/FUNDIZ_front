@@ -13,7 +13,7 @@ import MainPage from './views/MainPage';
 import { setNavigator } from './utils/navigator';
 import { CSPage } from './views/cs/CSPage';
 import { NoticeDetailPage } from './views/cs/NoticeDetail';
-import ProjectsAllPage, { ProjectByCategoryPage, ProjectBySubcategoryPage } from './views/project/ProjectAllPage';
+import ProjectsAllPage, { ProjectByCategoryPage, ProjectBySubcategoryPage, SearchProjectPage } from './views/project/ProjectAllPage';
 import { FundingPage } from './views/backing/backingPage';
 import FundingLoader from './components/FundingLoader';
 import { ApprovalDetail } from './views/admin/tabs/ApprovalDetail';
@@ -62,6 +62,7 @@ export default function App() {
 
           <Route path='/project'>
             <Route index element={<ProjectsAllPage />} />
+            <Route path='search' element={<SearchProjectPage />} />
             <Route path='category/:ctgrId' element={<ProjectByCategoryPage />} />
             <Route path='category/:ctgrId/subcategory/:subctgrId' element={<ProjectBySubcategoryPage />} />
             <Route path=':projectId' element={<ProjectDetailPage />} />
