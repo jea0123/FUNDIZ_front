@@ -8,7 +8,7 @@ import React from "react";
 export default function FundingLoader() {
     return (
         <div
-            className="flex min-h-screen w-full items-center justify-center bg-white"
+            className="flex min-h-screen w-full items-center justify-center"
             aria-busy
             aria-live="polite"
         >
