@@ -1,3 +1,4 @@
+import type { Status } from "@/views/admin/tabs/ProjectsTab";
 import type { Reward } from "./reward";
 import type { Tag } from "./tag";
 
@@ -91,4 +92,18 @@ export interface ProjectVerifyDetail {
 
     tagList: Tag[];
     rewardList: Reward[];
+}
+
+export interface AdminProjectList {
+    projectId: number;
+    title: string;
+    creatorName: string;
+    projectStatus: Status;
+    endDate: Date;
+    goalAmount: number;
+    currAmount: number;
+    backerCnt: number;
+    updatedAt: Date
+
+    percentNow: number;
 }
