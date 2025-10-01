@@ -1,9 +1,23 @@
 import { useEffect, useState } from "react";
 import { Button } from "../../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../../components/ui/tabs";
 import { Badge } from "../../components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "../../components/ui/avatar";
 //import { Input } from './ui/input';
 //import { Label } from './ui/label';
 //import { Textarea } from './ui/textarea';
@@ -22,7 +36,7 @@ import { ImageWithFallback } from "../../components/figma/ImageWithFallback";
 import { useNavigate } from "react-router-dom";
 //import { useLoginUserStore } from '@/store/LoginUserStore.store';
 //import { endpoints } from '@/api/apis';
-import { endpoints, getData, postData, deleteData, putData } from "@/api/apis";
+import { endpoints, getData, postData, deleteData } from "@/api/apis";
 import type { LoginUser } from "@/types";
 //import { set } from 'date-fns';
 //import { useParams } from 'react-router-dom';
@@ -48,13 +62,14 @@ import { MyInquiryTab } from "./MyInquiryTab";
 import { MyReportsTab } from "./MyReportsTab";
 
 export function MyPage() {
+  const tempUserId = 1;
   const [editMode, setEditMode] = useState(false);
   //const { loginUser } = useLoginUserStore();
   //const { projectId } = useParams();
   const navigate = useNavigate();
   const [loginUser, setLoginUser] = useState<LoginUser>();
   //const[projects, setProjects] =useState<ProjectDetail[]>();
-  const [addrList, setAddressList] = useState<AddressResponse[]>();11
+  const [addrList, setAddressList] = useState<AddressResponse[]>();
   const [addrAdd, setAddrAdd] = useState<AddrAddRequest>({
     addrName: "",
     recipient: "",
@@ -64,25 +79,27 @@ export function MyPage() {
     recipientPhone: "",
     isDefault: "N",
   });
+  
+
+  const [roleView, setRoleView] = useState<"user" | "creator">("user");
 
   const [addrEdit, setAddrEdit] = useState<AddrUpdateRequest>({
     addrId: 0,
-    userId: 4,
+    userId: tempUserId,
     addrName: "",
     recipient: "",
     postalCode: "",
     roadAddr: "",
     detailAddr: "",
     recipientPhone: "",
-    isDefault: "N",
   });
-  const statusLabel: Record<string, string> ={
+  const statusLabel: Record<string, string> = {
     PENDING: "결제 대기",
     COMPLETED: "결제 완료",
     CANCELED: "결제 취소",
     FAILED: "결제 실패",
-    REFUNDED: "환불"
-  }
+    REFUNDED: "환불",
+  };
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -95,13 +112,14 @@ export function MyPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedAddrId, setSelectedAddrId] = useState<number | null>(null);
   const [isBackingDetailOpen, setIsBackingDetailOpen] = useState(false);
-  const [selectedBacking, setSelectedBacking] = useState<BackingMyPageDetail | null>(null);
+  const [selectedBacking, setSelectedBacking] =
+    useState<BackingMyPageDetail | null>(null);
   const MypageAddrDelete = async (addrId: number) => {
-    const response = await deleteData(endpoints.deleteAddress(4, addrId), {});
+    const response = await deleteData(endpoints.deleteAddress(tempUserId, addrId), {});
     if (response.status === 200) {
       alert("배송지가 삭제되었습니다.");
 
-      const addrResponse = await getData(endpoints.getAddressList(4));
+      const addrResponse = await getData(endpoints.getAddressList(tempUserId));
       if (addrResponse.status === 200) {
         setAddressList(addrResponse.data);
       }
@@ -116,11 +134,11 @@ export function MyPage() {
   };
 
   const MypageAddrAdd = async (newAddr: AddrAddRequest) => {
-    const response = await postData(endpoints.createAddress(4), newAddr);
+    const response = await postData(endpoints.createAddress(tempUserId), newAddr);
     if (response.status === 200) {
       alert("배송지가 추가되었습니다.");
 
-      const addrResponse = await getData(endpoints.getAddressList(4));
+      const addrResponse = await getData(endpoints.getAddressList(tempUserId));
       if (addrResponse.status === 200) {
         setAddressList(addrResponse.data);
       }
@@ -132,18 +150,19 @@ export function MyPage() {
     }
   };
 
+
   const MyPageAddrUpdate = async (
     addrId: number,
     updateAddr: AddrUpdateRequest
   ) => {
     const response = await postData(
-      endpoints.updateAddress(4, addrId),
+      endpoints.updateAddress(tempUserId, addrId),
       updateAddr
     );
     if (response.status === 200) {
       alert("배송지가 수정되었습니다.");
 
-      const addrResponse = await getData(endpoints.getAddressList(4));
+      const addrResponse = await getData(endpoints.getAddressList(tempUserId));
       if (addrResponse.status === 200) {
         setAddressList(addrResponse.data);
       }
@@ -157,35 +176,33 @@ export function MyPage() {
 
   useEffect(() => {
     const MypageUser = async () => {
-      const response = await getData(endpoints.getMypage(4));
+      const response = await getData(endpoints.getMypage(tempUserId));
       if (response.status === 200) {
         setLoginUser(response.data);
       }
     };
 
     const MypageAddressList = async () => {
-      const response = await getData(endpoints.getAddressList(4));
+      const response = await getData(endpoints.getAddressList(tempUserId));
       if (response.status === 200) {
         setAddressList(response.data);
       }
     };
 
     const MypageBackingList = async () => {
-      const response = await getData(endpoints.getBackingList(4));
+      const response = await getData(endpoints.getBackingList(tempUserId));
       if (response.status === 200) {
         setBackingProjects(response.data);
       }
     };
 
     const MypageLikedList = async () => {
-      const response = await getData(endpoints.getLikedList(4));
+      const response = await getData(endpoints.getLikedList(tempUserId));
 
       if (response.status === 200) {
         setLikedProjects(response.data);
       }
     };
-
-    
 
     MypageUser();
     MypageBackingList();
@@ -211,19 +228,23 @@ export function MyPage() {
     return new Intl.NumberFormat("ko-KR").format(amount);
   };
 
-  
-
   // if (!loginUser) {
   //     navigate('/login');
   //     return;
   // }
 
-  const fetchBackingdetail = async (userId: number, projectId: number, rewardId: number) => {
-      const response = await getData(endpoints.getBackingDetail(userId, projectId, rewardId));
-    if(response.status===200){
+  const fetchBackingdetail = async (
+    userId: number,
+    projectId: number,
+    rewardId: number
+  ) => {
+    const response = await getData(
+      endpoints.getBackingDetail(userId, projectId, rewardId)
+    );
+    if (response.status === 200) {
       setSelectedBacking(response.data as BackingMyPageDetail);
     }
-  }
+  };
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -231,6 +252,20 @@ export function MyPage() {
         <div className="lg:col-span-1">
           <Card>
             <CardContent className="p-6 text-center">
+              <div className="flex justify-center mb-4 space-x-2">
+                <Button
+                  variant={roleView === "user" ? "default" : "outline"}
+                  onClick={() => setRoleView("user")}
+                >
+                  후원자
+                </Button>
+                <Button
+                  variant={roleView === "creator" ? "default" : "outline"}
+                  onClick={() => navigate("/creator/mypage")}
+                >
+                  창작자
+                </Button>
+              </div>
               <Avatar className="w-20 h-20 mx-auto mb-4">
                 <AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100" />
                 <AvatarFallback>{loginUser?.nickname}</AvatarFallback>
@@ -334,9 +369,12 @@ export function MyPage() {
             </Dialog>
 
             {/* 모드에 따라 배송지 출력화면 다르게 */}
-            <SavedAddressModal mode="mypage" triggerText="배송지 관리" onSelectAddress={(address) => {
-              console.log("선택된 주소 : " , address);
-            }}
+            <SavedAddressModal
+              mode="mypage"
+              triggerText="배송지 관리"
+              onSelectAddress={(address) => {
+                console.log("선택된 주소 : ", address);
+              }}
             />
 
             <Button
@@ -407,9 +445,15 @@ export function MyPage() {
                             <Badge
                               variant={
                                 backingList.backing.backingStatus === "PENDING"
-                                ? "default" : "secondary" }>
-                                  <span>{statusLabel[backingList.backing.backingStatus] ?? "알 수 없음 "}</span>
-                              
+                                  ? "default"
+                                  : "secondary"
+                              }
+                            >
+                              <span>
+                                {statusLabel[
+                                  backingList.backing.backingStatus
+                                ] ?? "알 수 없음 "}
+                              </span>
                             </Badge>
                             <span className="text-gray-500">
                               {backingList.backingReward.deliveryDate
@@ -422,86 +466,157 @@ export function MyPage() {
                             </span>
                           </div>
                         </div>
-                        <Dialog open ={isBackingDetailOpen} onOpenChange={setIsBackingDetailOpen}>
-                          <DialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            fetchBackingdetail(
-                              4,
-                              backingList.backingReward.backingProject.projectId,
-                              backingList.backingReward.rewardId
-                            )
-                            setIsBackingDetailOpen(true);
-                          }}
+                        <Dialog
+                          open={isBackingDetailOpen}
+                          onOpenChange={setIsBackingDetailOpen}
                         >
-                          상세보기
-                        </Button>
-                        </DialogTrigger>
-                        {selectedBacking && (
-                          <DialogContent className="w-screen h-screen max-w-none p-6">
-                            <DialogHeader>
-                              <DialogTitle>
-                                {selectedBacking.backingReward.backingProject.title}
-                              </DialogTitle>
-                              <DialogDescription>후원 상세 내역을 확인하세요</DialogDescription>
-                            </DialogHeader>
-                            <div className="h-full overflow-y-auto space-y-6">
-                              <ImageWithFallback src={selectedBacking.backingReward.backingProject.thumbnail}
-                                alt={selectedBacking.backingReward.backingProject.title}
-                                className="w-24 h-24 object-cover rounded"/>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                fetchBackingdetail(
+                                  4,
+                                  backingList.backingReward.backingProject
+                                    .projectId,
+                                  backingList.backingReward.rewardId
+                                );
+                                setIsBackingDetailOpen(true);
+                              }}
+                            >
+                              상세보기
+                            </Button>
+                          </DialogTrigger>
+                          {selectedBacking && (
+                            <DialogContent className="w-screen h-screen max-w-none p-6">
+                              <DialogHeader>
+                                <DialogTitle>
+                                  {
+                                    selectedBacking.backingReward.backingProject
+                                      .title
+                                  }
+                                </DialogTitle>
+                                <DialogDescription>
+                                  후원 상세 내역을 확인하세요
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="h-full overflow-y-auto space-y-6">
+                                <ImageWithFallback
+                                  src={
+                                    selectedBacking.backingReward.backingProject
+                                      .thumbnail
+                                  }
+                                  alt={
+                                    selectedBacking.backingReward.backingProject
+                                      .title
+                                  }
+                                  className="w-24 h-24 object-cover rounded"
+                                />
 
                                 <div>
                                   <h2 className="font-semibold text-lg">
-                                    {selectedBacking.backingReward.backingProject.title}
+                                    {
+                                      selectedBacking.backingReward
+                                        .backingProject.title
+                                    }
                                   </h2>
                                   <p className="text-sm text-gray-500">
-                                    달성금액 {formatCurrency(selectedBacking.backingReward.backingProject.currAmount ?? 0)}원 /
-                                    목표 {formatCurrency(selectedBacking.backingReward.backingProject.goalAmount ?? 0)}원
+                                    달성금액{" "}
+                                    {formatCurrency(
+                                      selectedBacking.backingReward
+                                        .backingProject.currAmount ?? 0
+                                    )}
+                                    원 / 목표{" "}
+                                    {formatCurrency(
+                                      selectedBacking.backingReward
+                                        .backingProject.goalAmount ?? 0
+                                    )}
+                                    원
                                   </p>
                                 </div>
-                            </div>
-
-                            <section className="mt-4">
-                              <h3 className="font-medium mb-2">후원 정보</h3>
-                              <div className="text-sm space-y-1">
-                                <p>후원 상태 : {" "}{statusLabel[selectedBacking.backing.backingStatus.trim()]?? "알 수 없음"}</p>
-                                <p>후원일 : {new Date(selectedBacking.backing.createdAt).toISOString().split("T")[0]}</p>
-                                <p>프로젝트 종료일 : {new Date(selectedBacking.backingReward.backingProject.endDate).toISOString().split("T")[0]}</p>
-                                <p>총 후원 금액 : {formatCurrency(selectedBacking.backing.amount)}원</p>
                               </div>
-                            </section>
 
-                            <section className="mt-4">
-                              <h3 className="font-medium mb-2">선물 정보</h3>
-                              <div className="text-sm space-y-1">
-                                <p>리워드명 : {selectedBacking.backingReward.rewardName}</p>
-                                <p>수량 : {selectedBacking.quantity}개</p>
-                                <p>리워드 금액 : {formatCurrency(selectedBacking.price)}원</p>
-                                <p>배송 예정일 : {selectedBacking.backingReward.deliveryDate ? new Date(selectedBacking.backingReward.deliveryDate).toISOString().split("T")[0] : "미정"}</p>
-                              
+                              <section className="mt-4">
+                                <h3 className="font-medium mb-2">후원 정보</h3>
+                                <div className="text-sm space-y-1">
+                                  <p>
+                                    후원 상태 :{" "}
+                                    {statusLabel[
+                                      selectedBacking.backing.backingStatus.trim()
+                                    ] ?? "알 수 없음"}
+                                  </p>
+                                  <p>
+                                    후원일 :{" "}
+                                    {
+                                      new Date(
+                                        selectedBacking.backing.createdAt
+                                      )
+                                        .toISOString()
+                                        .split("T")[0]
+                                    }
+                                  </p>
+                                  <p>
+                                    프로젝트 종료일 :{" "}
+                                    {
+                                      new Date(
+                                        selectedBacking.backingReward.backingProject.endDate
+                                      )
+                                        .toISOString()
+                                        .split("T")[0]
+                                    }
+                                  </p>
+                                  <p>
+                                    총 후원 금액 :{" "}
+                                    {formatCurrency(
+                                      selectedBacking.backing.amount
+                                    )}
+                                    원
+                                  </p>
+                                </div>
+                              </section>
+
+                              <section className="mt-4">
+                                <h3 className="font-medium mb-2">선물 정보</h3>
+                                <div className="text-sm space-y-1">
+                                  <p>
+                                    리워드명 :{" "}
+                                    {selectedBacking.backingReward.rewardName}
+                                  </p>
+                                  <p>수량 : {selectedBacking.quantity}개</p>
+                                  <p>
+                                    리워드 금액 :{" "}
+                                    {formatCurrency(selectedBacking.price)}원
+                                  </p>
+                                  <p>
+                                    배송 예정일 :{" "}
+                                    {selectedBacking.backingReward.deliveryDate
+                                      ? new Date(
+                                          selectedBacking.backingReward.deliveryDate
+                                        )
+                                          .toISOString()
+                                          .split("T")[0]
+                                      : "미정"}
+                                  </p>
+                                </div>
+                              </section>
+
+                              <section className="mt-4">
+                                <h3 className="font-medium mb-2">결제 정보</h3>
+                                <div className="text-sm space-y-1">
+                                  <p>결제 수단 : </p>
+                                  <p>결제 금액 : </p>
+                                  <p>결제 상태 : </p>
+                                  <p></p>
+                                </div>
+                              </section>
+
+                              <div className="absolute bottom-4 right-4">
+                                <DialogClose asChild>
+                                  <Button variant="outline">닫기</Button>
+                                </DialogClose>
                               </div>
-                            </section>
-
-                            <section className="mt-4">
-                              <h3 className="font-medium mb-2">결제 정보</h3>
-                              <div className="text-sm space-y-1">
-                                <p>결제 수단 : </p>
-                                <p>결제 금액 : </p>
-                                <p>결제 상태 : </p>
-                                <p></p>
-                              
-                              </div>
-                            </section>
-
-                            <div className ="absolute bottom-4 right-4">
-                              <DialogClose asChild>
-                                <Button variant="outline">닫기</Button>
-                              </DialogClose>
-                            </div>
-                          </DialogContent>
-                        )}
+                            </DialogContent>
+                          )}
                         </Dialog>
                       </div>
                     ))}

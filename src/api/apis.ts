@@ -51,7 +51,9 @@ export const endpoints = {
     updateAddress: (userId: number, addrId: number) => `/shipping/${userId}/update/${addrId}`,
     createAddress: (userId: number) => `/shipping/${userId}/add`,
     deleteAddress: (userId: number, addrId: number)=> `/shipping/${userId}/delete/${addrId}`,
+    setAddressDefault: (userId: number, addrId: number)=>`/shipping/${userId}/defaultAddr/${addrId}`,
     getBackingList: (userId: number)=>`/Backing/page/${userId}`,
+    getCreatorPageList : (creatorId :number)=>`/creator/${creatorId}/list`,
     getBackingDetail: (userId: number, projectId: number, rewardId: number) => `/Backing/page/${userId}/project/${projectId}/reward/${rewardId}`,
     getLikedList: (userId: number) => `/user/likedList/${userId}`,
     getProjectDetail: (projectId: number) => `/project/${projectId}`,
@@ -85,6 +87,7 @@ export const endpoints = {
     approveProject: (projectId: number) => `/admin/verify/approve/${projectId}`,
     rejectProject: (projectId: number) => `/admin/verify/reject/${projectId}`,
     getProjectVerifyDetail: (projectId: number) => `/admin/verify/${projectId}`,
+    getAdminProjectList: (p: SearchProjectVerify) => `/admin/project?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
 };
 
 export const getData = async (url: string, accessToken?: string) => {

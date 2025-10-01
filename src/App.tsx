@@ -13,12 +13,13 @@ import MainPage from './views/MainPage';
 import { setNavigator } from './utils/navigator';
 import { CSPage } from './views/cs/CSPage';
 import { NoticeDetailPage } from './views/cs/NoticeDetail';
-import ProjectsAllPage, { ProjectByCategoryPage, ProjectBySubcategoryPage } from './views/project/ProjectAllPage';
+import ProjectsAllPage, { ProjectByCategoryPage, ProjectBySubcategoryPage, SearchProjectPage } from './views/project/ProjectAllPage';
 import { FundingPage } from './views/backing/backingPage';
 import FundingLoader from './components/FundingLoader';
 import { ApprovalDetail } from './views/admin/tabs/ApprovalDetail';
 import { AdminTabs } from './views/admin/AdminTabs';
 import CreateProject from './views/creator/CreateProject';
+import { CreatorPage } from './views/creator/CreatorPage';
 
 const AdminDashboard = lazy(() => import('./views/admin/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
 
@@ -61,6 +62,7 @@ export default function App() {
 
           <Route path='/project'>
             <Route index element={<ProjectsAllPage />} />
+            <Route path='search' element={<SearchProjectPage />} />
             <Route path='category/:ctgrId' element={<ProjectByCategoryPage />} />
             <Route path='category/:ctgrId/subcategory/:subctgrId' element={<ProjectBySubcategoryPage />} />
             <Route path=':projectId' element={<ProjectDetailPage />} />
@@ -73,8 +75,13 @@ export default function App() {
           </Route>
 
           <Route path='/user'>
-            <Route path='mypage' element={<MyPage />} />
+            <Route path='Mypage' element={<MyPage />} />
           </Route>
+
+            
+          <Route path='/creator'>
+            <Route path='mypage' element={<CreatorPage />} />
+          </Route> 
 
           <Route path='/admin' element={<AdminDashboard />}>
             <Route index element={<AdminTabs />} />

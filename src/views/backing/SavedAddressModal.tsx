@@ -17,19 +17,22 @@ import type {
   AddrAddRequest,
   AddrUpdateRequest,
   AddressResponse,
+  resetDefaultAddr
 } from "@/types/address";
 
 interface SavedAddressModalProps {
   mode: "mypage" | "backing";
-  onSelectAddress?: (address: AddressResponse) => void; // 선택 시 callback
+  onSelectAddress?: (address: resetDefaultAddr) => void; // 선택 시 callback
   triggerText?: string;
 }
 
-export function SavedAddressModal({
+export function SavedAddressModal(
+  {
   mode,
   onSelectAddress,
   triggerText = "배송지 관리",
 }: SavedAddressModalProps) {
+  const tempUserId = 1;
   const [addrList, setAddrList] = useState<AddressResponse[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -49,19 +52,18 @@ export function SavedAddressModal({
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [addrEdit, setAddrEdit] = useState<AddrUpdateRequest>({
     addrId: 0,
-    userId: 4,
+    userId: tempUserId,
     addrName: "",
     recipient: "",
     postalCode: "",
     roadAddr: "",
     detailAddr: "",
     recipientPhone: "",
-    isDefault: "N",
   });
 
   useEffect(() => {
     const fetchAddressList = async () => {
-      const response = await getData(endpoints.getAddressList(4)); // userId 4
+      const response = await getData(endpoints.getAddressList(tempUserId)); // userId 4
       if (response.status === 200) {
         setAddrList(response.data);
       }
@@ -72,10 +74,10 @@ export function SavedAddressModal({
   }, [isOpen]);
 
   const handleAddAddress = async () => {
-    const response = await postData(endpoints.createAddress(4), addrAdd);
+    const response = await postData(endpoints.createAddress(tempUserId), addrAdd);
     if (response.status === 200) {
       alert("배송지가 추가되었습니다.");
-      const addrResponse = await getData(endpoints.getAddressList(4));
+      const addrResponse = await getData(endpoints.getAddressList(tempUserId));
       if (addrResponse.status === 200) setAddrList(addrResponse.data);
       setIsAddDialogOpen(false);
       setAddrAdd({
@@ -94,15 +96,21 @@ export function SavedAddressModal({
 
   const handleSetDefaultAddress = async (addr: AddressResponse) =>{
     try{
+      const payload: resetDefaultAddr ={
+        userId: addr.userId,
+        addrId: addr.addrId,
+        isDefault: "Y",
+      };
+
       const response =await postData(
-        endpoints.updateAddress(addr.userId, addr.addrId),
+        endpoints.setAddressDefault(payload.userId, payload.addrId),
         {...addr,isDefault:"Y"}
       );
 
       if(response.status === 200){
         alert("기본 배송지가 변경되었습니다.");
 
-        const addrResponse = await getData(endpoints.getAddressList(addr.userId));
+        const addrResponse = await getData(endpoints.getAddressList(payload.userId));
         if(addrResponse.status===200){
           setAddrList(addrResponse.data);
         }
@@ -122,7 +130,7 @@ export function SavedAddressModal({
     );
     if (response.status === 200) {
       alert("배송지가 수정되었습니다.");
-      const addrResponse = await getData(endpoints.getAddressList(4));
+      const addrResponse = await getData(endpoints.getAddressList(tempUserId));
       if (addrResponse.status === 200) setAddrList(addrResponse.data);
       setIsEditDialogOpen(false);
     } else {
@@ -131,7 +139,7 @@ export function SavedAddressModal({
   };
 
   const handleDeleteAddress = async (addrId: number) => {
-    const response = await deleteData(endpoints.deleteAddress(4, addrId), {});
+    const response = await deleteData(endpoints.deleteAddress(tempUserId, addrId), {});
     if (response.status === 200) {
       alert("배송지가 삭제되었습니다.");
       setAddrList((prev) => prev.filter((a) => a.addrId !== addrId));
@@ -153,78 +161,7 @@ export function SavedAddressModal({
           <DialogTitle>배송지 관리</DialogTitle>
           <DialogDescription>저장된 배송지를 관리하세요.</DialogDescription>
         </DialogHeader>
-
-        {/* 배송지 리스트 */}
-        <div className="mt-4 space-y-4">
-          {addrList.length > 0 ? (
-            addrList.map((addr) => (
-              <div
-                key={addr.addrId}
-                className="p-4 border rounded-lg flex items-start justify-between"
-              >
-                <div>
-                  <h4 className="font-medium">{addr.addrName}</h4>
-                  <p className="text-sm text-gray-500">
-                    {addr.recipient} ({addr.recipientPhone})
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {addr.roadAddr} {addr.detailAddr}
-                  </p>
-                  <Badge
-                    variant={addr.isDefault === "Y" ? "default" : "secondary"}
-                  >
-                    {addr.isDefault === "Y" ? "기본배송지" : "보조배송지"}
-                  </Badge>
-                </div>
-
-                {/* 모드 분기 */}
-                {mode === "mypage" ? (
-                  <div className="flex flex-col gap-2">
-                    <Button size="sm" variant="outline" disabled={addr.isDefault==="Y"}
-                    onClick={()=> handleSetDefaultAddress(addr)}>
-                      기본 설정
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setAddrEdit(addr);
-                        setIsEditDialogOpen(true);
-                      }}
-                    >
-                      수정
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleDeleteAddress(addr.addrId)}
-                    >
-                      삭제
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex items-center">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        onSelectAddress?.(addr);
-                        setIsOpen(false); // 선택 후 모달 닫기
-                      }}
-                    >
-                      선택
-                    </Button>
-                  </div>
-                )}
-              </div>
-            ))
-          ) : (
-            <p className="text-gray-500 text-center">
-              등록된 배송지가 없습니다.
-            </p>
-          )}
-        </div>
-
+        
         {/* 하단 추가 버튼 */}
         <div className="mt-4">
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
@@ -300,6 +237,79 @@ export function SavedAddressModal({
             </DialogContent>
           </Dialog>
         </div>
+
+        {/* 배송지 리스트 */}
+        <div className="mt-4 space-y-4">
+          {addrList.length > 0 ? (
+            addrList.map((addr) => (
+              <div
+                key={addr.addrId}
+                className="p-4 border rounded-lg flex items-start justify-between"
+              >
+                <div>
+                  <h4 className="font-medium">{addr.addrName}</h4>
+                  <p className="text-sm text-gray-500">
+                    {addr.recipient} ({addr.recipientPhone})
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {addr.roadAddr} {addr.detailAddr}
+                  </p>
+                  <Badge
+                    variant={addr.isDefault === "Y" ? "default" : "secondary"}
+                  >
+                    {addr.isDefault === "Y" ? "기본배송지" : "보조배송지"}
+                  </Badge>
+                </div>
+
+                {/* 모드 분기 */}
+                {mode === "mypage" ? (
+                  <div className="flex flex-col gap-2">
+                    <Button size="sm" variant="outline" disabled={addr.isDefault==="Y"}
+                    onClick={()=> handleSetDefaultAddress(addr)}>
+                      기본 설정
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setAddrEdit(addr);
+                        setIsEditDialogOpen(true);
+                      }}
+                    >
+                      수정
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleDeleteAddress(addr.addrId)}
+                    >
+                      삭제
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        onSelectAddress?.(addr);
+                        setIsOpen(false); // 선택 후 모달 닫기
+                      }}
+                    >
+                      선택
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-500 text-center">
+              등록된 배송지가 없습니다.
+            </p>
+          )}
+        </div>
+
+        
 
         {/* 수정 모달 */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

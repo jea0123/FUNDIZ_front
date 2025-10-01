@@ -13,10 +13,29 @@ export const toWon = (amount?: number) => {
     return `${amount.toLocaleString()} 원`;
 }
 
-export const getDaysLeft = (date: string | Date) => {
-    const now = new Date("2020-06-27T10:00:00Z");
+function toKstEndOfDay(date: string | Date): Date {
+    return new Date(`${date}T23:59:59+09:00`);
+}
+
+export function getDaysLeft(date: string | Date) {
+    const end = toKstEndOfDay(date);
+    const diffMs = end.getTime() - Date.now();
+
+    if (diffMs <= 0) return "0";
+
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    if (isNaN(diffDays)) {
+        console.error("잘못된 날짜 포맷");
+        return "-";
+    }
+
+    return `${diffDays}`;
+}
+
+export const getDaysBefore = (date: string | Date) => {
     const end = new Date(date);
-    const diffMs = end.getTime() - now.getTime();
+    const diffMs = end.getTime() - Date.now();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
     if (isNaN(diffDays)) {

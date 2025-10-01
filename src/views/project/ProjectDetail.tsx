@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Heart, Share2, Calendar, Users, MessageCircle, Star } from 'lucide-react';
 import type { ProjectDetail } from '@/types/projects';
 import { endpoints, getData } from '@/api/apis';
 import { useParams } from 'react-router-dom';
 import type { Community } from '@/types/community';
-import { formatDate, getDaysLeft } from '@/utils/utils';
+import { formatDate, getDaysBefore, getDaysLeft } from '@/utils/utils';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,20 +13,119 @@ import { Badge } from '@/components/ui/badge';
 import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
 import { Progress } from '@/components/ui/progress';
 import { useNavigate } from 'react-router-dom';
+import type { Reward } from '@/types/reward';
+import FundingLoader from '@/components/FundingLoader';
 
 export function ProjectDetailPage() {
+
+    /* ----------------------------- Router helpers ----------------------------- */
+
     const navigate = useNavigate();
     const { projectId } = useParams();
 
+    /* --------------------------------- Refs ---------------------------------- */
+
+    const cartRef = useRef<HTMLDivElement>(null);
+
+    /* --------------------------------- State --------------------------------- */
+
     const [project, setProject] = useState<ProjectDetail>();
-    const [selectedReward, setSelectedReward] = useState<number | null>(null);
     const [community, setCommunity] = useState<Community[]>([]);
     const [review, setReview] = useState<Community[]>([]);
+
     const [isLiked, setIsLiked] = useState(false);
-    
     const [loadingProject, setLoadingProject] = useState(false);
     const [loadingCommunity, setLoadingCommunity] = useState(false);
     const [loadingReview, setLoadingReview] = useState(false);
+    
+    const [cart, setCart] = useState<Record<number, number>>({});
+    const [cartPing, setCartPing] = useState(false);
+    const [qtyByReward, setQtyByReward] = useState<Record<number, number>>({});
+
+    /* ------------------------------- Derived ---------------------------------- */
+
+    const cartSummary = useMemo(() => {
+        if (!project) return { totalQty: 0, totalAmount: 0 };
+        let totalQty = 0, totalAmount = 0;
+        for (const [ridStr, qty] of Object.entries(cart)) {
+            const rid = Number(ridStr);
+            const r = project.rewardList.find(rr => rr.rewardId === rid);
+            if (!r) continue;
+            totalQty += qty;
+            totalAmount += r.price * qty;
+        }
+        return { totalQty, totalAmount };
+    }, [project, cart]);
+
+    /* ------------------------------ Handlers ---------------------------------- */
+
+    const getRemain = useCallback((r: Reward) => (r.rewardCnt > 0 ? Math.max(0, r.remain) : 99), []);
+
+    const incQty = useCallback((rewardId: number, max: number) => {
+        setQtyByReward(prev => ({ ...prev, [rewardId]: Math.min((prev[rewardId] ?? 1) + 1, max) }));
+    }, []);
+    
+    const decQty = useCallback((rewardId: number) => {
+        setQtyByReward(prev => ({ ...prev, [rewardId]: Math.max(1, (prev[rewardId] ?? 1) - 1) }));
+    }, []);
+
+    const addToCart = useCallback((reward: Reward, qtyToAdd: number) => {
+        if (qtyToAdd <= 0) return;
+        const remain = getRemain(reward);
+        setCart(prev => {
+            const current = prev[reward.rewardId] ?? 0;
+            const nextQty = Math.min(remain, current + qtyToAdd);
+            return { ...prev, [reward.rewardId]: nextQty };
+        });
+
+        requestAnimationFrame(() => {
+            cartRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+            setCartPing(true);
+            setTimeout(() => setCartPing(false), 800);
+        });
+        setQtyByReward(prev => ({ ...prev, [reward.rewardId]: 1 }));
+    }, [getRemain]);
+
+    const setCartQty = useCallback((rewardId: number, nextQty: number) => {
+        setCart(prev => {
+            if (nextQty <= 0) {
+                const { [rewardId]: _, ...rest } = prev;
+                return rest;
+            }
+            const reward = project?.rewardList.find(r => r.rewardId === rewardId);
+            const remain = reward ? getRemain(reward) : 1;
+            return { ...prev, [rewardId]: Math.min(remain, nextQty) };
+        });
+    }, [project, getRemain]);
+
+    const removeFromCart = useCallback((rewardId: number) => {
+        setCart(prev => {
+            const { [rewardId]: _, ...rest } = prev;
+            return rest;
+        });
+    }, []);
+
+    const handleCheckout = useCallback(() => {
+        if (!projectId) return;
+        const entries = Object.entries(cart).filter(([_, q]) => q > 0);
+        if (entries.length === 0) return;
+        const items= entries.map(([rid, q]) => `${rid}x${q}`).join(",");
+        const params = new URLSearchParams();
+        params.set("items", items);
+        navigate(`/project/${projectId}/backing?${params.toString()}`);
+    }, [cart, navigate, projectId]);
+
+    const handleShare = useCallback(() => {
+        navigator.clipboard.writeText(window.location.href);
+        alert('링크가 복사되었습니다.');
+    }, []);
+
+    // const handleSupport = (rewardId: number, quantity: number) => {
+    //     if(!projectId) return;
+    //     navigate(`/project/${projectId}/backing?rewardId=${rewardId}&qty=${quantity}`);
+    // };
+
+    /* -------------------------------- Effects -------------------------------- */
 
     const projectData = async () => {
         setLoadingProject(true);
@@ -56,26 +155,14 @@ export function ProjectDetailPage() {
         reviewData().finally(() => setLoadingReview(false));
     }, []);
 
+    /* -------------------------------- Helpers -------------------------------- */
+
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('ko-KR').format(amount);
     };
 
-    const handleSupport = (rewardId: number) => {
-        if(!projectId)
-            return;
-        setSelectedReward(rewardId);
-        navigate(`/project/${projectId}/backing?rewardId=${rewardId}`)
-    };
-
-    const handleShare = () => {
-        navigator.clipboard.writeText(window.location.href);
-        alert('링크가 복사되었습니다.');
-    };
-
     if (!projectId || !project || loadingProject || loadingCommunity || loadingReview) {
-        return (
-            <p>불러오는 중…</p>
-        )
+        return <FundingLoader />;
     }
 
     return (
@@ -124,16 +211,11 @@ export function ProjectDetailPage() {
                             <div className="flex-1">
                                 <h4 className="font-semibold">{project.creatorName}</h4>
                                 <p className="text-sm text-gray-600">
-                                    팔로워 {formatCurrency(project.followerCnt)}명 ·
-                                    프로젝트 {project.projectCnt}개
+                                    팔로워 {formatCurrency(project.followerCnt)}명 · 프로젝트 {project.projectCnt}개
                                 </p>
                             </div>
-                            <Button variant="outline" size="sm">
-                                팔로우
-                            </Button>
-                            <Button variant="outline" size="sm">
-                                문의하기
-                            </Button>
+                            <Button variant="outline" size="sm">팔로우</Button>
+                            <Button variant="outline" size="sm">문의하기</Button>
                         </div>
                     </div>
 
@@ -146,10 +228,7 @@ export function ProjectDetailPage() {
                         </TabsList>
 
                         <TabsContent value="description" className="mt-6">
-                            <div
-                                className="prose max-w-none"
-                                dangerouslySetInnerHTML={{ __html: project.content }}
-                            />
+                            <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: project.content }} />
                         </TabsContent>
 
                         <TabsContent value="updates">
@@ -158,10 +237,10 @@ export function ProjectDetailPage() {
                             ) : (
                                 <>
                                     {project.newsList.map((news) => (
-                                        <div className="space-y-4 mt-6">
+                                        <div key={news.newsId} className="space-y-4 mt-6">
                                             <Card>
                                                 <CardHeader>
-                                                    <CardTitle className="text-lg">{news.content}</CardTitle>
+                                                    <CardTitle className="text-lg">새소식</CardTitle>
                                                     <p className="text-sm text-gray-500">{formatDate(news.createdAt)}</p>
                                                 </CardHeader>
                                                 <CardContent>
@@ -170,7 +249,8 @@ export function ProjectDetailPage() {
                                             </Card>
                                         </div>
                                     ))}
-                                </>)}
+                                </>
+                            )}
                         </TabsContent>
 
                         <TabsContent value="community">
@@ -178,7 +258,7 @@ export function ProjectDetailPage() {
                                 <div className="text-sm text-muted-foreground">게시글이 존재하지 않습니다.</div>
                             ) : (<>
                                 {community.map((cm) => (
-                                    <div className="space-y-4 mt-6">
+                                    <div key={cm.cmId} className="space-y-4 mt-6">
                                         <Card>
                                             <CardContent className="pt-6">
                                                 <div className="flex items-start space-x-3">
@@ -188,7 +268,7 @@ export function ProjectDetailPage() {
                                                     <div className="flex-1">
                                                         <div className="flex items-center space-x-2 mb-1">
                                                             <span className="font-medium">{cm.nickname}</span>
-                                                            <span className="text-sm text-gray-500">{getDaysLeft(cm.createdAt)} 전</span>
+                                                            <span className="text-sm text-gray-500">{getDaysBefore(cm.createdAt)} 전</span>
                                                         </div>
                                                         <p className="text-sm">{cm.cmContent}</p>
                                                         <div className="flex items-center space-x-2 mt-2">
@@ -211,7 +291,7 @@ export function ProjectDetailPage() {
                                 <div className="text-sm text-muted-foreground">게시글이 존재하지 않습니다.</div>
                             ) : (<>
                                 {review.map((rv) => (
-                                    <div className="space-y-4 mt-6">
+                                    <div key={rv.cmId} className="space-y-4 mt-6">
                                         <Card>
                                             <CardContent className="pt-6">
                                                 <div className="flex items-start space-x-3">
@@ -226,7 +306,7 @@ export function ProjectDetailPage() {
                                                                     <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                                                                 ))}
                                                             </div>
-                                                            <span className="text-sm text-gray-500">{getDaysLeft(rv.createdAt)} 전</span>
+                                                            <span className="text-sm text-gray-500">{getDaysBefore(rv.createdAt)} 전</span>
                                                         </div>
                                                         <p className="text-sm">{rv.cmContent}</p>
                                                     </div>
@@ -241,24 +321,18 @@ export function ProjectDetailPage() {
                 </div>
 
                 <div className="lg:col-span-1">
-                    <div className="sticky top-8">
-                        <Card className="mb-6">
+                    <div className="space-y-6">
+                        <Card>
                             <CardContent className="p-6">
                                 <div className="space-y-4">
                                     <div>
                                         <div className="flex justify-between items-center mb-2">
-                                            <span className="text-2xl font-bold text-blue-600">
-                                                {project.percentNow}%
-                                            </span>
+                                            <span className="text-2xl font-bold text-blue-600">{project.percentNow}%</span>
                                             <span className="text-sm text-gray-500">달성</span>
                                         </div>
                                         <Progress value={project.percentNow} className="h-3 mb-3" />
-                                        <div className="text-xl font-bold">
-                                            {formatCurrency(project.currAmount)}원
-                                        </div>
-                                        <div className="text-sm text-gray-500">
-                                            목표 {formatCurrency(project.goalAmount)}원
-                                        </div>
+                                        <div className="text-xl font-bold">{formatCurrency(project.currAmount)}원</div>
+                                        <div className="text-sm text-gray-500">목표 {formatCurrency(project.goalAmount)}원</div>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4 py-4 border-y">
@@ -292,22 +366,92 @@ export function ProjectDetailPage() {
                             </CardContent>
                         </Card>
 
-                        <div className="space-y-4">
-                            <h3 className="text-lg font-semibold">리워드 선택</h3>
-                            {project.rewardList.map((reward) => (
+                        <Card
+                            ref={cartRef}
+                            className={`bt-white transition ${cartPing ? "ring-2 ring-blue-500/50 shadow-md" : ""}`}
+                        >
+                            <CardContent className="p-4 space-y-4">
+                                {Object.keys(cart).length === 0 ? (
+                                    <div className="text-sm text-gray-500">리워드를 담으면 이곳에 표시됩니다.</div>
+                                ) : (
+                                    <>
+                                        <div className="space-y-4">
+                                            {Object.entries(cart).map(([ridStr, qty]) => {
+                                                const rid = Number(ridStr);
+                                                const r = project.rewardList.find(rr => rr.rewardId === rid);
+                                                if (!r) return null;
+                                                const max = getRemain(r);
+                                                const soldOut = max <= 0;
+
+                                                return (
+                                                    <div key={rid} className="flex items-start justify-between gap-2">
+                                                        <div className="min-w-0">
+                                                            <div className="font-semibold truncate">{r.rewardName}</div>
+                                                            <div className="text-sm text-gray-500">
+                                                                {formatCurrency(r.price)}원 · {r.rewardCnt > 0 ? `잔여 ${max}개` : "무제한"}
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <Button
+                                                                variant="outline"
+                                                                size="icon"
+                                                                onClick={() => setCartQty(rid, qty - 1)}
+                                                                disabled={qty <= 1}
+                                                            >
+                                                                -
+                                                            </Button>
+                                                            <span className="w-6 text-center">{qty}</span>
+                                                            <Button
+                                                                variant="outline"
+                                                                size="icon"
+                                                                onClick={() => setCartQty(rid, Math.min(max, qty + 1))}
+                                                                disabled={qty >= max || soldOut}
+                                                            >
+                                                                +
+                                                            </Button>
+                                                            <Button variant="ghost" size="icon" onClick={() => removeFromCart(rid)}>
+                                                                X
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        <div className="flex items-center justify-between pt-2 border-t">
+                                            <span className="font-semibold">합계</span>
+                                            <span className="text-lg font-bold">{formatCurrency(cartSummary.totalAmount)}원</span>
+                                        </div>
+
+                                        <Button
+                                            className="w-full"
+                                            size="lg"
+                                            onClick={handleCheckout}
+                                            disabled={cartSummary.totalQty === 0}
+                                        >
+                                            {formatCurrency(cartSummary.totalAmount)}원 결제하기
+                                        </Button>
+                                    </>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {project.rewardList.map(reward => {
+                            const max = getRemain(reward);
+                            const soldOut = max <= 0;
+                            const inputQty = qtyByReward[reward.rewardId] ?? 1;
+
+                            return (
                                 <Card
                                     key={reward.rewardId}
-                                    className={`cursor-pointer transition-colors ${selectedReward === reward.rewardId ? 'ring-2 ring-blue-500' : ''}`}
-                                    onClick={() => setSelectedReward(reward.rewardId)}
+                                    className={`transition-colors ${soldOut ? "opacity-60 pointer-events-none" : ""}`}
                                 >
                                     <CardContent className="p-4">
                                         <div className="flex justify-between items-start mb-2">
-                                            <span className="text-lg font-semibold">
-                                                {formatCurrency(reward.price)}원
-                                            </span>
-                                            {reward.rewardCnt && (
+                                            <span className="text-lg font-semibold">{formatCurrency(reward.price)}원</span>
+                                            {reward.rewardCnt > 0 && (
                                                 <Badge variant="secondary" className="text-xs">
-                                                    한정 {reward.rewardCnt}개
+                                                    {soldOut ? "품절" : `잔여 ${reward.remain}개`}
                                                 </Badge>
                                             )}
                                         </div>
@@ -318,17 +462,46 @@ export function ProjectDetailPage() {
                                             {/* <span className="text-gray-500">{reward.backers}명 후원</span> */}
                                             <span className="text-gray-500">예상 발송: {formatDate(reward.deliveryDate)}</span>
                                         </div>
+
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div className="flex items-center gap-2">
+                                                <Button
+                                                    variant="outline"
+                                                    size="icon"
+                                                    onClick={() => decQty(reward.rewardId)}
+                                                    disabled={soldOut}
+                                                >
+                                                    -
+                                                </Button>
+                                                <span className="min-w-8 text-center">{Math.min(inputQty, Math.max(1, max))}</span>
+                                                <Button
+                                                    variant="outline"
+                                                    size="icon"
+                                                    onClick={() => incQty(reward.rewardId, max)}
+                                                    disabled={soldOut || inputQty >= max}
+                                                >
+                                                    +
+                                                </Button>
+                                            </div>
+                                            <Button
+                                                onClick={() => addToCart(reward, Math.min(inputQty, Math.max(1, max)))}
+                                                disabled={soldOut}
+                                            >
+                                                담기
+                                            </Button>
+                                        </div>
                                     </CardContent>
                                 </Card>
-                            ))}
-
+                            );
+                        })}
+                        <div className="pt-2">
                             <Button
-                                className="w-full"
-                                size="lg"
-                                onClick={() => selectedReward && handleSupport(selectedReward)}
-                                disabled={!selectedReward}
+                                    className="w-full"
+                                    size="lg"
+                                    onClick={handleCheckout}
+                                    disabled={cartSummary.totalQty === 0}
                             >
-                                {selectedReward ? '후원하기' : '리워드를 선택하세요'}
+                                {cartSummary.totalQty > 0 ? `${formatCurrency(cartSummary.totalAmount)}원 후원하기` : '리워드를 선택하세요'}
                             </Button>
                         </div>
                     </div>
