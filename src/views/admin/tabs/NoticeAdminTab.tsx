@@ -41,6 +41,8 @@ import {
 import { endpoints, getData, postData, deleteData } from "@/api/apis";
 import type { Notice, NoticeAddRequest, NoticeUpdateRequest } from '@/types/notice';
 import { formatDate } from '@/utils/utils';
+import { NoticeAddTab } from "./NoticeAddTab";
+import { useNavigate } from "react-router-dom";
 
 export function NoticeAdminTab() {
     const [notices, setNotices] = useState<Notice[]>([]);
@@ -97,6 +99,14 @@ export function NoticeAdminTab() {
         }
       };
 
+      const navigate = useNavigate();
+
+      const noticeAddNavigate = () => {
+        navigate('?tab=noticeadd');
+      };
+
+
+
     return (
         <div>
             <div>
@@ -133,6 +143,7 @@ export function NoticeAdminTab() {
                                     <div className="flex items-center gap-2">
                                         <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>이전</Button>
                                         <Button variant="outline" size="sm" disabled={page === pageCount} onClick={() => setPage(p => Math.min(pageCount, p + 1))}>다음</Button>
+                                        <Button variant="outline" size="sm" onClick={noticeAddNavigate}>글쓰기</Button>
                                     </div>
                                 </div>
                             </CardContent>

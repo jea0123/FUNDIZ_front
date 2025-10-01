@@ -7,6 +7,7 @@ import { UsersTab } from "./tabs/UsersTab";
 import { AnalyticsTab } from "./tabs/AnalyticsTab";
 import { InquiryAdminTab } from "./tabs/InquiryAdminTab";
 import { NoticeAdminTab } from "./tabs/NoticeAdminTab";
+import { NoticeAddTab } from "./tabs/NoticeAddTab";
 
 export function AdminTabs() {
     const [sp, setSp] = useSearchParams();
@@ -30,6 +31,7 @@ export function AdminTabs() {
             <TabsContent value="analytics"><AnalyticsTab /></TabsContent>
             <TabsContent value="inquiry"><InquiryAdminTab /></TabsContent>
             <TabsContent value="notice"><NoticeAdminTab /></TabsContent>
+            <TabsContent value="noticeadd"><NoticeAddTab /></TabsContent>
         </Tabs>
     );
 }

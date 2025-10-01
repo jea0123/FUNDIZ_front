@@ -46,9 +46,6 @@ export function AdminDashboard() {
                     <NavLink to="/admin?tab=notice" className={({ isActive }) => linkCls(isActive)}>
                         <Megaphone className="mr-2 h-4 w-4" /> 공지사항 관리
                     </NavLink>
-                    <NavLink to="/admin?tab=noticeadd" className={({ isActive }) => linkCls(isActive)}>
-                        <NotebookPen className="mr-2 h-4 w-4" /> 공지사항 등록
-                    </NavLink>
                 </nav>
 
                 <div className="flex-1 min-w-0 mt-6">
