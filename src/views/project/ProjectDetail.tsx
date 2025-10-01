@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Heart, Share2, Calendar, Users, MessageCircle, Star } from 'lucide-react';
 import type { ProjectDetail } from '@/types/projects';
 import { endpoints, getData } from '@/api/apis';
@@ -17,20 +17,115 @@ import type { Reward } from '@/types/reward';
 import FundingLoader from '@/components/FundingLoader';
 
 export function ProjectDetailPage() {
-    const navigate = useNavigate();
 
+    /* ----------------------------- Router helpers ----------------------------- */
+
+    const navigate = useNavigate();
     const { projectId } = useParams();
 
+    /* --------------------------------- Refs ---------------------------------- */
+
+    const cartRef = useRef<HTMLDivElement>(null);
+
+    /* --------------------------------- State --------------------------------- */
+
     const [project, setProject] = useState<ProjectDetail>();
-    const [cart, setCart] = useState<Record<number, number>>({});
-    const [qtyByReward, setQtyByReward] = useState<Record<number, number>>({});
     const [community, setCommunity] = useState<Community[]>([]);
     const [review, setReview] = useState<Community[]>([]);
+
     const [isLiked, setIsLiked] = useState(false);
-    
     const [loadingProject, setLoadingProject] = useState(false);
     const [loadingCommunity, setLoadingCommunity] = useState(false);
     const [loadingReview, setLoadingReview] = useState(false);
+    
+    const [cart, setCart] = useState<Record<number, number>>({});
+    const [cartPing, setCartPing] = useState(false);
+    const [qtyByReward, setQtyByReward] = useState<Record<number, number>>({});
+
+    /* ------------------------------- Derived ---------------------------------- */
+
+    const cartSummary = useMemo(() => {
+        if (!project) return { totalQty: 0, totalAmount: 0 };
+        let totalQty = 0, totalAmount = 0;
+        for (const [ridStr, qty] of Object.entries(cart)) {
+            const rid = Number(ridStr);
+            const r = project.rewardList.find(rr => rr.rewardId === rid);
+            if (!r) continue;
+            totalQty += qty;
+            totalAmount += r.price * qty;
+        }
+        return { totalQty, totalAmount };
+    }, [project, cart]);
+
+    /* ------------------------------ Handlers ---------------------------------- */
+
+    const getRemain = useCallback((r: Reward) => (r.rewardCnt > 0 ? Math.max(0, r.remain) : 99), []);
+
+    const incQty = useCallback((rewardId: number, max: number) => {
+        setQtyByReward(prev => ({ ...prev, [rewardId]: Math.min((prev[rewardId] ?? 1) + 1, max) }));
+    }, []);
+    
+    const decQty = useCallback((rewardId: number) => {
+        setQtyByReward(prev => ({ ...prev, [rewardId]: Math.max(1, (prev[rewardId] ?? 1) - 1) }));
+    }, []);
+
+    const addToCart = useCallback((reward: Reward, qtyToAdd: number) => {
+        if (qtyToAdd <= 0) return;
+        const remain = getRemain(reward);
+        setCart(prev => {
+            const current = prev[reward.rewardId] ?? 0;
+            const nextQty = Math.min(remain, current + qtyToAdd);
+            return { ...prev, [reward.rewardId]: nextQty };
+        });
+
+        requestAnimationFrame(() => {
+            cartRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+            setCartPing(true);
+            setTimeout(() => setCartPing(false), 800);
+        });
+        setQtyByReward(prev => ({ ...prev, [reward.rewardId]: 1 }));
+    }, [getRemain]);
+
+    const setCartQty = useCallback((rewardId: number, nextQty: number) => {
+        setCart(prev => {
+            if (nextQty <= 0) {
+                const { [rewardId]: _, ...rest } = prev;
+                return rest;
+            }
+            const reward = project?.rewardList.find(r => r.rewardId === rewardId);
+            const remain = reward ? getRemain(reward) : 1;
+            return { ...prev, [rewardId]: Math.min(remain, nextQty) };
+        });
+    }, [project, getRemain]);
+
+    const removeFromCart = useCallback((rewardId: number) => {
+        setCart(prev => {
+            const { [rewardId]: _, ...rest } = prev;
+            return rest;
+        });
+    }, []);
+
+    const handleCheckout = useCallback(() => {
+        if (!projectId) return;
+        const entries = Object.entries(cart).filter(([_, q]) => q > 0);
+        if (entries.length === 0) return;
+        const items= entries.map(([rid, q]) => `${rid}x${q}`).join(",");
+        const params = new URLSearchParams();
+        params.set("items", items);
+        navigate(`/project/${projectId}/backing?${params.toString()}`);
+    }, [cart, navigate, projectId]);
+
+    const handleShare = useCallback(() => {
+        navigator.clipboard.writeText(window.location.href);
+        alert('링크가 복사되었습니다.');
+    }, []);
+
+    // const handleSupport = (rewardId: number, quantity: number) => {
+    //     if(!projectId) return;
+    //     navigate(`/project/${projectId}/backing?rewardId=${rewardId}&qty=${quantity}`);
+    // };
+
+    /* -------------------------------- Effects -------------------------------- */
 
     const projectData = async () => {
         setLoadingProject(true);
@@ -60,86 +155,10 @@ export function ProjectDetailPage() {
         reviewData().finally(() => setLoadingReview(false));
     }, []);
 
-    const getRemain = (r: Reward) => (r.rewardCnt > 0 ? Math.max(0, r.remain) : 99);
-
-    const setInputQty = (rewardId: number, next: number, max: number) => {
-        setQtyByReward(prev => ({ ...prev, [rewardId]: Math.min(Math.max(1, next), max) }));
-    };
-
-    const incQty = (rewardId: number, max: number) => {
-        setQtyByReward(prev => ({ ...prev, [rewardId]: Math.min((prev[rewardId] ?? 1) + 1, max) }));
-    };
-    
-    const decQty = (rewardId: number) => {
-        setQtyByReward(prev => ({ ...prev, [rewardId]: Math.max(1, (prev[rewardId] ?? 1) - 1) }));
-    };
-
-    const addToCart = (reward: Reward, qtyToAdd: number) => {
-        if (qtyToAdd <= 0) return;
-        const limited = reward.rewardCnt > 0;
-        const remain = limited ? Math.max(0, reward.remain) : 99;
-        setCart(prev => {
-            const current = prev[reward.rewardId] ?? 0;
-            const nextQty = Math.min(remain, current + qtyToAdd);
-            return { ...prev, [reward.rewardId]: nextQty };
-        });
-    };
-
-    const setCartQty = (rewardId: number, nextQty: number) => {
-        setCart(prev => {
-            if (nextQty <= 0) {
-                const { [rewardId]: _, ...rest } = prev;
-                return rest;
-            }
-            const reward = project?.rewardList.find(r => r.rewardId === rewardId);
-            const limited = reward && reward.rewardCnt > 0;
-            const remain = reward ? (limited ? Math.max(0, reward.remain) : 99) : 1;
-            return { ...prev, [rewardId]: Math.min(remain, nextQty) };
-        });
-    };
-
-    const removeFromCart = (rewardId: number) => {
-        setCart(prev => {
-            const { [rewardId]: _, ...rest } = prev;
-            return rest;
-        });
-    };
-
-    const cartSummary = useMemo(() => {
-        if (!project) return { totalQty: 0, totalAmount: 0 };
-        let totalQty = 0, totalAmount = 0;
-        for (const [ridStr, qty] of Object.entries(cart)) {
-            const rid = Number(ridStr);
-            const r = project.rewardList.find(rr => rr.rewardId === rid);
-            if (!r) continue;
-            totalQty += qty;
-            totalAmount += r.price * qty;
-        }
-        return { totalQty, totalAmount };
-    }, [project, cart]);
-
-    const handleCheckout = () => {
-        if (!projectId) return;
-        const entries = Object.entries(cart).filter(([_, q]) => q > 0);
-        if (entries.length === 0) return;
-        const items= entries.map(([rid, q]) => `${rid}x${q}`).join(",");
-        const params = new URLSearchParams();
-        params.set("items", items);
-        navigate(`/project/${projectId}/backing?${params.toString()}`);
-    };
+    /* -------------------------------- Helpers -------------------------------- */
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('ko-KR').format(amount);
-    };
-
-    // const handleSupport = (rewardId: number, quantity: number) => {
-    //     if(!projectId) return;
-    //     navigate(`/project/${projectId}/backing?rewardId=${rewardId}&qty=${quantity}`);
-    // };
-
-    const handleShare = () => {
-        navigator.clipboard.writeText(window.location.href);
-        alert('링크가 복사되었습니다.');
     };
 
     if (!projectId || !project || loadingProject || loadingCommunity || loadingReview) {
@@ -347,7 +366,10 @@ export function ProjectDetailPage() {
                             </CardContent>
                         </Card>
 
-                        <Card className="bg-white">
+                        <Card
+                            ref={cartRef}
+                            className={`bt-white transition ${cartPing ? "ring-2 ring-blue-500/50 shadow-md" : ""}`}
+                        >
                             <CardContent className="p-4 space-y-4">
                                 {Object.keys(cart).length === 0 ? (
                                     <div className="text-sm text-gray-500">리워드를 담으면 이곳에 표시됩니다.</div>
@@ -366,7 +388,7 @@ export function ProjectDetailPage() {
                                                         <div className="min-w-0">
                                                             <div className="font-semibold truncate">{r.rewardName}</div>
                                                             <div className="text-sm text-gray-500">
-                                                                {formatCurrency(r.price)}원 · {r.rewardCnt > 0 ? `남은 ${max}개` : "무제한"}
+                                                                {formatCurrency(r.price)}원 · {r.rewardCnt > 0 ? `잔여 ${max}개` : "무제한"}
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center gap-2">
@@ -429,7 +451,7 @@ export function ProjectDetailPage() {
                                             <span className="text-lg font-semibold">{formatCurrency(reward.price)}원</span>
                                             {reward.rewardCnt > 0 && (
                                                 <Badge variant="secondary" className="text-xs">
-                                                    {soldOut ? "품절" : `한정 ${reward.rewardCnt}개 · 남은 ${reward.remain}개`}
+                                                    {soldOut ? "품절" : `잔여 ${reward.remain}개`}
                                                 </Badge>
                                             )}
                                         </div>
@@ -472,6 +494,16 @@ export function ProjectDetailPage() {
                                 </Card>
                             );
                         })}
+                        <div className="pt-2">
+                            <Button
+                                    className="w-full"
+                                    size="lg"
+                                    onClick={handleCheckout}
+                                    disabled={cartSummary.totalQty === 0}
+                            >
+                                {cartSummary.totalQty > 0 ? `${formatCurrency(cartSummary.totalAmount)}원 후원하기` : '리워드를 선택하세요'}
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </div>
