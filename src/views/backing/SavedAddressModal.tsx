@@ -26,11 +26,13 @@ interface SavedAddressModalProps {
   triggerText?: string;
 }
 
-export function SavedAddressModal({
+export function SavedAddressModal(
+  {
   mode,
   onSelectAddress,
   triggerText = "배송지 관리",
 }: SavedAddressModalProps) {
+  const tempUserId = 1;
   const [addrList, setAddrList] = useState<AddressResponse[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -50,7 +52,7 @@ export function SavedAddressModal({
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [addrEdit, setAddrEdit] = useState<AddrUpdateRequest>({
     addrId: 0,
-    userId: 4,
+    userId: tempUserId,
     addrName: "",
     recipient: "",
     postalCode: "",
@@ -61,7 +63,7 @@ export function SavedAddressModal({
 
   useEffect(() => {
     const fetchAddressList = async () => {
-      const response = await getData(endpoints.getAddressList(4)); // userId 4
+      const response = await getData(endpoints.getAddressList(tempUserId)); // userId 4
       if (response.status === 200) {
         setAddrList(response.data);
       }
@@ -72,10 +74,10 @@ export function SavedAddressModal({
   }, [isOpen]);
 
   const handleAddAddress = async () => {
-    const response = await postData(endpoints.createAddress(4), addrAdd);
+    const response = await postData(endpoints.createAddress(tempUserId), addrAdd);
     if (response.status === 200) {
       alert("배송지가 추가되었습니다.");
-      const addrResponse = await getData(endpoints.getAddressList(4));
+      const addrResponse = await getData(endpoints.getAddressList(tempUserId));
       if (addrResponse.status === 200) setAddrList(addrResponse.data);
       setIsAddDialogOpen(false);
       setAddrAdd({
@@ -128,7 +130,7 @@ export function SavedAddressModal({
     );
     if (response.status === 200) {
       alert("배송지가 수정되었습니다.");
-      const addrResponse = await getData(endpoints.getAddressList(4));
+      const addrResponse = await getData(endpoints.getAddressList(tempUserId));
       if (addrResponse.status === 200) setAddrList(addrResponse.data);
       setIsEditDialogOpen(false);
     } else {
@@ -137,7 +139,7 @@ export function SavedAddressModal({
   };
 
   const handleDeleteAddress = async (addrId: number) => {
-    const response = await deleteData(endpoints.deleteAddress(4, addrId), {});
+    const response = await deleteData(endpoints.deleteAddress(tempUserId, addrId), {});
     if (response.status === 200) {
       alert("배송지가 삭제되었습니다.");
       setAddrList((prev) => prev.filter((a) => a.addrId !== addrId));

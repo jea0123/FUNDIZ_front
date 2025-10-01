@@ -53,6 +53,7 @@ export const endpoints = {
     deleteAddress: (userId: number, addrId: number)=> `/shipping/${userId}/delete/${addrId}`,
     setAddressDefault: (userId: number, addrId: number)=>`/shipping/${userId}/defaultAddr/${addrId}`,
     getBackingList: (userId: number)=>`/Backing/page/${userId}`,
+    getCreatorPageList : (creatorId :number)=>`/creator/${creatorId}/list`,
     getBackingDetail: (userId: number, projectId: number, rewardId: number) => `/Backing/page/${userId}/project/${projectId}/reward/${rewardId}`,
     getLikedList: (userId: number) => `/user/likedList/${userId}`,
     getProjectDetail: (projectId: number) => `/project/${projectId}`,

@@ -1,14 +1,56 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
+import { endpoints, getData, postData } from "@/api/apis";
+import type { creatorPList } from "@/types/creator";
 
 export function CreatorPage() {
   const [activeMenu, setActiveMenu] = useState("dashboard");
   const [roleView, setRoleView] = useState<"user" | "creator">("creator");
+  const [projects, setProjects] =useState<creatorPList[]>([]);
   const navigate = useNavigate();
+
+  const creatorId = 1;
+
+  useEffect(() => {
+    if(activeMenu === "manage"){
+      getData(endpoints.getCreatorPageList(creatorId)).then((res)=>{
+        if(res && res.status ===200){
+          setProjects(res.data);
+        }
+      }).catch((err)=>{
+        console.error("프로젝트 리스트 불러오기 실패" ,err);
+      });    
+    }
+  },[activeMenu, creatorId]);
+
+const statusColor = (status: string) => {
+    switch (status) {
+      case "SUCCESS":
+        return "bg-green-100 text-green-700";
+      case "FAILED":
+        return "bg-red-100 text-red-700";
+      case "UPCOMING":
+        return "bg-yellow-100 text-yellow-700";
+      case "VERIFYING":
+        return "bg-blue-100 text-blue-700";
+      case "OPEN":
+        return "bg-purple-100 text-purple-700";
+      case "CLOSED":
+        return "bg-gray-200 text-gray-700";
+      case "DRAFT":
+        return "bg-orange-100 text-orange-700";
+      case "SETTLED":
+        return "bg-emerald-100 text-emerald-700";
+      case "CANCELED":
+        return "bg-pink-100 text-pink-700";
+      default:
+        return "bg-gray-100 text-gray-600";
+    }
+};
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -36,7 +78,7 @@ export function CreatorPage() {
                 <AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100" />
                 <AvatarFallback>유저</AvatarFallback>
               </Avatar>
-              <h3 className="font-semibold mb-1">성직자명</h3>
+              <h3 className="font-semibold mb-1">성직자</h3>
               <p className="text-sm text-gray-500 mb-4">hong@example.com</p>
               <Badge variant="secondary">크리에이터</Badge>
             </CardContent>
@@ -44,56 +86,32 @@ export function CreatorPage() {
 
           {/* 메뉴 버튼 */}
           <div className="mt-6 space-y-2">
-            <Button
-              variant={activeMenu === "register" ? "default" : "ghost"}
-              className="w-full justify-start"
-              onClick={() => setActiveMenu("register")}
-            >
-              프로젝트 등록
-            </Button>
-            <Button
-              variant={activeMenu === "manage" ? "default" : "ghost"}
-              className="w-full justify-start"
-              onClick={() => setActiveMenu("manage")}
-            >
-              프로젝트 관리
-            </Button>
-            <Button
-              variant={activeMenu === "fundings" ? "default" : "ghost"}
-              className="w-full justify-start"
-              onClick={() => setActiveMenu("fundings")}
-            >
-              후원 내역
-            </Button>
-            <Button
-              variant={activeMenu === "shipping" ? "default" : "ghost"}
-              className="w-full justify-start"
-              onClick={() => setActiveMenu("shipping")}
-            >
-              배송 내역
-            </Button>
-            <Button
-              variant={activeMenu === "qna" ? "default" : "ghost"}
-              className="w-full justify-start"
-              onClick={() => setActiveMenu("qna")}
-            >
-              QnA
-            </Button>
-            <Button
-              variant={activeMenu === "settlement" ? "default" : "ghost"}
-              className="w-full justify-start"
-              onClick={() => setActiveMenu("settlement")}
-            >
-              정산 내역
-            </Button>
-          </div>
+            {[
+              { key: "dashboard", label: "창작자 대시보드" },
+              { key: "register", label: "프로젝트 등록" },
+              { key: "manage", label: "프로젝트 관리" },
+              { key: "fundings", label: "후원 내역" },
+              { key: "shipping", label: "배송 내역" },
+              { key: "qna", label: "QnA" },
+              { key: "settlement", label: "정산 내역" },
+            ].map((menu) => (
+              <Button
+                key={menu.key}
+                variant={activeMenu === menu.key ? "default" : "ghost"}
+                className="w-full justify-start"
+                onClick={() => setActiveMenu(menu.key)}
+              >
+                {menu.label}
+              </Button>
+            ))}
+          </div>          
         </div>
 
         {/* 오른쪽 컨텐츠 */}
         <div className="lg:col-span-3">
           {activeMenu === "dashboard" && (
             <div>
-              <h2 className="text-xl font-bold mb-4">창작자 대시보드</h2>
+              <h2 className="text-xl font-bold mb-4">프로젝트 관리</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <Card>
                   <CardHeader>
@@ -135,9 +153,55 @@ export function CreatorPage() {
               </Card>
             </div>
           )}
-
-          {activeMenu === "register" && <div>프로젝트 등록 화면</div>}
-          {activeMenu === "manage" && <div>프로젝트 관리 화면</div>}
+          {activeMenu === "register" && <div>프로젝트 등록 페이지로</div>}
+          {activeMenu === "manage" && (
+            <div>
+              <h2 className="text-xl font-bold mb-4">내 프로젝트 관리</h2>
+              {projects.length === 0 ? (
+                <p className="text-gray-500">등록된 프로젝트가 없습니다.</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {projects.map((project) => (
+                    <Card key={project.projectId} className="overflow-hidden">
+                      <img
+                        src={project.thumbnail}
+                        alt={project.title}
+                        className="h-40 w-full object-cover"
+                      />
+                      <CardHeader>
+                        <CardTitle>{project.title}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm text-gray-500">
+                            목표 {project.goalAmount.toLocaleString()}원
+                          </span>
+                          <Badge className={statusColor(project.projectStatus)}>
+                            {project.projectStatus}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-gray-600">
+                          현재 {project.currAmount.toLocaleString()}원
+                        </p>
+                        <p className="text-xs text-gray-400 mt-2">
+                          생성일: {project.createdAt}
+                        </p>
+                        <Button
+                          variant="outline"
+                          className="mt-3 w-full"
+                          onClick={() =>
+                            alert(`프로젝트 ${project.projectId} 상세 관리`)
+                          }
+                        >
+                          상세 관리
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           {activeMenu === "fundings" && <div>후원 내역 화면</div>}
           {activeMenu === "shipping" && <div>배송 내역 화면</div>}
           {activeMenu === "qna" && <div>QnA 관리 화면</div>}
