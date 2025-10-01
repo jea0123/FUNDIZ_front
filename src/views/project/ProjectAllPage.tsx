@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import type { Category } from "@/types/admin";
 import type { Featured, SearchProjectParams, Subcategory } from "@/types/projects";
@@ -10,6 +10,7 @@ import Crumbs from "./components/Crumbs";
 import CategoryChips from "./components/CategoryChips";
 import SortBar from "./components/SortBar";
 import SubcategoryTabs from "./components/SubcategoryTabs";
+import FundingLoader from "@/components/FundingLoader";
 
 /* ------------------------------ Common hook ------------------------------ */
 
@@ -156,6 +157,34 @@ export default function ProjectAllPage() {
             <SortBar value={sort} onChange={setSort} total={total} />
 
             {loading && <p className="text-gray-500">불러오는 중…</p>}
+            {error && <p className="text-red-600">목록을 불러오지 못했습니다.</p>}
+            {!loading && !error && <ProjectGrid items={items} />}
+
+            <Pagination page={page} size={size} total={total} onPage={setPage} />
+        </div>
+    );
+}
+
+export function SearchProjectPage() {
+    const { sort, page, size, keyword, setSort, setPage, setKeyword } = useQueryState();
+    const { items, total, loading, error } = useProject({ page, size, keyword, sort });
+
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if (!keyword.length) navigate("/project");
+    }, [keyword, navigate]);
+    
+    if (!keyword.length) return null;
+
+    return (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="mb-4 text-sm text-gray-700">
+                검색어: <span className="font-medium">{keyword}</span>
+                <Button variant="link" size="sm" className="ml-2" onClick={() => setKeyword("")}>검색어 지우기</Button>
+            </div>
+            <SortBar value={sort} onChange={setSort} total={total} />
+            {loading && <FundingLoader />}
             {error && <p className="text-red-600">목록을 불러오지 못했습니다.</p>}
             {!loading && !error && <ProjectGrid items={items} />}
 
