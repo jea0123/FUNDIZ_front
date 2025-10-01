@@ -115,7 +115,7 @@ function useProject(params: SearchProjectParams) {
 
 /* ------------------------------ UI component ------------------------------ */
 
-function Pagination({ page, size, total, onPage }: { page: number; size: number; total: number; onPage: (p: number) => void }) {
+export function Pagination({ page, size, total, onPage }: { page: number; size: number; total: number; onPage: (p: number) => void }) {
     const lastPage = Math.max(1, Math.ceil(total / size));
 
     return (
