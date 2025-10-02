@@ -7,8 +7,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { endpoints, postData } from "@/api/apis";
 import type { NoticeAddRequest } from "@/types/notice";
+import { useNavigate } from "react-router-dom";
 
 export function NoticeAddTab() {
+
+    const navigate = useNavigate();
 
     const [noticeAdd, setNoticeAdd] = useState<NoticeAddRequest>({
         title : "",
@@ -25,6 +28,8 @@ export function NoticeAddTab() {
               alert("공지사항 등록 실패");
               return false;
             }
+
+            navigate('?tab=notice');
           };
 
     return (
