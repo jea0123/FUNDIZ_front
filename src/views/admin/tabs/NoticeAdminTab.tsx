@@ -41,6 +41,8 @@ import {
 import { endpoints, getData, postData, deleteData } from "@/api/apis";
 import type { Notice, NoticeAddRequest, NoticeUpdateRequest } from '@/types/notice';
 import { formatDate } from '@/utils/utils';
+import { NoticeAddTab } from "./NoticeAddTab";
+import { useNavigate } from "react-router-dom";
 
 export function NoticeAdminTab() {
     const [notices, setNotices] = useState<Notice[]>([]);
@@ -97,6 +99,14 @@ export function NoticeAdminTab() {
         }
       };
 
+      const navigate = useNavigate();
+
+      const noticeAddNavigate = () => {
+        navigate('?tab=noticeadd');
+      };
+
+
+
     return (
         <div>
             <div>
@@ -108,6 +118,7 @@ export function NoticeAdminTab() {
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
+                                            <TableHead className="w-20">번호</TableHead>
                                             <TableHead>제목</TableHead>
                                             <TableHead className="w-40">작성일</TableHead>
                                             <TableHead className="w-48">작업</TableHead>
@@ -116,6 +127,7 @@ export function NoticeAdminTab() {
                                     <TableBody>
                                         {paged.map(n => (
                                             <TableRow key={n.noticeId}>
+                                                <TableCell className="font-medium">{n.noticeId}</TableCell>
                                                 <TableCell className="font-medium"><a href={`/cs/notice/${n.noticeId}`}>{n.title}</a></TableCell>
                                                 <TableCell className="text-zinc-500">{formatDate(n.createdAt)}</TableCell>
                                                 <TableCell>
@@ -133,6 +145,7 @@ export function NoticeAdminTab() {
                                     <div className="flex items-center gap-2">
                                         <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>이전</Button>
                                         <Button variant="outline" size="sm" disabled={page === pageCount} onClick={() => setPage(p => Math.min(pageCount, p + 1))}>다음</Button>
+                                        <Button variant="outline" size="sm" onClick={noticeAddNavigate}>글쓰기</Button>
                                     </div>
                                 </div>
                             </CardContent>

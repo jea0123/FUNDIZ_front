@@ -15,6 +15,7 @@ import type { Reward } from "@/types/reward";
 import type { ProjectDetail } from "@/types/projects";
 
 export function FundingPage() {
+  const tempUserId = 1;
   const { projectId } = useParams<{ projectId: string }>();
   const [searchParams] = useSearchParams();
   const rewardId = searchParams.get("rewardId");
@@ -81,7 +82,7 @@ export function FundingPage() {
     }
 
     const payload = {
-      userId: 1, // TODO: 로그인 유저 ID
+      userId: tempUserId, // TODO: 로그인 유저 ID
       ...finalAddress,
       backingRewardList: [
         {

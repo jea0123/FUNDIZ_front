@@ -29,12 +29,14 @@ import {
   MapPin,
   Bell,
   TrendingUpDown,
+  MessagesSquare,
+  Siren,
 } from "lucide-react";
 import { ImageWithFallback } from "../../components/figma/ImageWithFallback";
 import { useNavigate } from "react-router-dom";
 //import { useLoginUserStore } from '@/store/LoginUserStore.store';
 //import { endpoints } from '@/api/apis';
-import { endpoints, getData, postData, deleteData, putData } from "@/api/apis";
+import { endpoints, getData, postData, deleteData } from "@/api/apis";
 import type { LoginUser } from "@/types";
 //import { set } from 'date-fns';
 //import { useParams } from 'react-router-dom';
@@ -56,8 +58,11 @@ import type {
 } from "@/types/address";
 
 import { SavedAddressModal } from "../backing/SavedAddressModal";
+import { MyInquiryTab } from "./MyInquiryTab";
+import { MyReportsTab } from "./MyReportsTab";
 
 export function MyPage() {
+  const tempUserId = 1;
   const [editMode, setEditMode] = useState(false);
   //const { loginUser } = useLoginUserStore();
   //const { projectId } = useParams();
@@ -74,12 +79,13 @@ export function MyPage() {
     recipientPhone: "",
     isDefault: "N",
   });
+  
 
   const [roleView, setRoleView] = useState<"user" | "creator">("user");
 
   const [addrEdit, setAddrEdit] = useState<AddrUpdateRequest>({
     addrId: 0,
-    userId: 4,
+    userId: tempUserId,
     addrName: "",
     recipient: "",
     postalCode: "",
@@ -109,11 +115,11 @@ export function MyPage() {
   const [selectedBacking, setSelectedBacking] =
     useState<BackingMyPageDetail | null>(null);
   const MypageAddrDelete = async (addrId: number) => {
-    const response = await deleteData(endpoints.deleteAddress(4, addrId), {});
+    const response = await deleteData(endpoints.deleteAddress(tempUserId, addrId), {});
     if (response.status === 200) {
       alert("배송지가 삭제되었습니다.");
 
-      const addrResponse = await getData(endpoints.getAddressList(4));
+      const addrResponse = await getData(endpoints.getAddressList(tempUserId));
       if (addrResponse.status === 200) {
         setAddressList(addrResponse.data);
       }
@@ -128,11 +134,11 @@ export function MyPage() {
   };
 
   const MypageAddrAdd = async (newAddr: AddrAddRequest) => {
-    const response = await postData(endpoints.createAddress(4), newAddr);
+    const response = await postData(endpoints.createAddress(tempUserId), newAddr);
     if (response.status === 200) {
       alert("배송지가 추가되었습니다.");
 
-      const addrResponse = await getData(endpoints.getAddressList(4));
+      const addrResponse = await getData(endpoints.getAddressList(tempUserId));
       if (addrResponse.status === 200) {
         setAddressList(addrResponse.data);
       }
@@ -144,18 +150,19 @@ export function MyPage() {
     }
   };
 
+
   const MyPageAddrUpdate = async (
     addrId: number,
     updateAddr: AddrUpdateRequest
   ) => {
     const response = await postData(
-      endpoints.updateAddress(4, addrId),
+      endpoints.updateAddress(tempUserId, addrId),
       updateAddr
     );
     if (response.status === 200) {
       alert("배송지가 수정되었습니다.");
 
-      const addrResponse = await getData(endpoints.getAddressList(4));
+      const addrResponse = await getData(endpoints.getAddressList(tempUserId));
       if (addrResponse.status === 200) {
         setAddressList(addrResponse.data);
       }
@@ -169,28 +176,28 @@ export function MyPage() {
 
   useEffect(() => {
     const MypageUser = async () => {
-      const response = await getData(endpoints.getMypage(4));
+      const response = await getData(endpoints.getMypage(tempUserId));
       if (response.status === 200) {
         setLoginUser(response.data);
       }
     };
 
     const MypageAddressList = async () => {
-      const response = await getData(endpoints.getAddressList(4));
+      const response = await getData(endpoints.getAddressList(tempUserId));
       if (response.status === 200) {
         setAddressList(response.data);
       }
     };
 
     const MypageBackingList = async () => {
-      const response = await getData(endpoints.getBackingList(4));
+      const response = await getData(endpoints.getBackingList(tempUserId));
       if (response.status === 200) {
         setBackingProjects(response.data);
       }
     };
 
     const MypageLikedList = async () => {
-      const response = await getData(endpoints.getLikedList(4));
+      const response = await getData(endpoints.getLikedList(tempUserId));
 
       if (response.status === 200) {
         setLikedProjects(response.data);
@@ -377,6 +384,24 @@ export function MyPage() {
             >
               <Bell className="mr-2 h-4 w-4" />
               알림
+            </Button>
+
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+              onClick={() => setActiveTab("myinquiry")}
+            >
+              <MessagesSquare className="mr-2 h-4 w-4" />
+              내 문의내역
+            </Button>
+
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+              onClick={() => setActiveTab("myreports")}
+            >
+              <Siren className="mr-2 h-4 w-4" />
+              내 신고내역
             </Button>
           </div>
         </div>
@@ -701,6 +726,12 @@ export function MyPage() {
                   </div>
                 </CardContent>
               </Card>
+            </TabsContent>
+            <TabsContent value="myinquiry" className="mt-6">
+              <MyInquiryTab/>
+            </TabsContent>
+            <TabsContent value="myreports" className="mt-6">
+              <MyReportsTab/>
             </TabsContent>
           </Tabs>
         </div>
