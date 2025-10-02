@@ -42,7 +42,7 @@ import { endpoints, getData, postData, deleteData } from "@/api/apis";
 import type { Notice, NoticeAddRequest, NoticeUpdateRequest } from '@/types/notice';
 import { formatDate } from '@/utils/utils';
 import { NoticeAddTab } from "./NoticeAddTab";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 export function NoticeAdminTab() {
     const [notices, setNotices] = useState<Notice[]>([]);
@@ -63,49 +63,20 @@ export function NoticeAdminTab() {
     const paged = notices.slice((page - 1) * pageSize, page * pageSize);
     const pageCount = Math.ceil(notices.length / pageSize);
     
-      const noticeUpdate = async (
-        noticeId: number,
-        updateNotice: NoticeUpdateRequest
-      ) => {
-        const response = await postData(
-          endpoints.updateNotice(noticeId),
-          updateNotice
-        );
-        if (response.status === 200) {
-          alert("공지사항이 수정되었습니다.");
-    
-          const notices = await getData(endpoints.getNotices);
-          if (notices.status === 200) {
-            setNotices(notices.data);
-          }
-        } else {
-          alert("공지사항 수정 실패");
-          return false;
-        }
-      };
-
-      const noticeDelete = async (noticeId: number) => {
-        const response = await deleteData(endpoints.deleteNotice(noticeId));
+    const noticeDelete = async (noticeId: number) => {
+        const response = await deleteData(endpoints.deleteNotice(noticeId), {});
         if (response.status === 200) {
           alert("공지사항이 삭제되었습니다.");
-    
-          const response = await getData(endpoints.getNotices);
-          if (response.status === 200) {
-            setNotices(response.data);
-          }  
+          setNotices((prev) => prev.filter((ntc) => ntc.noticeId !== noticeId));
         } else {
           alert("공지사항 삭제 실패");
-          return false;
         }
       };
 
       const navigate = useNavigate();
-
       const noticeAddNavigate = () => {
         navigate('?tab=noticeadd');
       };
-
-
 
     return (
         <div>
@@ -132,8 +103,8 @@ export function NoticeAdminTab() {
                                                 <TableCell className="text-zinc-500">{formatDate(n.createdAt)}</TableCell>
                                                 <TableCell>
                                                     <div className="flex gap-2">
-                                                        <Button size="sm" variant="outline" onClick={() => openEditNotice(n)}>수정</Button>
-                                                        <Button size="sm" variant="destructive" onClick={() => setNotices(prev => prev.filter(x => x.noticeId !== n.noticeId))}>삭제</Button>
+                                                        <Button size="sm" variant="outline" onClick={() => navigate(`?tab=noticeupdate&id=${n.noticeId}`)}>수정</Button>
+                                                        <Button size="sm" variant="destructive" onClick={() => noticeDelete(n.noticeId)}>삭제</Button>
                                                     </div>
                                                 </TableCell>
                                             </TableRow>
