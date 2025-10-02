@@ -1,9 +1,9 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { Route, Routes, useNavigate } from 'react-router-dom';
-import { LoginPage } from './components/LoginPage';
+import { LoginPage } from './views/auth/LoginPage';
 import { MyPage } from './views/user/MyPage';
 import { Navbar, Footer } from './components/Navbar';
-import { RegisterPage } from './components/RegisterPage';
+import { RegisterPage } from './views/auth/RegisterPage';
 import { useLoginUserStore } from './store/LoginUserStore.store';
 import { useCookies } from 'react-cookie';
 import { endpoints, getData } from './api/apis';
@@ -20,6 +20,7 @@ import { ApprovalDetail } from './views/admin/tabs/ApprovalDetail';
 import { AdminTabs } from './views/admin/AdminTabs';
 import CreateProject from './views/creator/CreateProject';
 import { CreatorPage } from './views/creator/CreatorPage';
+import NotificationsPage from './components/NotificationsPage';
 
 const AdminDashboard = lazy(() => import('./views/admin/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
 
@@ -78,10 +79,10 @@ export default function App() {
             <Route path='Mypage' element={<MyPage />} />
           </Route>
 
-            
+
           <Route path='/creator'>
             <Route path='mypage' element={<CreatorPage />} />
-          </Route> 
+          </Route>
 
           <Route path='/admin' element={<AdminDashboard />}>
             <Route index element={<AdminTabs />} />
@@ -95,7 +96,7 @@ export default function App() {
 
           <Route path="/error" element={<ErrorPage />} />
           <Route path="*" element={<ErrorPage />} />
-          {/* <Route path="/loading" element={<FundingLoader />} /> */}
+          <Route path="/notifications" element={<NotificationsPage />} />/
         </Routes>
         <Footer />
       </div>

@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Checkbox } from './ui/checkbox';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { Checkbox } from '../../components/ui/checkbox';
 import { Mail, Lock, Eye, EyeOff, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { endpoints, postData } from '@/api/apis';
@@ -81,7 +81,7 @@ export function RegisterPage() {
         const { status } = response;
         if (status === 200 || status === 201) {
             alert('회원가입이 완료되었습니다.');
-            navigate('/login', { replace: true });
+            navigate('/auth/login', { replace: true });
             return;
         } else if (status === 409) {
             alert('이미 가입된 이메일입니다.');
