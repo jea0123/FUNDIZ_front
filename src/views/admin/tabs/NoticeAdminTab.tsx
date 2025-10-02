@@ -1,14 +1,5 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import {
-    Tabs,
-    TabsList,
-    TabsTrigger,
-    TabsContent
-} from "@/components/ui/tabs";
 import {
     Card,
     CardHeader,
@@ -23,28 +14,13 @@ import {
     TableBody,
     TableCell
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import {
-    Select,
-    SelectTrigger,
-    SelectContent,
-    SelectItem,
-    SelectValue
-} from "@/components/ui/select";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter
-} from "@/components/ui/dialog";
-import { endpoints, getData, postData, deleteData } from "@/api/apis";
-import type { Notice, NoticeAddRequest, NoticeUpdateRequest } from '@/types/notice';
+import { endpoints, getData, deleteData } from "@/api/apis";
+import type { Notice } from '@/types/notice';
 import { formatDate } from '@/utils/utils';
-import { NoticeAddTab } from "./NoticeAddTab";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export function NoticeAdminTab() {
+
     const [notices, setNotices] = useState<Notice[]>([]);
     
     const getNotices = async () => {
@@ -91,8 +67,9 @@ export function NoticeAdminTab() {
                                         <TableRow>
                                             <TableHead className="w-20">번호</TableHead>
                                             <TableHead>제목</TableHead>
-                                            <TableHead className="w-40">작성일</TableHead>
-                                            <TableHead className="w-48">작업</TableHead>
+                                            <TableHead className="w-30">조회수</TableHead>
+                                            <TableHead className="w-45">작성일</TableHead>
+                                            <TableHead className="w-45">작업</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -100,6 +77,7 @@ export function NoticeAdminTab() {
                                             <TableRow key={n.noticeId}>
                                                 <TableCell className="font-medium">{n.noticeId}</TableCell>
                                                 <TableCell className="font-medium"><a href={`/cs/notice/${n.noticeId}`}>{n.title}</a></TableCell>
+                                                <TableCell className="font-medium">{n.viewCnt}</TableCell>
                                                 <TableCell className="text-zinc-500">{formatDate(n.createdAt)}</TableCell>
                                                 <TableCell>
                                                     <div className="flex gap-2">

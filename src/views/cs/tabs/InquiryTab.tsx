@@ -7,8 +7,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { endpoints, postData } from "@/api/apis";
 import type { IqrAddRequest } from "@/types/inquiry";
+import { useNavigate } from "react-router-dom";
+
+
+    
 
 export function InquiryTab() {
+
+    const navigate = useNavigate();
+
     const tempUserId = 4;
 
     const [inqAdd, setInqAdd] = useState<IqrAddRequest>({
@@ -29,6 +36,8 @@ export function InquiryTab() {
               alert("문의사항 등록 실패");
               return false;
             }
+
+            navigate('/user/mypage', {state : { tab : 'myinquiry'}});
           };
 
     return (
