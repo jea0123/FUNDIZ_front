@@ -21,21 +21,17 @@ export function useQueryState() {
     const rangeType = searchParams.get("rangeType") || "";
     const projectStatus = searchParams.get("projectStatus") || "";
 
-    const setParam = (k: string, v?: string) => {
+    const setParam = (k: string, v?: string, opts?: { resetPage?: boolean }) => {
         const next = new URLSearchParams(searchParams);
-
-        if (v && v.length) {
-            next.set(k, v);
-        } else {
-            next.delete(k);
-        }
+        v && v.length ? next.set(k, v) : next.delete(k);
+        if (opts?.resetPage) next.set("page", "1");
         setSearchParams(next, { replace: true });
     };
 
     const setPage = (p: number) => setParam("page", String(p));
-    const setSize = (s: number) => setParam("size", String(s));
-    const setRangeType = (rt: string) => setParam("rangeType", rt);
-    const setProjectStatus = (ps: string) => setParam("projectStatus", ps);
+    const setSize = (s: number) => setParam("size", String(s), { resetPage: true });
+    const setRangeType = (rt: string) => setParam("rangeType", rt, { resetPage: true });
+    const setProjectStatus = (ps: string) => setParam("projectStatus", ps, { resetPage: true });
 
     return { page, size, rangeType, projectStatus, setPage, setSize, setRangeType, setProjectStatus };
 }
@@ -228,7 +224,10 @@ export function ApprovalsTab() {
                     {verifyList.map((r) => (
                         <ApprovalCard key={r.projectId} project={r} projectData={projectData} />
                     ))}
-                    <Pagination page={page} size={size} total={total} onPage={setPage} />
+                    <Pagination
+                        key={`${projectStatus || 'ALL'}-${rangeType || 'ALL'}-${size}`}
+                        page={page} size={size} total={total} onPage={setPage}
+                    />
                 </div>
                 )}
             </CardContent>

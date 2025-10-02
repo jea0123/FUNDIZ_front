@@ -301,7 +301,7 @@ export function Steps(props: {
                             />
                         </div>
                         {/* TODO: 사업자 서류첨부 업로드 기능 추가 */}
-                        <div>
+                        {/* <div>
                             <Label htmlFor="businessDoc">사업자 관련 서류 (PDF/JPG/PNG) *</Label>
                             <Input
                                 ref={businessDocRef}
@@ -347,7 +347,7 @@ export function Steps(props: {
                             <p className="text-xs text-gray-500 mt-1">
                                 • 최대 4GB (권장 50MB 이하)
                             </p>
-                        </div>
+                        </div> */}
                         <div>
                             <Label htmlFor="email">문의 이메일 *</Label>
                             <Input
