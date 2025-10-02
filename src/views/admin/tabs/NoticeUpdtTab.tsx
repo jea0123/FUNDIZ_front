@@ -47,6 +47,8 @@ export function NoticeUpdtTab() {
             alert("공지사항 수정 실패");
             return false;
         }
+
+        navigate('?tab=notice');
     };
 
     return (
