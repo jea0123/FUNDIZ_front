@@ -118,6 +118,7 @@ export function NoticeAdminTab() {
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
+                                            <TableHead className="w-20">번호</TableHead>
                                             <TableHead>제목</TableHead>
                                             <TableHead className="w-40">작성일</TableHead>
                                             <TableHead className="w-48">작업</TableHead>
@@ -126,6 +127,7 @@ export function NoticeAdminTab() {
                                     <TableBody>
                                         {paged.map(n => (
                                             <TableRow key={n.noticeId}>
+                                                <TableCell className="font-medium">{n.noticeId}</TableCell>
                                                 <TableCell className="font-medium"><a href={`/cs/notice/${n.noticeId}`}>{n.title}</a></TableCell>
                                                 <TableCell className="text-zinc-500">{formatDate(n.createdAt)}</TableCell>
                                                 <TableCell>
