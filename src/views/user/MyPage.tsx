@@ -29,8 +29,6 @@ import {
   MapPin,
   Bell,
   TrendingUpDown,
-  MessagesSquare,
-  Siren,
 } from "lucide-react";
 import { ImageWithFallback } from "../../components/figma/ImageWithFallback";
 import { useNavigate } from "react-router-dom";
@@ -58,8 +56,6 @@ import type {
 } from "@/types/address";
 
 import { SavedAddressModal } from "../backing/SavedAddressModal";
-import { MyInquiryTab } from "./MyInquiryTab";
-import { MyReportsTab } from "./MyReportsTab";
 
 export function MyPage() {
   const tempUserId = 1;
@@ -385,24 +381,6 @@ export function MyPage() {
               <Bell className="mr-2 h-4 w-4" />
               알림
             </Button>
-
-            <Button
-              variant="ghost"
-              className="w-full justify-start"
-              onClick={() => setActiveTab("myinquiry")}
-            >
-              <MessagesSquare className="mr-2 h-4 w-4" />
-              내 문의내역
-            </Button>
-
-            <Button
-              variant="ghost"
-              className="w-full justify-start"
-              onClick={() => setActiveTab("myreports")}
-            >
-              <Siren className="mr-2 h-4 w-4" />
-              내 신고내역
-            </Button>
           </div>
         </div>
 
@@ -476,7 +454,7 @@ export function MyPage() {
                               size="sm"
                               onClick={() => {
                                 fetchBackingdetail(
-                                  4,
+                                  tempUserId,
                                   backingList.backingReward.backingProject
                                     .projectId,
                                   backingList.backingReward.rewardId
@@ -726,12 +704,6 @@ export function MyPage() {
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
-            <TabsContent value="myinquiry" className="mt-6">
-              <MyInquiryTab/>
-            </TabsContent>
-            <TabsContent value="myreports" className="mt-6">
-              <MyReportsTab/>
             </TabsContent>
           </Tabs>
         </div>

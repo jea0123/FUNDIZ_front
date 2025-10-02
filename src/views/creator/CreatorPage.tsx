@@ -13,7 +13,7 @@ export function CreatorPage() {
   const [projects, setProjects] =useState<creatorPList[]>([]);
   const navigate = useNavigate();
 
-  const creatorId = 1;
+  const creatorId = 96;
 
   useEffect(() => {
     if(activeMenu === "manage"){
@@ -27,30 +27,18 @@ export function CreatorPage() {
     }
   },[activeMenu, creatorId]);
 
-const statusColor = (status: string) => {
-    switch (status) {
-      case "SUCCESS":
-        return "bg-green-100 text-green-700";
-      case "FAILED":
-        return "bg-red-100 text-red-700";
-      case "UPCOMING":
-        return "bg-yellow-100 text-yellow-700";
-      case "VERIFYING":
-        return "bg-blue-100 text-blue-700";
-      case "OPEN":
-        return "bg-purple-100 text-purple-700";
-      case "CLOSED":
-        return "bg-gray-200 text-gray-700";
-      case "DRAFT":
-        return "bg-orange-100 text-orange-700";
-      case "SETTLED":
-        return "bg-emerald-100 text-emerald-700";
-      case "CANCELED":
-        return "bg-pink-100 text-pink-700";
-      default:
-        return "bg-gray-100 text-gray-600";
-    }
-};
+const statusMap: Record<string, {class: string; label: string}> ={
+  DRAFT: {class : "bg-gray-100 text-gray-700" , label: "작성 중"},
+  VERIFYING: {class : "bg-blue-100 text-blue-700", label : "심사 중"},
+  UPCOMING: {class : "bg-yellow-100 text-yellow-700", label: "오픈 예정"},
+  REJECTED: {class : "bg-red=100 text-red-700", label: "반려"},
+  OPEN: { class : "bg-purple-100 text-purple-700", label : "진행 중"},
+  SUCCESS : {class : "bg-green-100 text-green-700", label : "성공"},
+  FAILED : { class : "bg-red-100 text-red-700", label: "실패"},
+  CANCELED: {class : "bg-lime-100 text-lime-700", label : "취소"},
+  SETTLED: {class : "bg-rose-100 text-rose-700", label : "정산 완료"},
+  CLOSED: {class : "bg-fuchsia-100 text-fuchsia-700", label : "종료"}  
+}
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -127,13 +115,13 @@ const statusColor = (status: string) => {
                 </Card>
                 <Card>
                   <CardHeader>
-                    <CardTitle>총 회원</CardTitle>
+                    <CardTitle>총 후원받은 수</CardTitle>
                   </CardHeader>
                   <CardContent>34,567</CardContent>
                 </Card>
                 <Card>
                   <CardHeader>
-                    <CardTitle>승인 대기</CardTitle>
+                    <CardTitle>프로젝트 승인 대기</CardTitle>
                   </CardHeader>
                   <CardContent>23</CardContent>
                 </Card>
@@ -176,8 +164,8 @@ const statusColor = (status: string) => {
                           <span className="text-sm text-gray-500">
                             목표 {project.goalAmount.toLocaleString()}원
                           </span>
-                          <Badge className={statusColor(project.projectStatus)}>
-                            {project.projectStatus}
+                          <Badge className={statusMap[project.projectStatus]?.class || "bg-gray-100 text-gray-600"}>
+                            {statusMap[project.projectStatus]?.label || project.projectStatus}
                           </Badge>
                         </div>
                         <p className="text-sm text-gray-600">
