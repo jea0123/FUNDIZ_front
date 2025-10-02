@@ -1,6 +1,7 @@
 import type { Status } from "@/views/admin/tabs/ProjectsTab";
 import type { Reward } from "./reward";
 import type { Tag } from "./tag";
+import type { AdminStatus } from "@/views/admin/tabs/AdminProjectEdit";
 
 export interface Analytics {
     kpi: {
@@ -64,7 +65,7 @@ export interface SearchProjectVerify {
     rangeType?: string;
 }
 
-export interface RejectRequestDto {
+export interface RejectProjectDto {
     rejectedReason: string;
 }
 
@@ -99,6 +100,7 @@ export interface AdminProjectList {
     title: string;
     creatorName: string;
     projectStatus: Status;
+    startDate: Date;
     endDate: Date;
     goalAmount: number;
     currAmount: number;
@@ -106,4 +108,12 @@ export interface AdminProjectList {
     updatedAt: Date
 
     percentNow: number;
+}
+
+export interface AdminProjectUpdateDto {
+    projectId: number;
+    subctgrId: number;
+    title: string;
+    thumbnail: string;
+    projectStatus: AdminStatus;
 }

@@ -4,7 +4,6 @@ import type { SearchProjectParams } from '@/types/projects';
 import { appNavigate } from '@/utils/navigator';
 import type { AxiosResponse } from 'axios';
 import axios from 'axios';
-import { use } from 'react';
 
 const axiosInstance = axios.create({
     baseURL: 'http://localhost:9099/api/v1',
@@ -40,36 +39,57 @@ const toQueryString = (params: Record<string, unknown>) => {
 };
 
 export const endpoints = {
+    // ==================== Auth API ====================
     checkEmail: '/auth/checkEmail',
     checkNickname: '/auth/checkNickname',
     signUp: '/auth/signUp',
     signIn: '/auth/signIn',
+
+    // ==================== User API ====================
     getLoginUser: '/user/loginUser',
-    getRecentTop10: '/project/recent-top10',
-    getMypage: (userId : number) => `/user/userPage/${userId}`,
-    getAddressList: (userId: number) =>  `/shipping/${userId}/list`,
-    updateAddress: (userId: number, addrId: number) => `/shipping/${userId}/update/${addrId}`,
-    createAddress: (userId: number) => `/shipping/${userId}/add`,
-    deleteAddress: (userId: number, addrId: number)=> `/shipping/${userId}/delete/${addrId}`,
-    setAddressDefault: (userId: number, addrId: number)=>`/shipping/${userId}/defaultAddr/${addrId}`,
-    getBackingList: (userId: number)=>`/backing/page/${userId}`,
+    getMypage: (userId: number) => `/user/userPage/${userId}`,
     getCreatorPageList : (creatorId :number)=>`/creator/${creatorId}/list`,
-    getBackingDetail: (userId: number, projectId: number, rewardId: number) => `/backing/page/${userId}/project/${projectId}/reward/${rewardId}`,
     getLikedList: (userId: number) => `/user/likedList/${userId}`,
-    getProjectDetail: (projectId: number) => `/project/${projectId}`,
     getQnAList: (userId: number) => `/user/QnAList/${userId}`,
-    getQnAListDetail: (userId: number, projectId: number)=> `/user/QnAListDetail/${userId}/project/${projectId}`,
+    getRecentView: (userId: number) => `/user/recentViewProjects/${userId}`,
+    getQnAListDetail: (userId: number, projectId: number) => `/user/QnAListDetail/${userId}/project/${projectId}`,
+
+    // ==================== Project API ====================
+    createProject: '/project',
+    getFeatured: '/project/featured',
+    getRecentTop10: '/project/recent-top10',
+    getProjectDetail: (projectId: number) => `/project/${projectId}`,
     getCommunity: (projectId: number) => `/project/${projectId}/community`,
     getReview: (projectId: number) => `/project/${projectId}/review`,
-    getFeatured: '/project/featured',
-    getRecentView: (userId: number) => `/user/recentViewProjects/${userId}`,
-    getCategories: '/categories',
+    searchProject: (p: SearchProjectParams) => `/project/search?${toQueryString({ page: p.page, size: p.size, keyword: p.keyword, ctgrId: p.ctgrId, subctgrId: p.subctgrId, sort: p.sort })}`,
+
+    // ==================== Shipping API ====================
+    getAddressList: (userId: number) => `/shipping/${userId}/list`,
+    updateAddress: (userId: number, addrId: number) => `/shipping/${userId}/update/${addrId}`,
+    createAddress: (userId: number) => `/shipping/${userId}/add`,
+    deleteAddress: (userId: number, addrId: number) => `/shipping/${userId}/delete/${addrId}`,
+    setAddressDefault: (userId: number, addrId: number) => `/shipping/${userId}/defaultAddr/${addrId}`,
+
+    // ==================== Backing API ====================
+    getBackingList: (userId: number) => `/Backing/page/${userId}`,
+    getBackingDetail: (userId: number, projectId: number, rewardId: number) => `/Backing/page/${userId}/project/${projectId}/reward/${rewardId}`,
+
+    // ==================== Admin API ====================
     getAdminAnalytics: (period: string, metric: string) => `/admin/analytics?period=${period}&metric=${metric}`,
     getCategorySuccess: (ctgrId: number) => `/admin/category-success?ctgrId=${ctgrId}`,
-    createProject: '/project',
-    getSubcategories: '/categories/subcategories',
     getRewardSalesTop: (period: string, metric: string) => `/admin/reward-sales-top?period=${period}&metric=${metric}`,
-    searchProject: (p: SearchProjectParams) => `/project/search?${toQueryString({ page: p.page, size: p.size, keyword: p.keyword, ctgrId: p.ctgrId, subctgrId: p.subctgrId, sort: p.sort })}`,
+    getProjectVerifyList: (p: SearchProjectVerify) => `/admin/verify?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
+    approveProject: (projectId: number) => `/admin/verify/approve/${projectId}`,
+    rejectProject: (projectId: number) => `/admin/verify/reject/${projectId}`,
+    getProjectVerifyDetail: (projectId: number) => `/admin/verify/${projectId}`,
+    getAdminProjectList: (p: SearchProjectVerify) => `/admin/project?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
+    adminUpdateProject: (projectId: number) => `/admin/project/${projectId}`,
+
+    // ==================== Category API ====================
+    getCategories: '/categories',
+    getSubcategories: '/categories/subcategories',
+
+    // ==================== Customer Service API ====================
     getNotices: '/cs/notice',
     getNoticeDetail: (noticeId: number) => `/cs/notice/${noticeId}`,
     addNotice: '/cs/notice/add',
@@ -82,12 +102,15 @@ export const endpoints = {
     getReports: '/cs/report/list',
     getMyReports: (userId: number) => `/cs/report/mylist/${userId}`,
     getReportDetail: (reportId: number) => `/cs/report/${reportId}`,
-    addReport: (userId: number) => `/cs/report/${userId}/add`, 
-    getProjectVerifyList: (p: SearchProjectVerify) => `/admin/verify?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
-    approveProject: (projectId: number) => `/admin/verify/approve/${projectId}`,
-    rejectProject: (projectId: number) => `/admin/verify/reject/${projectId}`,
-    getProjectVerifyDetail: (projectId: number) => `/admin/verify/${projectId}`,
-    getAdminProjectList: (p: SearchProjectVerify) => `/admin/project?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
+    addReport: (userId: number) => `/cs/report/${userId}/add`,
+
+    // ==================== Notification API ====================
+    getNotificationSSE: (userId: number) => `/notifications/stream?userId=${userId}`,
+    getNotifications: '/notifications/list',
+    markAsRead: (notificationId: number) => `/notifications/read/${notificationId}`,
+    markAllAsRead: '/notifications/readAll',
+    deleteNotification: (notificationId: number) => `/notifications/delete/${notificationId}`,
+    deleteAllNotifications: '/notifications/deleteAll',
 };
 
 export const getData = async (url: string, accessToken?: string) => {

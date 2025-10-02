@@ -1,3 +1,13 @@
+import dayjs from "dayjs";
+import relativeTime from 'dayjs/plugin/relativeTime';
+import 'dayjs/locale/ko';
+import { toast } from "sonner";
+
+dayjs.extend(relativeTime);
+dayjs.locale("ko");
+
+export const getElapsedTime = (createdAt: Date) => dayjs(createdAt).fromNow();
+
 export const toWonPlus = (amount?: number) => {
     if (amount === undefined) return "-";
     if (amount >= 100_000_000) return `${Math.round(amount / 100_000_000)}억 원+`;
@@ -84,3 +94,30 @@ export const formatDate = (date: string | Date) => {
 
     return `${year}-${month}-${day}`;
 }
+
+/** 성공(파랑 톤) */
+export const toastSuccess = (message: string) =>
+    toast.success(message, {
+        style: {
+            backgroundColor: "#EFF6FF", // blue-50
+            color: "#1D4ED8",           // blue-700
+        },
+    });
+
+/** 경고(노랑 톤) */
+export const toastWarning = (message: string) =>
+    toast.warning(message, {
+        style: {
+            backgroundColor: "#FFFBEB", // amber-50
+            color: "#92400E",           // amber-800
+        },
+    });
+
+/** 에러(빨강 톤) */
+export const toastError = (message: string) =>
+    toast.error(message, {
+        style: {
+            backgroundColor: "#FEF2F2", // red-50
+            color: "#991B1B",           // red-800
+        },
+    });

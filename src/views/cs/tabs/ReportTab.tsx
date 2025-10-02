@@ -7,8 +7,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { endpoints, postData } from "@/api/apis";
 import type { ReportAddRequest } from "@/types/report";
+import { useNavigate } from "react-router-dom";
 
 export function ReportTab() {
+    const navigate = useNavigate();
     const tempUserId = 4
     const [rptAdd, setRptAdd] = useState<ReportAddRequest>({
         userId : tempUserId,
@@ -27,6 +29,8 @@ export function ReportTab() {
               alert("신고 등록 실패");
               return false;
             }
+
+            navigate('/user/mypage', {state : { tab : 'myreports'}});
           };
 
     return (
