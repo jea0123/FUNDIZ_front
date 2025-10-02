@@ -8,6 +8,7 @@ import { AnalyticsTab } from "./tabs/AnalyticsTab";
 import { InquiryAdminTab } from "./tabs/InquiryAdminTab";
 import { NoticeAdminTab } from "./tabs/NoticeAdminTab";
 import { NoticeAddTab } from "./tabs/NoticeAddTab";
+import { NoticeUpdtTab } from "./tabs/NoticeUpdtTab";
 import { ProjectsTab } from "./tabs/ProjectsTab";
 
 export function AdminTabs() {
@@ -32,6 +33,7 @@ export function AdminTabs() {
             <TabsContent value="inquiry"><InquiryAdminTab /></TabsContent>
             <TabsContent value="notice"><NoticeAdminTab /></TabsContent>
             <TabsContent value="noticeadd"><NoticeAddTab /></TabsContent>
+            <TabsContent value="noticeupdate"><NoticeUpdtTab /></TabsContent>
         </Tabs>
     );
 }
