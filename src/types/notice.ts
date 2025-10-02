@@ -10,7 +10,6 @@ export interface Notice{
 }
 
 export interface NoticeAddRequest{
-    adId: number;
     title : string;
     content : string;
     viewCnt : number;

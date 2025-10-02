@@ -1,6 +1,5 @@
-import React, { useMemo, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
@@ -58,41 +57,42 @@ export type Reply = {
     deletedAt?: string | null;
 };
 
-export function InquiryAdminTab() {
-    
+export function MyInquiryTab() {
+    const tempUserId = 4;
 
     const [page, setPage] = useState(1);
     const pageSize = 10;
     
-    const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+    const [myInquiries, setMyInquiries] = useState<Inquiry[]>([]);
     
-        const getInquiries = async () => {
-            const response = await getData(endpoints.getInquiries);
-            if (response.status === 200) {
-                setInquiries(response.data);
-            }
-        };
+    const getMyInquiries = async () => {
+        const response = await getData(endpoints.getMyInquiries(tempUserId));
+        if (response.status === 200) {
+            setMyInquiries(response.data);
+        }
+    };
 
+    console.log(myInquiries);
+    
         useEffect(() => {
-                getInquiries();
+                getMyInquiries();
             }, []);
 
-    const pagedinq = inquiries.slice((page - 1) * pageSize, page * pageSize);
-    const pageinqCount = Math.ceil(inquiries.length / pageSize);
+    const pagedinq = myInquiries.slice((page - 1) * pageSize, page * pageSize);
+    const pageinqCount = Math.ceil(myInquiries.length / pageSize);
 
     const [openInquiry, setOpenInquiry] = useState<string | undefined>(undefined);
-    const setInquiryStatus = (inqId: number, answered: 'Y' | 'N') => setInquiries(prev => prev.map(i => i.inqId === inqId ? { ...i, isAnswer: answered } : i));
+    const setMyInquiryStatus = (inqId: number, answered: 'Y' | 'N') => setMyInquiries(prev => prev.map(i => i.inqId === inqId ? { ...i, isAnswer: answered } : i));
 
     return (
         <div>
             <div>
                         <Card>
-                            <CardHeader><CardTitle>문의 내역</CardTitle></CardHeader>
+                            <CardHeader><CardTitle>내 문의 내역</CardTitle></CardHeader>
                             <CardContent>
                                 <Accordion type="single" collapsible value={openInquiry} onValueChange={setOpenInquiry}>
                                     <div className="grid grid-cols-12 gap-2 w-full items-center">
                                         <div className="col-span-5">제목</div>
-                                        <div className="col-span-2">작성자</div>
                                         <div className="col-span-3">유형</div>
                                         <div className="col-span-2">등록일</div>
                                     </div>
@@ -101,7 +101,6 @@ export function InquiryAdminTab() {
                                             <AccordionTrigger>
                                                 <div className="grid grid-cols-12 gap-2 w-full items-center">
                                                     <div className="col-span-5 font-medium truncate">{inq.title}</div>
-                                                    <div className="col-span-2 font-medium truncate">{inq.userId}</div>
                                                     <div className="col-span-3"><Badge variant="secondary">{inq.ctgr}</Badge></div>
                                                     <div className="col-span-2 text-xs text-zinc-500">{formatDate(inq.createdAt)}</div>
                                                 </div>

@@ -4,7 +4,7 @@ import type { ProjectDetail } from '@/types/projects';
 import { endpoints, getData } from '@/api/apis';
 import { useParams } from 'react-router-dom';
 import type { Community } from '@/types/community';
-import { formatDate, getDaysLeft } from '@/utils/utils';
+import { formatDate, getDaysBefore, getDaysLeft } from '@/utils/utils';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -268,7 +268,7 @@ export function ProjectDetailPage() {
                                                     <div className="flex-1">
                                                         <div className="flex items-center space-x-2 mb-1">
                                                             <span className="font-medium">{cm.nickname}</span>
-                                                            <span className="text-sm text-gray-500">{getDaysLeft(cm.createdAt)} 전</span>
+                                                            <span className="text-sm text-gray-500">{getDaysBefore(cm.createdAt)} 전</span>
                                                         </div>
                                                         <p className="text-sm">{cm.cmContent}</p>
                                                         <div className="flex items-center space-x-2 mt-2">
@@ -306,7 +306,7 @@ export function ProjectDetailPage() {
                                                                     <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                                                                 ))}
                                                             </div>
-                                                            <span className="text-sm text-gray-500">{getDaysLeft(rv.createdAt)} 전</span>
+                                                            <span className="text-sm text-gray-500">{getDaysBefore(rv.createdAt)} 전</span>
                                                         </div>
                                                         <p className="text-sm">{rv.cmContent}</p>
                                                     </div>

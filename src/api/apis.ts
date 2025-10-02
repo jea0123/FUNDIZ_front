@@ -49,9 +49,11 @@ export const endpoints = {
     // ==================== User API ====================
     getLoginUser: '/user/loginUser',
     getMypage: (userId: number) => `/user/userPage/${userId}`,
+    getCreatorPageList : (creatorId :number)=>`/creator/${creatorId}/list`,
     getLikedList: (userId: number) => `/user/likedList/${userId}`,
     getQnAList: (userId: number) => `/user/QnAList/${userId}`,
     getRecentView: (userId: number) => `/user/recentViewProjects/${userId}`,
+    getQnAListDetail: (userId: number, projectId: number) => `/user/QnAListDetail/${userId}/project/${projectId}`,
 
     // ==================== Project API ====================
     createProject: '/project',
@@ -72,7 +74,6 @@ export const endpoints = {
     // ==================== Backing API ====================
     getBackingList: (userId: number) => `/Backing/page/${userId}`,
     getBackingDetail: (userId: number, projectId: number, rewardId: number) => `/Backing/page/${userId}/project/${projectId}/reward/${rewardId}`,
-    getQnAListDetail: (userId: number, projectId: number) => `/user/QnAListDetail/${userId}/project/${projectId}`,
 
     // ==================== Admin API ====================
     getAdminAnalytics: (period: string, metric: string) => `/admin/analytics?period=${period}&metric=${metric}`,
@@ -82,6 +83,7 @@ export const endpoints = {
     approveProject: (projectId: number) => `/admin/verify/approve/${projectId}`,
     rejectProject: (projectId: number) => `/admin/verify/reject/${projectId}`,
     getProjectVerifyDetail: (projectId: number) => `/admin/verify/${projectId}`,
+    getAdminProjectList: (p: SearchProjectVerify) => `/admin/project?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
 
     // ==================== Category API ====================
     getCategories: '/categories',
@@ -93,10 +95,12 @@ export const endpoints = {
     addNotice: '/cs/notice/add',
     updateNotice: (noticeId: number) => `/cs/notice/update/${noticeId}`,
     deleteNotice: (noticeId: number) => `/cs/notice/delete/${noticeId}`,
-    getInquiries: '/cs/inquiry',
+    getInquiries: '/cs/inquiry/list',
+    getMyInquiries: (userId: number) => `/cs/inquiry/mylist/${userId}`,
     getInqDetail: (inqId: number) => `/cs/inquiry/${inqId}`,
     addInquiry: (userId: number) => `/cs/inquiry/${userId}/add`,
-    getReports: '/cs/report',
+    getReports: '/cs/report/list',
+    getMyReports: (userId: number) => `/cs/report/mylist/${userId}`,
     getReportDetail: (reportId: number) => `/cs/report/${reportId}`,
     addReport: (userId: number) => `/cs/report/${userId}/add`,
 };
