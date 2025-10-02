@@ -125,7 +125,7 @@ export function SavedAddressModal(
 
   const handleEditAddress = async () => {
     const response = await postData(
-      endpoints.updateAddress(4, addrEdit.addrId),
+      endpoints.updateAddress(tempUserId, addrEdit.addrId),
       addrEdit
     );
     if (response.status === 200) {
