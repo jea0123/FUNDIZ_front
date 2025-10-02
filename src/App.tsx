@@ -20,6 +20,7 @@ import { ApprovalDetail } from './views/admin/tabs/ApprovalDetail';
 import { AdminTabs } from './views/admin/AdminTabs';
 import CreateProject from './views/creator/CreateProject';
 import { CreatorPage } from './views/creator/CreatorPage';
+import AdminProjectEdit from './views/admin/tabs/AdminProjectEdit';
 
 const AdminDashboard = lazy(() => import('./views/admin/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
 
@@ -86,6 +87,7 @@ export default function App() {
           <Route path='/admin' element={<AdminDashboard />}>
             <Route index element={<AdminTabs />} />
             <Route path='verify/:projectId' element={<ApprovalDetail />} />
+            <Route path='project/:projectId' element={<AdminProjectEdit />} />
           </Route>
 
           <Route path="/cs">

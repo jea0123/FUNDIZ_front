@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
-import { Eye, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { endpoints, getData } from "@/api/apis";
 import { useNavigate } from "react-router-dom";
@@ -103,12 +103,12 @@ function Project({ p }: { p: AdminProjectList }) {
             </CardContent>
 
             <CardFooter className="justify-end gap-2">
-                <Button variant="outline" size="sm" onClick={goEdit} title="관리자 프로젝트 수정으로 이동">
+                <Button variant="outline" size="sm" onClick={goEdit} title="프로젝트 수정으로 이동">
                     <Pencil className="h-4 w-4 mr-1" /> 수정
                 </Button>
 
                 {verify && (
-                    <Button variant="default" size="sm" onClick={goVerifyDetail} title="심사 상세 화면으로 이동">
+                    <Button variant="default" size="sm" onClick={goVerifyDetail} title="심사 상세로 이동">
                         심사
                     </Button>   
                 )}

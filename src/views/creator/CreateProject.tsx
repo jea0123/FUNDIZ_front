@@ -118,7 +118,7 @@ export default function CreateProject() {
     );
 
     //TODO: 선택된 카테고리와 연결된 세부카테고리만 조회하도록 백엔드 수정
-    //카테고리 선택에 따른 세부카테고리 필터링 및 정렬
+    //선택된 카테고리에 속한 세부카테고리 보여주는 필터링 및 정렬
     const sortedSubcategories = useMemo(() => {
         return subcategories
             .filter((sc) => sc.ctgrId === project.ctgrId)

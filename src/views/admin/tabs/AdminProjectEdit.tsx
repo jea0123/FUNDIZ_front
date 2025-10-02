@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { AdminProjectUpdateDto, Category } from "@/types/admin";
 import type { Subcategory } from "@/types/projects";
-import { useEffect, useMemo, useState } from "react";
+import { Upload } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 /* -------------------------------- Types -------------------------------- */
@@ -30,6 +31,9 @@ export default function AdminProjectEdit() {
 
     const [form, setForm] = useState<AdminProjectUpdateDto | null>(null);
 
+    const [selectedCtgrId, setSelectedCtgrId] = useState<number | "">("");
+    const initSyncedRef = useRef(false);
+
     /* --------------------------- Helpers --------------------------- */
 
     const ko = useMemo(
@@ -50,10 +54,19 @@ export default function AdminProjectEdit() {
         });
     }, [subcategories, ko]);
 
-    const categoryNameOf = (subctgrId: number) => {
-        const sub = subcategories.find(s => s.subctgrId === subctgrId);
-        const cat = categories.find(c => c.ctgrId === sub?.ctgrId);
-        return cat?.ctgrName ?? "-";
+    //선택된 카테고리에 속한 세부카테고리 보여주는 필터링
+    const filteredSubcategories = useMemo(() => {
+        if (selectedCtgrId === "") return [];
+        return sortedSubcategories.filter((s) => s.ctgrId === selectedCtgrId);
+    }, [sortedSubcategories, selectedCtgrId]);
+
+    //subctgrId로 카테고리 ID/이름 찾기
+    const findCategoryBySub = (subctgrId?: number) => {
+        if (!subctgrId) return { id: undefined, name: "-" };
+        const sub = subcategories.find((s) => s.subctgrId === subctgrId);
+        if (!sub) return { id: undefined, name: "-" };
+        const cat = categories.find((c) => c.ctgrId === sub.ctgrId);
+        return { id: cat?.ctgrId, name: cat?.ctgrName ?? "-" };
     };
 
     const toAdminProjectForm = (projectRes: any, pid: number): AdminProjectUpdateDto => ({
@@ -74,6 +87,7 @@ export default function AdminProjectEdit() {
 
     /* --------------------------- Effects --------------------------- */
 
+    //카테고리/서브카테고리/프로젝트 상세 불러오고 form 세팅
     useEffect(() => {
         (async () => {
             setIsLoading(true);
@@ -97,6 +111,34 @@ export default function AdminProjectEdit() {
             }
         })();
     }, [projectId]);
+
+    //form.subctgrId 기준으로 selectedCtgrId 초기값 세팅
+    useEffect(() => {
+        if (initSyncedRef.current) return;
+        if (!form || subcategories.length === 0 || categories.length === 0) return;
+
+        const sub = subcategories.find((s) => s.subctgrId === form.subctgrId);
+        const catId = sub ? categories.find((c) => c.ctgrId === sub.ctgrId)?.ctgrId : undefined;
+        const next = catId ?? "";
+
+        setSelectedCtgrId(next);
+        initSyncedRef.current = true;
+    }, [form?.subctgrId, subcategories, categories]);
+
+    //선택한 카테고리가 바뀌면 현재 subctgrId가 그 카테고리에 속하는지 검사, 아니라면 0으로 초기화
+    useEffect(() => {
+        if (selectedCtgrId === "") return;
+
+        const formSubId = form?.subctgrId;
+        if (formSubId == null || formSubId === 0) return;
+
+        const ok = subcategories.some(
+            (s) => s.subctgrId === formSubId && s.ctgrId === selectedCtgrId
+        );
+        if (!ok) {
+            setForm((p) => (p && p.subctgrId !== 0 ? { ...p, subctgrId: 0 } : p));
+        }
+    }, [selectedCtgrId, form?.subctgrId, subcategories]);
 
     /* --------------------------- Submit --------------------------- */
 
@@ -132,6 +174,8 @@ export default function AdminProjectEdit() {
 
     if (isLoading || !form) return <FundingLoader />;
 
+    const currentCat = findCategoryBySub(form.subctgrId);
+
     return (
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <h1 className="text-2xl font-semibold">프로젝트 수정 (관리자)</h1>
@@ -139,80 +183,6 @@ export default function AdminProjectEdit() {
             <Card className="mt-6">
                 <CardContent className="p-6 space-y-6">
                     <input type="hidden" value={form.projectId} readOnly />
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-                        <div>
-                            <Label>세부카테고리</Label>
-                            <Select
-                                value={String(form.subctgrId || "")}
-                                onValueChange={(v) => setForm((p) => p ? ({ ...p, subctgrId: Number(v) }) : p)}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="세부카테고리를 선택하세요" />
-                                </SelectTrigger>
-                                <SelectContent className="max-h-72">
-                                    {sortedSubcategories.map((s) => (
-                                        <SelectItem key={s.subctgrId} value={String(s.subctgrId)}>
-                                            {s.subctgrName}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div>
-                            <Label>카테고리</Label>
-                            <Input value={categoryNameOf(form.subctgrId)} readOnly className="bg-muted" />
-                        </div>
-                    </div>
-
-                    <div>
-                        <Label htmlFor="title">프로젝트명</Label>
-                        <Input
-                            id="title"
-                            value={form.title}
-                            onChange={(e) => setForm((p) => p ? ({ ...p, title: e.target.value }) : p)}
-                            placeholder="프로젝트명"
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-                            <div>
-                                <Label htmlFor="thumbnail">대표 이미지</Label>
-                                <Input
-                                    id="thumbnail"
-                                    value={form.thumbnail}
-                                    onChange={(e) => setForm((p) => p ? ({ ...p, thumbnail: e.target.value }) : p)}
-                                />
-                            </div>
-
-                            {/* TODO: 파일업로드 기능 추가 */}
-                            {/* <div>
-                                <Label htmlFor="thumbUpload">대표 이미지 업로드</Label>
-                                <Input
-                                    id="thumbUpload"
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={async (e) => {
-                                        const file = e.target.files?.[0];
-                                        if (!file) return;
-                                    }}
-                                />
-                            </div> */}
-                        </div>
-
-                        {form.thumbnail && (
-                            <div className="border rounded-md p-3">
-                                <img
-                                    src={form.thumbnail}
-                                    alt="thumbnail preview"
-                                    className="max-h-40 object-contain mx-auto"
-                                    onError={(e) => (e.currentTarget.style.display = "none")}
-                                />
-                            </div>
-                        )}
-                    </div>
 
                     <div>
                         <Label>프로젝트 상태</Label>
@@ -233,11 +203,84 @@ export default function AdminProjectEdit() {
                         </Select>
                     </div>
 
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                        <div>
+                            <Label>카테고리</Label>
+                            <Select
+                                value={selectedCtgrId === "" ? undefined : String(selectedCtgrId)}
+                                onValueChange={(v) => {
+                                    const next = v === "" ? "" : Number(v);
+                                    setSelectedCtgrId(next);
+                                    setForm((p) => (p ? { ...p, subctgrId: 0 } : p));
+                                }}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder={"카테고리를 선택하세요"} />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-72">
+                                    {categories.map((c) => (
+                                        <SelectItem key={c.ctgrId} value={String(c.ctgrId)}>
+                                            {c.ctgrName}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div>
+                            <Label>세부카테고리</Label>
+                            <Select
+                                value={form.subctgrId ? String(form.subctgrId) : undefined}
+                                onValueChange={(v) => {
+                                    const subId = Number(v);
+                                    const picked = subcategories.find(s => s.subctgrId === subId);
+                                    if (picked && picked.ctgrId !== selectedCtgrId) {
+                                        setSelectedCtgrId(picked.ctgrId);
+                                    }
+                                    setForm((p) => (p ? { ...p, subctgrId: subId } : p));
+                                }}
+                                disabled={selectedCtgrId === ""}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="세부카테고리를 선택하세요" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-72">
+                                    {filteredSubcategories.map((s) => (
+                                        <SelectItem key={s.subctgrId} value={String(s.subctgrId)}>
+                                            {s.subctgrName}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <Label htmlFor="title">프로젝트명</Label>
+                        <Input
+                            id="title"
+                            value={form.title}
+                            onChange={(e) => setForm((p) => p ? ({ ...p, title: e.target.value }) : p)}
+                            placeholder="프로젝트명"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        {/* TODO: 파일업로드 기능 추가 */}
+                        <div>
+                            <Label>대표 이미지 *</Label>
+                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                                <Upload className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                                <p className="text-gray-500 mb-2">이미지를 드래그하거나 클릭하여 업로드</p>
+                                <Button variant="outline" size="sm">파일 선택</Button>
+                                <p className="text-xs text-gray-400 mt-2">권장 크기: 1200x800px, 최대 4MB (JPG, PNG)</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="flex justify-end gap-2 pt-2">
                         <Button variant="outline" onClick={() => navigate(-1)}>취소</Button>
-                        <Button onClick={handleSubmit} disabled={isSaving}>
-                            저장
-                        </Button>
+                        <Button onClick={handleSubmit} disabled={isSaving}>저장</Button>
                     </div>
                 </CardContent>
             </Card>
