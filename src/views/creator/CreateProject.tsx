@@ -209,6 +209,8 @@ export default function CreateProject() {
         }
     };
 
+    /* --------------------------- Render --------------------------- */
+
     if (isLoading) return <FundingLoader></FundingLoader>;
 
     const progress = (currentStep / STEPS.length) * 100;

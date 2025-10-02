@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
-import { Eye } from "lucide-react";
+import { Eye, Pencil } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { endpoints, getData } from "@/api/apis";
 import { useNavigate } from "react-router-dom";
@@ -33,62 +33,85 @@ function StatusBadge({ status }: { status: Status }) {
     return <span className={cls("inline-flex items-center px-2 py-0.5 rounded text-xs font-medium", map[status])}>{status}</span>;
 }
 
-/* ------------------------------ Row (Card) ------------------------------ */
+/* ------------------------------ Card ------------------------------ */
 
 function Project({ p }: { p: AdminProjectList }) {
     const navigate = useNavigate();
+    const verify = p.projectStatus === "VERIFYING";
+
+    const goEdit = () => navigate(`/admin/project/${p.projectId}`);
+    const goVerifyDetail = () => {
+        if (!verify) return;
+        navigate(`/admin/verify/${p.projectId}`);
+    }
 
     return (
         <Card className="pb-3">
-            <CardContent className="pt-4">
+            <CardContent>
                 <div className="flex flex-wrap items-center gap-2 mb-2">
                     <h4 className="font-semibold leading-tight line-clamp-2 mr-2">{p.title}</h4>
                     <StatusBadge status={p.projectStatus} />
-                    <span className="font-semibold">{getDaysLeft(p.endDate)}</span>
-                    {/* TODO: 프로젝트ID ?? */}
-                    <span className="text-xs text-muted-foreground">#{p.projectId}</span>
+                    <span className="font-semibold">({getDaysLeft(p.endDate)}일 남음)</span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-2 text-sm text-muted-foreground">
-                    <div><span className="text-gray-600">창작자</span>: {p.creatorName}</div>
+                <div className="space-y-1 text-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 items-center">
+                        <div className="min-w-0">
+                            <span className="text-muted-foreground">기간</span>
+                            <span className="mx-1">:</span>
+                            <span className="text-foreground font-medium tabular-nums">
+                                {formatDate(p.startDate)} ~ {formatDate(p.endDate)}
+                            </span>
+                        </div>
 
-                    <div className="md:text-right">
-                        <span className="text-gray-600">달성률</span>: <span className="font-semibold text-gray-900">{p.percentNow}%</span>
+                        <div className="md:text-right">
+                            <span className="text-muted-foreground">현재/목표 금액</span>
+                            <span className="mx-1">:</span>
+                            <span className="text-foreground font-medium tabular-nums">
+                                {p.currAmount.toLocaleString()} / {p.goalAmount.toLocaleString()} ({p.percentNow}%)
+                            </span>
+                        </div>
                     </div>
 
-                    <div className="md:text-right">
-                        <span className="text-gray-600">현재/목표 금액</span>: <span className="font-medium text-gray-900">
-                            {p.currAmount.toLocaleString()} / {p.goalAmount.toLocaleString()}
-                        </span>
-                    </div>
+                    {/* 2줄차: 창작자 / 후원자 수 / 마지막 수정일 */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 items-center">
+                        <div className="min-w-0">
+                            <span className="text-muted-foreground">창작자</span>
+                            <span className="mx-1">:</span>
+                            <span className="text-foreground truncate" title={p.creatorName}>
+                                {p.creatorName}
+                            </span>
+                        </div>
 
-                    <div className="md:text-right">
-                        <span className="text-gray-600">후원자 수</span>: <span className="font-medium text-gray-900">{p.backerCnt.toLocaleString()}</span>
-                    </div>
+                        <div className="text-right md:text-center">
+                            <span className="text-muted-foreground">후원자 수</span>
+                            <span className="mx-1">:</span>
+                            <span className="text-foreground font-medium tabular-nums">
+                                {p.backerCnt.toLocaleString()}
+                            </span>
+                        </div>
 
-                    <div className="md:text-right">
-                        <span className="text-gray-600">마지막 수정일</span>: {p.updatedAt ? formatDate(p.updatedAt) : "-"}
+                        <div className="col-span-2 md:col-span-1 md:text-right">
+                            <span className="text-muted-foreground">마지막 수정일</span>
+                            <span className="mx-1">:</span>
+                            <span className="text-foreground">
+                                {p.updatedAt ? formatDate(p.updatedAt) : "-"}
+                            </span>
+                        </div>
                     </div>
                 </div>
             </CardContent>
 
             <CardFooter className="justify-end gap-2">
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigate(`/admin/projects/${p.projectId}`)}
-                    title="상세보기"
-                >
-                    <Eye className="h-4 w-4 mr-1" />상세
+                <Button variant="outline" size="sm" onClick={goEdit} title="관리자 프로젝트 수정으로 이동">
+                    <Pencil className="h-4 w-4 mr-1" /> 수정
                 </Button>
-                <Button
-                    variant="default"
-                    size="sm"
-                    onClick={() => navigate(`/admin/verify/${p.projectId}`)}
-                    title="심사 페이지로 이동"
-                >
-                    심사
-                </Button>
+
+                {verify && (
+                    <Button variant="default" size="sm" onClick={goVerifyDetail} title="심사 상세 화면으로 이동">
+                        심사
+                    </Button>   
+                )}
             </CardFooter>
         </Card>
     );
@@ -151,6 +174,8 @@ export function ProjectsTab() {
         );
     };
 
+    /* --------------------------- Render --------------------------- */
+
     if (loading) return <FundingLoader />;
     if (error) return <p className="text-red-600">프로젝트 목록을 불러오지 못했습니다.</p>;
 
@@ -192,7 +217,10 @@ export function ProjectsTab() {
                 ) : (
                     <div className="space-y-4">
                         {items.map(p => <Project key={p.projectId} p={p} />)}
-                        <Pagination page={page} size={size} total={total} onPage={setPage} />
+                        <Pagination
+                            key={`${projectStatus || 'ALL'}-${rangeType || 'ALL'}-${size}`}
+                            page={page} size={size} total={total} onPage={setPage}
+                        />
                     </div>
                 )}
             </CardContent>
