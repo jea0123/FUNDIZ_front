@@ -12,8 +12,15 @@ if (rootElement) {
   root.render(
     <CookiesProvider>
       <BrowserRouter>
-        <Toaster />
-          <App />
+        <Toaster
+          toastOptions={{
+            style: {
+              borderRadius: 10,
+              boxShadow: "0 8px 30px rgba(0,0,0,0.08)",
+              fontWeight: 500,
+            },
+          }} />
+        <App />
       </BrowserRouter>
     </CookiesProvider>
   );

@@ -21,6 +21,4 @@ export interface NoticeUpdateRequest{
     adId: number;
     title : string;
     content : string;
-    viewCnt : number;
-    createdAt : Date;
 }

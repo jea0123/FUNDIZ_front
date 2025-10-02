@@ -4,7 +4,6 @@ import type { SearchProjectParams } from '@/types/projects';
 import { appNavigate } from '@/utils/navigator';
 import type { AxiosResponse } from 'axios';
 import axios from 'axios';
-import { use } from 'react';
 
 const axiosInstance = axios.create({
     baseURL: 'http://localhost:9099/api/v1',
@@ -104,6 +103,14 @@ export const endpoints = {
     getMyReports: (userId: number) => `/cs/report/mylist/${userId}`,
     getReportDetail: (reportId: number) => `/cs/report/${reportId}`,
     addReport: (userId: number) => `/cs/report/${userId}/add`,
+
+    // ==================== Notification API ====================
+    getNotificationSSE: (userId: number) => `/notifications/stream?userId=${userId}`,
+    getNotifications: '/notifications/list',
+    markAsRead: (notificationId: number) => `/notifications/read/${notificationId}`,
+    markAllAsRead: '/notifications/readAll',
+    deleteNotification: (notificationId: number) => `/notifications/delete/${notificationId}`,
+    deleteAllNotifications: '/notifications/deleteAll',
 };
 
 export const getData = async (url: string, accessToken?: string) => {
