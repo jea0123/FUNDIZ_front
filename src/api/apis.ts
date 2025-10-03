@@ -59,8 +59,8 @@ export const endpoints = {
     getFeatured: '/project/featured',
     getRecentTop10: '/project/recent-top10',
     getProjectDetail: (projectId: number) => `/project/${projectId}`,
-    getCommunity: (projectId: number) => `/project/${projectId}/community`,
-    getReview: (projectId: number) => `/project/${projectId}/review`,
+    getCommunityList: (projectId: number) => `/project/${projectId}/community`,
+    getReviewList: (projectId: number) => `/project/${projectId}/review`,
     searchProject: (p: SearchProjectParams) => `/project/search?${toQueryString({ page: p.page, size: p.size, keyword: p.keyword, ctgrId: p.ctgrId, subctgrId: p.subctgrId, sort: p.sort })}`,
 
     // ==================== Shipping API ====================

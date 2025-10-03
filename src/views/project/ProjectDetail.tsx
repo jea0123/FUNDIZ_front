@@ -3,7 +3,6 @@ import { Heart, Share2, Calendar, Users, MessageCircle, Star } from 'lucide-reac
 import type { ProjectDetail } from '@/types/projects';
 import { endpoints, getData } from '@/api/apis';
 import { useParams } from 'react-router-dom';
-import type { Community } from '@/types/community';
 import { formatDate, getDaysBefore, getDaysLeft } from '@/utils/utils';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,6 +14,7 @@ import { Progress } from '@/components/ui/progress';
 import { useNavigate } from 'react-router-dom';
 import type { Reward } from '@/types/reward';
 import FundingLoader from '@/components/FundingLoader';
+import type { CommunityDto, Cursor, CursorPage, ReviewDto } from '@/types/community';
 
 export function ProjectDetailPage() {
 
@@ -30,17 +30,27 @@ export function ProjectDetailPage() {
     /* --------------------------------- State --------------------------------- */
 
     const [project, setProject] = useState<ProjectDetail>();
-    const [community, setCommunity] = useState<Community[]>([]);
-    const [review, setReview] = useState<Community[]>([]);
+    const [community, setCommunity] = useState<CommunityDto[]>([]);
+    const [communityCursor, setCommunityCursor] = useState<Cursor | null>(null);
+    const [review, setReview] = useState<ReviewDto[]>([]);
+    const [reviewCursor, setReviewCursor] = useState<Cursor | null>(null);
+    const [tab, setTab] = useState<"description"|"updates"|"community"|"review">("description");
 
     const [isLiked, setIsLiked] = useState(false);
     const [loadingProject, setLoadingProject] = useState(false);
     const [loadingCommunity, setLoadingCommunity] = useState(false);
     const [loadingReview, setLoadingReview] = useState(false);
-    
+
     const [cart, setCart] = useState<Record<number, number>>({});
     const [cartPing, setCartPing] = useState(false);
     const [qtyByReward, setQtyByReward] = useState<Record<number, number>>({});
+
+    const communitySentinelRef = useRef<HTMLDivElement | null>(null);
+    const reviewSentinelRef = useRef<HTMLDivElement | null>(null);
+
+    //중복 호출 방지용 락
+    const communityLoadingLockRef = useRef(false);
+    const reviewLoadingLockRef = useRef(false);
 
     /* ------------------------------- Derived ---------------------------------- */
 
@@ -64,7 +74,7 @@ export function ProjectDetailPage() {
     const incQty = useCallback((rewardId: number, max: number) => {
         setQtyByReward(prev => ({ ...prev, [rewardId]: Math.min((prev[rewardId] ?? 1) + 1, max) }));
     }, []);
-    
+
     const decQty = useCallback((rewardId: number) => {
         setQtyByReward(prev => ({ ...prev, [rewardId]: Math.max(1, (prev[rewardId] ?? 1) - 1) }));
     }, []);
@@ -109,7 +119,7 @@ export function ProjectDetailPage() {
         if (!projectId) return;
         const entries = Object.entries(cart).filter(([_, q]) => q > 0);
         if (entries.length === 0) return;
-        const items= entries.map(([rid, q]) => `${rid}x${q}`).join(",");
+        const items = entries.map(([rid, q]) => `${rid}x${q}`).join(",");
         const params = new URLSearchParams();
         params.set("items", items);
         navigate(`/project/${projectId}/backing?${params.toString()}`);
@@ -120,40 +130,143 @@ export function ProjectDetailPage() {
         alert('링크가 복사되었습니다.');
     }, []);
 
-    // const handleSupport = (rewardId: number, quantity: number) => {
-    //     if(!projectId) return;
-    //     navigate(`/project/${projectId}/backing?rewardId=${rewardId}&qty=${quantity}`);
-    // };
-
     /* -------------------------------- Effects -------------------------------- */
 
     const projectData = async () => {
         setLoadingProject(true);
-        const response = await getData(endpoints.getProjectDetail(Number(projectId)));
-        if (response.status === 200) {
-            setProject(response.data);
-        }
-    };
-    const communityData = async () => {
-        setLoadingCommunity(true);
-        const response = await getData(endpoints.getCommunity(Number(projectId)));
-        if (response.status === 200) {
-            setCommunity(response.data);
-        }
-    };
-    const reviewData = async () => {
-        setLoadingReview(true);
-        const response = await getData(endpoints.getReview(Number(projectId)));
-        if (response.status === 200) {
-            setReview(response.data);
+        try {
+            const response = await getData(endpoints.getProjectDetail(Number(projectId)));
+            if (response.status === 200) {
+                setProject(response.data);
+            }
+        } finally {
+            setLoadingProject(false);
         }
     };
 
+    const communityData = useCallback(async () => {
+        if (!projectId) return;
+        setLoadingCommunity(true);
+        try {
+            const params = new URLSearchParams();
+            if (communityCursor) {
+                if (communityCursor.lastCreatedAt) params.set("lastCreatedAt", communityCursor.lastCreatedAt);
+                if (communityCursor.lastId != null) params.set("lastId", String(communityCursor.lastId));
+            }
+            params.set("size", "10");
+
+            const url = `${endpoints.getCommunityList(Number(projectId))}?${params.toString()}`
+            const { status, data } = await getData(url);
+
+            if (status !== 200 || !data) {
+                if (!communityCursor) setCommunity([]); //첫 로드 실패하면 초기화
+                setCommunityCursor(null);
+                return;
+            }
+
+            if (Array.isArray((data as CursorPage<CommunityDto>)?.items)) {
+                const page = data as CursorPage<CommunityDto>;
+                const items =  page.items ?? [];
+                setCommunity(prev => (communityCursor ? [...prev, ...items] : items)); //커서 있으면 append, 없으면 replace
+                setCommunityCursor(page?.nextCursor ?? null);
+                return;
+            }
+
+            if (!communityCursor) setCommunity([]);
+            setCommunityCursor(null);
+        } finally {
+            setLoadingCommunity(false);
+        }
+    }, [projectId, communityCursor]);
+
+    const reviewData = useCallback(async () => {
+        if (!projectId) return;
+        setLoadingReview(true);
+        try {
+            const params = new URLSearchParams();
+            if (reviewCursor) {
+                if (reviewCursor.lastCreatedAt) params.set("lastCreatedAt", reviewCursor.lastCreatedAt);
+                if (reviewCursor.lastId != null) params.set("lastId", String(reviewCursor.lastId));
+            }
+            params.set("size", "10");
+
+            const url = `${endpoints.getReviewList(Number(projectId))}?${params.toString()}`;
+            const { status, data } = await getData(url);
+
+            if (status !== 200 || !data) {
+                if (!reviewCursor) setReview([]); //첫 로드 실패하면 초기화
+                setReviewCursor(null);
+                return;
+            }
+
+            if (Array.isArray((data as CursorPage<ReviewDto>)?.items)) {
+                const page = data as CursorPage<ReviewDto>;
+                const items = page.items ?? [];
+                setReview(prev => (reviewCursor ? [...prev, ...items] : items)); //커서 있으면 append, 없으면 replace
+                setReviewCursor(page.nextCursor ?? null);
+                return;
+            }
+
+            if (!reviewCursor) setReview([]);
+            setReviewCursor(null);
+        } finally {
+            setLoadingReview(false);
+        }
+    }, [projectId, reviewCursor]);
+
     useEffect(() => {
-        projectData().finally(() => setLoadingProject(false));
-        communityData().finally(() => setLoadingCommunity(false));
-        reviewData().finally(() => setLoadingReview(false));
-    }, []);
+        projectData();
+        communityData();
+        reviewData();
+    }, [projectId]);
+
+    useEffect(() => {
+        if (tab !== "community") return; //옵저버 탭이 켜졌을 때만 붙이기
+        const el = communitySentinelRef.current;
+        if (!el) return;
+
+        if (!communityCursor || loadingCommunity) return;
+
+        const io = new IntersectionObserver(
+            (entries) => {
+                const first = entries[0];
+                if (first.isIntersecting && !communityLoadingLockRef.current) {
+                    communityLoadingLockRef.current = true;
+                    communityData().finally(() => {
+                        communityLoadingLockRef.current = false;
+                    });
+                }
+            },
+            { root: null, rootMargin: "300px", threshold: 0.01 }
+        );
+
+        io.observe(el);
+        return () => io.disconnect();
+    }, [tab, communityCursor, loadingCommunity, communityData]);
+
+    useEffect(() => {
+        if (tab !== "review") return; //옵저버 탭이 켜졌을 때만 붙이기
+        const el = reviewSentinelRef.current;
+        if (!el) return;
+
+        if (!reviewCursor || loadingReview) return;
+
+        const io = new IntersectionObserver(
+            (entries) => {
+                const first = entries[0];
+                if (first.isIntersecting && !reviewLoadingLockRef.current) {
+                    reviewLoadingLockRef.current = true;
+                    reviewData().finally(() => {
+                        reviewLoadingLockRef.current = false;
+                    });
+                }
+            },
+            { root: null, rootMargin: "300px", threshold: 0.01 }
+        );
+
+        io.observe(el);
+        return () => io.disconnect();
+    }, [tab, reviewCursor, loadingReview, reviewData]);
 
     /* -------------------------------- Helpers -------------------------------- */
 
@@ -161,7 +274,9 @@ export function ProjectDetailPage() {
         return new Intl.NumberFormat('ko-KR').format(amount);
     };
 
-    if (!projectId || !project || loadingProject || loadingCommunity || loadingReview) {
+    /* --------------------------------- Render --------------------------------- */
+
+    if (!projectId || !project || loadingProject) {
         return <FundingLoader />;
     }
 
@@ -219,12 +334,12 @@ export function ProjectDetailPage() {
                         </div>
                     </div>
 
-                    <Tabs defaultValue="description" className="mb-8">
+                    <Tabs defaultValue="description" className="mb-8" onValueChange={(v) => setTab(v as any)}>
                         <TabsList className="grid w-full grid-cols-4">
                             <TabsTrigger value="description">프로젝트 소개</TabsTrigger>
                             <TabsTrigger value="updates">새소식</TabsTrigger>
                             <TabsTrigger value="community">커뮤니티</TabsTrigger>
-                            <TabsTrigger value="reviews">후기</TabsTrigger>
+                            <TabsTrigger value="review">후기</TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="description" className="mt-6">
@@ -254,9 +369,10 @@ export function ProjectDetailPage() {
                         </TabsContent>
 
                         <TabsContent value="community">
-                            {community.length == 0 ? (
+                            {!Array.isArray(community) || community.length == 0 ? (
                                 <div className="text-sm text-muted-foreground">게시글이 존재하지 않습니다.</div>
-                            ) : (<>
+                            ) : (
+                            <>
                                 {community.map((cm) => (
                                     <div key={cm.cmId} className="space-y-4 mt-6">
                                         <Card>
@@ -283,13 +399,24 @@ export function ProjectDetailPage() {
                                         </Card>
                                     </div>
                                 ))}
-                            </>)}
+
+                                {loadingCommunity && (
+                                    <div className="mt-4 space-y-2">
+                                        <div className="h-20 animate-pulse rounded-xl bg-gray-100" />
+                                        <div className="h-20 animate-pulse rounded-xl bg-gray-100" />
+                                    </div>
+                                )}
+
+                                {communityCursor && <div ref={communitySentinelRef} className="h-1 w-full" />}
+                            </>
+                            )}
                         </TabsContent>
 
-                        <TabsContent value="reviews">
+                        <TabsContent value="review">
                             {review.length == 0 ? (
                                 <div className="text-sm text-muted-foreground">게시글이 존재하지 않습니다.</div>
-                            ) : (<>
+                            ) : (
+                            <>
                                 {review.map((rv) => (
                                     <div key={rv.cmId} className="space-y-4 mt-6">
                                         <Card>
@@ -315,7 +442,17 @@ export function ProjectDetailPage() {
                                         </Card>
                                     </div>
                                 ))}
-                            </>)}
+                                
+                                {loadingReview && (
+                                    <div className="mt-4 space-y-2">
+                                        <div className="h-20 animate-pulse rounded-xl bg-gray-100" />
+                                        <div className="h-20 animate-pulse rounded-xl bg-gray-100" />
+                                    </div>
+                                )}
+                                
+                                {reviewCursor && <div ref={reviewSentinelRef} className="h-1 w-full" />}
+                            </>
+                            )}
                         </TabsContent>
                     </Tabs>
                 </div>
@@ -496,10 +633,10 @@ export function ProjectDetailPage() {
                         })}
                         <div className="pt-2">
                             <Button
-                                    className="w-full"
-                                    size="lg"
-                                    onClick={handleCheckout}
-                                    disabled={cartSummary.totalQty === 0}
+                                className="w-full"
+                                size="lg"
+                                onClick={handleCheckout}
+                                disabled={cartSummary.totalQty === 0}
                             >
                                 {cartSummary.totalQty > 0 ? `${formatCurrency(cartSummary.totalAmount)}원 후원하기` : '리워드를 선택하세요'}
                             </Button>
