@@ -23,7 +23,11 @@ export function useQueryState() {
 
     const setParam = (k: string, v?: string, opts?: { resetPage?: boolean }) => {
         const next = new URLSearchParams(searchParams);
-        v && v.length ? next.set(k, v) : next.delete(k);
+        if (v && v.length) {
+            next.set(k, v);
+        } else {
+            next.delete(k);
+        }
         if (opts?.resetPage) next.set("page", "1");
         setSearchParams(next, { replace: true });
     };
@@ -54,12 +58,12 @@ function ApprovalCard({ project, projectData }: { project: ProjectVerifyList; pr
             }
             const response = await postData(endpoints.approveProject(projectId));
             if (response.status === 200) {
-                alert(`[${title}] 승인되었습니다.`);
+                alert(`[${title}]\n승인되었습니다.`);
                 await projectData();
             }
         } catch (err) {
             console.log(err);
-            alert(`[${title}] 승인 실패했습니다.`);
+            alert(`[${title}]\n승인 실패했습니다.`);
         } finally {
             setApprovingId(null);
         }
@@ -70,13 +74,13 @@ function ApprovalCard({ project, projectData }: { project: ProjectVerifyList; pr
             setRejectingId(projectId);
             const response = await postData(endpoints.rejectProject(projectId), { rejectedReason: reason });
             if (response.status === 200) {
-                alert(`[${title}] 반려되었습니다.\n사유: ${reason}`);
+                alert(`[${title}]\n반려되었습니다.\n사유: ${reason}`);
                 await projectData();
                 setOpenRejectModal(false);
             }
         } catch (err) {
             console.log(err);
-            alert(`[${title}] 반려 실패했습니다.`);
+            alert(`[${title}]\n반려 실패했습니다.`);
         } finally {
             setRejectingId(null);
         }

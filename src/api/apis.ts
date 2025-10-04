@@ -84,6 +84,7 @@ export const endpoints = {
     getProjectVerifyDetail: (projectId: number) => `/admin/verify/${projectId}`,
     getAdminProjectList: (p: SearchProjectVerify) => `/admin/project?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
     adminUpdateProject: (projectId: number) => `/admin/project/${projectId}`,
+    cancelProject: (projectId: number) => `/admin/project/${projectId}/cancel`,
 
     // ==================== Category API ====================
     getCategories: '/categories',

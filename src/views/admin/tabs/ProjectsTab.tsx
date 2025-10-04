@@ -1,8 +1,8 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
-import { Pencil } from "lucide-react";
+import { Pencil, XCircle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { endpoints, getData } from "@/api/apis";
+import { endpoints, getData, postData } from "@/api/apis";
 import { useNavigate } from "react-router-dom";
 import FundingLoader from "@/components/FundingLoader";
 import { useQueryState } from "./ApprovalsTab";
@@ -35,14 +35,28 @@ function StatusBadge({ status }: { status: Status }) {
 
 /* ------------------------------ Card ------------------------------ */
 
-function Project({ p }: { p: AdminProjectList }) {
+function Project({ p, onChanged }: { p: AdminProjectList; onChanged: () => void }) {
     const navigate = useNavigate();
-    const verify = p.projectStatus === "VERIFYING";
+
+    const canVerify = p.projectStatus === "VERIFYING";
+    const canCancel = ["VERIFYING", "UPCOMING", "OPEN"].includes(p.projectStatus);
+    const [cancel, setCancel] = useState(false);
 
     const goEdit = () => navigate(`/admin/project/${p.projectId}`);
     const goVerifyDetail = () => {
-        if (!verify) return;
+        if (!canVerify) return;
         navigate(`/admin/verify/${p.projectId}`);
+    }
+    const goCancel = async () => {
+        if (!confirm(`[${p.title}]\n프로젝트를 취소하시겠습니까?`)) return;
+        try {
+            setCancel(true);
+            await postData(endpoints.cancelProject(p.projectId));
+            alert(`[${p.title}]\n취소되었습니다.`);
+            onChanged();
+        } finally {
+            setCancel(false);
+        }
     }
 
     return (
@@ -103,12 +117,18 @@ function Project({ p }: { p: AdminProjectList }) {
             </CardContent>
 
             <CardFooter className="justify-end gap-2">
-                <Button variant="outline" size="sm" onClick={goEdit} title="프로젝트 수정으로 이동">
+                <Button variant="outline" size="sm" onClick={goEdit}>
                     <Pencil className="h-4 w-4 mr-1" /> 수정
                 </Button>
 
-                {verify && (
-                    <Button variant="default" size="sm" onClick={goVerifyDetail} title="심사 상세로 이동">
+                {canCancel && (
+                    <Button variant="destructive" size="sm" onClick={goCancel} disabled={cancel}>
+                        <XCircle className="h-4 w-4 mr-1" /> {cancel ? "취소중" : "취소"}
+                    </Button>
+                )}
+
+                {canVerify && (
+                    <Button variant="default" size="sm" onClick={goVerifyDetail}>
                         심사
                     </Button>   
                 )}
@@ -216,7 +236,7 @@ export function ProjectsTab() {
                     <p>조건에 맞는 프로젝트가 없습니다.</p>
                 ) : (
                     <div className="space-y-4">
-                        {items.map(p => <Project key={p.projectId} p={p} />)}
+                        {items.map(p => <Project key={p.projectId} p={p} onChanged={fetchData} />)}
                         <Pagination
                             key={`${projectStatus || 'ALL'}-${rangeType || 'ALL'}-${size}`}
                             page={page} size={size} total={total} onPage={setPage}
