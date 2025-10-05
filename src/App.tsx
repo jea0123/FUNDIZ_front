@@ -84,6 +84,7 @@ export default function App() {
                         <Route index element={<CreatorDashboard />} />
                         <Route path='dashboard' element={<CreatorDashboard />} />
                         <Route path='project/new' element={<CreateProject />} />
+                        <Route path='project/:projectId' element={<CreateProject />} />
                         <Route path='projects'>
                             <Route index element={<CreatorProjects />} />
                             {/* TODO: 프로젝트 상세 */}

@@ -6,7 +6,7 @@ import { appNavigate } from '@/utils/navigator';
 import type { AxiosResponse } from 'axios';
 import axios from 'axios';
 
-const axiosInstance = axios.create({
+export const axiosInstance = axios.create({
     baseURL: 'http://localhost:9099/api/v1',
     validateStatus: () => true
 });
@@ -53,8 +53,11 @@ export const endpoints = {
     getQnAList: (userId: number) => `/user/QnAList/${userId}`,
     getRecentView: (userId: number) => `/user/recentViewProjects/${userId}`,
     getQnAListDetail: (userId: number, projectId: number) => `/user/QnAListDetail/${userId}/project/${projectId}`,
-    getCreatorProjectList: (creatorId: number, p: SearchCreatorProjectDto) => `/creator/${creatorId}/projects?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
+    getCreatorProjectList: (p: SearchCreatorProjectDto) => `/creator/projects?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
+    getCreatorProjectDetail: (projectId: number) => `/creator/project/${projectId}`,
     createProject: '/creator/project/new',
+    updateProject: (projectId: number) => `/creator/project/${projectId}`,
+    submitProject: (projectId: number) => `/creator/project/${projectId}/submit`,
     deleteProject: (projectId: number) => `/creator/project/${projectId}`,
 
     // ==================== Project API ====================
@@ -81,9 +84,9 @@ export const endpoints = {
     getCategorySuccess: (ctgrId: number) => `/admin/category-success?ctgrId=${ctgrId}`,
     getRewardSalesTop: (period: string, metric: string) => `/admin/reward-sales-top?period=${period}&metric=${metric}`,
     getProjectVerifyList: (p: SearchProjectDto) => `/admin/verify?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
-    approveProject: (projectId: number) => `/admin/verify/approve/${projectId}`,
-    rejectProject: (projectId: number) => `/admin/verify/reject/${projectId}`,
     getProjectVerifyDetail: (projectId: number) => `/admin/verify/${projectId}`,
+    approveProject: (projectId: number) => `/admin/verify/${projectId}/approve`,
+    rejectProject: (projectId: number) => `/admin/verify/${projectId}/reject`,
     getAdminProjectList: (p: SearchProjectDto) => `/admin/project?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
     adminUpdateProject: (projectId: number) => `/admin/project/${projectId}`,
     cancelProject: (projectId: number) => `/admin/project/${projectId}/cancel`,

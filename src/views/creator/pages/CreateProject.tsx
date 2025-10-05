@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Save, Send } from 'lucide-react';
+import { ArrowLeft, Save, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import type { ProjectCreateRequestDto, Subcategory } from '@/types/projects';
@@ -9,8 +9,18 @@ import type { Category } from '@/types/admin';
 import FundingLoader from '@/components/FundingLoader';
 import { CreateProjectStepper } from '../components/CreateProjectStepper';
 import { CreateProjectSteps } from '../components/CreateProjectSteps';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const normalizeName = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
+
+const toNum = (v: any, d = 0) => (v === null || v === "" ? d : Number(v));
+const toDate = (v: any) => (v instanceof Date ? v : (v ? new Date(v) : new Date()));
+const toTagNames = (list: any): string[] =>
+    Array.isArray(list)
+        ? list
+            .map((t) => (typeof t === "string" ? t : t?.tagName))
+            .filter((s): s is string => typeof s === "string" && s.trim().length > 0)
+        : [];
 
 const isValidReward = (r: RewardCreateRequestDto) =>
     r.rewardName.trim().length > 0 &&
@@ -69,7 +79,16 @@ const STEPS = [
     { id: 5, title: '검토 및 제출', description: '프로젝트 요약 및 심사 안내' },
 ];
 
+/* --------------------------- Page --------------------------- */
+
 export default function CreateProject() {
+    const { projectId: projectIdParam } = useParams();
+    const projectId = projectIdParam ? Number(projectIdParam) : null;
+    const isEdit = !!projectId; // 편집 모드 여부
+
+    const navigate = useNavigate();
+    const goList = () => navigate("/creator/projects");
+
     const [currentStep, setCurrentStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -98,7 +117,7 @@ export default function CreateProject() {
     const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
 
     //리워드 임시 id
-    type RewardForm = RewardCreateRequestDto & { tempId: string };
+    type RewardForm = RewardCreateRequestDto & { tempId: string; rewardId?: number };
     const [rewardList, setRewardList] = useState<RewardForm[]>([]);
     const [newReward, setNewReward] = useState<RewardCreateRequestDto>({
         rewardName: '',
@@ -121,7 +140,7 @@ export default function CreateProject() {
     //선택된 카테고리에 속한 세부카테고리 보여주는 필터링 및 정렬
     const sortedSubcategories = useMemo(() => {
         return subcategories
-            .filter((sc) => sc.ctgrId === project.ctgrId)
+            .filter((sc) => Number(sc.ctgrId) === Number(project.ctgrId))
             .slice()
             .sort((a, b) => {
                 const an = a.subctgrName ?? '';
@@ -145,11 +164,49 @@ export default function CreateProject() {
                 ]);
                 setCategories(Array.isArray(catRes?.data) ? catRes.data : []);
                 setSubcategories(Array.isArray(subRes?.data) ? subRes.data : []);
+
+                if (isEdit && projectId) {
+                    const response = await getData(endpoints.getCreatorProjectDetail(projectId));
+                    const draft = response?.data?.data ?? response?.data ?? {}; // ResponseDto 형태 / 직접 데이터 둘 다 대응
+
+                    setProject((prev) => ({
+                        ...prev,
+                        projectId: toNum(draft.projectId),
+                        ctgrId: toNum(draft.ctgrId),
+                        subctgrId: toNum(draft.subctgrId),
+                        creatorId: toNum(draft.creatorId),
+                        title: draft.title ?? "",
+                        content: draft.content ?? "",
+                        thumbnail: draft.thumbnail ?? "",
+                        goalAmount: toNum(draft.goalAmount),
+                        startDate: toDate(draft.startDate),
+                        endDate: toDate(draft.endDate),
+                        tagList: toTagNames(draft.tagList),
+                        rewardList: [],
+                        creatorName: draft.creatorName ?? "",
+                        businessNum: draft.businessNum ?? "",
+                        email: draft.email ?? "",
+                        phone: draft.phone ?? ""
+                    }));
+
+                    setRewardList(
+                        (draft.rewardList ?? []).map((r: any) => ({
+                            rewardId: toNum(r.rewardId),
+                            rewardName: r.rewardName ?? "",
+                            price: toNum(r.price),
+                            rewardContent: r.rewardContent ?? "",
+                            deliveryDate: toDate(r.deliveryDate),
+                            rewardCnt: toNum(r.rewardCnt, 0),
+                            isPosting: ((r.isPosting ?? "Y") + "").trim() === "N" ? "N" : "Y",
+                            tempId: Math.random().toString(36).slice(2, 10)
+                        }))
+                    );
+                }
             } finally {
                 setIsLoading(false);
             }
         })();
-    }, []);
+    }, [isEdit, projectId]);
 
     //리워드 임시 id 생성
     const genId = () => Math.random().toString(36).slice(2, 10);
@@ -180,29 +237,61 @@ export default function CreateProject() {
     //리워드 삭제
     const removeReward = (tempId: string) => setRewardList((prev) => prev.filter((r) => r.tempId !== tempId));
 
+    //임시저장
+    const handleSaveDraft = async () => {
+        const payload = buildPayload(project, rewardList);
+        setIsLoading(true);
+        try {
+            if (isEdit && projectId) {
+                // 기존 Draft 업데이트
+                await postData(endpoints.updateProject(projectId), payload);
+                alert("임시저장이 완료되었습니다.");
+            } else {
+                // 신규 Draft 생성
+                const response = await postData(endpoints.createProject, payload);
+                if (response.status === 200) {
+                    alert("임시저장이 완료되었습니다.");
+                } else {
+                    alert("임시저장에 실패했습니다.");
+                }
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     //제출
     const handleSubmit = async () => {
         if (!validateAgree(agree, setAgreeError)) return;
 
         const { ok, message } = isValidProject(project);
         if (!ok) return alert(message);
-        if (rewardList.length === 0) return alert('최소 하나 이상의 리워드를 추가해주세요.');
-        if (rewardList.find((r) => !isValidReward(r))) return alert('리워드 정보를 올바르게 입력해주세요.');
+        if (rewardList.length === 0) return alert("최소 하나 이상의 리워드를 추가해주세요.");
+        if (rewardList.find((r) => !isValidReward(r))) return alert("리워드 정보가 올바르지 않습니다. 다시 확인해주세요.");
 
-        //서버 전송용 payload 구성 (tempId 제거)
-        const payload = buildPayload(project, rewardList);
         setIsLoading(true);
         try {
-            const response = await postData(endpoints.createProject, payload);
-            const status = response?.status ?? 0;
-            if (status === 200 || status === 201) {
-                alert('프로젝트가 심사를 위해 제출되었습니다.');
-            } else if (status === 400) {
-                alert('입력한 정보가 올바르지 않습니다. 다시 확인해주세요.');
-            } else if (status === 0) {
-                alert('서버 응답이 없습니다. 잠시 후 다시 시도해주세요.');
+            if (isEdit && projectId) {
+                // 편집 중인 Draft 심사요청
+                const response = await postData(endpoints.submitProject(projectId), {});
+                if (response.status === 200) {
+                    alert("심사요청이 완료되었습니다.");
+                } else {
+                    alert("심사요청에 실패했습니다. 잠시 후 다시 시도해주세요.");
+                }
             } else {
-                alert('프로젝트 제출에 실패했습니다. 다시 시도해주세요.');
+                // 신규 작성 후 즉시 심사요청
+                const payload = buildPayload(project, rewardList);
+                const response = await postData(endpoints.createProject, payload);
+                if (response.status === 200) {
+                    alert("심사요청이 완료되었습니다.");
+                } else if (response.status === 400) {
+                    alert("입력한 정보가 올바르지 않습니다. 다시 확인해주세요.");
+                } else if (response.status === 0) {
+                    alert("서버 응답이 없습니다. 잠시 후 다시 시도해주세요.");
+                } else {
+                    alert("심사요청에 실패했습니다. 잠시 후 다시 시도해주세요.");
+                }
             }
         } finally {
             setIsLoading(false);
@@ -217,11 +306,12 @@ export default function CreateProject() {
 
     return (
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <CreateProjectStepper steps={STEPS} currentStep={currentStep} progress={progress} />
+            <CreateProjectStepper steps={STEPS} currentStep={currentStep} progress={progress} title={isEdit ? "프로젝트 수정" : "프로젝트 만들기"} />
 
             <Card className="mt-6">
                 <CardContent className="p-6">
                     <CreateProjectSteps
+                        key={isEdit ? `edit-${projectId}` : "new"}
                         step={currentStep}
                         project={project}
                         setProject={setProject}
@@ -240,17 +330,26 @@ export default function CreateProject() {
             </Card>
 
             <div className="flex justify-between mt-8">
-                <div>
-                    {currentStep > 1 && (
-                        <Button variant="outline" onClick={() => setCurrentStep((s) => Math.max(1, s - 1))}>이전</Button>
-                    )}
+                <div className="flex items-center">
+                    {isEdit && currentStep === 1 ? (
+                        <Button variant="ghost" onClick={() => goList()}>
+                            <ArrowLeft className="h-4 w-4 mr-2" /> 목록으로
+                        </Button>
+                    ) : currentStep > 1 ? (
+                        <Button variant="outline" onClick={() => setCurrentStep((s) => Math.max(1, s - 1))}>
+                            이전
+                        </Button>
+                    ) : null}
                 </div>
+
                 <div className="flex space-x-2">
-                    <Button variant="outline">
+                    <Button variant="outline" onClick={handleSaveDraft}>
                         <Save className="h-4 w-4 mr-2" /> 임시저장
                     </Button>
                     {currentStep < STEPS.length ? (
-                        <Button onClick={() => setCurrentStep((s) => Math.min(STEPS.length, s + 1))}> 다음</Button>
+                        <Button onClick={() => setCurrentStep((s) => Math.min(STEPS.length, s + 1))}>
+                            다음
+                        </Button>
                     ) : (
                         <Button onClick={handleSubmit} disabled={!agree || isLoading}>
                             <Send className="h-4 w-4 mr-2" /> 심사요청
