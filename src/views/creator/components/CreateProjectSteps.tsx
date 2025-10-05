@@ -16,7 +16,7 @@ import { useRef, useState } from "react";
 const formatCurrency = (amount: string) =>
     new Intl.NumberFormat("ko-KR").format(parseInt(amount || "0", 10) || 0);
 
-export function Steps(props: {
+export function CreateProjectSteps(props: {
     step: number;
     project: ProjectCreateRequestDto;
     setProject: React.Dispatch<React.SetStateAction<ProjectCreateRequestDto>>;
@@ -374,106 +374,106 @@ export function Steps(props: {
     }
 
     if (step === 5) {
-    return (
-        <div className="space-y-6">
-            <Card>
-                <CardHeader><CardTitle>프로젝트 요약</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <h4 className="font-medium text-gray-700">카테고리</h4>
-                            <p>
-                                {(() => {
-                                    const sub = (subcategories as Subcategory[]).find(sc => sc.subctgrId === project.subctgrId);
-                                    if (!sub) return "-";
-                                    const ctgName = (categories as Category[]).find(c => c.ctgrId === sub.ctgrId)?.ctgrName ?? "기타";
-                                    return `${ctgName} > ${sub.subctgrName}`;
-                                })()}
-                            </p>
+        return (
+            <div className="space-y-6">
+                <Card>
+                    <CardHeader><CardTitle>프로젝트 요약</CardTitle></CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <h4 className="font-medium text-gray-700">카테고리</h4>
+                                <p>
+                                    {(() => {
+                                        const sub = (subcategories as Subcategory[]).find(sc => sc.subctgrId === project.subctgrId);
+                                        if (!sub) return "-";
+                                        const ctgName = (categories as Category[]).find(c => c.ctgrId === sub.ctgrId)?.ctgrName ?? "기타";
+                                        return `${ctgName} > ${sub.subctgrName}`;
+                                    })()}
+                                </p>
+                            </div>
+                            <div>
+                                <h4 className="font-medium text-gray-700">목표 금액</h4>
+                                <p>{project.goalAmount ? `${formatCurrency(String(project.goalAmount))}원` : "-"}</p>
+                            </div>
+                            <div>
+                                <h4 className="font-medium text-gray-700">펀딩 기간</h4>
+                                <p>
+                                    {project.startDate && project.endDate
+                                        ? `${formatDate(project.startDate)} ~ ${formatDate(project.endDate)}`
+                                        : "-"}
+                                </p>
+                            </div>
+                            <div>
+                                <h4 className="font-medium text-gray-700">리워드 개수</h4>
+                                <p>{rewardList.length}개</p>
+                            </div>
                         </div>
                         <div>
-                            <h4 className="font-medium text-gray-700">목표 금액</h4>
-                            <p>{project.goalAmount ? `${formatCurrency(String(project.goalAmount))}원` : "-"}</p>
+                            <h4 className="font-medium text-gray-700">프로젝트 제목</h4>
+                            <p>{project.title || "-"}</p>
                         </div>
                         <div>
-                        <h4 className="font-medium text-gray-700">펀딩 기간</h4>
-                        <p>
-                            {project.startDate && project.endDate
-                            ? `${formatDate(project.startDate)} ~ ${formatDate(project.endDate)}`
-                            : "-"}
-                        </p>
-                    </div>
-                    <div>
-                        <h4 className="font-medium text-gray-700">리워드 개수</h4>
-                        <p>{rewardList.length}개</p>
-                    </div>
-                    </div>
-                    <div>
-                        <h4 className="font-medium text-gray-700">프로젝트 제목</h4>
-                        <p>{project.title || "-"}</p>
-                    </div>
-                    <div>
-                        <h4 className="font-medium text-gray-700">창작자</h4>
-                        <p>{project.creatorName || "-"}</p>
-                    </div>
-                </CardContent>
-            </Card>
+                            <h4 className="font-medium text-gray-700">창작자</h4>
+                            <p>{project.creatorName || "-"}</p>
+                        </div>
+                    </CardContent>
+                </Card>
 
-            <Card>
-                <CardHeader><CardTitle>심사 안내</CardTitle></CardHeader>
-                <CardContent>
-                <div className="space-y-2 text-sm">
-                    <p>• 프로젝트 심사는 영업일 기준 3-5일 소요됩니다.</p>
-                    <p>• 심사 결과는 등록된 이메일로 안내드립니다.</p>
-                    <p>• 심사 승인 후 펀딩 시작일에 자동으로 공개됩니다.</p>
-                    <p>• 심사 반려 시 수정 후 재제출이 가능합니다.</p>
+                <Card>
+                    <CardHeader><CardTitle>심사 안내</CardTitle></CardHeader>
+                    <CardContent>
+                        <div className="space-y-2 text-sm">
+                            <p>• 프로젝트 심사는 영업일 기준 3-5일 소요됩니다.</p>
+                            <p>• 심사 결과는 등록된 이메일로 안내드립니다.</p>
+                            <p>• 심사 승인 후 펀딩 시작일에 자동으로 공개됩니다.</p>
+                            <p>• 심사 반려 시 수정 후 재제출이 가능합니다.</p>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <div className="flex items-center space-x-2">
+                    <Checkbox
+                        id="agree"
+                        checked={agree}
+                        onCheckedChange={(v) => { const val = Boolean(v); setAgree?.(val); }}
+                        aria-invalid={!!agreeError}
+                    />
+                    <label htmlFor="agree" className="text-sm">프로젝트 등록 약관 및 정책에 동의합니다. *</label>
                 </div>
-                </CardContent>
-            </Card>
-
-            <div className="flex items-center space-x-2">
-                <Checkbox
-                    id="agree"
-                    checked={agree}
-                    onCheckedChange={(v) => {const val = Boolean(v); setAgree?.(val);}}
-                    aria-invalid={!!agreeError}
-                />
-                <label htmlFor="agree" className="text-sm">프로젝트 등록 약관 및 정책에 동의합니다. *</label>
-            </div>
-            {agreeError && (<p className="text-xs text-red-500 mt-1">{agreeError}</p>)}
+                {agreeError && (<p className="text-xs text-red-500 mt-1">{agreeError}</p>)}
             </div>
         );
     }
 }
 
 function TagEditor({
-  tags, onAdd, onRemove
-}: { tags: string[]; onAdd: (tag: string)=>void; onRemove: (tag: string)=>void }) {
-  const [value, setValue] = useState("");
-  const add = () => { onAdd(value); setValue(""); };
+    tags, onAdd, onRemove
+}: { tags: string[]; onAdd: (tag: string) => void; onRemove: (tag: string) => void }) {
+    const [value, setValue] = useState("");
+    const add = () => { onAdd(value); setValue(""); };
 
-  return (
-    <div>
-      <Label>검색 태그 (최대 10개)</Label>
-      <div className="flex space-x-2 mb-2 mt-1">
-        <Input
-          placeholder="태그 입력"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }}
-        />
-        <Button type="button" variant="outline" onClick={add}>추가</Button>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {tags.map(tag => (
-          <Badge key={tag} variant="secondary" className="cursor-pointer">
-            {tag}
-            <X className="h-3 w-3 ml-1" onClick={() => onRemove(tag)} />
-          </Badge>
-        ))}
-      </div>
-    </div>
-  );
+    return (
+        <div>
+            <Label>검색 태그 (최대 10개)</Label>
+            <div className="flex space-x-2 mb-2 mt-1">
+                <Input
+                    placeholder="태그 입력"
+                    value={value}
+                    onChange={(e) => setValue(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }}
+                />
+                <Button type="button" variant="outline" onClick={add}>추가</Button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+                {tags.map(tag => (
+                    <Badge key={tag} variant="secondary" className="cursor-pointer">
+                        {tag}
+                        <X className="h-3 w-3 ml-1" onClick={() => onRemove(tag)} />
+                    </Badge>
+                ))}
+            </div>
+        </div>
+    );
 }
 
 function FeesCard({ goalAmount }: { goalAmount: number }) {
