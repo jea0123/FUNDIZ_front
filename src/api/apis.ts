@@ -1,5 +1,6 @@
 
-import type { SearchProjectVerify } from '@/types/admin';
+import type { SearchProjectDto } from '@/types/admin';
+import type { SearchCreatorProjectDto } from '@/types/creator';
 import type { SearchProjectParams } from '@/types/projects';
 import { appNavigate } from '@/utils/navigator';
 import type { AxiosResponse } from 'axios';
@@ -48,19 +49,20 @@ export const endpoints = {
     // ==================== User API ====================
     getLoginUser: '/user/loginUser',
     getMypage: (userId: number) => `/user/userPage/${userId}`,
-    getCreatorPageList : (creatorId :number)=>`/creator/${creatorId}/list`,
     getLikedList: (userId: number) => `/user/likedList/${userId}`,
     getQnAList: (userId: number) => `/user/QnAList/${userId}`,
     getRecentView: (userId: number) => `/user/recentViewProjects/${userId}`,
     getQnAListDetail: (userId: number, projectId: number) => `/user/QnAListDetail/${userId}/project/${projectId}`,
+    getCreatorProjectList: (creatorId: number, p: SearchCreatorProjectDto) => `/creator/${creatorId}/projects?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
+    createProject: '/creator/project/new',
+    deleteProject: (projectId: number) => `/creator/project/${projectId}`,
 
     // ==================== Project API ====================
-    createProject: '/project',
     getFeatured: '/project/featured',
     getRecentTop10: '/project/recent-top10',
     getProjectDetail: (projectId: number) => `/project/${projectId}`,
-    getCommunity: (projectId: number) => `/project/${projectId}/community`,
-    getReview: (projectId: number) => `/project/${projectId}/review`,
+    getCommunityList: (projectId: number) => `/project/${projectId}/community`,
+    getReviewList: (projectId: number) => `/project/${projectId}/review`,
     searchProject: (p: SearchProjectParams) => `/project/search?${toQueryString({ page: p.page, size: p.size, keyword: p.keyword, ctgrId: p.ctgrId, subctgrId: p.subctgrId, sort: p.sort })}`,
 
     // ==================== Shipping API ====================
@@ -78,12 +80,13 @@ export const endpoints = {
     getAdminAnalytics: (period: string, metric: string) => `/admin/analytics?period=${period}&metric=${metric}`,
     getCategorySuccess: (ctgrId: number) => `/admin/category-success?ctgrId=${ctgrId}`,
     getRewardSalesTop: (period: string, metric: string) => `/admin/reward-sales-top?period=${period}&metric=${metric}`,
-    getProjectVerifyList: (p: SearchProjectVerify) => `/admin/verify?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
+    getProjectVerifyList: (p: SearchProjectDto) => `/admin/verify?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
     approveProject: (projectId: number) => `/admin/verify/approve/${projectId}`,
     rejectProject: (projectId: number) => `/admin/verify/reject/${projectId}`,
     getProjectVerifyDetail: (projectId: number) => `/admin/verify/${projectId}`,
-    getAdminProjectList: (p: SearchProjectVerify) => `/admin/project?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
+    getAdminProjectList: (p: SearchProjectDto) => `/admin/project?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
     adminUpdateProject: (projectId: number) => `/admin/project/${projectId}`,
+    cancelProject: (projectId: number) => `/admin/project/${projectId}/cancel`,
 
     // ==================== Category API ====================
     getCategories: '/categories',

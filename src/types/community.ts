@@ -1,13 +1,38 @@
-import type { Reply } from "./reply";
+import type { ReplyDto } from "./reply";
 
-export interface Community {
+export interface CommunityDto {
     cmId: number;
-    nickname: string;
-    profileImg: string;
+    projectId: number;
     cmContent: string;
-    rating: number;
-    createdAt: Date;
-    code: string;
+    createdAt: string;
+    code: "CM";
 
-    replyList: Reply[];
+    nickname: string;
+    profileImg: string | null;
+
+    replyList: ReplyDto[];
+}
+
+export interface ReviewDto {
+    cmId: number;
+    projectId: number;
+    cmContent: string;
+    createdAt: string;
+    code: "RV";
+    rating: number;
+
+    nickname: string;
+    profileImg: string | null;
+
+    replyList: ReplyDto[];
+}
+
+export interface Cursor {
+    lastCreatedAt: string;
+    lastId: number | null;
+}
+
+export interface CursorPage<T> {
+    items: T[];
+    nextCursor: Cursor | null;
 }

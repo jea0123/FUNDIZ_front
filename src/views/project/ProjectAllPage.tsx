@@ -156,7 +156,7 @@ export default function ProjectAllPage() {
             <CategoryChips categories={categories} activeCatId="all" />
             <SortBar value={sort} onChange={setSort} total={total} />
 
-            {loading && <p className="text-gray-500">불러오는 중…</p>}
+            {loading && <FundingLoader />}
             {error && <p className="text-red-600">목록을 불러오지 못했습니다.</p>}
             {!loading && !error && <ProjectGrid items={items} />}
 
@@ -210,7 +210,7 @@ export function ProjectByCategoryPage() {
             <SubcategoryTabs ctgrId={ctgrId} subcategories={subcategories} activeSubId="all" />
             <SortBar value={sort} onChange={setSort} total={total} />
 
-            {loading && <p className="text-gray-500">불러오는 중…</p>}
+            {loading && <FundingLoader />}
             {error && <p className="text-red-600">목록을 불러오지 못했습니다.</p>}
             {!loading && !error && <ProjectGrid items={items} />}
 
@@ -237,7 +237,7 @@ export function ProjectBySubcategoryPage() {
             <SubcategoryTabs ctgrId={ctgrId} subcategories={subcategories} activeSubId={subctgrId} />
             <SortBar value={sort} onChange={setSort} total={total} />
 
-            {loading && <p className="text-gray-500">불러오는 중…</p>}
+            {loading && <FundingLoader />}
             {error && <p className="text-red-600">목록을 불러오지 못했습니다.</p>}
             {!loading && !error && <ProjectGrid items={items} />}
 

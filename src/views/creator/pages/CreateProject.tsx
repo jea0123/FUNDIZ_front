@@ -7,8 +7,8 @@ import { endpoints, getData, postData } from '@/api/apis';
 import type { RewardCreateRequestDto } from '@/types/reward';
 import type { Category } from '@/types/admin';
 import FundingLoader from '@/components/FundingLoader';
-import { Stepper } from './components/Stepper';
-import { Steps } from './components/Steps';
+import { CreateProjectStepper } from '../components/CreateProjectStepper';
+import { CreateProjectSteps } from '../components/CreateProjectSteps';
 
 const normalizeName = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
 
@@ -25,7 +25,7 @@ const isValidProject = (p: ProjectCreateRequestDto) => {
         return { ok: false, message: "필수 입력 항목을 모두 채워주세요." };
     if (!p.goalAmount || p.goalAmount <= 0)
         return { ok: false, message: "목표 금액을 입력하세요." };
-    
+
     const start = new Date(p.startDate);
     const end = new Date(p.endDate);
 
@@ -33,7 +33,7 @@ const isValidProject = (p: ProjectCreateRequestDto) => {
         return { ok: false, message: "펀딩 기간을 올바르게 입력하세요." };
     if (start > end)
         return { ok: false, message: "시작일은 종료일보다 이전이어야 합니다." };
-    
+
     return { ok: true, message: "" };
 };
 
@@ -63,16 +63,16 @@ const validateAgree = (
 
 const STEPS = [
     { id: 1, title: '프로젝트 정보', description: '기본 정보 입력' },
-    { id: 2, title: '펀딩 설정', description: '목표 금액 및 기간 설정' },
+    { id: 2, title: '프로젝트 설정', description: '목표 금액 및 기간 설정' },
     { id: 3, title: '리워드 설계', description: '후원자 리워드 구성' },
-    { id: 4, title: "정책 및 정보", description: "환불 정책 및 크리에이터 정보" },
-    { id: 5, title: '검토 및 제출', description: '최종 검토 후 심사 요청' },
+    { id: 4, title: "창작자 정보", description: "창작자 기본 정보" },
+    { id: 5, title: '검토 및 제출', description: '프로젝트 요약 및 심사 안내' },
 ];
 
 export default function CreateProject() {
     const [currentStep, setCurrentStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
-    
+
     //서버 전송용
     const [project, setProject] = useState<ProjectCreateRequestDto>({
         projectId: 0,
@@ -92,11 +92,11 @@ export default function CreateProject() {
         email: "",
         phone: ""
     });
-    
+
     //카테고리
     const [categories, setCategories] = useState<Category[]>([]);
     const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
-    
+
     //리워드 임시 id
     type RewardForm = RewardCreateRequestDto & { tempId: string };
     const [rewardList, setRewardList] = useState<RewardForm[]>([]);
@@ -150,10 +150,10 @@ export default function CreateProject() {
             }
         })();
     }, []);
-    
+
     //리워드 임시 id 생성
     const genId = () => Math.random().toString(36).slice(2, 10);
-    
+
     //리워드 추가
     const addReward = () => {
         if (!isValidReward(newReward)) {
@@ -217,11 +217,11 @@ export default function CreateProject() {
 
     return (
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <Stepper steps={STEPS} currentStep={currentStep} progress={progress} />
+            <CreateProjectStepper steps={STEPS} currentStep={currentStep} progress={progress} />
 
             <Card className="mt-6">
                 <CardContent className="p-6">
-                    <Steps
+                    <CreateProjectSteps
                         step={currentStep}
                         project={project}
                         setProject={setProject}
@@ -242,7 +242,7 @@ export default function CreateProject() {
             <div className="flex justify-between mt-8">
                 <div>
                     {currentStep > 1 && (
-                        <Button variant="outline" onClick={() => setCurrentStep((s) => Math.max(1, s-1))}>이전</Button>
+                        <Button variant="outline" onClick={() => setCurrentStep((s) => Math.max(1, s - 1))}>이전</Button>
                     )}
                 </div>
                 <div className="flex space-x-2">
@@ -250,10 +250,10 @@ export default function CreateProject() {
                         <Save className="h-4 w-4 mr-2" /> 임시저장
                     </Button>
                     {currentStep < STEPS.length ? (
-                        <Button onClick={() => setCurrentStep((s) => Math.min(STEPS.length, s+1))}> 다음</Button>
+                        <Button onClick={() => setCurrentStep((s) => Math.min(STEPS.length, s + 1))}> 다음</Button>
                     ) : (
                         <Button onClick={handleSubmit} disabled={!agree || isLoading}>
-                            <Send className="h-4 w-4 mr-2" /> 심사 요청
+                            <Send className="h-4 w-4 mr-2" /> 심사요청
                         </Button>
                     )}
                 </div>
