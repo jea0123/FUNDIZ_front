@@ -1,8 +1,8 @@
 import { useEffect, useState, type JSX } from 'react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
 import { Search, Heart, User, Bell, Menu, X, CreditCard, Truck, Package, MessageCircle, CheckCircle2 } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../components/ui/dropdown-menu';
 import { useNavigate } from 'react-router-dom';
 import { useLoginUserStore } from '@/store/LoginUserStore.store';
 import { useCookies } from 'react-cookie';
@@ -21,7 +21,7 @@ const typeIcon: Record<string, JSX.Element> = {
     COMMENT_REPLY: <MessageCircle className="h-4 w-4 text-indigo-500" />,
 };
 
-export function Navbar() {
+export function Header() {
     const [cookie] = useCookies();
     const [searchQuery, setSearchQuery] = useState('');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
