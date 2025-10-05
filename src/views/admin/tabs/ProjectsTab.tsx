@@ -18,7 +18,7 @@ export type Status = "DRAFT" | "VERIFYING" | "UPCOMING" | "OPEN" | "SUCCESS" | "
 
 function cls(...xs: (string | false | undefined)[]) { return xs.filter(Boolean).join(" "); }
 
-function StatusBadge({ status }: { status: Status }) {
+export function StatusBadge({ status }: { status: Status }) {
     const map: Record<Status, string> = {
         DRAFT: "bg-slate-100 text-slate-700",
         VERIFYING: "bg-blue-100 text-blue-700",
@@ -36,11 +36,11 @@ function StatusBadge({ status }: { status: Status }) {
 /* ------------------------------ Card ------------------------------ */
 
 function Project({ p, onChanged }: { p: AdminProjectList; onChanged: () => void }) {
-    const navigate = useNavigate();
-
     const canVerify = p.projectStatus === "VERIFYING";
     const canCancel = ["VERIFYING", "UPCOMING", "OPEN"].includes(p.projectStatus);
     const [cancel, setCancel] = useState(false);
+    
+    const navigate = useNavigate();
 
     const goEdit = () => navigate(`/admin/project/${p.projectId}`);
     const goVerifyDetail = () => {
@@ -60,63 +60,29 @@ function Project({ p, onChanged }: { p: AdminProjectList; onChanged: () => void 
     }
 
     return (
-        <Card className="pb-3">
+        <Card className="block">
+            <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 flex-wrap">
+                    <span className="mr-1 truncate">{p.title}</span>
+                    <StatusBadge status={p.projectStatus as Status} />
+                    {["UPCOMING", "OPEN"].includes(p.projectStatus) && (
+                        <span>({getDaysLeft(p.endDate)}일 남음)</span>
+                    )}
+                </CardTitle>
+            </CardHeader>
+
             <CardContent>
-                <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <h4 className="font-semibold leading-tight line-clamp-2 mr-2">{p.title}</h4>
-                    <StatusBadge status={p.projectStatus} />
-                    <span className="font-semibold">({getDaysLeft(p.endDate)}일 남음)</span>
-                </div>
-
-                <div className="space-y-1 text-sm">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 items-center">
-                        <div className="min-w-0">
-                            <span className="text-muted-foreground">기간</span>
-                            <span className="mx-1">:</span>
-                            <span className="text-foreground font-medium tabular-nums">
-                                {formatDate(p.startDate)} ~ {formatDate(p.endDate)}
-                            </span>
-                        </div>
-
-                        <div className="md:text-right">
-                            <span className="text-muted-foreground">현재/목표 금액</span>
-                            <span className="mx-1">:</span>
-                            <span className="text-foreground font-medium tabular-nums">
-                                {p.currAmount.toLocaleString()} / {p.goalAmount.toLocaleString()} ({p.percentNow}%)
-                            </span>
-                        </div>
-                    </div>
-
-                    {/* 2줄차: 창작자 / 후원자 수 / 마지막 수정일 */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 items-center">
-                        <div className="min-w-0">
-                            <span className="text-muted-foreground">창작자</span>
-                            <span className="mx-1">:</span>
-                            <span className="text-foreground truncate" title={p.creatorName}>
-                                {p.creatorName}
-                            </span>
-                        </div>
-
-                        <div className="text-right md:text-center">
-                            <span className="text-muted-foreground">후원자 수</span>
-                            <span className="mx-1">:</span>
-                            <span className="text-foreground font-medium tabular-nums">
-                                {p.backerCnt.toLocaleString()}
-                            </span>
-                        </div>
-
-                        <div className="col-span-2 md:col-span-1 md:text-right">
-                            <span className="text-muted-foreground">마지막 수정일</span>
-                            <span className="mx-1">:</span>
-                            <span className="text-foreground">
-                                {p.updatedAt ? formatDate(p.updatedAt) : "-"}
-                            </span>
-                        </div>
-                    </div>
+                <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
+                    <div>기간: {formatDate(p.startDate)} ~ {formatDate(p.endDate)}</div>
+                    <div>카테고리: {p.ctgrName} &gt; {p.subctgrName}</div>
+                    <div>현재/목표금액: {p.currAmount.toLocaleString()} / {p.goalAmount.toLocaleString()} ({p.percentNow}%)</div>
+                    <div>후원자 수: {p.backerCnt.toLocaleString()}</div>
+                    <div>창작자: {p.creatorName}</div>
+                    <div>마지막 수정일: {formatDate(p.updatedAt)}</div>
                 </div>
             </CardContent>
-
-            <CardFooter className="justify-end gap-2">
+            
+            <CardFooter className="justify-end gap-2 pt-2">
                 <Button variant="outline" size="sm" onClick={goEdit}>
                     <Pencil className="h-4 w-4 mr-1" /> 수정
                 </Button>
@@ -205,7 +171,7 @@ export function ProjectsTab() {
                 <CardTitle>프로젝트 목록</CardTitle>
                 <CardDescription>운영 중인 프로젝트를 조회하고 상세/심사로 이동합니다.</CardDescription>
 
-                <div className="flex flex-wrap items-center gap-2 mt-3">
+                <div className="flex flex-wrap items-center gap-2 mt-2">
                     <span className="text-xs text-muted-foreground mr-1">상태</span>
                     <StatusButton label="전체" value="" />
                     <StatusButton label="심사중" value="VERIFYING" />

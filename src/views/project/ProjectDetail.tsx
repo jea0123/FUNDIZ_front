@@ -423,11 +423,11 @@ export function ProjectDetailPage() {
                                             <CardContent className="pt-6">
                                                 <div className="flex items-start space-x-3">
                                                     <Avatar className="w-8 h-8">
-                                                        <AvatarFallback>{rv.nickname}</AvatarFallback>
+                                                        <AvatarFallback>{rv.profileImg}</AvatarFallback>
                                                     </Avatar>
                                                     <div className="flex-1">
                                                         <div className="flex items-center space-x-2 mb-1">
-                                                            <span className="font-medium"></span>
+                                                            <span className="font-medium">{rv.nickname}</span>
                                                             <div className="flex items-center">
                                                                 {[...Array(rv.rating)].map((_, i) => (
                                                                     <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
@@ -436,6 +436,12 @@ export function ProjectDetailPage() {
                                                             <span className="text-sm text-gray-500">{getDaysBefore(rv.createdAt)} 전</span>
                                                         </div>
                                                         <p className="text-sm">{rv.cmContent}</p>
+                                                        <div className="flex items-center space-x-2 mt-2">
+                                                            <Button variant="ghost" size="sm">
+                                                                <MessageCircle className="h-3 w-3 mr-1" />
+                                                                댓글
+                                                            </Button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </CardContent>

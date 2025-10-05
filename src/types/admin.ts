@@ -57,7 +57,7 @@ export interface ProjectVerifyList {
     requestedAt: Date;
 }
 
-export interface SearchProjectVerify {
+export interface SearchProjectDto {
     page: number;
     size: number;
 
@@ -106,7 +106,8 @@ export interface AdminProjectList {
     currAmount: number;
     backerCnt: number;
     updatedAt: Date
-
+    ctgrName: string;
+    subctgrName: string;
     percentNow: number;
 }
 
