@@ -61,6 +61,37 @@ export default function App() {
                     <Route element={<Layout />}>
                         <Route path='/' element={<MainPage />} />
 
+                    <Route path='/auth'>
+                        <Route path='register' element={<RegisterPage />} />
+                        <Route path='login' element={<LoginPage />} />
+                    </Route>
+
+                    <Route path='/project'>
+                        <Route index element={<ProjectsAllPage />} />
+                        <Route path='search' element={<SearchProjectPage />} />
+                        <Route path='category/:ctgrId' element={<ProjectByCategoryPage />} />
+                        <Route path='category/:ctgrId/subcategory/:subctgrId' element={<ProjectBySubcategoryPage />} />
+                        <Route path=':projectId' element={<ProjectDetailPage />} />
+                        <Route path=':projectId/backing' element={<FundingPage onBackClick={function (): void {
+                            throw new Error('Function not implemented.');
+                        }} onCompleteClick={function (): void {
+                            throw new Error('Function not implemented.');
+                        }} />} />
+                    </Route>
+
+                    <Route path='/user'>
+                        <Route path='Mypage' element={<MyPage />} />
+                    </Route>
+
+                    <Route path='/creator' element={<CreatorLayout />}>
+                        <Route index element={<CreatorDashboard />} />
+                        <Route path='dashboard' element={<CreatorDashboard />} />
+                        <Route path='project/new' element={<CreateProject />} />
+                        <Route path='project/:projectId' element={<CreateProject />} />
+                        <Route path='projects'>
+                            <Route index element={<CreatorProjects />} />
+                            {/* TODO: 프로젝트 상세 */}
+                            {/* <Route path=':projectId' element={<CreatorProjectDetail />} /> */}
                         <Route path='/auth'>
                             <Route path='register' element={<RegisterPage />} />
                             <Route path='login' element={<LoginPage />} />

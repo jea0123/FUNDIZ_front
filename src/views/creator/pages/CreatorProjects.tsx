@@ -114,7 +114,7 @@ export default function CreatorProjects() {
     const url = useMemo(() => {
         if (idLoading) return null;
         if (creatorId != null) {
-            return endpoints.getCreatorProjectList(creatorId, {
+            return endpoints.getCreatorProjectList({
                 page, size, projectStatus: isAllStatus ? undefined : (projectStatus || undefined), rangeType: rangeType || undefined
             });
         }

@@ -3,11 +3,11 @@ import { Progress } from "@/components/ui/progress";
 type Step = { id: number; title: string; description: string };
 
 export function CreateProjectStepper({
-    steps, currentStep, progress
-}: { steps: Step[]; currentStep: number; progress: number }) {
+    steps, currentStep, progress, title = "프로젝트 만들기"
+}: { steps: Step[]; currentStep: number; progress: number, title?: string }) {
     return (
         <div className="mb-8">
-            <h1 className="text-3xl mb-6">프로젝트 만들기</h1>
+            <h1 className="text-3xl mb-6">{title}</h1>
             <div className="flex items-center justify-between mb-4">
                 {steps.map((step, index) => (
                     <div key={step.id} className="flex items-center">
