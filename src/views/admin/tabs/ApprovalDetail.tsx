@@ -91,30 +91,32 @@ export function ApprovalDetail() {
                     <CardDescription className="leading-relaxed">
                         창작자가 제출한 프로젝트의 상세 정보를 확인하고 승인/반려를 결정하세요.
                     </CardDescription>
-
-                    <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-gray-600">
-                        <div>
-                            <span className="text-gray-500 mr-2">기간</span> 
-                            {formatDate(detail.startDate)} ~ {formatDate(detail.endDate)}
-                        </div>
-                        <div>
-                            <span className="text-gray-500 mr-2">목표금액</span>
-                            {detail.goalAmount.toLocaleString()}원
-                        </div>
-                    </div>
                 </CardHeader>
                 <CardContent className="space-y-8">
                     <section>
-                        <h3 className="text-lg font-semibold mb-6">{detail.title}</h3>
-                        <p className="text-sm text-gray-600 mb-6">
-                            창작자: <span className="font-medium text-gray-800">{detail.creatorName}</span>
-                            <span className="mx-2 text-gray-300">|</span>
-                            카테고리: {detail.ctgrName} &gt; {detail.subctgrName ?? "-"}
-                        </p>
+                        <h3 className="text-lg font-semibold mb-4">{detail.title}</h3>
+                        <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
+                            <div>
+                                <span className="text-gray-500 mr-2">기간</span> 
+                                {formatDate(detail.startDate)} ~ {formatDate(detail.endDate)}
+                            </div>
+                            <div>
+                                <span className="text-gray-500 mr-2">카테고리</span>
+                                {detail.ctgrName} &gt; {detail.subctgrName ?? "-"}
+                            </div>
+                            <div>
+                                <span className="text-gray-500 mr-2">목표금액</span>
+                                {detail.goalAmount.toLocaleString()}원
+                            </div>
+                        </div>
                         <div className="prose prose-sm max-w-none text-gray-800">
                             <p className="whitespace-pre-line">{detail.content}</p>
                         </div>
-                        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                            <div className="rounded-lg border bg-white p-3">
+                                <div className="text-gray-500 mb-1">창작자</div>
+                                <div className="font-medium">{detail.creatorName}</div>
+                            </div>
                             <div className="rounded-lg border bg-white p-3">
                                 <div className="text-gray-500 mb-1">사업자번호</div>
                                 <div className="font-medium">{detail.businessNum}</div>

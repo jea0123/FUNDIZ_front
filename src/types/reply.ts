@@ -4,10 +4,17 @@ export interface Reply {
     qnaId: number;
     cmId: number;
     inqId: number;
-
     content: string;
     isSecret: string;
     createdAt: Date;
     deletedAt: Date;
     code: string;
+}
+
+export interface ReplyDto {
+    replyId: number;
+    cmId: number;
+    userId: number;
+    content: string;
+    createdAt: Date;
 }

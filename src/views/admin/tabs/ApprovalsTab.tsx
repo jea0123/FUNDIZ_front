@@ -23,7 +23,11 @@ export function useQueryState() {
 
     const setParam = (k: string, v?: string, opts?: { resetPage?: boolean }) => {
         const next = new URLSearchParams(searchParams);
-        v && v.length ? next.set(k, v) : next.delete(k);
+        if (v && v.length) {
+            next.set(k, v);
+        } else {
+            next.delete(k);
+        }
         if (opts?.resetPage) next.set("page", "1");
         setSearchParams(next, { replace: true });
     };
@@ -46,6 +50,8 @@ function ApprovalCard({ project, projectData }: { project: ProjectVerifyList; pr
     const [openRejectModal, setOpenRejectModal] = useState(false);
     const [targetProject, setTargetProject] = useState< { id: number; title: string } | null>(null);
 
+    const goDetail = (projectId: number) => navigate(`/admin/verify/${projectId}`);
+
     const handleApproveButton = async (projectId: number, title: string) => {
         try {
             setApprovingId(projectId);
@@ -54,12 +60,12 @@ function ApprovalCard({ project, projectData }: { project: ProjectVerifyList; pr
             }
             const response = await postData(endpoints.approveProject(projectId));
             if (response.status === 200) {
-                alert(`[${title}] 승인되었습니다.`);
+                alert(`[${title}]\n승인되었습니다.`);
                 await projectData();
             }
         } catch (err) {
             console.log(err);
-            alert(`[${title}] 승인 실패했습니다.`);
+            alert(`[${title}]\n승인 실패했습니다.`);
         } finally {
             setApprovingId(null);
         }
@@ -70,13 +76,13 @@ function ApprovalCard({ project, projectData }: { project: ProjectVerifyList; pr
             setRejectingId(projectId);
             const response = await postData(endpoints.rejectProject(projectId), { rejectedReason: reason });
             if (response.status === 200) {
-                alert(`[${title}] 반려되었습니다.\n사유: ${reason}`);
+                alert(`[${title}]\n반려되었습니다.\n사유: ${reason}`);
                 await projectData();
                 setOpenRejectModal(false);
             }
         } catch (err) {
             console.log(err);
-            alert(`[${title}] 반려 실패했습니다.`);
+            alert(`[${title}]\n반려 실패했습니다.`);
         } finally {
             setRejectingId(null);
         }
@@ -84,39 +90,43 @@ function ApprovalCard({ project, projectData }: { project: ProjectVerifyList; pr
 
     return (
         <>
-        <Card className="pb-4">
+        <Card className="block">
+            <CardHeader className="pb-2">
+                <CardTitle>{project.title}</CardTitle>
+            </CardHeader>
+
             <CardContent>
-                <h4 className="font-semibold mb-4">{project.title}</h4>
                 <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
-                    <div>창작자명: {project.creatorName}</div>
-                    <div>카테고리: {project.ctgrName} &gt; {project.subctgrName ?? "-"}</div>
+                    <div>기간: {formatDate(project.startDate)} ~ {formatDate(project.endDate)}</div>
+                    <div>카테고리: {project.ctgrName} &gt; {project.subctgrName}</div>
                     <div>목표금액: {project.goalAmount}원</div>
+                    <div>창작자: {project.creatorName}</div>
                     <div>심사요청일: {formatDate(project.requestedAt)}</div>
                 </div>
             </CardContent>
-            <CardFooter className="justify-end gap-2">
-                <Button
-                    variant="outline" size="sm"
-                    onClick={() => navigate(`/admin/verify/${project.projectId}`)}
-                >
-                    <Eye className="h-4 w-4 mr-1" />상세보기
+
+            <CardFooter className="justify-end gap-2 pt-2">
+                <Button variant="outline" size="sm" onClick={() => goDetail(project.projectId)}>
+                    <Eye className="h-4 w-4 mr-1" /> 상세보기
                 </Button>
                 <Button 
-                    variant="default" size="sm"
+                    variant="default"
+                    size="sm"
                     onClick={() => handleApproveButton(project.projectId, project.title)}
                     disabled={approvingId === project.projectId}
                 >
                     <CheckCircle className="h-4 w-4 mr-1"/>{approvingId === project.projectId ? "승인중" : "승인"}
                 </Button>
                 <Button
-                    variant="destructive" size="sm"
+                    variant="destructive"
+                    size="sm"
                     onClick={() => {
                         setTargetProject({ id: project.projectId, title: project.title });
                         setReason("");
                         setOpenRejectModal(true);
                     }}
                 >
-                    <XCircle className="h-4 w-4 mr-1" />반려
+                    <XCircle className="h-4 w-4 mr-1" /> 반려
                 </Button>
             </CardFooter>
         </Card>
@@ -198,24 +208,28 @@ export function ApprovalsTab() {
         );
     };
 
-    if (loading) return <FundingLoader></FundingLoader>;
+    if (loading) return <FundingLoader />;
     if (error) return <p className="text-red-600">심사 목록을 불러오지 못했습니다.</p>;
 
     return (
         <Card>
             <CardHeader>
-                <CardTitle>프로젝트 심사 관리</CardTitle>
+                <CardTitle>프로젝트 심사</CardTitle>
                 <CardDescription>창작자가 제출한 프로젝트를 심사하고 승인/반려를 결정하세요.</CardDescription>
-                <div className="flex items-center gap-2 mt-2">
+                
+                <div className="flex flex-wrap items-center gap-2 mt-2">
+                    <span className="text-xs text-muted-foreground mr-1">기간</span>
                     <RangeButton label="전체" value="" />
                     <RangeButton label="최근 7일" value="7d" />
                     <RangeButton label="최근 30일" value="30d" />
                     <RangeButton label="최근 90일" value="90d" />
                 </div>
+
                 <div className="text-xs text-gray-500 mt-2 pl-1">
-                    <span>총 {total.toLocaleString()}건</span>
+                    총 {total.toLocaleString()}건
                 </div>
             </CardHeader>
+            
             <CardContent>
                 {verifyList.length === 0 ? (
                     <p>심사 대기중인 프로젝트가 없습니다.</p>

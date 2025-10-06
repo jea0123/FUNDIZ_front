@@ -261,7 +261,7 @@ export function MyPage() {
                 </Button>
                 <Button
                   variant={roleView === "creator" ? "default" : "outline"}
-                  onClick={() => navigate("/creator/mypage")}
+                  onClick={() => navigate("/creator")}
                 >
                   창작자
                 </Button>
