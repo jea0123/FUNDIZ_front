@@ -1,6 +1,9 @@
 
 import type { SearchProjectVerify } from '@/types/admin';
 import type { SearchProjectParams } from '@/types/projects';
+import type { SearchNoticeParams } from '@/types/notice';
+import type { SearchIqrParams } from '@/types/inquiry';
+import type { SearchUserParams } from '@/types/admin';
 import { appNavigate } from '@/utils/navigator';
 import type { AxiosResponse } from 'axios';
 import axios from 'axios';
@@ -83,24 +86,24 @@ export const endpoints = {
     rejectProject: (projectId: number) => `/admin/verify/reject/${projectId}`,
     getProjectVerifyDetail: (projectId: number) => `/admin/verify/${projectId}`,
     getAdminProjectList: (p: SearchProjectVerify) => `/admin/project?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
-    adminUpdateProject: (projectId: number) => `/admin/project/${projectId}`,
+    getUsers: (p: SearchUserParams) => `/admin/user/list?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
 
     // ==================== Category API ====================
     getCategories: '/categories',
     getSubcategories: '/categories/subcategories',
 
     // ==================== Customer Service API ====================
-    getNotices: '/cs/notice',
+    getNotices: (p: SearchNoticeParams) => `/cs/notice/list?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
     getNoticeDetail: (noticeId: number) => `/cs/notice/${noticeId}`,
     addNotice: '/cs/notice/add',
     updateNotice: (noticeId: number) => `/cs/notice/update/${noticeId}`,
     deleteNotice: (noticeId: number) => `/cs/notice/delete/${noticeId}`,
-    getInquiries: '/cs/inquiry/list',
-    getMyInquiries: (userId: number) => `/cs/inquiry/mylist/${userId}`,
+    getInquiries: (p: SearchIqrParams) => `/cs/inquiry/list?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
+    getMyInquiries: (userId: number, p: SearchIqrParams) => `/cs/inquiry/mylist/${userId}?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
     getInqDetail: (inqId: number) => `/cs/inquiry/${inqId}`,
     addInquiry: (userId: number) => `/cs/inquiry/${userId}/add`,
-    getReports: '/cs/report/list',
-    getMyReports: (userId: number) => `/cs/report/mylist/${userId}`,
+    getReports: (p: SearchIqrParams) => `/cs/report/list?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
+    getMyReports: (userId: number, p: SearchIqrParams) => `/cs/report/mylist/${userId}?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
     getReportDetail: (reportId: number) => `/cs/report/${reportId}`,
     addReport: (userId: number) => `/cs/report/${userId}/add`,
 

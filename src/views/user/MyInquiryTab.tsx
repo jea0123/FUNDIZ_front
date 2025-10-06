@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -41,10 +41,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { endpoints, getData, postData } from "@/api/apis";
 import { formatDate } from '@/utils/utils';
-import type { Inquiry } from "@/types/inquiry";
+import type { Inquiry, SearchIqrParams } from "@/types/inquiry";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 // ========= 공용 타입 (DB 스키마 기반) =========
 
+const tempUserId = 4;
 
 export type Reply = {
     replyId: number;
@@ -57,32 +59,71 @@ export type Reply = {
     deletedAt?: string | null;
 };
 
-export function MyInquiryTab() {
-    const tempUserId = 4;
+function useQueryState() {
+    const [searchParams, setSearchParams] = useSearchParams();
 
-    const [page, setPage] = useState(1);
-    const pageSize = 10;
-    
-    const [myInquiries, setMyInquiries] = useState<Inquiry[]>([]);
-    
-    const getMyInquiries = async () => {
-        const response = await getData(endpoints.getMyInquiries(tempUserId));
-        if (response.status === 200) {
-            setMyInquiries(response.data);
-        }
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+    const size = Math.max(1, parseInt(searchParams.get("size") || "10", 10));
+    const perGroup = Math.max(1, parseInt(searchParams.get("perGroup") || "10", 10));
+    const keyword = searchParams.get("keyword") || "";
+
+    const setParam = (patch: Record<string, string | undefined>) => {
+        const next = new URLSearchParams(searchParams);
+        Object.entries(patch).forEach(([k, v]) => {
+            if (v && v.length) next.set(k, v);
+            else next.delete(k);
+        });
+        setSearchParams(next, { replace: true });
     };
 
-    console.log(myInquiries);
+    const setPage = (p: number) => setParam({ page: String(p) });
+    const setSize = (s: number) => setParam({ size: String(s) });
+    const setPerGroup = (g: number) => setParam({ size: String(g) });
+    const setKeyword = (k: string) => { setParam({ keyword: k || undefined, page: "1" }); };
+
+    return { page, size, perGroup, keyword, setPage, setSize, setPerGroup, setKeyword, };
+}
+
+function useMyInquiry(params: SearchIqrParams) {
+    const { page, size, perGroup, keyword } = params;
+    const [items, setItems] = useState<Inquiry[]>([]);
+    const [total, setTotal] = useState(0);
+
+    const url = useMemo(() => {
+        return endpoints.getMyInquiries(tempUserId, params);
+    }, [page, size, perGroup, keyword]);
+
+    useEffect(() => {( async () => {
+                const {status, data} = await getData(url);
+                if (status === 200) {
+                    setItems(data.items);
+                    setTotal(data.totalElements);
+                }
+            })();
+        }, [url]);
+
+    console.log(items);
+
+    return { items, total };
+}
+
+export function Pagination({ page, size, perGroup, total, onPage }: { page: number; size: number; perGroup: number; total: number; onPage: (p: number) => void }) {
+    const lastPage = Math.max(1, Math.ceil(total / size));
+
+    return (
+        <div className="flex items-center justify-center gap-2 mt-6">
+        <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onPage(page - 1)}>이전</Button>
+        <span className="text-sm text-gray-600">{page} / {lastPage}</span>
+        <Button variant="outline" size="sm" disabled={page >= lastPage} onClick={() => onPage(page + 1)}>다음</Button>
+        </div>
+    );
+}
+
+export function MyInquiryTab() {
+    const { page, size, perGroup, keyword, setPage } = useQueryState();
+    const { items, total } = useMyInquiry({ page, size, perGroup, keyword });
     
-        useEffect(() => {
-                getMyInquiries();
-            }, []);
-
-    const pagedinq = myInquiries.slice((page - 1) * pageSize, page * pageSize);
-    const pageinqCount = Math.ceil(myInquiries.length / pageSize);
-
     const [openInquiry, setOpenInquiry] = useState<string | undefined>(undefined);
-    const setMyInquiryStatus = (inqId: number, answered: 'Y' | 'N') => setMyInquiries(prev => prev.map(i => i.inqId === inqId ? { ...i, isAnswer: answered } : i));
 
     return (
         <div>
@@ -96,7 +137,7 @@ export function MyInquiryTab() {
                                         <div className="col-span-3">유형</div>
                                         <div className="col-span-2">등록일</div>
                                     </div>
-                                    {pagedinq.map(inq => (
+                                    {items.map(inq => (
                                         <AccordionItem key={inq.inqId} value={String(inq.inqId)}>
                                             <AccordionTrigger>
                                                 <div className="grid grid-cols-12 gap-2 w-full items-center">
@@ -115,10 +156,8 @@ export function MyInquiryTab() {
                                     ))}
                                 </Accordion>
                                 <div className="mt-4 flex items-center justify-between">
-                                    <span className="text-xs text-zinc-500">{page}/{pageinqCount} 페이지</span>
                                     <div className="flex items-center gap-2">
-                                        <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>이전</Button>
-                                        <Button variant="outline" size="sm" disabled={page === pageinqCount} onClick={() => setPage(p => Math.min(pageinqCount, p + 1))}>다음</Button>
+                                        <Pagination page={page} size={size} perGroup={perGroup} total={total} onPage={setPage} />
                                     </div>
                                 </div>
                             </CardContent>

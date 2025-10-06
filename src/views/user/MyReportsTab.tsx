@@ -32,46 +32,88 @@ import {
     SelectValue
 } from "@/components/ui/select";
 import { endpoints, getData, postData } from "@/api/apis";
+import type { Report, SearchRptParams } from "@/types/report";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { formatDate } from '@/utils/utils';
 
 // ========= 공용 타입 (DB 스키마 기반) =========
 
 
-export type Report = {
-    reportId: number;
-    userId: number;
-    target: number;
-    reason: string;
-    reportDate: string;
+const tempUserId = 4;
+
+export type ReportStatus = {
     reportStatus: 'RECEIVED' | 'PROCESSING' | 'DONE';
-    reportType: string;
 };
 
+function useQueryState() {
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+    const size = Math.max(1, parseInt(searchParams.get("size") || "10", 10));
+    const perGroup = Math.max(1, parseInt(searchParams.get("perGroup") || "10", 10));
+    const keyword = searchParams.get("keyword") || "";
+
+    const setParam = (patch: Record<string, string | undefined>) => {
+        const next = new URLSearchParams(searchParams);
+        Object.entries(patch).forEach(([k, v]) => {
+            if (v && v.length) next.set(k, v);
+            else next.delete(k);
+        });
+        setSearchParams(next, { replace: true });
+    };
+
+    const setPage = (p: number) => setParam({ page: String(p) });
+    const setSize = (s: number) => setParam({ size: String(s) });
+    const setPerGroup = (g: number) => setParam({ size: String(g) });
+    const setKeyword = (k: string) => { setParam({ keyword: k || undefined, page: "1" }); };
+
+    return { page, size, perGroup, keyword, setPage, setSize, setPerGroup, setKeyword, };
+}
+
+function useMyReport(params: SearchRptParams) {
+    const { page, size, perGroup, keyword } = params;
+    const [items, setItems] = useState<Report[]>([]);
+    const [total, setTotal] = useState(0);
+
+    const url = useMemo(() => {
+        return endpoints.getMyReports(tempUserId, params);
+    }, [page, size, perGroup, keyword]);
+
+    useEffect(() => {( async () => {
+                const {status, data} = await getData(url);
+                if (status === 200) {
+                    setItems(data.items);
+                    setTotal(data.totalElements);
+                }
+            })();
+        }, [url]);
+
+    console.log(items);
+
+    return { items, total, setItems };
+}
+
+export function Pagination({ page, size, perGroup, total, onPage }: { page: number; size: number; perGroup: number; total: number; onPage: (p: number) => void }) {
+    const lastPage = Math.max(1, Math.ceil(total / size));
+
+    return (
+        <div className="flex items-center justify-center gap-2 mt-6">
+        <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onPage(page - 1)}>이전</Button>
+        <span className="text-sm text-gray-600">{page} / {lastPage}</span>
+        <Button variant="outline" size="sm" disabled={page >= lastPage} onClick={() => onPage(page + 1)}>다음</Button>
+        </div>
+    );
+}
+
 export function MyReportsTab() {
+    const { page, size, perGroup, keyword, setPage } = useQueryState();
+        const { items, total, setItems } = useMyReport({ page, size, perGroup, keyword });
     
-    const [page, setPage] = useState(1);
-    const pageSize = 10;
     
-    const [reports, setReports] = useState<Report[]>([]);
+        const [reportFilter, setReportFilter] = useState<'전체' | 'RECEIVED' | 'UNDER_REVIEW' | 'COMPLETED'>('전체');
+        const filteredReports = useMemo(() => items.filter(r => reportFilter === '전체' ? true : r.reportStatus === reportFilter), [items, reportFilter]);
+        const updateReportStatus = (id: number, status: ReportStatus['reportStatus']) => setItems(prev => prev.map(r => r.reportId === id ? { ...r, reportStatus: status } : r));
     
-        const getMyReports = async () => {
-            const response = await getData(endpoints.getMyReports(4));
-            if (response.status === 200) {
-                setReports(response.data);
-            }
-        };
-    
-        useEffect(() => {
-                getMyReports();
-            }, []);
-
-
-    const [reportFilter, setReportFilter] = useState<'전체' | 'RECEIVED' | 'UNDER_REVIEW' | 'COMPLETED'>('전체');
-    const filteredReports = useMemo(() => reports.filter(r => reportFilter === '전체' ? true : r.reportStatus === reportFilter), [reports, reportFilter]);
-    const updateReportStatus = (id: number, status: Report['reportStatus']) => setReports(prev => prev.map(r => r.reportId === id ? { ...r, reportStatus: status } : r));
-
-    const pagedrpt = filteredReports.slice((page - 1) * pageSize, page * pageSize);
-    const pagerptCount = Math.ceil(filteredReports.length / pageSize);
-
     return (
         <div>
             <div>
@@ -102,13 +144,13 @@ export function MyReportsTab() {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {pagedrpt.map(r => (
+                                        {items.map(r => (
                                             <TableRow key={r.reportId}>
                                                 <TableCell className="font-medium">{r.reason}</TableCell>
                                                 <TableCell>{r.reportType}</TableCell>
                                                 <TableCell>TID {r.target}</TableCell>
                                                 <TableCell>
-                                                    <Select value={r.reportStatus} onValueChange={(v) => updateReportStatus(r.reportId, v as Report['reportStatus'])}>
+                                                    <Select value={r.reportStatus} onValueChange={(v) => updateReportStatus(r.reportId, v as ReportStatus['reportStatus'])}>
                                                         <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
                                                         <SelectContent>
                                                             <SelectItem value="RECEIVED">접수</SelectItem>
@@ -117,16 +159,14 @@ export function MyReportsTab() {
                                                         </SelectContent>
                                                     </Select>
                                                 </TableCell>
-                                                <TableCell className="text-zinc-500">{r.reportDate}</TableCell>
+                                                <TableCell className="text-zinc-500">{formatDate(r.reportDate)}</TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>
                                 </Table>
                                 <div className="mt-4 flex items-center justify-between">
-                                    <span className="text-xs text-zinc-500">{page}/{pagerptCount} 페이지</span>
                                     <div className="flex items-center gap-2">
-                                        <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>이전</Button>
-                                        <Button variant="outline" size="sm" disabled={page === pagerptCount} onClick={() => setPage(p => Math.min(pagerptCount, p + 1))}>다음</Button>
+                                        <Pagination page={page} size={size} perGroup={perGroup} total={total} onPage={setPage} />
                                     </div>
                                 </div>
                             </CardContent>
