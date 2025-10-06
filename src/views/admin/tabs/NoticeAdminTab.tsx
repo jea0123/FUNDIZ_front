@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
     Card,
@@ -15,30 +15,76 @@ import {
     TableCell
 } from "@/components/ui/table";
 import { endpoints, getData, deleteData } from "@/api/apis";
-import type { Notice } from '@/types/notice';
+import type { Notice, SearchNoticeParams } from '@/types/notice';
 import { formatDate } from '@/utils/utils';
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+
+function useQueryState() {
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+    const size = Math.max(1, parseInt(searchParams.get("size") || "10", 10));
+    const perGroup = Math.max(1, parseInt(searchParams.get("perGroup") || "10", 10));
+    const keyword = searchParams.get("keyword") || "";
+
+    const setParam = (patch: Record<string, string | undefined>) => {
+        const next = new URLSearchParams(searchParams);
+        Object.entries(patch).forEach(([k, v]) => {
+            if (v && v.length) next.set(k, v);
+            else next.delete(k);
+        });
+        setSearchParams(next, { replace: true });
+    };
+
+    const setPage = (p: number) => setParam({ page: String(p) });
+    const setSize = (s: number) => setParam({ size: String(s) });
+    const setPerGroup = (g: number) => setParam({ size: String(g) });
+    const setKeyword = (k: string) => { setParam({ keyword: k || undefined, page: "1" }); };
+
+    return { page, size, perGroup, keyword, setPage, setSize, setPerGroup, setKeyword, };
+}
+
+function useNotice(params: SearchNoticeParams) {
+    const { page, size, perGroup, keyword } = params;
+    const [items, setItems] = useState<Notice[]>([]);
+    const [total, setTotal] = useState(0);
+
+    const url = useMemo(() => {
+        return endpoints.getNotices(params);
+    }, [page, size, perGroup, keyword]);
+
+    useEffect(() => {( async () => {
+                const {status, data} = await getData(url);
+                if (status === 200) {
+                    setItems(data.items);
+                    setTotal(data.totalElements);
+                }
+            })();
+        }, [url]);
+
+    console.log(items);
+
+    return { items, total };
+}
+
+export function Pagination({ page, size, perGroup, total, onPage }: { page: number; size: number; perGroup: number; total: number; onPage: (p: number) => void }) {
+    const lastPage = Math.max(1, Math.ceil(total / size));
+
+    return (
+        <div className="flex items-center justify-center gap-2 mt-6">
+        <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onPage(page - 1)}>이전</Button>
+        <span className="text-sm text-gray-600">{page} / {lastPage}</span>
+        <Button variant="outline" size="sm" disabled={page >= lastPage} onClick={() => onPage(page + 1)}>다음</Button>
+        </div>
+    );
+}
+
 
 export function NoticeAdminTab() {
-
     const [notices, setNotices] = useState<Notice[]>([]);
-    
-    const getNotices = async () => {
-        const response = await getData(endpoints.getNotices);
-        if (response.status === 200) {
-            setNotices(response.data);
-        }
-    };
-    
-    useEffect(() => {
-            getNotices();
-        }, []);
+    const { page, size, perGroup, keyword, setPage } = useQueryState();
+    const { items, total } = useNotice({ page, size, perGroup, keyword });
 
-    const [page, setPage] = useState(1);
-    const pageSize = 10;
-    const paged = notices.slice((page - 1) * pageSize, page * pageSize);
-    const pageCount = Math.ceil(notices.length / pageSize);
-    
     const noticeDelete = async (noticeId: number) => {
         const response = await deleteData(endpoints.deleteNotice(noticeId), {});
         if (response.status === 200) {
@@ -47,13 +93,15 @@ export function NoticeAdminTab() {
         } else {
           alert("공지사항 삭제 실패");
         }
+
+        window.location.reload();
       };
 
       const navigate = useNavigate();
       const noticeAddNavigate = () => {
         navigate('?tab=noticeadd');
       };
-
+      
     return (
         <div>
             <div>
@@ -73,7 +121,7 @@ export function NoticeAdminTab() {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {paged.map(n => (
+                                        {items.map(n => (
                                             <TableRow key={n.noticeId}>
                                                 <TableCell className="font-medium">{n.noticeId}</TableCell>
                                                 <TableCell className="font-medium"><a href={`/cs/notice/${n.noticeId}`}>{n.title}</a></TableCell>
@@ -90,10 +138,8 @@ export function NoticeAdminTab() {
                                     </TableBody>
                                 </Table>
                                 <div className="mt-4 flex items-center justify-between">
-                                    <span className="text-xs text-zinc-500">{page}/{pageCount} 페이지</span>
-                                    <div className="flex items-center gap-2">
-                                        <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>이전</Button>
-                                        <Button variant="outline" size="sm" disabled={page === pageCount} onClick={() => setPage(p => Math.min(pageCount, p + 1))}>다음</Button>
+                                    <Pagination page={page} size={size} perGroup={perGroup} total={total} onPage={setPage} />
+                                    <div className="flex items-center justify-center gap-2 mt-6">
                                         <Button variant="outline" size="sm" onClick={noticeAddNavigate}>글쓰기</Button>
                                     </div>
                                 </div>

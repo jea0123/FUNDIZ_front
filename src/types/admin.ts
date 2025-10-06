@@ -118,3 +118,39 @@ export interface AdminProjectUpdateDto {
     thumbnail: string;
     projectStatus: AdminStatus;
 }
+
+export interface Users {
+    userId: number;
+    email: string;
+    nickname: string;
+    isSuspended: string;
+    joinedAt: Date;
+    lastLoginAt: Date;
+    followCnt: number;
+    role: string;
+}
+
+export interface SearchUserParams {
+    page: number;
+    size: number;
+    perGroup: number;
+    keyword?: string;
+}
+
+export interface PageResult<T> {
+    items: T[];
+    page: number;
+    size: number
+    perGroup: number;
+
+    totalElements: number;
+    totalPages: number;
+
+    hasPrev: boolean;
+    hasNext: boolean;
+    prevPage: number;
+    nextPage: number;
+
+    groupStart: number;
+    groupEnd: number;
+};
