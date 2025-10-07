@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Save, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import type { ProjectCreateRequestDto, Subcategory } from '@/types/projects';
+import type { Subcategory } from '@/types/projects';
 import { endpoints, getData, postData } from '@/api/apis';
 import type { RewardCreateRequestDto } from '@/types/reward';
 import type { Category } from '@/types/admin';
@@ -10,17 +10,45 @@ import FundingLoader from '@/components/FundingLoader';
 import { CreateProjectStepper } from '../components/CreateProjectStepper';
 import { CreateProjectSteps } from '../components/CreateProjectSteps';
 import { useNavigate, useParams } from 'react-router-dom';
+import type { ProjectCreateRequestDto } from '@/types/creator';
+import { formatDate } from '@/utils/utils';
+
+type RewardCreatePayload = Omit<RewardCreateRequestDto, "deliveryDate"> & {
+    deliveryDate: string;
+};
+
+type ProjectCreatePayload = Omit<ProjectCreateRequestDto, "startDate"|"endDate"|"rewardList"> & {
+    startDate: string;
+    endDate: string;
+    rewardList: RewardCreatePayload[];
+};
 
 const normalizeName = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
 
 const toNum = (v: any, d = 0) => (v === null || v === "" ? d : Number(v));
 const toDate = (v: any) => (v instanceof Date ? v : (v ? new Date(v) : new Date()));
+// 태그 문자열화
 const toTagNames = (list: any): string[] =>
     Array.isArray(list)
         ? list
             .map((t) => (typeof t === "string" ? t : t?.tagName))
             .filter((s): s is string => typeof s === "string" && s.trim().length > 0)
         : [];
+
+// 태그 정규화/중복제거
+const cleanTags = (list: any): string[] => {
+    const arr = toTagNames(list).map((s) => s.trim()).filter(Boolean);
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const t of arr) {
+        const key = normalizeName(t);
+        if (!seen.has(key)) {
+            seen.add(key);
+            out.push(t);
+        }
+    }
+    return out;
+};
 
 const isValidReward = (r: RewardCreateRequestDto) =>
     r.rewardName.trim().length > 0 &&
@@ -49,14 +77,20 @@ const isValidProject = (p: ProjectCreateRequestDto) => {
 
 const buildPayload = (
     project: ProjectCreateRequestDto,
-    rewards: Array<RewardCreateRequestDto & { tempId: string }>
-): ProjectCreateRequestDto => ({
+    rewards: Array<RewardCreateRequestDto & { tempId: string; rewardId?: number }>
+): ProjectCreatePayload => ({
     ...project,
-    rewardList: rewards.map((r) => {
-        const rest = { ...r };
-        delete (rest as any).tempId;
-        return rest as RewardCreateRequestDto;
-    }),
+    startDate: formatDate(project.startDate),
+    endDate: formatDate(project.endDate),
+    tagList: cleanTags(project.tagList),
+    rewardList: rewards.map(({ rewardName, price, rewardContent, deliveryDate, rewardCnt, isPosting }) => ({
+        rewardName,
+        price,
+        rewardContent,
+        deliveryDate: formatDate(deliveryDate),
+        rewardCnt,
+        isPosting
+    })),
 });
 
 const validateAgree = (
@@ -64,7 +98,7 @@ const validateAgree = (
     setAgreeError: (message: string | null) => void
 ) => {
     if (!agree) {
-        setAgreeError('약관 및 정책에 동의해야 제출할 수 있습니다.');
+        setAgreeError("약관 및 정책에 동의해야 제출할 수 있습니다.");
         return false;
     }
     setAgreeError(null);
@@ -72,11 +106,11 @@ const validateAgree = (
 };
 
 const STEPS = [
-    { id: 1, title: '프로젝트 정보', description: '기본 정보 입력' },
-    { id: 2, title: '프로젝트 설정', description: '목표 금액 및 기간 설정' },
-    { id: 3, title: '리워드 설계', description: '후원자 리워드 구성' },
+    { id: 1, title: "프로젝트 정보", description: "기본 정보 입력" },
+    { id: 2, title: "프로젝트 설정", description: '목표 금액 및 기간 설정' },
+    { id: 3, title: "리워드 설계", description: "후원자 리워드 구성" },
     { id: 4, title: "창작자 정보", description: "창작자 기본 정보" },
-    { id: 5, title: '검토 및 제출', description: '프로젝트 요약 및 심사 안내' },
+    { id: 5, title: "검토 및 제출", description: "프로젝트 요약 및 심사 안내" },
 ];
 
 /* --------------------------- Page --------------------------- */
@@ -87,7 +121,7 @@ export default function CreateProject() {
     const isEdit = !!projectId; // 편집 모드 여부
 
     const navigate = useNavigate();
-    const goList = () => navigate("/creator/projects");
+    const goList = () => navigate("/creator/projects", { replace: true });
 
     const [currentStep, setCurrentStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
@@ -120,12 +154,12 @@ export default function CreateProject() {
     type RewardForm = RewardCreateRequestDto & { tempId: string; rewardId?: number };
     const [rewardList, setRewardList] = useState<RewardForm[]>([]);
     const [newReward, setNewReward] = useState<RewardCreateRequestDto>({
-        rewardName: '',
+        rewardName: "",
         price: 0,
-        rewardContent: '',
+        rewardContent: "",
         deliveryDate: new Date(),
         rewardCnt: 0,
-        isPosting: 'Y'
+        isPosting: "Y"
     });
 
     //약관 및 정책 동의 여부 검사
@@ -143,8 +177,8 @@ export default function CreateProject() {
             .filter((sc) => Number(sc.ctgrId) === Number(project.ctgrId))
             .slice()
             .sort((a, b) => {
-                const an = a.subctgrName ?? '';
-                const bn = b.subctgrName ?? '';
+                const an = a.subctgrName ?? "";
+                const bn = b.subctgrName ?? "";
                 const aNum = /^\d/.test(an);
                 const bNum = /^\d/.test(bn);
                 if (aNum !== bNum) return aNum ? 1 : -1; //숫자로 시작하면 문자 뒤로
@@ -181,7 +215,7 @@ export default function CreateProject() {
                         goalAmount: toNum(draft.goalAmount),
                         startDate: toDate(draft.startDate),
                         endDate: toDate(draft.endDate),
-                        tagList: toTagNames(draft.tagList),
+                        tagList: cleanTags(draft.tagList),
                         rewardList: [],
                         creatorName: draft.creatorName ?? "",
                         businessNum: draft.businessNum ?? "",
@@ -246,11 +280,13 @@ export default function CreateProject() {
                 // 기존 Draft 업데이트
                 await postData(endpoints.updateProject(projectId), payload);
                 alert("임시저장이 완료되었습니다.");
+                goList();
             } else {
                 // 신규 Draft 생성
                 const response = await postData(endpoints.createProject, payload);
                 if (response.status === 200) {
                     alert("임시저장이 완료되었습니다.");
+                    goList();
                 } else {
                     alert("임시저장에 실패했습니다.");
                 }
@@ -271,27 +307,38 @@ export default function CreateProject() {
 
         setIsLoading(true);
         try {
+            const payload = buildPayload(project, rewardList);
+
             if (isEdit && projectId) {
+                // 기존 Draft 업데이트
+                const updateRes = await postData(endpoints.updateProject(projectId), payload);
+                if (updateRes.status !== 200) {
+                    alert("변경사항 저장에 실패했습니다. 다시 시도해주세요.");
+                    return;
+                }
+
                 // 편집 중인 Draft 심사요청
-                const response = await postData(endpoints.submitProject(projectId), {});
-                if (response.status === 200) {
+                const submitRes = await postData(endpoints.submitProject(projectId), {});
+                if (submitRes.status === 200) {
                     alert("심사요청이 완료되었습니다.");
+                    goList();
                 } else {
-                    alert("심사요청에 실패했습니다. 잠시 후 다시 시도해주세요.");
+                    alert("심사요청에 실패했습니다. 다시 시도해주세요.");
                 }
+                return;
+            } 
+
+            // 신규 작성 후 즉시 심사요청
+            const createRes = await postData(endpoints.createProject, payload);
+            if (createRes.status === 200) {
+                alert("심사요청이 완료되었습니다.");
+                goList();
+            } else if (createRes.status === 400) {
+                alert("입력한 정보가 올바르지 않습니다. 다시 확인해주세요.");
+            } else if (createRes.status === 0) {
+                alert("서버 응답이 없습니다. 잠시 후 다시 시도해주세요.");
             } else {
-                // 신규 작성 후 즉시 심사요청
-                const payload = buildPayload(project, rewardList);
-                const response = await postData(endpoints.createProject, payload);
-                if (response.status === 200) {
-                    alert("심사요청이 완료되었습니다.");
-                } else if (response.status === 400) {
-                    alert("입력한 정보가 올바르지 않습니다. 다시 확인해주세요.");
-                } else if (response.status === 0) {
-                    alert("서버 응답이 없습니다. 잠시 후 다시 시도해주세요.");
-                } else {
-                    alert("심사요청에 실패했습니다. 잠시 후 다시 시도해주세요.");
-                }
+                alert("심사요청에 실패했습니다. 다시 시도해주세요.");
             }
         } finally {
             setIsLoading(false);
@@ -332,7 +379,7 @@ export default function CreateProject() {
             <div className="flex justify-between mt-8">
                 <div className="flex items-center">
                     {isEdit && currentStep === 1 ? (
-                        <Button variant="ghost" onClick={() => goList()}>
+                        <Button variant="outline" onClick={() => goList()}>
                             <ArrowLeft className="h-4 w-4 mr-2" /> 목록으로
                         </Button>
                     ) : currentStep > 1 ? (

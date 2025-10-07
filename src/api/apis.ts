@@ -57,7 +57,7 @@ export const endpoints = {
     getRecentView: (userId: number) => `/user/recentViewProjects/${userId}`,
     getQnAListDetail: (userId: number, projectId: number) => `/user/QnAListDetail/${userId}/project/${projectId}`,
     getCreatorProjectList: (p: SearchCreatorProjectDto) => `/creator/projects?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
-    getCreatorProjectDetail: (projectId: number) => `/creator/project/${projectId}`,
+    getCreatorProjectDetail: (projectId: number) => `/creator/projects/${projectId}`,
     createProject: '/creator/project/new',
     updateProject: (projectId: number) => `/creator/project/${projectId}`,
     submitProject: (projectId: number) => `/creator/project/${projectId}/submit`,
@@ -95,7 +95,6 @@ export const endpoints = {
     adminUpdateProject: (projectId: number) => `/admin/project/${projectId}`,
     cancelProject: (projectId: number) => `/admin/project/${projectId}/cancel`,
     getUsers: (p: SearchUserParams) => `/admin/user/list?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
-
 
     // ==================== Category API ====================
     getCategories: '/categories',

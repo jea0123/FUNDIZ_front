@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type { Category } from "@/types/admin";
-import type { ProjectCreateRequestDto, Subcategory } from "@/types/projects";
+import type { ProjectCreateRequestDto } from "@/types/creator";
+import type { Subcategory } from "@/types/projects";
 import type { RewardCreateRequestDto } from "@/types/reward";
 import { formatDate } from "@/utils/utils";
 import { Plus, Trash, Truck, Upload, X } from "lucide-react";
@@ -15,6 +16,8 @@ import { useRef, useState } from "react";
 
 const formatCurrency = (amount: string) =>
     new Intl.NumberFormat("ko-KR").format(parseInt(amount || "0", 10) || 0);
+
+const normalizeName = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
 
 export function CreateProjectSteps(props: {
     step: number;
@@ -107,11 +110,22 @@ export function CreateProjectSteps(props: {
                     onAdd={(tag) => setProject(prev => {
                         const trimmed = tag.trim();
                         if (!trimmed) return prev;
-                        const next = Array.from(new Set([...(prev.tagList || []), trimmed]));
+
+                        const exists = (prev.tagList || []).some(
+                            (tag) => normalizeName(tag) === normalizeName(trimmed)
+                        );
+                        if (exists) return prev;
+
+                        const next = [...(prev.tagList || []), trimmed];
                         if (next.length > 10) return prev;
                         return { ...prev, tagList: next };
                     })}
-                    onRemove={(tag) => setProject(prev => ({ ...prev, tagList: (prev.tagList || []).filter(t => t !== tag) }))}
+                    onRemove={(tag) => setProject(prev => ({
+                        ...prev,
+                        tagList: (prev.tagList || []).filter(
+                            (t) => normalizeName(t) !== normalizeName(tag)
+                        )
+                    }))}
                 />
             </div>
         );
