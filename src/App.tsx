@@ -2,7 +2,6 @@ import { lazy, Suspense, useEffect } from 'react'
 import { Route, Routes, useNavigate } from 'react-router-dom';
 import { LoginPage } from './views/auth/LoginPage';
 import { MyPage } from './views/user/MyPage';
-import { Footer } from './layout/Header';
 import { RegisterPage } from './views/auth/RegisterPage';
 import { useLoginUserStore } from './store/LoginUserStore.store';
 import { useCookies } from 'react-cookie';
@@ -11,7 +10,6 @@ import { ProjectDetailPage } from './views/project/ProjectDetail';
 import ErrorPage from './views/ErrorPage';
 import MainPage from './views/MainPage';
 import { setNavigator } from './utils/navigator';
-import { CSPage } from './views/cs/CSPage';
 import { NoticeDetailPage } from './views/cs/NoticeDetail';
 import ProjectsAllPage, { ProjectByCategoryPage, ProjectBySubcategoryPage, SearchProjectPage } from './views/project/ProjectAllPage';
 import { FundingPage } from './views/backing/backingPage';
@@ -25,6 +23,10 @@ import CreatorProjects from './views/creator/pages/CreatorProjects';
 import CreatorLayout from './views/creator/CreatorLayout';
 import { AdminConsole } from './views/admin/AdminConsole';
 import Layout from './layout/Layout';
+import { NoticeTab } from './views/cs/tabs/NoticeTab';
+import { InquiryTab } from './views/cs/tabs/InquiryTab';
+import { ReportTab } from './views/cs/tabs/ReportTab';
+import CSLayout from './views/cs/CSLayout';
 
 const AdminTabs = lazy(() => import('./views/admin/AdminTabs').then(module => ({ default: module.AdminTabs })));
 
@@ -105,9 +107,12 @@ export default function App() {
                             <Route path='project/:projectId' element={<AdminProjectEdit />} />
                         </Route>
 
-                        <Route path="/cs">
-                            <Route index element={<CSPage />} />
+                        <Route path="/cs" element={<CSLayout />}>
+                            <Route index element={<NoticeTab />} />
+                            <Route path='notice' element={<NoticeTab />} />
                             <Route path='notice/:noticeId' element={<NoticeDetailPage />} />
+                            <Route path='inquiry' element={<InquiryTab />} />
+                            <Route path='report' element={<ReportTab />} />
                         </Route>
 
                         <Route path="/error" element={<ErrorPage />} />
@@ -115,7 +120,6 @@ export default function App() {
                         <Route path="/notifications" element={<NotificationsPage />} />
                     </Route>
                 </Routes>
-                <Footer />
             </div>
         </Suspense>
     );

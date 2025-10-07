@@ -14,9 +14,9 @@ const nav = {
         { label: "제휴문의", href: "/partnership" },
     ],
     support: [
-        { label: "공지사항", href: "/notice" },
-        { label: "자주 묻는 질문", href: "/faq" },
-        { label: "문의하기", href: "/inquiry" },
+        { label: "공지사항", href: "/cs/notice" },
+        { label: "1:1 문의", href: "/cs/inquiry" },
+        { label: "신고하기", href: "/cs/report" },
         { label: "환불/정책", href: "/policy/refund" },
         { label: "결제 안내", href: "/policy/payment" },
     ],
@@ -25,6 +25,11 @@ const nav = {
         { label: "새 프로젝트", href: "/project/new" },
         { label: "카테고리", href: "/category" },
         { label: "크리에이터", href: "/creators" },
+    ],
+    management: [
+        { label: "마이 페이지 (유저)", href: "/user/mypage" },
+        { label: "창작자 페이지", href: "/creator" },
+        { label: "관리자 콘솔", href: "/admin" },
     ],
 };
 
@@ -73,7 +78,7 @@ export default function SiteFooter() {
                 <Separator className="my-8 bg-neutral-200" />
 
                 {/* Link grid */}
-                <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-5">
+                <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-6">
                     <div className="col-span-2 space-y-3 lg:col-span-2">
                         <p className="max-w-prose text-sm leading-6 text-neutral-500">
                             아이디어가 현실이 되도록 돕습니다. FUNDING은 창작자와 후원자가 투명하게 연결되는 공간을 지향합니다.
@@ -95,6 +100,7 @@ export default function SiteFooter() {
                     <FooterColumn title="About Us" items={nav.about} />
                     <FooterColumn title="고객지원" items={nav.support} />
                     <FooterColumn title="탐색하기" items={nav.explore} />
+                    <FooterColumn title="관리(임시)" items={nav.management} />
                 </div>
 
                 <Separator className="my-8 bg-neutral-200" />

@@ -313,16 +313,3 @@ export function Header() {
         </nav>
     );
 }
-
-export function Footer() {
-    return (
-        <div style={{ padding: '30px' }}>
-            <ul style={{ listStyle: 'none', textAlign: 'center' }}>
-                <li style={{ display: 'inline-block', marginRight: '50px' }}><a href="/user/mypage">마이페이지</a></li>
-                <li style={{ display: 'inline-block', marginRight: '50px' }}><a href="/cs">고객센터</a></li>
-                <li style={{ display: 'inline-block' }}><a href="/admin">관리자 대시보드</a></li>
-            </ul>
-        </div>
-    );
-
-}

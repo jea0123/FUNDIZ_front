@@ -43,7 +43,7 @@ export function InquiryTab() {
     return (
             <Card className="lg:col-span-2">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><MessagesSquare className="w-5 h-5" /> 1:1 문의</CardTitle>
+                    <CardTitle className="flex items-center gap-2 text-xl"><MessagesSquare className="w-5 h-5" /> 1:1 문의</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
