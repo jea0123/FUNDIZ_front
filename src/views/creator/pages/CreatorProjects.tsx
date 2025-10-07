@@ -21,7 +21,7 @@ type Bucket = "PREP" | "OPER";
 
 export default function CreatorProjects() {
     //TODO: 임시용 폴백 id (나중에 삭제하기)
-    const { creatorId, loading: idLoading } = useCreatorId(13);
+    const { creatorId, loading: idLoading } = useCreatorId(26);
 
     const [projects, setProjects] = useState<CreatorProjectListDto[]>([]);
     const [total, setTotal] = useState(0);
@@ -161,6 +161,7 @@ export default function CreatorProjects() {
             alert("삭제 실패하였습니다. 잠시 후 다시 시도해주세요.");
         } finally {
             setDeletingId(null);
+            alert("프로젝트가 삭제되었습니다.");
         }
     }, [fetchData]);
 

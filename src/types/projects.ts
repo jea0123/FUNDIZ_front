@@ -1,6 +1,6 @@
 import type { SortKey } from "@/views/project/components/SortBar";
 import type { News } from "./news";
-import type { Reward, RewardCreateRequestDto } from "./reward";
+import type { Reward } from "./reward";
 import type { Tag } from "./tag";
 
 export interface Project {
@@ -88,29 +88,6 @@ export interface RecentView{
     endDate: Date;
     percentNow: number;
     viewedAt: Date;
-}
-
-export interface ProjectCreateRequestDto {
-    projectId: number;
-    ctgrId: number; //프론트에서만 사용
-    subctgrId: number;
-    creatorId: number;
-
-    title: string;
-    content: string;
-    thumbnail: string;
-    goalAmount: number;
-    startDate: Date;
-    endDate: Date;
-
-    tagList: string[];
-
-    rewardList: RewardCreateRequestDto[];
-
-    creatorName: string;
-    businessNum: string;
-    email: string;
-    phone: string;
 }
 
 export interface Subcategory {

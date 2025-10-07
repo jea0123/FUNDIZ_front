@@ -1,4 +1,4 @@
-import type { Reward } from "./reward";
+import type { Reward, RewardCreateRequestDto } from "./reward";
 import type { Tag } from "./tag";
 
 export interface CreatorProjectListDto {
@@ -47,4 +47,27 @@ export interface CreatorProjectDetailDto {
 
     tagList: Tag[];
     rewardList: Reward[];
+}
+
+export interface ProjectCreateRequestDto {
+    projectId: number;
+    ctgrId: number; //프론트에서만 사용
+    subctgrId: number;
+    creatorId: number;
+
+    title: string;
+    content: string;
+    thumbnail: string;
+    goalAmount: number;
+    startDate: Date;
+    endDate: Date;
+
+    tagList: string[];
+
+    rewardList: RewardCreateRequestDto[];
+
+    creatorName: string;
+    businessNum: string;
+    email: string;
+    phone: string;
 }

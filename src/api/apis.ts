@@ -95,7 +95,6 @@ export const endpoints = {
     cancelProject: (projectId: number) => `/admin/project/${projectId}/cancel`,
     getUsers: (p: SearchUserParams) => `/admin/user/list?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
 
-
     // ==================== Category API ====================
     getCategories: '/categories',
     getSubcategories: '/categories/subcategories',
