@@ -7,7 +7,7 @@ export function CreatorSidebar() {
         ${isActive ? "bg-gray-100 text-black" : "text-gray-700 hover:bg-gray-50"}`;
     
         return (
-            <nav className="w-56 shrink-0 border-r border-gray-200 pr-2 mt-6 space-y-2">
+            <nav className="w-56 shrink-0 pr-2 mt-6 space-y-2">
                 <NavLink to="/creator/dashboard" className={({ isActive }) => linkCls(isActive)}>
                     <Gauge className="mr-2 h-4 w-4" /> 대시보드
                 </NavLink>

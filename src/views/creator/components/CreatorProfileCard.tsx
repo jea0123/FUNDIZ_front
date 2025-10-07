@@ -10,8 +10,7 @@ export default function CreatorProfileCard() {
     const navigate = useNavigate();
 
     return (
-        <Card>
-            <CardContent className="p-6 text-center">
+        <div className="pb-6 text-center border-b border-gray-200">
                 <div className="flex justify-center mb-4 space-x-2">
                     <Button
                         variant={roleView === "user" ? "default" : "outline"}
@@ -33,7 +32,6 @@ export default function CreatorProfileCard() {
                 <h3 className="font-semibold mb-1">창작자</h3>
                 <p className="text-sm text-gray-500 mb-4">hong@example.com</p>
                 <Badge variant="secondary">창작자</Badge>
-            </CardContent>
-        </Card>
+            </div>
     );
 }
