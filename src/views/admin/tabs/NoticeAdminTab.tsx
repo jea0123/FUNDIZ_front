@@ -124,7 +124,10 @@ export function NoticeAdminTab() {
                                         {items.map(n => (
                                             <TableRow key={n.noticeId}>
                                                 <TableCell className="font-medium">{n.noticeId}</TableCell>
-                                                <TableCell className="font-medium"><a href={`/cs/notice/${n.noticeId}`}>{n.title}</a></TableCell>
+                                                <TableCell className="font-medium">
+                                                    <a href={`/cs/notice/${n.noticeId}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer">{n.title}</a></TableCell>
                                                 <TableCell className="font-medium">{n.viewCnt}</TableCell>
                                                 <TableCell className="text-zinc-500">{formatDate(n.createdAt)}</TableCell>
                                                 <TableCell>
