@@ -20,8 +20,8 @@ type Bucket = "PREP" | "OPER";
 /* ---------------------------------- Page ---------------------------------- */
 
 export default function CreatorProjects() {
-    //TODO: 임시용 폴백 id (나중에 삭제하기)
-    const { creatorId, loading: idLoading } = useCreatorId(26);
+    //TODO: 임시용 id (나중에 삭제하기)
+    const { creatorId, loading: idLoading } = useCreatorId(7);
 
     const [projects, setProjects] = useState<CreatorProjectListDto[]>([]);
     const [total, setTotal] = useState(0);

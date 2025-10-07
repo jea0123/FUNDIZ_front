@@ -27,6 +27,7 @@ import { NoticeTab } from './views/cs/tabs/NoticeTab';
 import { InquiryTab } from './views/cs/tabs/InquiryTab';
 import { ReportTab } from './views/cs/tabs/ReportTab';
 import CSLayout from './views/cs/CSLayout';
+import CreatorProjectDetail from './views/creator/pages/CreatorProjectDetail';
 
 const AdminTabs = lazy(() => import('./views/admin/AdminTabs').then(module => ({ default: module.AdminTabs })));
 
@@ -92,8 +93,7 @@ export default function App() {
                             <Route path='project/:projectId' element={<CreateProject />} />
                             <Route path='projects'>
                                 <Route index element={<CreatorProjects />} />
-                                {/* TODO: 프로젝트 상세 */}
-                                {/* <Route path=':projectId' element={<CreatorProjectDetail />} /> */}
+                                <Route path=':projectId' element={<CreatorProjectDetail />} />
                             </Route>
                             <Route path='backings' />
                             <Route path='shipping' />
