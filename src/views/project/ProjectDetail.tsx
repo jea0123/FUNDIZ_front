@@ -15,6 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import type { Reward } from '@/types/reward';
 import FundingLoader from '@/components/FundingLoader';
 import type { CommunityDto, Cursor, CursorPage, ReviewDto } from '@/types/community';
+import { QnATab } from './components/QnATab';
 
 export function ProjectDetailPage() {
 
@@ -335,11 +336,12 @@ export function ProjectDetailPage() {
                     </div>
 
                     <Tabs defaultValue="description" className="mb-8" onValueChange={(v) => setTab(v as any)}>
-                        <TabsList className="grid w-full grid-cols-4">
+                        <TabsList className="grid w-full grid-cols-5">
                             <TabsTrigger value="description">프로젝트 소개</TabsTrigger>
-                            <TabsTrigger value="updates">새소식</TabsTrigger>
-                            <TabsTrigger value="community">커뮤니티</TabsTrigger>
-                            <TabsTrigger value="review">후기</TabsTrigger>
+                            <TabsTrigger value="updates">새소식 {project.newsList.length}</TabsTrigger>
+                            <TabsTrigger value="community">커뮤니티 {community.length}</TabsTrigger>
+                            <TabsTrigger value="review">후기 {review.length}</TabsTrigger>
+                            <TabsTrigger value="qna">Q&A</TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="description" className="mt-6">
@@ -459,6 +461,9 @@ export function ProjectDetailPage() {
                                 {reviewCursor && <div ref={reviewSentinelRef} className="h-1 w-full" />}
                             </>
                             )}
+                        </TabsContent>
+                        <TabsContent value="qna">
+                            <QnATab/>
                         </TabsContent>
                     </Tabs>
                 </div>

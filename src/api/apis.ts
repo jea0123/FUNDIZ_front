@@ -69,6 +69,7 @@ export const endpoints = {
     getProjectDetail: (projectId: number) => `/project/${projectId}`,
     getCommunityList: (projectId: number) => `/project/${projectId}/community`,
     getReviewList: (projectId: number) => `/project/${projectId}/review`,
+    getQnAListOfPJ: (projectId: number) => `/project/${projectId}/qna`,
     searchProject: (p: SearchProjectParams) => `/project/search?${toQueryString({ page: p.page, size: p.size, keyword: p.keyword, ctgrId: p.ctgrId, subctgrId: p.subctgrId, sort: p.sort })}`,
 
     // ==================== Shipping API ====================
