@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Subcategory } from '@/types/projects';
 import { endpoints, getData, postData } from '@/api/apis';
-import type { RewardCreateRequestDto } from '@/types/reward';
+import type { RewardCreateRequestDto, RewardDraft, RewardForm } from '@/types/reward';
 import type { Category } from '@/types/admin';
 import FundingLoader from '@/components/FundingLoader';
 import { CreateProjectStepper } from '../components/CreateProjectStepper';
@@ -13,11 +13,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 import type { ProjectCreateRequestDto } from '@/types/creator';
 import { formatDate } from '@/utils/utils';
 
-type RewardCreatePayload = Omit<RewardCreateRequestDto, "deliveryDate"> & {
+type RewardCreatePayload = Omit<RewardCreateRequestDto, "projectId" | "deliveryDate"> & {
     deliveryDate: string;
 };
 
-type ProjectCreatePayload = Omit<ProjectCreateRequestDto, "startDate"|"endDate"|"rewardList"> & {
+type ProjectCreatePayload = Omit<ProjectCreateRequestDto, "startDate" | "endDate" | "rewardList"> & {
     startDate: string;
     endDate: string;
     rewardList: RewardCreatePayload[];
@@ -50,13 +50,14 @@ const cleanTags = (list: any): string[] => {
     return out;
 };
 
-const isValidReward = (r: RewardCreateRequestDto) =>
+const isValidReward = (r: RewardDraft) => (
     r.rewardName.trim().length > 0 &&
     r.price > 0 &&
     r.rewardContent.trim().length > 0 &&
     r.deliveryDate instanceof Date &&
     !isNaN(r.deliveryDate.getTime()) &&
-    (r.isPosting === 'Y' || r.isPosting === 'N');
+    (r.isPosting === "Y" || r.isPosting === "N")
+);
 
 const isValidProject = (p: ProjectCreateRequestDto) => {
     if (!p.title || !p.content || !p.thumbnail)
@@ -77,7 +78,7 @@ const isValidProject = (p: ProjectCreateRequestDto) => {
 
 const buildPayload = (
     project: ProjectCreateRequestDto,
-    rewards: Array<RewardCreateRequestDto & { tempId: string; rewardId?: number }>
+    rewards: Array<RewardForm>
 ): ProjectCreatePayload => ({
     ...project,
     startDate: formatDate(project.startDate),
@@ -150,10 +151,9 @@ export default function CreateProject() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
 
-    //리워드 임시 id
-    type RewardForm = RewardCreateRequestDto & { tempId: string; rewardId?: number };
+    //리워드
     const [rewardList, setRewardList] = useState<RewardForm[]>([]);
-    const [newReward, setNewReward] = useState<RewardCreateRequestDto>({
+    const [newReward, setNewReward] = useState<RewardDraft>({
         rewardName: "",
         price: 0,
         rewardContent: "",
@@ -326,7 +326,7 @@ export default function CreateProject() {
                     alert("심사요청에 실패했습니다. 다시 시도해주세요.");
                 }
                 return;
-            } 
+            }
 
             // 신규 작성 후 즉시 심사요청
             const createRes = await postData(endpoints.createProject, payload);
