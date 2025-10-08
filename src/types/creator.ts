@@ -71,3 +71,10 @@ export interface ProjectCreateRequestDto {
     email: string;
     phone: string;
 }
+
+export interface ProjectSummaryDto {
+  projectId: number;
+  title: string;
+  endDate: Date;
+  projectStatus: string;
+}

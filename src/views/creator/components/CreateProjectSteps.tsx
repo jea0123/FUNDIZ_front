@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { Category } from "@/types/admin";
 import type { ProjectCreateRequestDto } from "@/types/creator";
 import type { Subcategory } from "@/types/projects";
-import type { RewardCreateRequestDto } from "@/types/reward";
+import type { RewardDraft, RewardForm } from "@/types/reward";
 import { formatDate } from "@/utils/utils";
 import { Plus, Trash, Truck, Upload, X } from "lucide-react";
 import { useRef, useState } from "react";
@@ -25,13 +25,13 @@ export function CreateProjectSteps(props: {
     setProject: React.Dispatch<React.SetStateAction<ProjectCreateRequestDto>>;
     categories: Category[];
     subcategories: Subcategory[];
-    rewardList: Array<RewardCreateRequestDto & { tempId: string }>;
-    newReward: RewardCreateRequestDto;
-    setNewReward: (r: RewardCreateRequestDto) => void;
+    rewardList: RewardForm[];
+    newReward: RewardDraft;
+    setNewReward: React.Dispatch<React.SetStateAction<RewardDraft>>;
     addReward: () => void;
-    removeReward: (id: string) => void;
+    removeReward: (tempId: string) => void;
     agree?: boolean;
-    setAgree?: (v: boolean) => void;
+    setAgree?: React.Dispatch<React.SetStateAction<boolean>>;
     agreeError?: string | null;
 }) {
     const {

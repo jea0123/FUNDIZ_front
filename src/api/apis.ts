@@ -62,6 +62,9 @@ export const endpoints = {
     updateProject: (projectId: number) => `/creator/project/${projectId}`,
     submitProject: (projectId: number) => `/creator/project/${projectId}/submit`,
     deleteProject: (projectId: number) => `/creator/project/${projectId}`,
+    getCreatorProjectSummary: (projectId: number) => `/creator/projects/${projectId}/summary`,
+    getCreatorRewardList: (projectId: number) => `/creator/projects/${projectId}/reward`,
+    addReward: (projectId: number) => `/creator/projects/${projectId}/reward`,
 
     // ==================== Project API ====================
     getFeatured: '/project/featured',
