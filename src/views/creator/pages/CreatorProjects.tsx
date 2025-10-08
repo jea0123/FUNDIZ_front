@@ -21,7 +21,7 @@ type Bucket = "PREP" | "OPER";
 
 export default function CreatorProjects() {
     //TODO: 임시용 id (나중에 삭제하기)
-    const { creatorId, loading: idLoading } = useCreatorId(7);
+    const { creatorId, loading: idLoading } = useCreatorId(28);
 
     const [projects, setProjects] = useState<CreatorProjectListDto[]>([]);
     const [total, setTotal] = useState(0);
@@ -33,6 +33,7 @@ export default function CreatorProjects() {
     const navigate = useNavigate();
     const goDetail = (projectId: number) => navigate(`/creator/projects/${projectId}`);
     const goEdit = (projectId: number) => navigate(`/creator/project/${projectId}`);
+    const goAddReward = (projectId: number) => navigate(`/creator/projects/${projectId}/reward`)
 
     const { page, size, projectStatus, rangeType, setPage, setProjectStatus, setRangeType } = useQueryState();
 
@@ -284,6 +285,7 @@ export default function CreatorProjects() {
                                                 onDetail={goDetail}
                                                 onEdit={goEdit}
                                                 onDelete={deleteProject}
+                                                onAddReward={goAddReward}
                                             />
                                         </CardFooter>
                                     </Card>

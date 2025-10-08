@@ -28,6 +28,7 @@ import { InquiryTab } from './views/cs/tabs/InquiryTab';
 import { ReportTab } from './views/cs/tabs/ReportTab';
 import CSLayout from './views/cs/CSLayout';
 import CreatorProjectDetail from './views/creator/pages/CreatorProjectDetail';
+import CreatorAddReward from './views/creator/pages/CreatorAddReward';
 
 const AdminTabs = lazy(() => import('./views/admin/AdminTabs').then(module => ({ default: module.AdminTabs })));
 
@@ -94,6 +95,7 @@ export default function App() {
                             <Route path='projects'>
                                 <Route index element={<CreatorProjects />} />
                                 <Route path=':projectId' element={<CreatorProjectDetail />} />
+                                <Route path=':projectId/reward' element={<CreatorAddReward />} />
                             </Route>
                             <Route path='backings' />
                             <Route path='shipping' />
