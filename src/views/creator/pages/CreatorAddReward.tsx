@@ -214,8 +214,7 @@ export default function CreatorAddReward() {
                             <Label htmlFor="price">후원 금액 *</Label>
                             <Input
                                 id="price"
-                                placeholder="0"
-                                value={String(form.price ?? "")}
+                                value={form.price ?? ""}
                                 onChange={(e) => setForm({ ...form, price: Number(e.target.value.replace(/[^0-9]/g, "")) })}
                                 disabled={disabledByStatus}
                             />
@@ -228,8 +227,8 @@ export default function CreatorAddReward() {
                             <Label htmlFor="rewardCnt">제한 수량 (선택)</Label>
                             <Input
                                 id="rewardCnt"
-                                placeholder="0"
-                                value={String(form.rewardCnt ?? "")}
+                                placeholder="비워두면 무제한"
+                                value={form.rewardCnt ?? ""}
                                 onChange={(e) => setForm({ ...form, rewardCnt: Number(e.target.value.replace(/[^0-9]/g, "")) })}
                                 disabled={disabledByStatus}
                             />
@@ -321,7 +320,7 @@ export default function CreatorAddReward() {
                                         <div className="min-w-0 flex-1">
                                             <div className="flex flex-wrap items-center gap-2 mb-2">
                                                 <span className="text-lg font-semibold tabular-nums">{numberKR(r.price)}원</span>
-                                                
+
                                                 {r.rewardCnt === null
                                                     ? <Badge variant="secondary">무제한</Badge>
                                                     : <Badge variant="secondary">한정 {r.rewardCnt}개</Badge>}
@@ -332,12 +331,10 @@ export default function CreatorAddReward() {
                                             <h4 className="font-medium truncate">{r.rewardName}</h4>
                                             <p className="mt-1 text-sm text-muted-foreground break-words">{r.rewardContent}</p>
                                             <div className="mt-2 text-sm text-foreground/80 flex flex-wrap items-center gap-3">
-                                                {r.deliveryDate && (
-                                                    <span className="inline-flex items-center gap-1">
-                                                        {formatDate(r.deliveryDate)}
-                                                        {r.isPosting === "Y" && <Truck className="h-4 w-4" />}
-                                                    </span>
-                                                )}
+                                                <span className="inline-flex items-center gap-1">
+                                                    {formatDate(r.deliveryDate)}
+                                                    {r.isPosting === "Y" && <Truck className="h-4 w-4" />}
+                                                </span>
 
                                                 {r.remain === null ? <span>무제한</span> : <span>잔여 {r.remain}개</span>}
                                             </div>

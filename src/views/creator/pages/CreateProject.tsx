@@ -11,22 +11,15 @@ import { CreateProjectStepper } from '../components/CreateProjectStepper';
 import { CreateProjectSteps } from '../components/CreateProjectSteps';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { ProjectCreateRequestDto } from '@/types/creator';
-import { formatDate } from '@/utils/utils';
 
-type RewardCreatePayload = Omit<RewardCreateRequestDto, "projectId" | "deliveryDate"> & {
-    deliveryDate: string;
-};
+type RewardCreatePayload = Omit<RewardCreateRequestDto, "projectId">;
 
-type ProjectCreatePayload = Omit<ProjectCreateRequestDto, "startDate" | "endDate" | "rewardList"> & {
-    startDate: string;
-    endDate: string;
+type ProjectCreatePayload = Omit<ProjectCreateRequestDto, "rewardList"> & {
     rewardList: RewardCreatePayload[];
 };
 
 const normalizeName = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
 
-const toNum = (v: any, d = 0) => (v === null || v === "" ? d : Number(v));
-const toDate = (v: any) => (v instanceof Date ? v : (v ? new Date(v) : new Date()));
 // 태그 문자열화
 const toTagNames = (list: any): string[] =>
     Array.isArray(list)
@@ -50,14 +43,14 @@ const cleanTags = (list: any): string[] => {
     return out;
 };
 
-const isValidReward = (r: RewardDraft) => (
+const isValidReward = (r: RewardDraft) =>
     r.rewardName.trim().length > 0 &&
     r.price > 0 &&
     r.rewardContent.trim().length > 0 &&
     r.deliveryDate instanceof Date &&
     !isNaN(r.deliveryDate.getTime()) &&
-    (r.isPosting === "Y" || r.isPosting === "N")
-);
+    (r.rewardCnt === null || r.rewardCnt >= 1) &&
+    (r.isPosting === "Y" || r.isPosting === "N");
 
 const isValidProject = (p: ProjectCreateRequestDto) => {
     if (!p.title || !p.content || !p.thumbnail)
@@ -76,22 +69,19 @@ const isValidProject = (p: ProjectCreateRequestDto) => {
     return { ok: true, message: "" };
 };
 
-const buildPayload = (
-    project: ProjectCreateRequestDto,
-    rewards: Array<RewardForm>
-): ProjectCreatePayload => ({
+const buildPayload = (project: ProjectCreateRequestDto, rewards: RewardForm[]): ProjectCreatePayload => ({
     ...project,
-    startDate: formatDate(project.startDate),
-    endDate: formatDate(project.endDate),
+    startDate: project.startDate,
+    endDate: project.endDate,
     tagList: cleanTags(project.tagList),
-    rewardList: rewards.map(({ rewardName, price, rewardContent, deliveryDate, rewardCnt, isPosting }) => ({
-        rewardName,
-        price,
-        rewardContent,
-        deliveryDate: formatDate(deliveryDate),
-        rewardCnt,
-        isPosting
-    })),
+    rewardList: rewards.map((r: any): RewardCreatePayload => ({
+        rewardName: r.rewardName.trim(),
+        price: r.price,
+        rewardContent: r.rewardContent.trim(),
+        deliveryDate: r.deliveryDate,
+        rewardCnt: r.rewardCnt,
+        isPosting: r.isPosting
+    }))
 });
 
 const validateAgree = (
@@ -158,7 +148,7 @@ export default function CreateProject() {
         price: 0,
         rewardContent: "",
         deliveryDate: new Date(),
-        rewardCnt: 0,
+        rewardCnt: null,
         isPosting: "Y"
     });
 
@@ -205,33 +195,33 @@ export default function CreateProject() {
 
                     setProject((prev) => ({
                         ...prev,
-                        projectId: toNum(draft.projectId),
-                        ctgrId: toNum(draft.ctgrId),
-                        subctgrId: toNum(draft.subctgrId),
-                        creatorId: toNum(draft.creatorId),
-                        title: draft.title ?? "",
-                        content: draft.content ?? "",
-                        thumbnail: draft.thumbnail ?? "",
-                        goalAmount: toNum(draft.goalAmount),
-                        startDate: toDate(draft.startDate),
-                        endDate: toDate(draft.endDate),
+                        projectId: draft.projectId,
+                        ctgrId: draft.ctgrId,
+                        subctgrId: draft.subctgrId,
+                        creatorId: draft.creatorId,
+                        title: draft.title,
+                        content: draft.content,
+                        thumbnail: draft.thumbnail,
+                        goalAmount: draft.goalAmount,
+                        startDate: draft.startDate,
+                        endDate: draft.endDate,
                         tagList: cleanTags(draft.tagList),
                         rewardList: [],
-                        creatorName: draft.creatorName ?? "",
-                        businessNum: draft.businessNum ?? "",
-                        email: draft.email ?? "",
-                        phone: draft.phone ?? ""
+                        creatorName: draft.creatorName,
+                        businessNum: draft.businessNum,
+                        email: draft.email,
+                        phone: draft.phone
                     }));
 
                     setRewardList(
                         (draft.rewardList ?? []).map((r: any) => ({
-                            rewardId: toNum(r.rewardId),
-                            rewardName: r.rewardName ?? "",
-                            price: toNum(r.price),
-                            rewardContent: r.rewardContent ?? "",
-                            deliveryDate: toDate(r.deliveryDate),
-                            rewardCnt: toNum(r.rewardCnt, 0),
-                            isPosting: ((r.isPosting ?? "Y") + "").trim() === "N" ? "N" : "Y",
+                            rewardId: r.rewardId,
+                            rewardName: r.rewardName,
+                            price: r.price,
+                            rewardContent: r.rewardContent,
+                            deliveryDate: r.deliveryDate,
+                            rewardCnt: r.rewardCnt == null ? null : r.rewardCnt,
+                            isPosting: r.isPosting,
                             tempId: Math.random().toString(36).slice(2, 10)
                         }))
                     );
@@ -263,7 +253,7 @@ export default function CreateProject() {
             price: 0,
             rewardContent: "",
             deliveryDate: new Date(),
-            rewardCnt: 0,
+            rewardCnt: null,
             isPosting: "Y",
         });
     };

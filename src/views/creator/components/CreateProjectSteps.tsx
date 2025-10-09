@@ -184,8 +184,7 @@ export function CreateProjectSteps(props: {
                                     <Label htmlFor="rewardAmount">후원 금액 *</Label>
                                     <Input
                                         id="rewardAmount"
-                                        placeholder="10000"
-                                        value={newReward.price}
+                                        value={newReward.price ?? ""}
                                         onChange={(e) => setNewReward({ ...newReward, price: Number(e.target.value.replace(/[^0-9]/g, "")) })}
                                     />
                                 </div>
@@ -193,8 +192,8 @@ export function CreateProjectSteps(props: {
                                     <Label htmlFor="rewardQuantity">제한 수량 (선택)</Label>
                                     <Input
                                         id="rewardQuantity"
-                                        placeholder="100"
-                                        value={newReward.rewardCnt}
+                                        placeholder="비워두면 무제한"
+                                        value={newReward.rewardCnt ?? ""}
                                         onChange={(e) => setNewReward({ ...newReward, rewardCnt: Number(e.target.value.replace(/[^0-9]/g, "")) })}
                                     />
                                 </div>
@@ -260,16 +259,20 @@ export function CreateProjectSteps(props: {
                                         <div className="flex-1">
                                             <div className="flex items-center space-x-2 mb-2">
                                                 <span className="text-lg font-semibold">{formatCurrency(String(r.price))}원</span>
-                                                {r.rewardCnt > 0 && <Badge variant="secondary">한정 {r.rewardCnt}개</Badge>}
+
+                                                {r.rewardCnt === null
+                                                    ? <Badge variant="secondary">무제한</Badge>
+                                                    : <Badge variant="secondary">한정 {r.rewardCnt}개</Badge>}
+
                                                 {r.isPosting === "Y" ? <Badge>배송 필요</Badge> : <Badge variant="outline">배송 불필요</Badge>}
                                             </div>
+
                                             <h4 className="font-medium mb-1">{r.rewardName}</h4>
                                             <p className="text-sm text-gray-600">{r.rewardContent}</p>
                                             <div className="mt-2 text-sm text-gray-700">
                                                 <div className="flex items-center gap-2">
-                                                    {r.deliveryDate && (
-                                                        <span className="inline-flex items-center gap-1">{formatDate(r.deliveryDate)}{r.isPosting === "Y" && <Truck className="h-4 w-4" />}</span>
-                                                    )}
+                                                    {formatDate(r.deliveryDate)}
+                                                    {r.isPosting === "Y" && <Truck className="h-4 w-4" />}
                                                 </div>
                                             </div>
                                         </div>

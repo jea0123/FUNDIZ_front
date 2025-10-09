@@ -33,7 +33,7 @@ export type RewardDraft = {
     price: number;
     rewardContent: string;
     deliveryDate: Date;
-    rewardCnt: number;
+    rewardCnt: number | null;
     isPosting: "Y" | "N";
 };
 
