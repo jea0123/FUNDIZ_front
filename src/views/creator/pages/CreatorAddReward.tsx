@@ -7,13 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Plus, ArrowLeft, Truck, PackagePlus, Loader2, Gift } from "lucide-react";
 import { endpoints, getData, postData } from "@/api/apis";
 import type { ProjectSummaryDto } from "@/types/creator";
 import type { Reward, RewardCreateRequestDto } from "@/types/reward";
 import FundingLoader from "@/components/FundingLoader";
 import { formatDate } from "@/utils/utils";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const numberKR = (n?: number | null) => new Intl.NumberFormat("ko-KR").format(n || 0);
 
@@ -36,7 +36,10 @@ export default function CreatorAddReward() {
     const [saving, setSaving] = useState(false);
     const [project, setProject] = useState<ProjectSummaryDto | null>(null);
     const [rewards, setRewards] = useState<Reward[]>([]);
-    
+
+    //리워드 추가 전 확인 모달
+    const [confirmOpen, setConfirmOpen] = useState(false);
+
     // 신규 리워드 폼 상태
     const [form, setForm] = useState<RewardFormState>({
         projectId,
@@ -162,14 +165,7 @@ export default function CreatorAddReward() {
 
     return (
         <div className="max-w-5xl mx-auto p-6 space-y-6">
-            <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                    <h1 className="text-2xl font-semibold truncate">리워드 추가</h1>
-                </div>
-                <Button variant="outline" onClick={() => navigate(-1)}>
-                    <ArrowLeft className="h-4 w-4 mr-2" /> 뒤로
-                </Button>
-            </div>
+            <h1 className="text-2xl font-semibold">리워드 추가</h1>
 
             <Card className="block">
                 <CardHeader>
@@ -296,7 +292,7 @@ export default function CreatorAddReward() {
                     </div>
 
                     <Button
-                        onClick={onSubmit}
+                        onClick={() => setConfirmOpen(true)}
                         disabled={disabledByStatus || saving}
                         className="w-full"
                     >
@@ -351,7 +347,59 @@ export default function CreatorAddReward() {
                 </CardContent>
             </Card>
 
-            <Separator />
+            {/* 리워드 추가 전 확인 모달 */}
+            <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Gift className="h-4 w-4" />
+                            리워드 추가 전 확인
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    <div className="space-y-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-lg font-semibold tabular-nums">{numberKR(form.price)}원</span>
+                            {form.rewardCnt ? <Badge variant="secondary">한정 {form.rewardCnt}개</Badge> : null}
+                            {form.isPosting === "Y" ? <Badge>배송 필요</Badge> : <Badge variant="outline">배송 불필요</Badge>}
+                        </div>
+
+                        <div>
+                            <h4 className="font-medium">{form.rewardName || "-"}</h4>
+                            <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap break-words">
+                                {form.rewardContent || "-"}
+                            </p>
+                        </div>
+
+                        <div className="text-sm text-foreground/80 flex flex-wrap items-center gap-3">
+                            <span className="inline-flex items-center gap-1">
+                                {formatDate(form.deliveryDate)}
+                                {form.isPosting === "Y" && <Truck className="h-4 w-4" />}
+                            </span>
+                        </div>
+                    </div>
+
+                    <DialogFooter className="gap-2">
+                        <Button variant="outline" onClick={() => setConfirmOpen(false)} disabled={saving}>
+                            취소
+                        </Button>
+                        <Button
+                            onClick={async () => {
+                                if (!validate()) return;
+                                await onSubmit();
+                                setConfirmOpen(false);
+                            }}
+                            disabled={saving}
+                        >
+                            {saving ? "추가중" : "추가"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Button variant="outline" onClick={() => navigate(-1)}>
+                <ArrowLeft className="h-4 w-4 mr-2" /> 뒤로
+            </Button>
         </div>
     );
 }

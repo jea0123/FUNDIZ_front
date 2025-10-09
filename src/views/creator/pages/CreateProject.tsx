@@ -379,12 +379,12 @@ export default function CreateProject() {
             <div className="flex justify-between mt-8">
                 <div className="flex items-center">
                     {isEdit && currentStep === 1 ? (
-                        <Button variant="outline" onClick={() => goList()}>
-                            <ArrowLeft className="h-4 w-4 mr-2" /> 목록으로
+                        <Button variant="outline" onClick={() => navigate(-1)}>
+                            <ArrowLeft className="h-4 w-4 mr-2" /> 뒤로
                         </Button>
                     ) : currentStep > 1 ? (
                         <Button variant="outline" onClick={() => setCurrentStep((s) => Math.max(1, s - 1))}>
-                            이전
+                            이전 단계
                         </Button>
                     ) : null}
                 </div>
@@ -395,7 +395,7 @@ export default function CreateProject() {
                     </Button>
                     {currentStep < STEPS.length ? (
                         <Button onClick={() => setCurrentStep((s) => Math.min(STEPS.length, s + 1))}>
-                            다음
+                            다음 단계
                         </Button>
                     ) : (
                         <Button onClick={handleSubmit} disabled={!agree || isLoading}>
