@@ -16,20 +16,9 @@ export interface RewardCreateRequestDto {
     rewardName: string;
     price: number;
     rewardContent: string;
-    deliveryDate?: Date;
-    rewardCnt?: number | null;
-    isPosting: string;
-}
-
-export interface RewardUpdateRequestDto {
-    rewardId: number;
-    projectId: number;
-    rewardName: string;
-    price: number;
-    rewardContent: string;
     deliveryDate: Date;
-    rewardCnt: number;
-    isPosting: string;
+    rewardCnt: number | null;
+    isPosting: "Y" | "N";
 }
 
 export interface CartItem {
@@ -44,7 +33,7 @@ export type RewardDraft = {
     price: number;
     rewardContent: string;
     deliveryDate: Date;
-    rewardCnt: number;
+    rewardCnt: number | null;
     isPosting: "Y" | "N";
 };
 

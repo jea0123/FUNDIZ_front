@@ -214,7 +214,7 @@ export default function CreatorProjectDetail() {
                                     <div className="min-w-0">
                                         <div className="flex items-center gap-2 mb-1">
                                             <span className="text-lg font-semibold">{fmtKRW(r.price)}원</span>
-                                            {r.rewardCnt > 0 && <Badge variant="secondary">한정 {r.rewardCnt}개</Badge>}
+                                            {r.rewardCnt ? <Badge variant="secondary">한정 {r.rewardCnt}개</Badge> : null}
                                             <Badge variant={r.isPosting === "Y" ? "default" : "outline"}>
                                                 {r.isPosting === "Y" ? "배송 필요" : "배송 불필요"}
                                             </Badge>
