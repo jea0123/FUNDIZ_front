@@ -16,19 +16,8 @@ export interface RewardCreateRequestDto {
     rewardName: string;
     price: number;
     rewardContent: string;
-    deliveryDate?: Date;
-    rewardCnt?: number | null;
-    isPosting: string;
-}
-
-export interface RewardUpdateRequestDto {
-    rewardId: number;
-    projectId: number;
-    rewardName: string;
-    price: number;
-    rewardContent: string;
     deliveryDate: Date;
-    rewardCnt: number;
+    rewardCnt?: number | null;
     isPosting: string;
 }
 

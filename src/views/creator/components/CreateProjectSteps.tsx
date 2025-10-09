@@ -211,16 +211,18 @@ export function CreateProjectSteps(props: {
                             <div>
                                 <Label htmlFor="rewardDescription">리워드 설명 *</Label>
                                 <Textarea
-                                    id="rewardDescription" rows={3}
+                                    id="rewardDescription"
+                                    rows={3}
                                     placeholder="리워드 구성품과 혜택을 설명하세요"
                                     value={newReward.rewardContent}
                                     onChange={(e) => setNewReward({ ...newReward, rewardContent: e.target.value })}
                                 />
                             </div>
                             <div>
-                                <Label htmlFor="deliveryDate">배송 시작 예정일 *</Label>
+                                <Label htmlFor="deliveryDate">{newReward.isPosting === "Y" ? "배송 예정일 *" : "제공 예정일 *"}</Label>
                                 <Input
-                                    id="deliveryDate" type="date"
+                                    id="deliveryDate"
+                                    type="date"
                                     value={formatDate(newReward.deliveryDate)}
                                     onChange={(e) => setNewReward({ ...newReward, deliveryDate: new Date(e.target.value) })}
                                 />
@@ -231,10 +233,13 @@ export function CreateProjectSteps(props: {
                                     value={newReward.isPosting}
                                     onValueChange={(value) => setNewReward({ ...newReward, isPosting: value as "Y" | "N" })}
                                 >
-                                    <SelectTrigger id="isPosting" className="w-full"><SelectValue placeholder="배송 필요 여부 선택" /></SelectTrigger>
+                                    <SelectTrigger id="isPosting" className="w-full">
+                                        <SelectValue placeholder="배송 필요 여부 선택" />
+                                    </SelectTrigger>
+                                    
                                     <SelectContent>
                                         <SelectItem value="Y">배송 필요</SelectItem>
-                                        <SelectItem value="N">배송 불필요</SelectItem>
+                                        <SelectItem value="N">배송 불필요(디지털/현장수령)</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -250,23 +255,20 @@ export function CreateProjectSteps(props: {
                     <div className="space-y-2">
                         {rewardList.map((r) => (
                             <Card key={r.tempId}>
-                                <CardContent className="">
+                                <CardContent>
                                     <div className="flex justify-between items-start">
                                         <div className="flex-1">
                                             <div className="flex items-center space-x-2 mb-2">
                                                 <span className="text-lg font-semibold">{formatCurrency(String(r.price))}원</span>
                                                 {r.rewardCnt > 0 && <Badge variant="secondary">한정 {r.rewardCnt}개</Badge>}
+                                                {r.isPosting === "Y" ? <Badge>배송 필요</Badge> : <Badge variant="outline">배송 불필요</Badge>}
                                             </div>
                                             <h4 className="font-medium mb-1">{r.rewardName}</h4>
                                             <p className="text-sm text-gray-600">{r.rewardContent}</p>
                                             <div className="mt-2 text-sm text-gray-700">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="mr-1">{formatDate(r.deliveryDate)}</span>
-                                                    <Truck className="h-4 w-4" />
-                                                    {r.isPosting === "Y" ? (
-                                                        <Badge>배송 필요</Badge>
-                                                    ) : (
-                                                        <Badge variant="outline">배송 불필요</Badge>
+                                                    {r.deliveryDate && (
+                                                        <span className="inline-flex items-center gap-1">{formatDate(r.deliveryDate)}{r.isPosting === "Y" && <Truck className="h-4 w-4" />}</span>
                                                     )}
                                                 </div>
                                             </div>
