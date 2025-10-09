@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, ArrowLeft, Truck, PackagePlus, Loader2, Gift } from "lucide-react";
+import { Plus, ArrowLeft, Truck, PackagePlus, Loader2, Gift, AlertTriangle } from "lucide-react";
 import { endpoints, getData, postData } from "@/api/apis";
 import type { ProjectSummaryDto } from "@/types/creator";
 import type { Reward, RewardCreateRequestDto } from "@/types/reward";
@@ -15,6 +15,7 @@ import FundingLoader from "@/components/FundingLoader";
 import { formatDate } from "@/utils/utils";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useCreatorId } from "../useCreatorId";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const numberKR = (n?: number | null) => new Intl.NumberFormat("ko-KR").format(n || 0);
 
@@ -45,13 +46,12 @@ export default function CreatorAddReward() {
     const [saving, setSaving] = useState(false);
     const [project, setProject] = useState<ProjectSummaryDto | null>(null);
     const [rewards, setRewards] = useState<Reward[]>([]);
-
     // 리워드 추가 전 확인 모달
     const [confirmOpen, setConfirmOpen] = useState(false);
-
     // 신규 리워드 폼 상태
     const [form, setForm] = useState<RewardCreateRequestDto | null>(null);
-
+    // 리워드 삭제 불가 체크
+    const [chkNoDelete, setChkNoDelete] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     // projectId 확정 시 폼 초기화
@@ -83,6 +83,11 @@ export default function CreatorAddReward() {
         })();
         return () => { alive = false; };
     }, [projectId, idLoading]);
+
+    // 모달 닫힐 때마다 체크박스 초기화
+    useEffect(() => {
+        if (!confirmOpen) setChkNoDelete(false);
+    }, [confirmOpen]);
 
     const validate = () => {
         if (!form) return false;
@@ -146,6 +151,11 @@ export default function CreatorAddReward() {
         const s = project?.projectStatus;
         return !(s === "UPCOMING" || s === "OPEN"); // 운영 중에만 리워드 추가 허용
     }, [project?.projectStatus]);
+
+    const handleOpenConfirm = () => {
+        if (!validate()) return;
+        setConfirmOpen(true);
+    };
 
     if (loading) return <FundingLoader />;
 
@@ -292,7 +302,8 @@ export default function CreatorAddReward() {
                     </div>
 
                     <Button
-                        onClick={() => setConfirmOpen(true)}
+                        type="button"
+                        onClick={handleOpenConfirm}
                         disabled={disabledByStatus || saving}
                         className="w-full"
                     >
@@ -377,6 +388,21 @@ export default function CreatorAddReward() {
                                 {form.isPosting === "Y" && <Truck className="h-4 w-4" />}
                             </span>
                         </div>
+
+                        <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                            <p>
+                                이 리워드는 <span className="font-semibold">추가 후 삭제할 수 없습니다.</span><br />
+                                내용을 다시 한 번 확인해 주세요.
+                            </p>
+                        </div>
+
+                        <div className="flex items-start gap-2 text-sm text-foreground/80">
+                            <Checkbox id="chkNoDelete" checked={chkNoDelete} onCheckedChange={(checked) => setChkNoDelete(checked === true)} />
+                            <label htmlFor="chkNoDelete" className="select-none">
+                                삭제 불가 정책을 이해했고 동의합니다.
+                            </label>
+                        </div>
                     </div>
 
                     <DialogFooter className="gap-2">
@@ -386,10 +412,11 @@ export default function CreatorAddReward() {
                         <Button
                             onClick={async () => {
                                 if (!validate()) return;
+                                if (!chkNoDelete) return;
                                 await onSubmit();
                                 setConfirmOpen(false);
                             }}
-                            disabled={saving}
+                            disabled={saving || !chkNoDelete}
                         >
                             {saving ? "추가중" : "추가"}
                         </Button>
