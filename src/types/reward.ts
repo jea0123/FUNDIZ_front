@@ -17,8 +17,8 @@ export interface RewardCreateRequestDto {
     price: number;
     rewardContent: string;
     deliveryDate: Date;
-    rewardCnt?: number | null;
-    isPosting: string;
+    rewardCnt: number | null;
+    isPosting: "Y" | "N";
 }
 
 export interface CartItem {

@@ -14,48 +14,56 @@ import type { Reward, RewardCreateRequestDto } from "@/types/reward";
 import FundingLoader from "@/components/FundingLoader";
 import { formatDate } from "@/utils/utils";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useCreatorId } from "../useCreatorId";
 
 const numberKR = (n?: number | null) => new Intl.NumberFormat("ko-KR").format(n || 0);
 
 export default function CreatorAddReward() {
-    type RewardFormState = {
-        projectId: number;
-        rewardName: string;
-        price: number;
-        rewardContent: string;
-        deliveryDate: Date;
-        rewardCnt: number | null;
-        isPosting: "Y" | "N";
-    }
+    // 신규 리워드 폼
+    const defaultForm = (pid: number): RewardCreateRequestDto => ({
+        projectId: pid,
+        rewardName: "",
+        price: 0,
+        rewardContent: "",
+        deliveryDate: new Date(),
+        rewardCnt: null,
+        isPosting: "Y"
+    });
 
     const navigate = useNavigate();
-    const { projectId: projectIdParam } = useParams();
-    const projectId = Number(projectIdParam);
+
+    const { projectId: projectIdParam } = useParams<{ projectId: string }>();
+    const projectId = useMemo<number | null>(() => {
+        const num = Number(projectIdParam);
+        return Number.isFinite(num) && num > 0 ? num : null;
+    }, [projectIdParam]);
+
+    //TODO: 임시용 id (나중에 삭제하기)
+    const { loading: idLoading } = useCreatorId(28);
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [project, setProject] = useState<ProjectSummaryDto | null>(null);
     const [rewards, setRewards] = useState<Reward[]>([]);
 
-    //리워드 추가 전 확인 모달
+    // 리워드 추가 전 확인 모달
     const [confirmOpen, setConfirmOpen] = useState(false);
 
     // 신규 리워드 폼 상태
-    const [form, setForm] = useState<RewardFormState>({
-        projectId,
-        rewardName: "",
-        price: 0,
-        rewardContent: "",
-        deliveryDate: new Date(),
-        rewardCnt: null,
-        isPosting: "Y",
-    });
+    const [form, setForm] = useState<RewardCreateRequestDto | null>(null);
 
     const [errors, setErrors] = useState<Record<string, string>>({});
+
+    // projectId 확정 시 폼 초기화
+    useEffect(() => {
+        if (projectId) setForm(defaultForm(projectId));
+    }, [projectId]);
 
     // 초기 데이터 로드: 프로젝트 요약 + 기존 리워드
     useEffect(() => {
         let alive = true;
+        if (!projectId || idLoading) return;
+
         (async () => {
             try {
                 setLoading(true);
@@ -73,12 +81,12 @@ export default function CreatorAddReward() {
                 if (alive) setLoading(false);
             }
         })();
-        return () => {
-            alive = false;
-        };
-    }, [projectId]);
+        return () => { alive = false; };
+    }, [projectId, idLoading]);
 
     const validate = () => {
+        if (!form) return false;
+
         const e: Record<string, string> = {};
         if (!form.price || form.price <= 0) e.price = "금액을 입력하세요.";
         if (!form.rewardName?.trim()) e.rewardName = "리워드명을 입력하세요.";
@@ -93,14 +101,14 @@ export default function CreatorAddReward() {
                 if (del < end) e.deliveryDate = `${label}은 펀딩 종료일 이후여야 합니다.`;
             }
         }
-        if (form.rewardCnt != null && form.rewardCnt < 0) e.rewardCnt = "수량은 0 이상이어야 합니다.";
+        if (form.rewardCnt != null && form.rewardCnt < 0) e.rewardCnt = "리워드 수량은 0 이상이어야 합니다.";
 
         setErrors(e);
         return Object.keys(e).length === 0;
     };
 
     const onSubmit = async () => {
-        if (!project) return;
+        if (!project || !form) return;
         if (!validate()) return;
 
         try {
@@ -111,23 +119,15 @@ export default function CreatorAddReward() {
                 price: form.price,
                 rewardContent: form.rewardContent.trim(),
                 deliveryDate: form.deliveryDate,
-                rewardCnt: form.rewardCnt ?? 0,
+                rewardCnt: form.rewardCnt,
                 isPosting: form.isPosting
             };
 
             const res = await postData(endpoints.addReward(project.projectId), payload);
             if (res?.status === 200) {
                 alert("리워드를 추가했습니다.");
-                // 폼 초기화 + 리스트 재조회
-                setForm({
-                    projectId,
-                    rewardName: "",
-                    price: 0,
-                    rewardContent: "",
-                    deliveryDate: new Date(),
-                    rewardCnt: null,
-                    isPosting: "Y"
-                });
+                setForm(defaultForm(form.projectId)); // 폼 초기화
+
                 const refresh = await getData(endpoints.getCreatorRewardList(project.projectId));
                 setRewards(refresh.data || []);
             } else {
@@ -144,8 +144,7 @@ export default function CreatorAddReward() {
 
     const disabledByStatus = useMemo(() => {
         const s = project?.projectStatus;
-        // 운영 중 추가만 허용
-        return !(s === "UPCOMING" || s === "OPEN");
+        return !(s === "UPCOMING" || s === "OPEN"); // 운영 중에만 리워드 추가 허용
     }, [project?.projectStatus]);
 
     if (loading) return <FundingLoader />;
@@ -162,6 +161,8 @@ export default function CreatorAddReward() {
             </div>
         );
     }
+
+    if (!form) return <FundingLoader />;
 
     return (
         <div className="max-w-5xl mx-auto p-6 space-y-6">
@@ -277,7 +278,7 @@ export default function CreatorAddReward() {
                         <Label htmlFor="isPosting">배송 필요 여부 *</Label>
                         <Select
                             value={form.isPosting}
-                            onValueChange={(v) => setForm((f) => ({ ...f, isPosting: v as "Y" | "N" }))}
+                            onValueChange={(v) => setForm({ ...form, isPosting: v as "Y" | "N" })}
                             disabled={disabledByStatus}
                         >
                             <SelectTrigger id="isPosting" className="w-full">
@@ -305,13 +306,13 @@ export default function CreatorAddReward() {
             <Card>
                 <CardHeader>
                     <CardTitle className="text-base flex items-center">
-                        <Gift className="h-4 w-4 mr-2" /> 기존 리워드
+                        <Gift className="h-4 w-4 mr-2" /> 추가된 리워드
                     </CardTitle>
                 </CardHeader>
 
                 <CardContent>
                     {rewards.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">기존 리워드가 없습니다.</p>
+                        <p className="text-sm text-muted-foreground">추가된 리워드가 없습니다.</p>
                     ) : (
                         <div className="grid gap-4">
                             {rewards.map((r) => (
@@ -320,13 +321,16 @@ export default function CreatorAddReward() {
                                         <div className="min-w-0 flex-1">
                                             <div className="flex flex-wrap items-center gap-2 mb-2">
                                                 <span className="text-lg font-semibold tabular-nums">{numberKR(r.price)}원</span>
-                                                {r.rewardCnt ? <Badge variant="secondary">한정 {r.rewardCnt}개</Badge> : null}
+                                                
+                                                {r.rewardCnt === null
+                                                    ? <Badge variant="secondary">무제한</Badge>
+                                                    : <Badge variant="secondary">한정 {r.rewardCnt}개</Badge>}
+
                                                 {r.isPosting === "Y" ? <Badge>배송 필요</Badge> : <Badge variant="outline">배송 불필요</Badge>}
                                             </div>
 
                                             <h4 className="font-medium truncate">{r.rewardName}</h4>
                                             <p className="mt-1 text-sm text-muted-foreground break-words">{r.rewardContent}</p>
-
                                             <div className="mt-2 text-sm text-foreground/80 flex flex-wrap items-center gap-3">
                                                 {r.deliveryDate && (
                                                     <span className="inline-flex items-center gap-1">
@@ -334,9 +338,8 @@ export default function CreatorAddReward() {
                                                         {r.isPosting === "Y" && <Truck className="h-4 w-4" />}
                                                     </span>
                                                 )}
-                                                {typeof r.remain === "number" && (
-                                                    <span>남은 {numberKR(r.remain)}개</span>
-                                                )}
+
+                                                {r.remain === null ? <span>무제한</span> : <span>잔여 {r.remain}개</span>}
                                             </div>
                                         </div>
                                     </div>

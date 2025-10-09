@@ -231,12 +231,12 @@ export function CreateProjectSteps(props: {
                                 <Label htmlFor="isPosting">배송 필요 여부 *</Label>
                                 <Select
                                     value={newReward.isPosting}
-                                    onValueChange={(value) => setNewReward({ ...newReward, isPosting: value as "Y" | "N" })}
+                                    onValueChange={(v) => setNewReward({ ...newReward, isPosting: v as "Y" | "N" })}
                                 >
                                     <SelectTrigger id="isPosting" className="w-full">
                                         <SelectValue placeholder="배송 필요 여부 선택" />
                                     </SelectTrigger>
-                                    
+
                                     <SelectContent>
                                         <SelectItem value="Y">배송 필요</SelectItem>
                                         <SelectItem value="N">배송 불필요(디지털/현장수령)</SelectItem>
