@@ -16,6 +16,7 @@ import { formatDate } from "@/utils/utils";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useCreatorId } from "../useCreatorId";
 import { Checkbox } from "@/components/ui/checkbox";
+import { validateReward } from "@/types/reward-validator";
 
 const numberKR = (n?: number | null) => new Intl.NumberFormat("ko-KR").format(n || 0);
 
@@ -43,16 +44,19 @@ export default function CreatorAddReward() {
     const { loading: idLoading } = useCreatorId(28);
 
     const [loading, setLoading] = useState(true);
+    const [errors, setErrors] = useState<Record<string, string>>({});
     const [saving, setSaving] = useState(false);
     const [project, setProject] = useState<ProjectSummaryDto | null>(null);
     const [rewards, setRewards] = useState<Reward[]>([]);
+
     // 리워드 추가 전 확인 모달
     const [confirmOpen, setConfirmOpen] = useState(false);
+
     // 신규 리워드 폼 상태
     const [form, setForm] = useState<RewardCreateRequestDto | null>(null);
+
     // 리워드 삭제 불가 체크
     const [chkNoDelete, setChkNoDelete] = useState(false);
-    const [errors, setErrors] = useState<Record<string, string>>({});
 
     // projectId 확정 시 폼 초기화
     useEffect(() => {
@@ -91,25 +95,9 @@ export default function CreatorAddReward() {
 
     const validate = () => {
         if (!form) return false;
-
-        const e: Record<string, string> = {};
-        if (!form.price || form.price <= 0) e.price = "금액을 입력하세요.";
-        if (!form.rewardName?.trim()) e.rewardName = "리워드명을 입력하세요.";
-        if (!form.rewardContent?.trim()) e.rewardContent = "리워드 설명을 입력하세요.";
-        if (form.isPosting === "Y" || form.isPosting === "N") {
-            const label = form.isPosting === "Y" ? "배송 예정일" : "제공 예정일";
-            if (!form.deliveryDate) {
-                e.deliveryDate = `${label}을 선택하세요.`;
-            } else if (project?.endDate) {
-                const end = new Date(project.endDate);
-                const del = new Date(form.deliveryDate);
-                if (del < end) e.deliveryDate = `${label}은 펀딩 종료일 이후여야 합니다.`;
-            }
-        }
-        if (form.rewardCnt != null && form.rewardCnt < 0) e.rewardCnt = "리워드 수량은 0 이상이어야 합니다.";
-
-        setErrors(e);
-        return Object.keys(e).length === 0;
+        const { ok, errors } = validateReward(form, { fundingEndDate: project?.endDate });
+        setErrors(errors);
+        return ok;
     };
 
     const onSubmit = async () => {
