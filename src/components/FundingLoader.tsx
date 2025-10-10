@@ -1,4 +1,3 @@
-import React from "react";
 /**
  * FundingLoader — 스피너 전용(극심플)
  * - 풀스크린 중앙 정렬, 스피너만 표시

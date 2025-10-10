@@ -7,14 +7,17 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type { Category } from "@/types/admin";
-import type { ProjectCreateRequestDto, Subcategory } from "@/types/projects";
-import type { RewardCreateRequestDto } from "@/types/reward";
+import type { ProjectCreateRequestDto } from "@/types/creator";
+import type { Subcategory } from "@/types/projects";
+import type { RewardDraft, RewardForm } from "@/types/reward";
+import type { FieldErrors } from "@/types/reward-validator";
 import { formatDate } from "@/utils/utils";
 import { Plus, Trash, Truck, Upload, X } from "lucide-react";
 import { useRef, useState } from "react";
 
-const formatCurrency = (amount: string) =>
-    new Intl.NumberFormat("ko-KR").format(parseInt(amount || "0", 10) || 0);
+const numberKR = (n?: number | null) => new Intl.NumberFormat("ko-KR").format(n || 0);
+
+const normalizeName = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
 
 export function CreateProjectSteps(props: {
     step: number;
@@ -22,17 +25,21 @@ export function CreateProjectSteps(props: {
     setProject: React.Dispatch<React.SetStateAction<ProjectCreateRequestDto>>;
     categories: Category[];
     subcategories: Subcategory[];
-    rewardList: Array<RewardCreateRequestDto & { tempId: string }>;
-    newReward: RewardCreateRequestDto;
-    setNewReward: (r: RewardCreateRequestDto) => void;
+    rewardList: RewardForm[];
+    newReward: RewardDraft;
+    setNewReward: React.Dispatch<React.SetStateAction<RewardDraft>>;
     addReward: () => void;
-    removeReward: (id: string) => void;
+    removeReward: (tempId: string) => void;
     agree?: boolean;
-    setAgree?: (v: boolean) => void;
+    setAgree?: React.Dispatch<React.SetStateAction<boolean>>;
     agreeError?: string | null;
+    rewardErrors?: FieldErrors;
+    addDays: (date: Date, days: number) => Date;
 }) {
     const {
-        step, project, setProject, categories, subcategories, rewardList, newReward, setNewReward, addReward, removeReward, agree = false, setAgree, agreeError
+        step, project, setProject, categories, subcategories, rewardList, newReward,
+        setNewReward, addReward, removeReward, agree = false, setAgree, agreeError,
+        rewardErrors = {}, addDays
     } = props;
 
     const businessDocRef = useRef<HTMLInputElement>(null);
@@ -107,17 +114,55 @@ export function CreateProjectSteps(props: {
                     onAdd={(tag) => setProject(prev => {
                         const trimmed = tag.trim();
                         if (!trimmed) return prev;
-                        const next = Array.from(new Set([...(prev.tagList || []), trimmed]));
+
+                        const exists = (prev.tagList || []).some(
+                            (tag) => normalizeName(tag) === normalizeName(trimmed)
+                        );
+                        if (exists) return prev;
+
+                        const next = [...(prev.tagList || []), trimmed];
                         if (next.length > 10) return prev;
                         return { ...prev, tagList: next };
                     })}
-                    onRemove={(tag) => setProject(prev => ({ ...prev, tagList: (prev.tagList || []).filter(t => t !== tag) }))}
+                    onRemove={(tag) => setProject(prev => ({
+                        ...prev,
+                        tagList: (prev.tagList || []).filter(
+                            (t) => normalizeName(t) !== normalizeName(tag)
+                        )
+                    }))}
                 />
             </div>
         );
     }
 
     if (step === 2) {
+        const MIN_DAYS = 7;
+        const MAX_DAYS = 60;
+
+        const parseLocalDate = (s: string) => {
+            const [y, m, d] = s.split("-").map(Number);
+            return new Date(y, (m ?? 1) - 1, d ?? 1);
+        };
+
+        const clampDate = (d: Date, min: Date, max: Date) => d < min ? min : d > max ? max : d;
+
+        const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const start = parseLocalDate(e.target.value);
+            const end = addDays(start, MIN_DAYS);
+            setProject(prev => ({ ...prev, startDate: start, endDate: end }));
+        }
+
+        const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const pick = parseLocalDate(e.target.value);
+            if (!project.startDate) {
+                setProject(prev => ({ ...prev, endDate: pick }));
+                return;
+            }
+            const minEnd = addDays(project.startDate, MIN_DAYS);
+            const maxEnd = addDays(project.startDate, MAX_DAYS);
+            setProject(prev => ({ ...prev, endDate: clampDate(pick, minEnd, maxEnd) }));
+        };
+
         return (
             <div className="space-y-6">
                 <div>
@@ -132,24 +177,28 @@ export function CreateProjectSteps(props: {
                         }}
                     />
                     <p className="mt-2 text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded-md inline-block">
-                        {project.goalAmount ? `${formatCurrency(String(project.goalAmount))}원` : ""}
+                        {project.goalAmount ? `${numberKR(project.goalAmount)}원` : ""}
                     </p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <Label htmlFor="startDate">펀딩 시작일 *</Label>
                         <Input
-                            id="startDate" type="date"
+                            id="startDate"
+                            type="date"
                             value={formatDate(project.startDate)}
-                            onChange={(e) => setProject(prev => ({ ...prev, startDate: new Date(e.target.value) }))}
+                            onChange={handleStartDateChange}
                         />
                     </div>
                     <div>
                         <Label htmlFor="endDate">펀딩 종료일 *</Label>
                         <Input
-                            id="endDate" type="date"
-                            value={formatDate(project.endDate)}
-                            onChange={(e) => setProject(prev => ({ ...prev, endDate: new Date(e.target.value) }))}
+                            id="endDate"
+                            type="date"
+                            min={project.startDate ? formatDate(addDays(project.startDate, MIN_DAYS)) : undefined}
+                            max={project.startDate ? formatDate(addDays(project.startDate, MAX_DAYS)) : undefined}
+                            value={project.endDate ? formatDate(project.endDate) : ""}
+                            onChange={handleEndDateChange}
                         />
                     </div>
                 </div>
@@ -167,24 +216,30 @@ export function CreateProjectSteps(props: {
                         <CardContent className="p-4 space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <Label htmlFor="rewardAmount">후원 금액 *</Label>
+                                    <Label htmlFor="price">후원 금액 *</Label>
                                     <Input
-                                        id="rewardAmount"
-                                        placeholder="10000"
-                                        value={newReward.price}
+                                        id="price"
+                                        value={newReward.price ?? ""}
                                         onChange={(e) => setNewReward({ ...newReward, price: Number(e.target.value.replace(/[^0-9]/g, "")) })}
                                     />
+                                    {newReward.price ? (
+                                        <p className="mt-1 text-xs text-muted-foreground">{numberKR(newReward.price)}원</p>
+                                    ) : null}
+                                    {rewardErrors.price && <p className="mt-1 text-xs text-red-500">{rewardErrors.price}</p>}
                                 </div>
+
                                 <div>
                                     <Label htmlFor="rewardQuantity">제한 수량 (선택)</Label>
                                     <Input
                                         id="rewardQuantity"
-                                        placeholder="100"
-                                        value={newReward.rewardCnt}
+                                        placeholder="비워두면 무제한"
+                                        value={newReward.rewardCnt ?? ""}
                                         onChange={(e) => setNewReward({ ...newReward, rewardCnt: Number(e.target.value.replace(/[^0-9]/g, "")) })}
                                     />
+                                    {rewardErrors.rewardCnt && <p className="mt-1 text-xs text-red-500">{rewardErrors.rewardCnt}</p>}
                                 </div>
                             </div>
+
                             <div>
                                 <Label htmlFor="rewardTitle">리워드명 *</Label>
                                 <Input
@@ -193,37 +248,49 @@ export function CreateProjectSteps(props: {
                                     value={newReward.rewardName}
                                     onChange={(e) => setNewReward({ ...newReward, rewardName: e.target.value })}
                                 />
+                                {rewardErrors.rewardName && <p className="mt-1 text-xs text-red-500">{rewardErrors.rewardName}</p>}
                             </div>
+
                             <div>
                                 <Label htmlFor="rewardDescription">리워드 설명 *</Label>
                                 <Textarea
-                                    id="rewardDescription" rows={3}
+                                    id="rewardDescription"
+                                    rows={3}
                                     placeholder="리워드 구성품과 혜택을 설명하세요"
                                     value={newReward.rewardContent}
                                     onChange={(e) => setNewReward({ ...newReward, rewardContent: e.target.value })}
                                 />
+                                {rewardErrors.rewardContent && <p className="mt-1 text-xs text-red-500">{rewardErrors.rewardContent}</p>}
                             </div>
+
                             <div>
-                                <Label htmlFor="deliveryDate">배송 시작 예정일 *</Label>
+                                <Label htmlFor="deliveryDate">{newReward.isPosting === "Y" ? "배송 예정일 *" : "제공 예정일 *"}</Label>
                                 <Input
-                                    id="deliveryDate" type="date"
+                                    id="deliveryDate"
+                                    type="date"
                                     value={formatDate(newReward.deliveryDate)}
                                     onChange={(e) => setNewReward({ ...newReward, deliveryDate: new Date(e.target.value) })}
                                 />
+                                {rewardErrors.deliveryDate && <p className="mt-1 text-xs text-red-500">{rewardErrors.deliveryDate}</p>}
                             </div>
+
                             <div>
                                 <Label htmlFor="isPosting">배송 필요 여부 *</Label>
                                 <Select
                                     value={newReward.isPosting}
-                                    onValueChange={(value) => setNewReward({ ...newReward, isPosting: value as "Y" | "N" })}
+                                    onValueChange={(v) => setNewReward({ ...newReward, isPosting: v as "Y" | "N" })}
                                 >
-                                    <SelectTrigger id="isPosting" className="w-full"><SelectValue placeholder="배송 필요 여부 선택" /></SelectTrigger>
+                                    <SelectTrigger id="isPosting" className="w-full">
+                                        <SelectValue placeholder="배송 필요 여부 선택" />
+                                    </SelectTrigger>
+
                                     <SelectContent>
                                         <SelectItem value="Y">배송 필요</SelectItem>
-                                        <SelectItem value="N">배송 불필요</SelectItem>
+                                        <SelectItem value="N">배송 불필요(디지털/현장수령)</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
+
                             <Button onClick={addReward} className="w-full">
                                 <Plus className="h-4 w-4 mr-2" />리워드 추가
                             </Button>
@@ -236,24 +303,25 @@ export function CreateProjectSteps(props: {
                     <div className="space-y-2">
                         {rewardList.map((r) => (
                             <Card key={r.tempId}>
-                                <CardContent className="">
+                                <CardContent>
                                     <div className="flex justify-between items-start">
                                         <div className="flex-1">
                                             <div className="flex items-center space-x-2 mb-2">
-                                                <span className="text-lg font-semibold">{formatCurrency(String(r.price))}원</span>
-                                                {r.rewardCnt > 0 && <Badge variant="secondary">한정 {r.rewardCnt}개</Badge>}
+                                                <span className="text-lg font-semibold">{numberKR(r.price)}원</span>
+
+                                                {r.rewardCnt === null
+                                                    ? <Badge variant="secondary">무제한</Badge>
+                                                    : <Badge variant="secondary">한정 {r.rewardCnt}개</Badge>}
+
+                                                {r.isPosting === "Y" ? <Badge>배송 필요</Badge> : <Badge variant="outline">배송 불필요</Badge>}
                                             </div>
+
                                             <h4 className="font-medium mb-1">{r.rewardName}</h4>
                                             <p className="text-sm text-gray-600">{r.rewardContent}</p>
                                             <div className="mt-2 text-sm text-gray-700">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="mr-1">{formatDate(r.deliveryDate)}</span>
-                                                    <Truck className="h-4 w-4" />
-                                                    {r.isPosting === "Y" ? (
-                                                        <Badge>배송 필요</Badge>
-                                                    ) : (
-                                                        <Badge variant="outline">배송 불필요</Badge>
-                                                    )}
+                                                    {formatDate(r.deliveryDate)}
+                                                    {r.isPosting === "Y" && <Truck className="h-4 w-4" />}
                                                 </div>
                                             </div>
                                         </div>
@@ -393,7 +461,7 @@ export function CreateProjectSteps(props: {
                             </div>
                             <div>
                                 <h4 className="font-medium text-gray-700">목표 금액</h4>
-                                <p>{project.goalAmount ? `${formatCurrency(String(project.goalAmount))}원` : "-"}</p>
+                                <p>{project.goalAmount ? `${numberKR(project.goalAmount)}원` : "-"}</p>
                             </div>
                             <div>
                                 <h4 className="font-medium text-gray-700">펀딩 기간</h4>

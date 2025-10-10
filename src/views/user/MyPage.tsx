@@ -1,23 +1,23 @@
-import { useEffect, useState } from "react";
-import { Button } from "../../components/ui/button";
+import { useEffect, useState } from 'react';
+import { Button } from '../../components/ui/button';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "../../components/ui/card";
+} from '../../components/ui/card';
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "../../components/ui/tabs";
-import { Badge } from "../../components/ui/badge";
+} from '../../components/ui/tabs';
+import { Badge } from '../../components/ui/badge';
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "../../components/ui/avatar";
+} from '../../components/ui/avatar';
 //import { Input } from './ui/input';
 //import { Label } from './ui/label';
 //import { Textarea } from './ui/textarea';
@@ -30,18 +30,18 @@ import {
   Bell,
   TrendingUpDown,
   MessagesSquare,
-  Siren
-} from "lucide-react";
-import { ImageWithFallback } from "../../components/figma/ImageWithFallback";
-import { useNavigate } from "react-router-dom";
+  Siren,
+} from 'lucide-react';
+import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
+import { useNavigate } from 'react-router-dom';
 //import { useLoginUserStore } from '@/store/LoginUserStore.store';
 //import { endpoints } from '@/api/apis';
-import { endpoints, getData, postData, deleteData } from "@/api/apis";
-import type { LoginUser } from "@/types";
+import { endpoints, getData, postData, deleteData } from '@/api/apis';
+import type { LoginUser } from '@/types';
 //import { set } from 'date-fns';
 //import { useParams } from 'react-router-dom';
-import type { BackingMyPageDetail } from "@/types/backing";
-import type { LikedDetail } from "@/types/liked";
+import type { BackingMyPageDetail } from '@/types/backing';
+import type { LikedDetail } from '@/types/liked';
 import {
   Dialog,
   DialogClose,
@@ -50,16 +50,16 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import type {
   AddrAddRequest,
   AddrUpdateRequest,
   AddressResponse,
-} from "@/types/address";
+} from '@/types/address';
 
-import { SavedAddressModal } from "../backing/SavedAddressModal";
-import { MyInquiryTab } from "./MyInquiryTab";
-import { MyReportsTab } from "./MyReportsTab";
+import { SavedAddressModal } from '../backing/SavedAddressModal';
+import { MyInquiryTab } from './MyInquiryTab';
+import { MyReportsTab } from './MyReportsTab';
 
 export function MyPage() {
   const tempUserId = 1;
@@ -71,40 +71,39 @@ export function MyPage() {
   //const[projects, setProjects] =useState<ProjectDetail[]>();
   const [addrList, setAddressList] = useState<AddressResponse[]>();
   const [addrAdd, setAddrAdd] = useState<AddrAddRequest>({
-    addrName: "",
-    recipient: "",
-    postalCode: "",
-    roadAddr: "",
-    detailAddr: "",
-    recipientPhone: "",
-    isDefault: "N",
+    addrName: '',
+    recipient: '',
+    postalCode: '',
+    roadAddr: '',
+    detailAddr: '',
+    recipientPhone: '',
+    isDefault: 'N',
   });
-  
 
-  const [roleView, setRoleView] = useState<"user" | "creator">("user");
+  const [roleView, setRoleView] = useState<'user' | 'creator'>('user');
 
   const [addrEdit, setAddrEdit] = useState<AddrUpdateRequest>({
     addrId: 0,
     userId: tempUserId,
-    addrName: "",
-    recipient: "",
-    postalCode: "",
-    roadAddr: "",
-    detailAddr: "",
-    recipientPhone: "",
+    addrName: '',
+    recipient: '',
+    postalCode: '',
+    roadAddr: '',
+    detailAddr: '',
+    recipientPhone: '',
   });
   const statusLabel: Record<string, string> = {
-    PENDING: "결제 대기",
-    COMPLETED: "결제 완료",
-    CANCELED: "결제 취소",
-    FAILED: "결제 실패",
-    REFUNDED: "환불",
+    PENDING: '결제 대기',
+    COMPLETED: '결제 완료',
+    CANCELED: '결제 취소',
+    FAILED: '결제 실패',
+    REFUNDED: '환불',
   };
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
-  const [activeTab, setActiveTab] = useState("supported"); // 왼쪽 버튼 클릭 시 오른쪽 탭 제어
+  const [activeTab, setActiveTab] = useState('supported'); // 왼쪽 버튼 클릭 시 오른쪽 탭 제어
   const [backingProjects, setBackingProjects] =
     useState<BackingMyPageDetail[]>();
   const [likedProjects, setLikedProjects] = useState<LikedDetail[]>();
@@ -115,9 +114,12 @@ export function MyPage() {
   const [selectedBacking, setSelectedBacking] =
     useState<BackingMyPageDetail | null>(null);
   const MypageAddrDelete = async (addrId: number) => {
-    const response = await deleteData(endpoints.deleteAddress(tempUserId, addrId), {});
+    const response = await deleteData(
+      endpoints.deleteAddress(tempUserId, addrId),
+      {}
+    );
     if (response.status === 200) {
-      alert("배송지가 삭제되었습니다.");
+      alert('배송지가 삭제되었습니다.');
 
       const addrResponse = await getData(endpoints.getAddressList(tempUserId));
       if (addrResponse.status === 200) {
@@ -128,15 +130,18 @@ export function MyPage() {
 
       return true;
     } else {
-      alert("배송지 삭제 실패");
+      alert('배송지 삭제 실패');
       return false;
     }
   };
 
   const MypageAddrAdd = async (newAddr: AddrAddRequest) => {
-    const response = await postData(endpoints.createAddress(tempUserId), newAddr);
+    const response = await postData(
+      endpoints.createAddress(tempUserId),
+      newAddr
+    );
     if (response.status === 200) {
-      alert("배송지가 추가되었습니다.");
+      alert('배송지가 추가되었습니다.');
 
       const addrResponse = await getData(endpoints.getAddressList(tempUserId));
       if (addrResponse.status === 200) {
@@ -145,11 +150,10 @@ export function MyPage() {
       return true;
       setIsAddDialogOpen(false);
     } else {
-      alert("배송지 추가 실패");
+      alert('배송지 추가 실패');
       return false;
     }
   };
-
 
   const MyPageAddrUpdate = async (
     addrId: number,
@@ -160,7 +164,7 @@ export function MyPage() {
       updateAddr
     );
     if (response.status === 200) {
-      alert("배송지가 수정되었습니다.");
+      alert('배송지가 수정되었습니다.');
 
       const addrResponse = await getData(endpoints.getAddressList(tempUserId));
       if (addrResponse.status === 200) {
@@ -169,7 +173,7 @@ export function MyPage() {
       setIsEditDialogOpen(false);
       return true;
     } else {
-      alert("배송지 수정 실패");
+      alert('배송지 수정 실패');
       return false;
     }
   };
@@ -225,7 +229,7 @@ export function MyPage() {
   // }, [loginUser, navigate]);
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("ko-KR").format(amount);
+    return new Intl.NumberFormat('ko-KR').format(amount);
   };
 
   // if (!loginUser) {
@@ -254,14 +258,14 @@ export function MyPage() {
             <CardContent className="p-6 text-center">
               <div className="flex justify-center mb-4 space-x-2">
                 <Button
-                  variant={roleView === "user" ? "default" : "outline"}
-                  onClick={() => setRoleView("user")}
+                  variant={roleView === 'user' ? 'default' : 'outline'}
+                  onClick={() => setRoleView('user')}
                 >
                   후원자
                 </Button>
                 <Button
-                  variant={roleView === "creator" ? "default" : "outline"}
-                  onClick={() => navigate("/creator")}
+                  variant={roleView === 'creator' ? 'default' : 'outline'}
+                  onClick={() => navigate('/creator')}
                 >
                   창작자
                 </Button>
@@ -273,11 +277,11 @@ export function MyPage() {
               <h3 className="font-semibold mb-1">{loginUser?.nickname}</h3>
               <p className="text-sm text-gray-500 mb-4">{loginUser?.email}</p>
               <Badge variant="secondary">
-                {loginUser?.role === "creator"
-                  ? "크리에이터"
-                  : loginUser?.role === "admin"
-                  ? "관리자"
-                  : "일반회원"}
+                {loginUser?.role === 'creator'
+                  ? '크리에이터'
+                  : loginUser?.role === 'admin'
+                  ? '관리자'
+                  : '일반회원'}
               </Badge>
             </CardContent>
           </Card>
@@ -286,7 +290,7 @@ export function MyPage() {
             <Button
               variant="ghost"
               className="w-full justify-start"
-              onClick={() => setActiveTab("supported")}
+              onClick={() => setActiveTab('supported')}
             >
               <Package className="mr-2 h-4 w-4" />
               후원한 프로젝트
@@ -295,7 +299,7 @@ export function MyPage() {
             <Button
               variant="ghost"
               className="w-full justify-start"
-              onClick={() => setActiveTab("wishlist")}
+              onClick={() => setActiveTab('wishlist')}
             >
               <Heart className="mr-2 h-4 w-4" />
               찜한 프로젝트
@@ -373,14 +377,14 @@ export function MyPage() {
               mode="mypage"
               triggerText="배송지 관리"
               onSelectAddress={(address) => {
-                console.log("선택된 주소 : ", address);
+                console.log('선택된 주소 : ', address);
               }}
             />
 
             <Button
               variant="ghost"
               className="w-full justify-start"
-              onClick={() => setActiveTab("notifications")}
+              onClick={() => setActiveTab('notifications')}
             >
               <Bell className="mr-2 h-4 w-4" />
               알림
@@ -389,19 +393,17 @@ export function MyPage() {
             <Button
               variant="ghost"
               className="w-full justify-start"
-              onClick={() => setActiveTab("myinquiry")}
+              onClick={() => setActiveTab('myinquiry')}
             >
-              <MessagesSquare className="mr-2 h-4 w-4" />
-              내 문의내역
+              <MessagesSquare className="mr-2 h-4 w-4" />내 문의내역
             </Button>
 
             <Button
               variant="ghost"
               className="w-full justify-start"
-              onClick={() => setActiveTab("myreports")}
+              onClick={() => setActiveTab('myreports')}
             >
-              <Siren className="mr-2 h-4 w-4" />
-              내 신고내역
+              <Siren className="mr-2 h-4 w-4" />내 신고내역
             </Button>
           </div>
         </div>
@@ -444,15 +446,15 @@ export function MyPage() {
                             </span>
                             <Badge
                               variant={
-                                backingList.backing.backingStatus === "PENDING"
-                                  ? "default"
-                                  : "secondary"
+                                backingList.backing.backingStatus === 'PENDING'
+                                  ? 'default'
+                                  : 'secondary'
                               }
                             >
                               <span>
                                 {statusLabel[
                                   backingList.backing.backingStatus
-                                ] ?? "알 수 없음 "}
+                                ] ?? '알 수 없음 '}
                               </span>
                             </Badge>
                             <span className="text-gray-500">
@@ -461,8 +463,8 @@ export function MyPage() {
                                     backingList.backingReward.deliveryDate
                                   )
                                     .toISOString()
-                                    .split("T")[0]
-                                : ""}
+                                    .split('T')[0]
+                                : ''}
                             </span>
                           </div>
                         </div>
@@ -521,12 +523,12 @@ export function MyPage() {
                                     }
                                   </h2>
                                   <p className="text-sm text-gray-500">
-                                    달성금액{" "}
+                                    달성금액{' '}
                                     {formatCurrency(
                                       selectedBacking.backingReward
                                         .backingProject.currAmount ?? 0
                                     )}
-                                    원 / 목표{" "}
+                                    원 / 목표{' '}
                                     {formatCurrency(
                                       selectedBacking.backingReward
                                         .backingProject.goalAmount ?? 0
@@ -540,33 +542,33 @@ export function MyPage() {
                                 <h3 className="font-medium mb-2">후원 정보</h3>
                                 <div className="text-sm space-y-1">
                                   <p>
-                                    후원 상태 :{" "}
+                                    후원 상태 :{' '}
                                     {statusLabel[
                                       selectedBacking.backing.backingStatus.trim()
-                                    ] ?? "알 수 없음"}
+                                    ] ?? '알 수 없음'}
                                   </p>
                                   <p>
-                                    후원일 :{" "}
+                                    후원일 :{' '}
                                     {
                                       new Date(
                                         selectedBacking.backing.createdAt
                                       )
                                         .toISOString()
-                                        .split("T")[0]
+                                        .split('T')[0]
                                     }
                                   </p>
                                   <p>
-                                    프로젝트 종료일 :{" "}
+                                    프로젝트 종료일 :{' '}
                                     {
                                       new Date(
                                         selectedBacking.backingReward.backingProject.endDate
                                       )
                                         .toISOString()
-                                        .split("T")[0]
+                                        .split('T')[0]
                                     }
                                   </p>
                                   <p>
-                                    총 후원 금액 :{" "}
+                                    총 후원 금액 :{' '}
                                     {formatCurrency(
                                       selectedBacking.backing.amount
                                     )}
@@ -579,23 +581,23 @@ export function MyPage() {
                                 <h3 className="font-medium mb-2">선물 정보</h3>
                                 <div className="text-sm space-y-1">
                                   <p>
-                                    리워드명 :{" "}
+                                    리워드명 :{' '}
                                     {selectedBacking.backingReward.rewardName}
                                   </p>
                                   <p>수량 : {selectedBacking.quantity}개</p>
                                   <p>
-                                    리워드 금액 :{" "}
+                                    리워드 금액 :{' '}
                                     {formatCurrency(selectedBacking.price)}원
                                   </p>
                                   <p>
-                                    배송 예정일 :{" "}
+                                    배송 예정일 :{' '}
                                     {selectedBacking.backingReward.deliveryDate
                                       ? new Date(
                                           selectedBacking.backingReward.deliveryDate
                                         )
                                           .toISOString()
-                                          .split("T")[0]
-                                      : "미정"}
+                                          .split('T')[0]
+                                      : '미정'}
                                   </p>
                                 </div>
                               </section>
@@ -654,7 +656,7 @@ export function MyPage() {
                           </p>
                           <div className="flex items-center space-x-4 text-sm">
                             <span>
-                              달성률:{" "}
+                              달성률:{' '}
                               {(
                                 (likedList.currAmount / likedList.goalAmount) *
                                 100
@@ -728,10 +730,10 @@ export function MyPage() {
               </Card>
             </TabsContent>
             <TabsContent value="myinquiry" className="mt-6">
-              <MyInquiryTab/>
+              <MyInquiryTab />
             </TabsContent>
             <TabsContent value="myreports" className="mt-6">
-              <MyReportsTab/>
+              <MyReportsTab />
             </TabsContent>
           </Tabs>
         </div>

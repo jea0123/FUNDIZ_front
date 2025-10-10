@@ -12,24 +12,13 @@ export interface Reward {
 }
 
 export interface RewardCreateRequestDto {
-    rewardName: string;
-    price: number;
-    rewardContent: string;
-    deliveryDate: Date;
-    rewardCnt: number;
-    isPosting: string;
-}
-
-export interface RewardUpdateRequestDto {
-    rewardId: number;
     projectId: number;
     rewardName: string;
     price: number;
     rewardContent: string;
     deliveryDate: Date;
-    rewardCnt: number;
-    isPosting: string;
-    remain: number;
+    rewardCnt: number | null;
+    isPosting: "Y" | "N";
 }
 
 export interface CartItem {
@@ -38,3 +27,14 @@ export interface CartItem {
     price: number;
     remain: number;
 }
+
+export type RewardDraft = {
+    rewardName: string;
+    price: number;
+    rewardContent: string;
+    deliveryDate: Date;
+    rewardCnt: number | null;
+    isPosting: "Y" | "N";
+};
+
+export type RewardForm = RewardDraft & { tempId: string; rewardId?: number };
