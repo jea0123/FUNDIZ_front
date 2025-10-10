@@ -9,12 +9,13 @@ type Props = {
     onDetail: (id: number) => void;
     onEdit: (id: number) => void;
     onDelete: (id: number) => void;
+    onAddReward: (id: number) => void;
 };
 
-export default function QuickActions({ project, deletingId, onDetail, onEdit, onDelete }: Props) {
+export default function QuickActions({ project, deletingId, onDetail, onEdit, onDelete, onAddReward }: Props) {
     const status = project.projectStatus as Status;
 
-    const publicUrl = `${window.location.origin}/projects/${(project as any).slug ?? project.projectId}`;
+    const publicUrl = `${window.location.origin}/project/${(project as any).slug ?? project.projectId}`;
 
     if (status === "DRAFT") {
         return (
@@ -52,7 +53,7 @@ export default function QuickActions({ project, deletingId, onDetail, onEdit, on
                         <ExternalLink className="h-4 w-4 mr-1" /> 라이브 페이지
                     </a>
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => onEdit(project.projectId)}>
+                <Button variant="outline" size="sm" onClick={() => onAddReward(project.projectId)}>
                     <Gift className="h-4 w-4 mr-1" /> 리워드 추가
                 </Button>
             </>

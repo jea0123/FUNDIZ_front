@@ -4,29 +4,23 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Subcategory } from '@/types/projects';
 import { endpoints, getData, postData } from '@/api/apis';
-import type { RewardCreateRequestDto } from '@/types/reward';
+import type { RewardCreateRequestDto, RewardDraft, RewardForm } from '@/types/reward';
 import type { Category } from '@/types/admin';
 import FundingLoader from '@/components/FundingLoader';
 import { CreateProjectStepper } from '../components/CreateProjectStepper';
 import { CreateProjectSteps } from '../components/CreateProjectSteps';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { ProjectCreateRequestDto } from '@/types/creator';
-import { formatDate } from '@/utils/utils';
+import { assertValidReward, validateReward, validateRewardList, type FieldErrors } from '@/types/reward-validator';
 
-type RewardCreatePayload = Omit<RewardCreateRequestDto, "deliveryDate"> & {
-    deliveryDate: string;
-};
+type RewardCreatePayload = Omit<RewardCreateRequestDto, "projectId">;
 
-type ProjectCreatePayload = Omit<ProjectCreateRequestDto, "startDate"|"endDate"|"rewardList"> & {
-    startDate: string;
-    endDate: string;
+type ProjectCreatePayload = Omit<ProjectCreateRequestDto, "rewardList"> & {
     rewardList: RewardCreatePayload[];
 };
 
 const normalizeName = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
 
-const toNum = (v: any, d = 0) => (v === null || v === "" ? d : Number(v));
-const toDate = (v: any) => (v instanceof Date ? v : (v ? new Date(v) : new Date()));
 // 태그 문자열화
 const toTagNames = (list: any): string[] =>
     Array.isArray(list)
@@ -50,14 +44,6 @@ const cleanTags = (list: any): string[] => {
     return out;
 };
 
-const isValidReward = (r: RewardCreateRequestDto) =>
-    r.rewardName.trim().length > 0 &&
-    r.price > 0 &&
-    r.rewardContent.trim().length > 0 &&
-    r.deliveryDate instanceof Date &&
-    !isNaN(r.deliveryDate.getTime()) &&
-    (r.isPosting === 'Y' || r.isPosting === 'N');
-
 const isValidProject = (p: ProjectCreateRequestDto) => {
     if (!p.title || !p.content || !p.thumbnail)
         return { ok: false, message: "필수 입력 항목을 모두 채워주세요." };
@@ -75,22 +61,22 @@ const isValidProject = (p: ProjectCreateRequestDto) => {
     return { ok: true, message: "" };
 };
 
-const buildPayload = (
-    project: ProjectCreateRequestDto,
-    rewards: Array<RewardCreateRequestDto & { tempId: string; rewardId?: number }>
-): ProjectCreatePayload => ({
+const buildPayload = (project: ProjectCreateRequestDto, rewards: RewardForm[]): ProjectCreatePayload => ({
     ...project,
-    startDate: formatDate(project.startDate),
-    endDate: formatDate(project.endDate),
+    startDate: project.startDate,
+    endDate: project.endDate,
     tagList: cleanTags(project.tagList),
-    rewardList: rewards.map(({ rewardName, price, rewardContent, deliveryDate, rewardCnt, isPosting }) => ({
-        rewardName,
-        price,
-        rewardContent,
-        deliveryDate: formatDate(deliveryDate),
-        rewardCnt,
-        isPosting
-    })),
+    rewardList: rewards.map((r): RewardCreatePayload => {
+        const valid = assertValidReward(r, { fundingEndDate: project.endDate });
+        return {
+            rewardName: valid.rewardName,
+            price: valid.price,
+            rewardContent: valid.rewardContent,
+            deliveryDate: valid.deliveryDate,
+            rewardCnt: valid.rewardCnt,
+            isPosting: valid.isPosting
+        };
+    })
 });
 
 const validateAgree = (
@@ -116,6 +102,12 @@ const STEPS = [
 /* --------------------------- Page --------------------------- */
 
 export default function CreateProject() {
+    const addDays = (date: Date, days: number) => {
+        const d = new Date(date);
+        d.setDate(d.getDate() + days);
+        return d;
+    };
+
     const { projectId: projectIdParam } = useParams();
     const projectId = projectIdParam ? Number(projectIdParam) : null;
     const isEdit = !!projectId; // 편집 모드 여부
@@ -125,8 +117,9 @@ export default function CreateProject() {
 
     const [currentStep, setCurrentStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
+    const [rewardErrors, setRewardErrors] = useState<FieldErrors>({});
 
-    //서버 전송용
+    //프로젝트
     const [project, setProject] = useState<ProjectCreateRequestDto>({
         projectId: 0,
         ctgrId: 0,
@@ -137,7 +130,7 @@ export default function CreateProject() {
         thumbnail: "",
         goalAmount: 0,
         startDate: new Date(),
-        endDate: new Date(),
+        endDate: addDays(new Date(), 7),
         tagList: [],
         rewardList: [],
         creatorName: "",
@@ -150,15 +143,14 @@ export default function CreateProject() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
 
-    //리워드 임시 id
-    type RewardForm = RewardCreateRequestDto & { tempId: string; rewardId?: number };
+    //리워드
     const [rewardList, setRewardList] = useState<RewardForm[]>([]);
-    const [newReward, setNewReward] = useState<RewardCreateRequestDto>({
+    const [newReward, setNewReward] = useState<RewardDraft>({
         rewardName: "",
         price: 0,
         rewardContent: "",
         deliveryDate: new Date(),
-        rewardCnt: 0,
+        rewardCnt: null,
         isPosting: "Y"
     });
 
@@ -205,33 +197,33 @@ export default function CreateProject() {
 
                     setProject((prev) => ({
                         ...prev,
-                        projectId: toNum(draft.projectId),
-                        ctgrId: toNum(draft.ctgrId),
-                        subctgrId: toNum(draft.subctgrId),
-                        creatorId: toNum(draft.creatorId),
-                        title: draft.title ?? "",
-                        content: draft.content ?? "",
-                        thumbnail: draft.thumbnail ?? "",
-                        goalAmount: toNum(draft.goalAmount),
-                        startDate: toDate(draft.startDate),
-                        endDate: toDate(draft.endDate),
+                        projectId: draft.projectId,
+                        ctgrId: draft.ctgrId,
+                        subctgrId: draft.subctgrId,
+                        creatorId: draft.creatorId,
+                        title: draft.title,
+                        content: draft.content,
+                        thumbnail: draft.thumbnail,
+                        goalAmount: draft.goalAmount,
+                        startDate: draft.startDate,
+                        endDate: draft.endDate,
                         tagList: cleanTags(draft.tagList),
                         rewardList: [],
-                        creatorName: draft.creatorName ?? "",
-                        businessNum: draft.businessNum ?? "",
-                        email: draft.email ?? "",
-                        phone: draft.phone ?? ""
+                        creatorName: draft.creatorName,
+                        businessNum: draft.businessNum,
+                        email: draft.email,
+                        phone: draft.phone
                     }));
 
                     setRewardList(
                         (draft.rewardList ?? []).map((r: any) => ({
-                            rewardId: toNum(r.rewardId),
-                            rewardName: r.rewardName ?? "",
-                            price: toNum(r.price),
-                            rewardContent: r.rewardContent ?? "",
-                            deliveryDate: toDate(r.deliveryDate),
-                            rewardCnt: toNum(r.rewardCnt, 0),
-                            isPosting: ((r.isPosting ?? "Y") + "").trim() === "N" ? "N" : "Y",
+                            rewardId: r.rewardId,
+                            rewardName: r.rewardName,
+                            price: r.price,
+                            rewardContent: r.rewardContent,
+                            deliveryDate: r.deliveryDate,
+                            rewardCnt: r.rewardCnt == null ? null : r.rewardCnt,
+                            isPosting: r.isPosting,
                             tempId: Math.random().toString(36).slice(2, 10)
                         }))
                     );
@@ -247,23 +239,25 @@ export default function CreateProject() {
 
     //리워드 추가
     const addReward = () => {
-        if (!isValidReward(newReward)) {
-            alert("리워드 정보를 올바르게 입력해주세요.");
+        // 리워드 단건 검사
+        const single = validateReward(newReward, { fundingEndDate: project.endDate });
+        setRewardErrors(single.errors);
+        if (!single.ok) return;
+
+        // 리워드 목록 검사
+        const multiple = [...rewardList, { ...newReward, tempId: genId() }];
+        const list = validateRewardList(multiple, { fundingEndDate: project.endDate });
+        if (!list.ok) {
+            alert(list.allErrors.join("\n"));
             return;
         }
-        const newName = normalizeName(newReward.rewardName);
-        const dup = rewardList.some(r => normalizeName(r.rewardName) === newName);
-        if (dup) {
-            alert('같은 리워드명이 이미 있습니다. 다른 이름을 사용해주세요.');
-            return;
-        }
-        setRewardList((prev) => [...prev, { ...newReward, tempId: genId() }]);
+        setRewardList(multiple);
         setNewReward({
             rewardName: "",
             price: 0,
             rewardContent: "",
             deliveryDate: new Date(),
-            rewardCnt: 0,
+            rewardCnt: null,
             isPosting: "Y",
         });
     };
@@ -299,11 +293,18 @@ export default function CreateProject() {
     //제출
     const handleSubmit = async () => {
         if (!validateAgree(agree, setAgreeError)) return;
-
+        // 프로젝트 검증
         const { ok, message } = isValidProject(project);
         if (!ok) return alert(message);
+        // 리워드 검증
         if (rewardList.length === 0) return alert("최소 하나 이상의 리워드를 추가해주세요.");
-        if (rewardList.find((r) => !isValidReward(r))) return alert("리워드 정보가 올바르지 않습니다. 다시 확인해주세요.");
+        {
+            const { ok, allErrors } = validateRewardList(rewardList, { fundingEndDate: project.endDate });
+            if (!ok) {
+                alert(allErrors.join("\n"));
+                return;
+            }
+        }
 
         setIsLoading(true);
         try {
@@ -326,7 +327,7 @@ export default function CreateProject() {
                     alert("심사요청에 실패했습니다. 다시 시도해주세요.");
                 }
                 return;
-            } 
+            }
 
             // 신규 작성 후 즉시 심사요청
             const createRes = await postData(endpoints.createProject, payload);
@@ -372,6 +373,8 @@ export default function CreateProject() {
                         agree={agree}
                         setAgree={setAgree}
                         agreeError={agreeError}
+                        rewardErrors={rewardErrors}
+                        addDays={addDays}
                     />
                 </CardContent>
             </Card>
@@ -379,12 +382,12 @@ export default function CreateProject() {
             <div className="flex justify-between mt-8">
                 <div className="flex items-center">
                     {isEdit && currentStep === 1 ? (
-                        <Button variant="outline" onClick={() => goList()}>
-                            <ArrowLeft className="h-4 w-4 mr-2" /> 목록으로
+                        <Button variant="outline" onClick={() => navigate(-1)}>
+                            <ArrowLeft className="h-4 w-4 mr-2" /> 뒤로
                         </Button>
                     ) : currentStep > 1 ? (
                         <Button variant="outline" onClick={() => setCurrentStep((s) => Math.max(1, s - 1))}>
-                            이전
+                            이전 단계
                         </Button>
                     ) : null}
                 </div>
@@ -395,7 +398,7 @@ export default function CreateProject() {
                     </Button>
                     {currentStep < STEPS.length ? (
                         <Button onClick={() => setCurrentStep((s) => Math.min(STEPS.length, s + 1))}>
-                            다음
+                            다음 단계
                         </Button>
                     ) : (
                         <Button onClick={handleSubmit} disabled={!agree || isLoading}>
