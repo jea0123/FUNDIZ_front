@@ -11,11 +11,7 @@ import ErrorPage from './views/ErrorPage';
 import MainPage from './views/MainPage';
 import { setNavigator } from './utils/navigator';
 import { NoticeDetailPage } from './views/cs/NoticeDetail';
-import ProjectsAllPage, {
-  ProjectByCategoryPage,
-  ProjectBySubcategoryPage,
-  SearchProjectPage,
-} from './views/project/ProjectAllPage';
+import ProjectsAllPage, { ProjectByCategoryPage, ProjectBySubcategoryPage, SearchProjectPage, } from './views/project/ProjectAllPage';
 import { FundingPage } from './views/backing/backingPage';
 import FundingLoader from './components/FundingLoader';
 import { ApprovalDetail } from './views/admin/tabs/ApprovalDetail';
@@ -39,12 +35,7 @@ import CreatorBacking from './views/creator/pages/CreatorBacking';
 
 import CreatorAddReward from './views/creator/pages/CreatorAddReward';
 
-
-const AdminTabs = lazy(() =>
-  import('./views/admin/AdminTabs').then((module) => ({
-    default: module.AdminTabs,
-  }))
-);
+const AdminTabs = lazy(() => import('./views/admin/AdminTabs').then((module) => ({ default: module.AdminTabs, })));
 
 export default function App() {
   const { setLoginUser, resetLoginUser } = useLoginUserStore();
@@ -151,21 +142,21 @@ export default function App() {
               <Route path="report" element={<ReportTab />} />
             </Route>
 
-                        <Route path='/creator' element={<CreatorLayout />}>
-                            <Route index element={<CreatorDashboard />} />
-                            <Route path='dashboard' element={<CreatorDashboard />} />
-                            <Route path='project/new' element={<CreateProject />} />
-                            <Route path='project/:projectId' element={<CreateProject />} />
-                            <Route path='projects'>
-                                <Route index element={<CreatorProjects />} />
-                                <Route path=':projectId' element={<CreatorProjectDetail />} />
-                                <Route path=':projectId/reward' element={<CreatorAddReward />} />
-                            </Route>
-                            <Route path='backings' />
-                            <Route path='shipping' />
-                            <Route path='qna' />
-                            <Route path='settlement' />
-                        </Route>
+            <Route path='/creator' element={<CreatorLayout />}>
+              <Route index element={<CreatorDashboard />} />
+              <Route path='dashboard' element={<CreatorDashboard />} />
+              <Route path='project/new' element={<CreateProject />} />
+              <Route path='project/:projectId' element={<CreateProject />} />
+              <Route path='projects'>
+                <Route index element={<CreatorProjects />} />
+                <Route path=':projectId' element={<CreatorProjectDetail />} />
+                <Route path=':projectId/reward' element={<CreatorAddReward />} />
+              </Route>
+              <Route path='backings' />
+              <Route path='shipping' />
+              <Route path='qna' />
+              <Route path='settlement' />
+            </Route>
 
 
             <Route path="/error" element={<ErrorPage />} />
