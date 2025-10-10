@@ -27,6 +27,7 @@ import { NoticeTab } from './views/cs/tabs/NoticeTab';
 import { InquiryTab } from './views/cs/tabs/InquiryTab';
 import { ReportTab } from './views/cs/tabs/ReportTab';
 import CSLayout from './views/cs/CSLayout';
+import { CreatorQnATab } from './views/creator/pages/CreatorQnATab';
 import CreatorProjectDetail from './views/creator/pages/CreatorProjectDetail';
 
 import { CreatorShippingList } from './views/creator/pages/CreatorShippingList';
@@ -123,7 +124,7 @@ export default function App() {
                 path="shipping/:projectId"
                 element={<CreatorShippingDetail />}
               />
-              <Route path="qna" />
+              <Route path='qna' element={<CreatorQnATab/>}/>
               <Route path="settlement" />
             </Route>
 
@@ -157,7 +158,6 @@ export default function App() {
               <Route path='qna' />
               <Route path='settlement' />
             </Route>
-
 
             <Route path="/error" element={<ErrorPage />} />
             <Route path="*" element={<ErrorPage />} />

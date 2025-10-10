@@ -4,6 +4,8 @@ import type { SearchProjectParams } from '@/types/projects';
 import type { SearchNoticeParams } from '@/types/notice';
 import type { SearchIqrParams } from '@/types/inquiry';
 import type { SearchUserParams } from '@/types/admin';
+import type { SearchQnaParams } from '@/types/qna';
+import { appNavigate } from '@/utils/navigator';
 import type { AxiosResponse } from 'axios';
 import axios from 'axios';
 
@@ -41,6 +43,7 @@ const toQueryString = (params: Record<string, unknown>) => {
 };
 
 export const endpoints = {
+  
   // ==================== Auth API ====================
   checkEmail: '/auth/checkEmail',
   checkNickname: '/auth/checkNickname',
@@ -65,6 +68,7 @@ export const endpoints = {
   getCreatorProjectSummary: (projectId: number) => `/creator/projects/${projectId}/summary`,
   getCreatorRewardList: (projectId: number) => `/creator/projects/${projectId}/reward`,
   addReward: (projectId: number) => `/creator/projects/${projectId}/reward`,
+  getQnAListOfCreator: (p: SearchQnaParams) => `/creator/qna?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup })}`,
 
   // ==================== Project API ====================
   getFeatured: '/project/featured',
@@ -72,7 +76,7 @@ export const endpoints = {
   getProjectDetail: (projectId: number) => `/project/${projectId}`,
   getCommunityList: (projectId: number) => `/project/${projectId}/community`,
   getReviewList: (projectId: number) => `/project/${projectId}/review`,
-  getQnAListOfPJ: (projectId: number) => `/project/${projectId}/qna`,
+  getQnaListOfPJ: (projectId: number, p: SearchQnaParams) => `/project/${projectId}/qna?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup })}`,
   searchProject: (p: SearchProjectParams) => `/project/search?${toQueryString({ page: p.page, size: p.size, keyword: p.keyword, ctgrId: p.ctgrId, subctgrId: p.subctgrId, sort: p.sort, })}`,
 
   // ==================== Shipping API ====================
