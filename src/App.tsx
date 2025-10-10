@@ -27,6 +27,7 @@ import { NoticeTab } from './views/cs/tabs/NoticeTab';
 import { InquiryTab } from './views/cs/tabs/InquiryTab';
 import { ReportTab } from './views/cs/tabs/ReportTab';
 import CSLayout from './views/cs/CSLayout';
+import { CreatorQnATab } from './views/creator/pages/CreatorQnATab';
 
 const AdminTabs = lazy(() => import('./views/admin/AdminTabs').then(module => ({ default: module.AdminTabs })));
 
@@ -97,7 +98,7 @@ export default function App() {
                             </Route>
                             <Route path='backings' />
                             <Route path='shipping' />
-                            <Route path='qna' />
+                            <Route path='qna' element={<CreatorQnATab/>}/>
                             <Route path='settlement' />
                         </Route>
 

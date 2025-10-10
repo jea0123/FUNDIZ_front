@@ -35,7 +35,7 @@ export function ProjectDetailPage() {
     const [communityCursor, setCommunityCursor] = useState<Cursor | null>(null);
     const [review, setReview] = useState<ReviewDto[]>([]);
     const [reviewCursor, setReviewCursor] = useState<Cursor | null>(null);
-    const [tab, setTab] = useState<"description"|"updates"|"community"|"review">("description");
+    const [tab, setTab] = useState<"description"|"updates"|"community"|"review"|"qna">("description");
 
     const [isLiked, setIsLiked] = useState(false);
     const [loadingProject, setLoadingProject] = useState(false);
@@ -338,10 +338,10 @@ export function ProjectDetailPage() {
                     <Tabs defaultValue="description" className="mb-8" onValueChange={(v) => setTab(v as any)}>
                         <TabsList className="grid w-full grid-cols-5">
                             <TabsTrigger value="description">프로젝트 소개</TabsTrigger>
-                            <TabsTrigger value="updates">새소식 {project.newsList.length}</TabsTrigger>
-                            <TabsTrigger value="community">커뮤니티 {community.length}</TabsTrigger>
-                            <TabsTrigger value="review">후기 {review.length}</TabsTrigger>
-                            <TabsTrigger value="qna">Q&A</TabsTrigger>
+                            <TabsTrigger value="updates">새소식 <p className="text-indigo-600 font-semibold">{project.newsList.length}</p></TabsTrigger>
+                            <TabsTrigger value="community">커뮤니티 <p className="text-indigo-600 font-semibold">{community.length}</p></TabsTrigger>
+                            <TabsTrigger value="review">후기 <p className="text-indigo-600 font-semibold">{review.length}</p></TabsTrigger>
+                            <TabsTrigger value="qna">Q&A </TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="description" className="mt-6">
