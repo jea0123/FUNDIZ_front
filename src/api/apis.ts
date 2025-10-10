@@ -77,28 +77,6 @@ export const endpoints = {
   updateProject: (projectId: number) => `/creator/project/${projectId}`,
   submitProject: (projectId: number) => `/creator/project/${projectId}/submit`,
   deleteProject: (projectId: number) => `/creator/project/${projectId}`,
-
-  // ==================== User API ====================
-  getLoginUser: '/user/loginUser',
-  getMypage: (userId: number) => `/user/userPage/${userId}`,
-  getLikedList: (userId: number) => `/user/likedList/${userId}`,
-  getQnAList: (userId: number) => `/user/QnAList/${userId}`,
-  getRecentView: (userId: number) => `/user/recentViewProjects/${userId}`,
-  getQnAListDetail: (userId: number, projectId: number) =>
-    `/user/QnAListDetail/${userId}/project/${projectId}`,
-  getCreatorProjectList: (p: SearchCreatorProjectDto) =>
-    `/creator/projects?${toQueryString({
-      page: p.page,
-      size: p.size,
-      projectStatus: p.projectStatus,
-      rangeType: p.rangeType || undefined,
-    })}`,
-  getCreatorProjectDetail: (projectId: number) =>
-    `/creator/projects/${projectId}`,
-  createProject: '/creator/project/new',
-  updateProject: (projectId: number) => `/creator/project/${projectId}`,
-  submitProject: (projectId: number) => `/creator/project/${projectId}/submit`,
-  deleteProject: (projectId: number) => `/creator/project/${projectId}`,
   getCreatorProjectSummary: (projectId: number) =>
     `/creator/projects/${projectId}/summary`,
   getCreatorRewardList: (projectId: number) =>
