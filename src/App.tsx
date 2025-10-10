@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react';
 import { Route, Routes, useNavigate } from 'react-router-dom';
 import { LoginPage } from './views/auth/LoginPage';
 import { MyPage } from './views/user/MyPage';
@@ -11,7 +11,11 @@ import ErrorPage from './views/ErrorPage';
 import MainPage from './views/MainPage';
 import { setNavigator } from './utils/navigator';
 import { NoticeDetailPage } from './views/cs/NoticeDetail';
-import ProjectsAllPage, { ProjectByCategoryPage, ProjectBySubcategoryPage, SearchProjectPage } from './views/project/ProjectAllPage';
+import ProjectsAllPage, {
+  ProjectByCategoryPage,
+  ProjectBySubcategoryPage,
+  SearchProjectPage,
+} from './views/project/ProjectAllPage';
 import { FundingPage } from './views/backing/backingPage';
 import FundingLoader from './components/FundingLoader';
 import { ApprovalDetail } from './views/admin/tabs/ApprovalDetail';
@@ -28,64 +32,124 @@ import { InquiryTab } from './views/cs/tabs/InquiryTab';
 import { ReportTab } from './views/cs/tabs/ReportTab';
 import CSLayout from './views/cs/CSLayout';
 import CreatorProjectDetail from './views/creator/pages/CreatorProjectDetail';
+
+import { CreatorShippingList } from './views/creator/pages/CreatorShippingList';
+import { CreatorShippingDetail } from './views/creator/pages/CreatorShippingDetail';
+import CreatorBacking from './views/creator/pages/CreatorBacking';
+
 import CreatorAddReward from './views/creator/pages/CreatorAddReward';
 
-const AdminTabs = lazy(() => import('./views/admin/AdminTabs').then(module => ({ default: module.AdminTabs })));
+
+const AdminTabs = lazy(() =>
+  import('./views/admin/AdminTabs').then((module) => ({
+    default: module.AdminTabs,
+  }))
+);
 
 export default function App() {
-    const { setLoginUser, resetLoginUser } = useLoginUserStore();
-    const [cookie] = useCookies();
+  const { setLoginUser, resetLoginUser } = useLoginUserStore();
+  const [cookie] = useCookies();
 
-    function NavigatorRegistrar() {
-        const navigate = useNavigate();
-        useEffect(() => setNavigator(navigate), [navigate]);
-        return null; // 렌더링 없음
+  function NavigatorRegistrar() {
+    const navigate = useNavigate();
+    useEffect(() => setNavigator(navigate), [navigate]);
+    return null; // 렌더링 없음
+  }
+
+  useEffect(() => {
+    const getLoginUserResponse = (response: any) => {
+      if (response.status === 200) {
+        setLoginUser(response.data);
+      } else {
+        resetLoginUser();
+      }
+    };
+
+    if (cookie.accessToken) {
+      getData(endpoints.getLoginUser, cookie.accessToken).then(
+        getLoginUserResponse
+      );
     }
+  }, [cookie.accessToken]);
 
-    useEffect(() => {
-        const getLoginUserResponse = (response: any) => {
-            if (response.status === 200) {
-                setLoginUser(response.data);
-            } else {
-                resetLoginUser();
-            }
-        };
+  return (
+    <Suspense fallback={<FundingLoader />}>
+      <div className="min-h-screen bg-gray-50">
+        <NavigatorRegistrar />
+        {/* <Layout /> */}
+        <Routes>
+          <Route element={<Layout />}>
+            <Route path="/" element={<MainPage />} />
 
-        if (cookie.accessToken) {
-            getData(endpoints.getLoginUser, cookie.accessToken).then(getLoginUserResponse);
-        }
-    }, [cookie.accessToken]);
+            <Route path="/auth">
+              <Route path="register" element={<RegisterPage />} />
+              <Route path="login" element={<LoginPage />} />
+            </Route>
 
-    return (
-        <Suspense fallback={<FundingLoader />}>
-            <div className="min-h-screen bg-gray-50">
-                <NavigatorRegistrar />
-                {/* <Layout /> */}
-                <Routes>
-                    <Route element={<Layout />}>
-                        <Route path='/' element={<MainPage />} />
+            <Route path="/project">
+              <Route index element={<ProjectsAllPage />} />
+              <Route path="search" element={<SearchProjectPage />} />
+              <Route
+                path="category/:ctgrId"
+                element={<ProjectByCategoryPage />}
+              />
+              <Route
+                path="category/:ctgrId/subcategory/:subctgrId"
+                element={<ProjectBySubcategoryPage />}
+              />
+              <Route path=":projectId" element={<ProjectDetailPage />} />
+              <Route
+                path=":projectId/backing"
+                element={
+                  <FundingPage
+                    onBackClick={function (): void {
+                      throw new Error('Function not implemented.');
+                    }}
+                    onCompleteClick={function (): void {
+                      throw new Error('Function not implemented.');
+                    }}
+                  />
+                }
+              />
+            </Route>
 
-                        <Route path='/auth'>
-                            <Route path='register' element={<RegisterPage />} />
-                            <Route path='login' element={<LoginPage />} />
-                        </Route>
+            <Route path="/user">
+              <Route path="Mypage" element={<MyPage />} />
+            </Route>
 
-                        <Route path='/project'>
-                            <Route index element={<ProjectsAllPage />} />
-                            <Route path='search' element={<SearchProjectPage />} />
-                            <Route path='category/:ctgrId' element={<ProjectByCategoryPage />} />
-                            <Route path='category/:ctgrId/subcategory/:subctgrId' element={<ProjectBySubcategoryPage />} />
-                            <Route path=':projectId' element={<ProjectDetailPage />} />
-                            <Route path=':projectId/backing' element={<FundingPage onBackClick={function (): void {
-                                throw new Error('Function not implemented.');
-                            }} onCompleteClick={function (): void {
-                                throw new Error('Function not implemented.');
-                            }} />} />
-                        </Route>
+            <Route path="/creator" element={<CreatorLayout />}>
+              <Route index element={<CreatorDashboard />} />
+              <Route path="dashboard" element={<CreatorDashboard />} />
+              <Route path="project/new" element={<CreateProject />} />
+              <Route path="project/:projectId" element={<CreateProject />} />
+              <Route path="projects">
+                <Route index element={<CreatorProjects />} />
+                <Route path=":projectId" element={<CreatorProjectDetail />} />
+              </Route>
+              <Route path="backings" element={<CreatorBacking />} />
+              <Route path="shipping" element={<CreatorShippingList />} />
+              <Route
+                path="shipping/:projectId"
+                element={<CreatorShippingDetail />}
+              />
+              <Route path="qna" />
+              <Route path="settlement" />
+            </Route>
 
-                        <Route path='/user'>
-                            <Route path='Mypage' element={<MyPage />} />
-                        </Route>
+            <Route path="/admin" element={<AdminConsole />}>
+              <Route index element={<AdminTabs />} />
+              <Route path="verify/:projectId" element={<ApprovalDetail />} />
+              <Route path="project/:projectId" element={<AdminProjectEdit />} />
+            </Route>
+
+
+            <Route path="/cs" element={<CSLayout />}>
+              <Route index element={<NoticeTab />} />
+              <Route path="notice" element={<NoticeTab />} />
+              <Route path="notice/:noticeId" element={<NoticeDetailPage />} />
+              <Route path="inquiry" element={<InquiryTab />} />
+              <Route path="report" element={<ReportTab />} />
+            </Route>
 
                         <Route path='/creator' element={<CreatorLayout />}>
                             <Route index element={<CreatorDashboard />} />
@@ -103,26 +167,13 @@ export default function App() {
                             <Route path='settlement' />
                         </Route>
 
-                        <Route path='/admin' element={<AdminConsole />}>
-                            <Route index element={<AdminTabs />} />
-                            <Route path='verify/:projectId' element={<ApprovalDetail />} />
-                            <Route path='project/:projectId' element={<AdminProjectEdit />} />
-                        </Route>
 
-                        <Route path="/cs" element={<CSLayout />}>
-                            <Route index element={<NoticeTab />} />
-                            <Route path='notice' element={<NoticeTab />} />
-                            <Route path='notice/:noticeId' element={<NoticeDetailPage />} />
-                            <Route path='inquiry' element={<InquiryTab />} />
-                            <Route path='report' element={<ReportTab />} />
-                        </Route>
-
-                        <Route path="/error" element={<ErrorPage />} />
-                        <Route path="*" element={<ErrorPage />} />
-                        <Route path="/notifications" element={<NotificationsPage />} />
-                    </Route>
-                </Routes>
-            </div>
-        </Suspense>
-    );
+            <Route path="/error" element={<ErrorPage />} />
+            <Route path="*" element={<ErrorPage />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
+          </Route>
+        </Routes>
+      </div>
+    </Suspense>
+  );
 }
