@@ -202,6 +202,7 @@ export function MyPage() {
 
     const MypageLikedList = async () => {
       const response = await getData(endpoints.getLikedList(tempUserId));
+      console.log('찜 목록 응답:', response);
 
       if (response.status === 200) {
         setLikedProjects(response.data);

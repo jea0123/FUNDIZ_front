@@ -106,8 +106,8 @@ export const endpoints = {
 
   // ==================== User API ====================
   getLoginUser: '/user/loginUser',
-  getMypage: (userId: number) => `/user/userPage/${userId}`,
-  getLikedList: (userId: number) => `/user/likedList/${userId}`,
+  getMypage: (userId: number) => `user/userPage/${userId}`,
+  getLikedList: (userId: number) => `user/likedList/${userId}`,
   getQnAList: (userId: number) => `/user/QnAList/${userId}`,
   getRecentView: (userId: number) => `/user/recentViewProjects/${userId}`,
   getQnAListDetail: (userId: number, projectId: number) =>`/user/QnAListDetail/${userId}/project/${projectId}`,
@@ -125,7 +125,7 @@ export const endpoints = {
   addReward: (projectId: number) => `creator/projects/${projectId}/reward`,
   getCreatorInfoSummary: "/creator/info",
   getQnAListOfCreator: (p: SearchQnaParams) => `creator/qna?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup })}`,
-  creatorDashboard: '/creator/dashboard',
+  creatorDashboard: 'creator/dashBoard',
   creatorBackingList: '/creator/backingList',
   creatorShippingList: '/creator/shippingList',
   creatorShippingBackerList: (projectId: number) =>`/creator/shippingList/${projectId}`,

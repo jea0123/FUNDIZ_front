@@ -103,7 +103,7 @@ export default function CreatorDashboard() {
   const { creatorId, loading: idLoading } = useCreatorId(21);
   const [successRate, setSuccessRate] = useState<number>(0);
   const [failRate, setFailRate] = useState<number>(0);
-  const [data, setData] = useState<CreatorDashboard>(defaultCreatorDashboard);
+  const [data, setData] = useState<CreatorDashboard | null>(null);
   const [rankType, setRankType] = useState<'views' | 'backers' | 'likes'>(
     'views'
   );
@@ -119,49 +119,33 @@ export default function CreatorDashboard() {
     rankData[rankType].find((item) => item.rank === r)
   );
 
-  useEffect(() => {
-    if (idLoading || !creatorId) return;
+useEffect(() => {
+    if (idLoading) return;
 
     (async () => {
       try {
-        const res = await fetch(
-          `http://localhost:9099/api/v1${endpoints.creatorDashboard}`,
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Dev-Creator-Id': String(creatorId),
-            },
-          }
-        );
+        const res = await getData(endpoints.creatorDashboard); //creatorId 자동 헤더로 전달됨
+        console.log("대시보드 응답:", res);
 
-        const json = await res.json();
-        const data = json?.data;
-
-        if (res.status === 200 && data) {
-          setSuccessRate(data.projectSuccessPercentage ?? 0);
-          setFailRate(data.projectFailedPercentage ?? 0);
-          setData(data);
+        if (res.status === 200 && res.data) {
+          const dash = res.data as CreatorDashboard;
+          setData(dash);
+          setSuccessRate(dash.projectSuccessPercentage ?? 0);
+          setFailRate(dash.projectFailedPercentage ?? 0);
         } else {
-          console.warn(
-            '대시보드 데이터 로드 실패:',
-            json?.message ?? res.statusText
-          );
-          setSuccessRate(0);
-          setFailRate(0);
+          console.warn("대시보드 로드 실패:", res);
         }
       } catch (err) {
-        console.error('대시보드 데이터 요청 중 오류 발생:', err);
-        setSuccessRate(0);
-        setFailRate(0);
+        console.error("대시보드 오류:", err);
       }
     })();
-  }, [idLoading, creatorId]);
+  }, [idLoading]);
 
   const successData = [
-    { name: '성공', value: successRate },
-    { name: '실패', value: 100 - successRate },
+    { name: "성공", value: successRate },
+    { name: "실패", value: failRate },
   ];
+
 
   return (
     <div className="max-w-[1750px] mx-auto px-2">
@@ -178,28 +162,28 @@ export default function CreatorDashboard() {
             <div className="bg-gray-50 rounded-xl p-3 text-center shadow-sm">
               <h3 className="text-gray-600 mb-1">총 프로젝트</h3>
               <p className="text-2xl font-bold text-gray-900">
-                {data.projectTotal.toLocaleString()}
+                {data?.projectTotal?.toLocaleString() ?? "-"}
               </p>
             </div>
 
             <div className="bg-gray-50 rounded-xl p-3 text-center shadow-sm">
               <h3 className="text-gray-600 mb-1">총 후원금</h3>
               <p className="text-2xl font-bold text-gray-900">
-                ₩{data.totalAmount.toLocaleString()}
+                ₩{data?.totalAmount?.toLocaleString() ?? "-"}
               </p>
             </div>
 
             <div className="bg-gray-50 rounded-xl p-3 text-center shadow-sm">
               <h3 className="text-gray-600 mb-1">총 후원 수</h3>
               <p className="text-2xl font-bold text-gray-900">
-                {data.totalBackingCnt.toLocaleString()}
+                {data?.totalBackingCnt?.toLocaleString() ?? "-"}
               </p>
             </div>
 
             <div className="bg-gray-50 rounded-xl p-3 text-center shadow-sm">
               <h3 className="text-gray-600 mb-1">승인 대기</h3>
               <p className="text-2xl font-bold text-gray-900">
-                {data.totalVerifyingCnt.toLocaleString()}
+                {data?.totalVerifyingCnt?.toLocaleString() ?? "-"}
               </p>
             </div>
           </div>
