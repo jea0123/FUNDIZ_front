@@ -11,6 +11,26 @@ export const kyInstance = ky.create({
   prefixUrl: 'http://localhost:9099/api/v1',
   throwHttpErrors: false,
   hooks: {
+    //TODO: beforeRequest 추가 (X-Dev-Creator-Id)
+    beforeRequest: [
+      (req) => {
+        const isDev = import.meta.env?.DEV === true || import.meta.env?.MODE === 'development';
+        if (!isDev) return;
+
+        // prefixUrl까지 합쳐진 절대 URL에서 path만 추출
+        let pathname = '';
+        try {
+          pathname = new URL(req.url).pathname; // e.g. /api/v1/creator/projects
+        } catch {
+          pathname = String(req.url);
+        }
+
+        if (pathname.includes('/api/v1/creator/')) {
+          const devId = localStorage.getItem('DEV_CREATOR_ID') || '4';
+          req.headers.set('X-Dev-Creator-Id', devId);
+        }
+      },
+    ],
     afterResponse: [
       async (_req, _opts, res) => {
         if (res.status >= 400) {
@@ -92,6 +112,7 @@ export const endpoints = {
   creatorBackingList: '/creator/backingList',
   creatorShippingList: '/creator/shippingList',
   creatorShippingBackerList: (projectId: number) =>`/creator/shippingList/${projectId}`,
+  postCreatorNews: (projectId: number) => `creator/projects/${projectId}/news`,
 
   // ==================== Project API ====================
   getFeatured: 'project/featured',
