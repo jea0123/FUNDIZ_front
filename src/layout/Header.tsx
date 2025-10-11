@@ -1,3 +1,4 @@
+import { type KeyboardEvent } from 'react';
 import { useEffect, useState, type JSX } from 'react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -50,8 +51,7 @@ export function Header() {
 
     /**
      * @description 특정 알림을 읽음 처리
-     * @param id 알림 ID
-     * @returns void
+     * @param {number} id 알림 ID
      * @example
      * markRead(123);
      */
@@ -68,7 +68,6 @@ export function Header() {
 
     /**
      * @description 모든 알림을 읽음 처리
-     * @returns void
      * @example
      * markAllRead();
      */
@@ -87,8 +86,7 @@ export function Header() {
 
     /**
      * @description 특정 알림을 삭제
-     * @param id 알림 ID
-     * @returns void
+     * @param {number} id 알림 ID
      * @example
      * deleteNoti(123);
      */
@@ -105,8 +103,7 @@ export function Header() {
 
     /**
      * @description 알림 클릭 시 상세 페이지로 이동
-     * @param noti 알림 객체
-     * @returns void
+     * @param {Notification} noti 알림 객체
      * @example
      * navigateDetail(noti);
      */
@@ -127,12 +124,11 @@ export function Header() {
 
     /**
      * @description 검색어 입력 후 Enter 키 핸들러
-     * @param e 키보드 이벤트
-     * @returns void
+     * @param {KeyboardEvent<HTMLInputElement>} e 키보드 이벤트
      * @example
      * searchKeyHandler(e);
      */
-    const searchKeyHandler = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const searchKeyHandler = (e: KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter' && searchQuery.trim() !== '') {
             navigate(`/project/search?keyword=${encodeURIComponent(searchQuery.trim())}`);
         }

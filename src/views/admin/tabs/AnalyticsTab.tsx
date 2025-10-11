@@ -7,25 +7,25 @@ import type { Analytics, Category, RewardSalesTop, SubcategorySuccess } from "@/
 
 /**
  * @description 숫자를 한국 원화(KRW) 통화 형식으로 변환 (예: 1200 → "₩1.2K", 1000000 → "₩1M")
- * @param amount 변환할 금액
- * @returns 한국 원화 통화 형식 문자열
+ * @param {number} amount 변환할 금액
+ * @returns {string} 한국 원화 통화 형식 문자열
  */
 const currency = (amount: number) =>
     new Intl.NumberFormat("ko-KR", { style: "currency", currency: "KRW", notation: "compact", maximumFractionDigits: 1 }).format(amount ?? 0);
 
 /**
  * @description 숫자를 1,200 → 1.2K, 1,000,000 → 1M 등으로 축약
- * @param n 축약할 숫자
- * @returns 축약된 문자열
+ * @param {number} n 축약할 숫자
+ * @returns {string} 축약된 문자열
  */
 const numberCompact = (n: number) =>
     new Intl.NumberFormat("ko-KR", { notation: "compact", maximumFractionDigits: 1 }).format(n ?? 0);
 
 /**
  * @description 문자열을 최대 길이로 자르고, 초과 시 "…" 추가
- * @param s 자를 문자열
- * @param max 최대 길이 (기본값: 16)
- * @returns 자른 문자열
+ * @param {string} s 자를 문자열
+ * @param {number} max 최대 길이 (기본값: 16)
+ * @returns {string} 자른 문자열
  */
 const shortenLabel = (s: string, max = 16) => (s && s.length > max ? s.slice(0, max - 1) + "…" : s);
 

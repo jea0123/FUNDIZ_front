@@ -29,7 +29,6 @@ export default function NotificationsPage() {
 
     /**
      * @description 알림 목록 불러오기
-     * @returns void
      * @example
      * fetchNotifications();
      */
@@ -44,8 +43,7 @@ export default function NotificationsPage() {
 
     /**
      * @description 특정 알림을 읽음 처리
-     * @param id 알림 ID
-     * @returns void
+     * @param {number} id 알림 ID
      * @example
      * markRead(1);
      */
@@ -63,7 +61,6 @@ export default function NotificationsPage() {
 
     /**
      * @description 모든 알림을 읽음 처리
-     * @returns void
      * @example
      * markAllRead();
      */
@@ -80,8 +77,7 @@ export default function NotificationsPage() {
 
     /**
      * @description 특정 알림을 삭제
-     * @param id 알림 ID
-     * @returns void
+     * @param {number} id 알림 ID
      * @example
      * deleteOne(1);
      */
@@ -97,7 +93,6 @@ export default function NotificationsPage() {
 
     /**
      * @description 모든 알림을 삭제
-     * @returns void
      * @example
      * deleteAll();
      */

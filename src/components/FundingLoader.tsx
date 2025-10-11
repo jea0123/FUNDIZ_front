@@ -12,8 +12,8 @@ export default function FundingLoader() {
 
 /**
  * @description 로딩 스피너 컴포넌트
- * @param ariaLabel 접근성 라벨 (기본값: "Loading")
- * @returns 로딩 스피너 JSX 요소
+ * @param {string} ariaLabel 접근성 라벨 (기본값: "Loading")
+ * @returns {JSX.Element} 로딩 스피너 JSX 요소
  */
 function Spinner({ ariaLabel = "Loading" }: { ariaLabel?: string }) {
     return (

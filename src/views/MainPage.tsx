@@ -17,7 +17,6 @@ export default function Main() {
 
     /**
      * @description 주목할 만한 프로젝트 불러오기
-     * @returns void
      * @example
      * getFeaturedProjects();
      */
@@ -99,7 +98,6 @@ function PopularSidebar() {
 
     /**
      * @description 인기 프로젝트 불러오기
-     * @returns void
      * @example
      * getRecentProjects();
      */
@@ -117,7 +115,6 @@ function PopularSidebar() {
     /**
      * @description 카드 클릭 핸들러
      * @param {number} projectId - 프로젝트 ID
-     * @returns void
      * @example
      * onClickCard(1);
      */
@@ -173,7 +170,6 @@ export function RecentView({ title, perRow = 5, }: { title?: string; perRow?: nu
 
     /**
      * @description 최근 본 프로젝트 불러오기
-     * @returns void
      * @example
      * getRecentViewProjects();
      */
@@ -282,11 +278,11 @@ export function ProjectCard({ items }: { items: any; }) {
 
 /**
  * @description 배열을 청크 단위로 나누기
- * @param arr 나눌 배열
- * @param size 청크 크기
- * @returns 청크 배열
+ * @param {T[]} arr 나눌 배열
+ * @param {number} size 청크 크기
+ * @returns {T[][]} 청크 배열
  */
-function chunk<T>(arr: T[], size: number) {
+function chunk<T>(arr: T[], size: number): T[][] {
     const out: T[][] = [];
     for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
     return out;

@@ -3,8 +3,8 @@ import { useEffect, useRef } from "react";
 
 /**
  * @description 서버-발송 이벤트(SSE)를 사용하여 실시간 알림 수신
- * @param userId 사용자 ID
- * @param onMessage 실시간 알림 수신 이벤트 핸들러
+ * @param {number} userId 사용자 ID
+ * @param {function} onMessage 실시간 알림 수신 이벤트 핸들러
  */
 export function useNotificationSSE(userId: number, onMessage: (noti: Notification) => void) {
     const esRef = useRef<EventSource | null>(null);
@@ -15,7 +15,7 @@ export function useNotificationSSE(userId: number, onMessage: (noti: Notificatio
 
         /**
          * @description 알림 수신 이벤트 핸들러
-         * @param e 메시지 이벤트
+         * @param {MessageEvent} e 메시지 이벤트
          */
         const onNoti = (e: MessageEvent) => {
             try {
