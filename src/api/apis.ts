@@ -100,6 +100,7 @@ export const endpoints = {
   getCommunityList: (projectId: number) => `project/${projectId}/community`,
   getReviewList: (projectId: number) => `project/${projectId}/review`,
   getQnaListOfPJ: (projectId: number, p: SearchQnaParams) => `project/${projectId}/qna?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup })}`,
+  addQuestion: (projectId: number, userId: number) => `project/${projectId}/qna/${userId}/add`,
   searchProject: (p: SearchProjectParams) => `project/search?${toQueryString({ page: p.page, size: p.size, keyword: p.keyword, ctgrId: p.ctgrId, subctgrId: p.subctgrId, sort: p.sort, })}`,
 
   // ==================== Shipping API ====================
