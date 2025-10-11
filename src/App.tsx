@@ -36,6 +36,7 @@ import { CreatorShippingList } from './views/creator/pages/CreatorShippingList';
 import { CreatorShippingDetail } from './views/creator/pages/CreatorShippingDetail';
 import CreatorBacking from './views/creator/pages/CreatorBacking';
 import CreatorAddReward from './views/creator/pages/CreatorAddReward';
+import CreatorSettlementPage from './views/creator/pages/CreatorSettlementPage';
 
 const AdminTabs = lazy(() =>
   import('./views/admin/AdminTabs').then((module) => ({
@@ -131,7 +132,7 @@ export default function App() {
                 element={<CreatorShippingDetail />}
               />
               <Route path="qna" />
-              <Route path="settlement" />
+              <Route path="settlement" element={<CreatorSettlementPage />} />
             </Route>
 
             <Route path="/admin" element={<AdminConsole />}>
