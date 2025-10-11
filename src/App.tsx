@@ -45,12 +45,6 @@ const AdminTabs = lazy(() =>
   }))
 );
 
-const AdminTabs = lazy(() =>
-  import('./views/admin/AdminTabs').then((module) => ({
-    default: module.AdminTabs,
-  }))
-);
-
 export default function App() {
   const { setLoginUser, resetLoginUser } = useLoginUserStore();
   const [cookie] = useCookies();
