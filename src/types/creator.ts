@@ -14,6 +14,12 @@ export interface CreatorProjectListDto {
   subctgrName: string;
   percentNow: number;
   requestedAt?: string;
+
+  newsCount?: number;
+  lastNewsAt?: string | null;
+  reviewNewCount?: number; // 새 후기 수
+  reviewPendingCount?: number; // 미답글 수
+  lastReviewAt?: string | null;
 }
 
 export interface SearchCreatorProjectDto {

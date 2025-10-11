@@ -6,7 +6,7 @@ import { useParams } from 'react-router-dom';
 import { formatDate, getDaysBefore, getDaysLeft } from '@/utils/utils';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
@@ -15,7 +15,6 @@ import { useNavigate } from 'react-router-dom';
 import type { Reward } from '@/types/reward';
 import FundingLoader from '@/components/FundingLoader';
 import type { CommunityDto, Cursor, CursorPage, ReviewDto } from '@/types/community';
-import { QnATab } from './components/QnATab';
 
 export function ProjectDetailPage() {
 
@@ -35,7 +34,7 @@ export function ProjectDetailPage() {
     const [communityCursor, setCommunityCursor] = useState<Cursor | null>(null);
     const [review, setReview] = useState<ReviewDto[]>([]);
     const [reviewCursor, setReviewCursor] = useState<Cursor | null>(null);
-    const [tab, setTab] = useState<"description"|"updates"|"community"|"review"|"qna">("description");
+    const [tab, setTab] = useState<"description" | "news" | "community" | "review">("description");
 
     const [isLiked, setIsLiked] = useState(false);
     const [loadingProject, setLoadingProject] = useState(false);
@@ -167,7 +166,7 @@ export function ProjectDetailPage() {
 
             if (Array.isArray((data as CursorPage<CommunityDto>)?.items)) {
                 const page = data as CursorPage<CommunityDto>;
-                const items =  page.items ?? [];
+                const items = page.items ?? [];
                 setCommunity(prev => (communityCursor ? [...prev, ...items] : items)); //커서 있으면 append, 없으면 replace
                 setCommunityCursor(page?.nextCursor ?? null);
                 return;
@@ -336,19 +335,41 @@ export function ProjectDetailPage() {
                     </div>
 
                     <Tabs defaultValue="description" className="mb-8" onValueChange={(v) => setTab(v as any)}>
-                        <TabsList className="grid w-full grid-cols-5">
-                            <TabsTrigger value="description">프로젝트 소개</TabsTrigger>
-                            <TabsTrigger value="updates">새소식 <p className="text-indigo-600 font-semibold">{project.newsList.length}</p></TabsTrigger>
-                            <TabsTrigger value="community">커뮤니티 <p className="text-indigo-600 font-semibold">{community.length}</p></TabsTrigger>
-                            <TabsTrigger value="review">후기 <p className="text-indigo-600 font-semibold">{review.length}</p></TabsTrigger>
-                            <TabsTrigger value="qna">Q&A </TabsTrigger>
+                        <TabsList className="grid w-full grid-cols-4 gap-2">
+                            <TabsTrigger value="description" className="min-w-0 flex items-center justify-center gap-1 truncate">
+                                <span className="truncate">프로젝트 소개</span>
+                            </TabsTrigger>
+
+                            <TabsTrigger value="news" className="min-w-0 flex items-center justify-center gap-1 truncate">
+                                <span className="truncate">새소식</span>
+                                <span className="ml-1 inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-600">
+                                    {project.newsList.length}
+                                </span>
+                            </TabsTrigger>
+
+                            <TabsTrigger value="community" className="min-w-0 flex items-center justify-center gap-1 truncate">
+                                <span className="truncate">커뮤니티</span>
+                                <span className="ml-1 inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-600">
+                                    {community.length}
+                                </span>
+                            </TabsTrigger>
+
+                            <TabsTrigger value="review" className="min-w-0 flex items-center justify-center gap-1 truncate">
+                                <span className="truncate">후기</span>
+                                <span className="ml-1 inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-600">
+                                    {review.length}
+                                </span>
+                            </TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="description" className="mt-6">
-                            <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: project.content }} />
+                            <div
+                                className="prose max-w-none whitespace-pre-wrap break-words break-all [overflow-wrap:anywhere]"
+                                dangerouslySetInnerHTML={{ __html: project.content }}
+                            />
                         </TabsContent>
 
-                        <TabsContent value="updates">
+                        <TabsContent value="news">
                             {project.newsList.length == 0 ? (
                                 <div className="text-sm text-muted-foreground">게시글이 존재하지 않습니다.</div>
                             ) : (
@@ -356,12 +377,11 @@ export function ProjectDetailPage() {
                                     {project.newsList.map((news) => (
                                         <div key={news.newsId} className="space-y-4 mt-6">
                                             <Card>
-                                                <CardHeader>
-                                                    <CardTitle className="text-lg">새소식</CardTitle>
-                                                    <p className="text-sm text-gray-500">{formatDate(news.createdAt)}</p>
-                                                </CardHeader>
                                                 <CardContent>
-                                                    <p>{news.content}</p>
+                                                    <div className="whitespace-pre-wrap break-words break-all [overflow-wrap:anywhere]">
+                                                        {news.content}
+                                                    </div>
+                                                    <p className="text-sm text-gray-500 mt-2">{formatDate(news.createdAt)}</p>
                                                 </CardContent>
                                             </Card>
                                         </div>
@@ -374,43 +394,43 @@ export function ProjectDetailPage() {
                             {!Array.isArray(community) || community.length == 0 ? (
                                 <div className="text-sm text-muted-foreground">게시글이 존재하지 않습니다.</div>
                             ) : (
-                            <>
-                                {community.map((cm) => (
-                                    <div key={cm.cmId} className="space-y-4 mt-6">
-                                        <Card>
-                                            <CardContent className="pt-6">
-                                                <div className="flex items-start space-x-3">
-                                                    <Avatar className="w-8 h-8">
-                                                        <AvatarFallback>{cm.profileImg}</AvatarFallback>
-                                                    </Avatar>
-                                                    <div className="flex-1">
-                                                        <div className="flex items-center space-x-2 mb-1">
-                                                            <span className="font-medium">{cm.nickname}</span>
-                                                            <span className="text-sm text-gray-500">{getDaysBefore(cm.createdAt)} 전</span>
-                                                        </div>
-                                                        <p className="text-sm">{cm.cmContent}</p>
-                                                        <div className="flex items-center space-x-2 mt-2">
-                                                            <Button variant="ghost" size="sm">
-                                                                <MessageCircle className="h-3 w-3 mr-1" />
-                                                                댓글
-                                                            </Button>
+                                <>
+                                    {community.map((cm) => (
+                                        <div key={cm.cmId} className="space-y-4 mt-6">
+                                            <Card>
+                                                <CardContent className="pt-6">
+                                                    <div className="flex items-start space-x-3">
+                                                        <Avatar className="w-8 h-8">
+                                                            <AvatarFallback>{cm.profileImg}</AvatarFallback>
+                                                        </Avatar>
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center space-x-2 mb-1">
+                                                                <span className="font-medium">{cm.nickname}</span>
+                                                                <span className="text-sm text-gray-500">{getDaysBefore(cm.createdAt)} 전</span>
+                                                            </div>
+                                                            <p className="text-sm">{cm.cmContent}</p>
+                                                            <div className="flex items-center space-x-2 mt-2">
+                                                                <Button variant="ghost" size="sm">
+                                                                    <MessageCircle className="h-3 w-3 mr-1" />
+                                                                    댓글
+                                                                </Button>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    </div>
-                                ))}
+                                                </CardContent>
+                                            </Card>
+                                        </div>
+                                    ))}
 
-                                {loadingCommunity && (
-                                    <div className="mt-4 space-y-2">
-                                        <div className="h-20 animate-pulse rounded-xl bg-gray-100" />
-                                        <div className="h-20 animate-pulse rounded-xl bg-gray-100" />
-                                    </div>
-                                )}
+                                    {loadingCommunity && (
+                                        <div className="mt-4 space-y-2">
+                                            <div className="h-20 animate-pulse rounded-xl bg-gray-100" />
+                                            <div className="h-20 animate-pulse rounded-xl bg-gray-100" />
+                                        </div>
+                                    )}
 
-                                {communityCursor && <div ref={communitySentinelRef} className="h-1 w-full" />}
-                            </>
+                                    {communityCursor && <div ref={communitySentinelRef} className="h-1 w-full" />}
+                                </>
                             )}
                         </TabsContent>
 
@@ -418,52 +438,49 @@ export function ProjectDetailPage() {
                             {review.length == 0 ? (
                                 <div className="text-sm text-muted-foreground">게시글이 존재하지 않습니다.</div>
                             ) : (
-                            <>
-                                {review.map((rv) => (
-                                    <div key={rv.cmId} className="space-y-4 mt-6">
-                                        <Card>
-                                            <CardContent className="pt-6">
-                                                <div className="flex items-start space-x-3">
-                                                    <Avatar className="w-8 h-8">
-                                                        <AvatarFallback>{rv.profileImg}</AvatarFallback>
-                                                    </Avatar>
-                                                    <div className="flex-1">
-                                                        <div className="flex items-center space-x-2 mb-1">
-                                                            <span className="font-medium">{rv.nickname}</span>
-                                                            <div className="flex items-center">
-                                                                {[...Array(rv.rating)].map((_, i) => (
-                                                                    <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                                                                ))}
+                                <>
+                                    {review.map((rv) => (
+                                        <div key={rv.cmId} className="space-y-4 mt-6">
+                                            <Card>
+                                                <CardContent className="pt-6">
+                                                    <div className="flex items-start space-x-3">
+                                                        <Avatar className="w-8 h-8">
+                                                            <AvatarFallback>{rv.profileImg}</AvatarFallback>
+                                                        </Avatar>
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center space-x-2 mb-1">
+                                                                <span className="font-medium">{rv.nickname}</span>
+                                                                <div className="flex items-center">
+                                                                    {[...Array(rv.rating)].map((_, i) => (
+                                                                        <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                                                    ))}
+                                                                </div>
+                                                                <span className="text-sm text-gray-500">{getDaysBefore(rv.createdAt)} 전</span>
                                                             </div>
-                                                            <span className="text-sm text-gray-500">{getDaysBefore(rv.createdAt)} 전</span>
-                                                        </div>
-                                                        <p className="text-sm">{rv.cmContent}</p>
-                                                        <div className="flex items-center space-x-2 mt-2">
-                                                            <Button variant="ghost" size="sm">
-                                                                <MessageCircle className="h-3 w-3 mr-1" />
-                                                                댓글
-                                                            </Button>
+                                                            <p className="text-sm">{rv.cmContent}</p>
+                                                            <div className="flex items-center space-x-2 mt-2">
+                                                                <Button variant="ghost" size="sm">
+                                                                    <MessageCircle className="h-3 w-3 mr-1" />
+                                                                    댓글
+                                                                </Button>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    </div>
-                                ))}
-                                
-                                {loadingReview && (
-                                    <div className="mt-4 space-y-2">
-                                        <div className="h-20 animate-pulse rounded-xl bg-gray-100" />
-                                        <div className="h-20 animate-pulse rounded-xl bg-gray-100" />
-                                    </div>
-                                )}
-                                
-                                {reviewCursor && <div ref={reviewSentinelRef} className="h-1 w-full" />}
-                            </>
+                                                </CardContent>
+                                            </Card>
+                                        </div>
+                                    ))}
+
+                                    {loadingReview && (
+                                        <div className="mt-4 space-y-2">
+                                            <div className="h-20 animate-pulse rounded-xl bg-gray-100" />
+                                            <div className="h-20 animate-pulse rounded-xl bg-gray-100" />
+                                        </div>
+                                    )}
+
+                                    {reviewCursor && <div ref={reviewSentinelRef} className="h-1 w-full" />}
+                                </>
                             )}
-                        </TabsContent>
-                        <TabsContent value="qna">
-                            <QnATab/>
                         </TabsContent>
                     </Tabs>
                 </div>
@@ -606,8 +623,6 @@ export function ProjectDetailPage() {
                                         <h4 className="font-medium mb-2">{reward.rewardName}</h4>
                                         <p className="text-sm text-gray-600 mb-3">{reward.rewardContent}</p>
                                         <div className="flex justify-between items-center text-sm">
-                                            {/* //TODo: 리워드당 후원자수 */}
-                                            {/* <span className="text-gray-500">{reward.backers}명 후원</span> */}
                                             <span className="text-gray-500">예상 발송: {formatDate(reward.deliveryDate)}</span>
                                         </div>
 
