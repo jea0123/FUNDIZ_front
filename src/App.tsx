@@ -117,27 +117,22 @@ export default function App() {
             </Route>
 
             <Route path="/creator" element={<CreatorLayout />}>
-              <Route index element={<CreatorDashboard />} />
-              <Route path="dashboard" element={<CreatorDashboard />} />
-              <Route path="project/new" element={<CreateProject />} />
-              <Route path="project/:projectId" element={<CreateProject />} />
-              <Route path="projects">
-                <Route index element={<CreatorProjects />} />
-                <Route path=":projectId" element={<CreatorProjectDetail />} />
-              </Route>
-              <Route path=":projectId/reward" element={<CreatorAddReward />} />
-              <Route path="backings" element={<CreatorBacking />} />
-              <Route path="shipping" element={<CreatorShippingList />} />
-              <Route
-                path="shipping/:projectId"
-                element={<CreatorShippingDetail />}
-              />
-              <Route path="qna" />
-              <Route path="settlement" element={<CreatorSettlementPage />} />
-              =======
-              <Route path="qna" element={<CreatorQnATab />} />
-              <Route path="settlement" />
-            </Route>
+              <Route index element={<CreatorDashboard />} />
+              <Route path="dashboard" element={<CreatorDashboard />} />
+              <Route path="project/new" element={<CreateProject />} />
+              <Route path="project/:projectId" element={<CreateProject />} />
+              <Route path="projects">
+                <Route index element={<CreatorProjects />} />
+                <Route path=":projectId" element={<CreatorProjectDetail />} />
+              </Route>
+              <Route path=":projectId/reward" element={<CreatorAddReward />} />
+              <Route path="backings" element={<CreatorBacking />} />
+              <Route path="shipping" element={<CreatorShippingList />} />
+              <Route path="shipping/:projectId" element={<CreatorShippingDetail />} />
+              <Route path="qna" element={<CreatorQnATab />} />
+              <Route path="settlement" element={<CreatorSettlementPage />} />
+            </Route>
+
 
             <Route path="/admin" element={<AdminConsole />}>
               <Route index element={<AdminTabs />} />
@@ -151,25 +146,6 @@ export default function App() {
               <Route path="notice/:noticeId" element={<NoticeDetailPage />} />
               <Route path="inquiry" element={<InquiryTab />} />
               <Route path="report" element={<ReportTab />} />
-            </Route>
-
-            <Route path="/creator" element={<CreatorLayout />}>
-              <Route index element={<CreatorDashboard />} />
-              <Route path="dashboard" element={<CreatorDashboard />} />
-              <Route path="project/new" element={<CreateProject />} />
-              <Route path="project/:projectId" element={<CreateProject />} />
-              <Route path="projects">
-                <Route index element={<CreatorProjects />} />
-                <Route path=":projectId" element={<CreatorProjectDetail />} />
-                <Route
-                  path=":projectId/reward"
-                  element={<CreatorAddReward />}
-                />
-              </Route>
-              <Route path="backings" />
-              <Route path="shipping" />
-              <Route path="qna" />
-              <Route path="settlement" />
             </Route>
 
             <Route path="/error" element={<ErrorPage />} />
