@@ -108,11 +108,6 @@ export function ReportsAdminTab() {
     const { page, size, perGroup, keyword, setPage } = useQueryState();
     const { items, total, setItems } = useReport({ page, size, perGroup, keyword });
 
-
-    const [reportFilter, setReportFilter] = useState<'전체' | 'RECEIVED' | 'UNDER_REVIEW' | 'COMPLETED'>('전체');
-    const filteredReports = useMemo(() => items.filter(r => reportFilter === '전체' ? true : r.reportStatus === reportFilter), [items, reportFilter]);
-    const updateReportStatus = (id: number, status: ReportStatus['reportStatus']) => setItems(prev => prev.map(r => r.reportId === id ? { ...r, reportStatus: status } : r));
-
     return (
         <div>
             <div>

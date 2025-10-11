@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -44,9 +45,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { endpoints, getData, postData } from "@/api/apis";
 import { formatDate } from '@/utils/utils';
-import type { Qna, SearchQnaParams } from "@/types/qna";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import type { QnaAddRequest } from "@/types/qna";
+import type { Qna, SearchQnaParams, QnaAddRequest } from "@/types/qna";
 
 // ========= 공용 타입 (DB 스키마 기반) =========
 
@@ -162,6 +161,7 @@ export function QnATab() {
                                 <div className="mt-4 flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                         <Pagination page={page} size={size} perGroup={perGroup} total={total} onPage={setPage} />
+                                        <QnaAddModal/>
                                     </div>
                                 </div>
                             </CardContent>
@@ -169,4 +169,71 @@ export function QnATab() {
             </div>
         </div>
     );
+}
+
+export function QnaAddModal(){
+  const tempUserId = 24;
+
+  const { projectId: projectIdParam } = useParams<{ projectId: string }>();
+      const projectId = useMemo<number | null>(() => {
+          const num = Number(projectIdParam);
+          return Number.isFinite(num) && num > 0 ? num : null;
+      }, [projectIdParam]);
+
+  const [project, setProject] = useState<Qna | null>(null);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [qnaAdd, setQnaAdd] = useState<QnaAddRequest>({
+    projectId : tempProjectId,
+    userId : tempUserId,
+    content : "",
+    createdAt : new Date(Date.now())
+  });
+
+  const handleAddQna = async () => {
+    const url = endpoints.addQuestion(projectId, tempUserId);
+    console.log(url);
+    const response = await postData(url, qnaAdd);
+    console.log(qnaAdd);
+    if (response.status === 200) {
+      alert("문의사항이 등록되었습니다.");
+      setIsAddDialogOpen(false);
+    } else {
+      alert("문의사항 등록 실패");
+    }
+  };
+
+
+  return (
+    <div className="mt-4">
+    <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+      <DialogTrigger asChild>
+        <Button className="w-20">QnA 등록</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>QnA 등록</DialogTitle>
+        </DialogHeader>
+        <DialogDescription>
+          프로젝트에 관한 문의 사항을 적어주세요.
+        </DialogDescription>
+        <div className="space-y-3">
+          <Textarea
+            className="w-full border p-2 rounded"
+            value={qnaAdd.content}
+            onChange={(e) =>
+              setQnaAdd({ ...qnaAdd, content: e.target.value })
+            }
+            rows={20}
+          />
+        </div>
+        <div className="mt-4 flex justify-end gap-2">
+          <DialogClose asChild>
+            <Button variant="outline">취소</Button>
+          </DialogClose>
+          <Button onClick={handleAddQna}>추가</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </div>
+  );
 }
