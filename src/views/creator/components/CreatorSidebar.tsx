@@ -24,7 +24,7 @@ export function CreatorSidebar() {
                     <Truck className="mr-2 h-4 w-4" /> 배송 내역
                 </NavLink>
                 <NavLink to="/creator/qna" className={({ isActive }) => linkCls(isActive)}>
-                    <MessagesSquare className="mr-2 h-4 w-4" /> QnA
+                    <MessagesSquare className="mr-2 h-4 w-4" /> QnA 목록
                 </NavLink>
                 <NavLink to="/creator/settlement" className={({ isActive }) => linkCls(isActive)}>
                     <Wallet className="mr-2 h-4 w-4" /> 정산 내역

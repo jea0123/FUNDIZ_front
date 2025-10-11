@@ -31,12 +31,19 @@ import { NoticeTab } from './views/cs/tabs/NoticeTab';
 import { InquiryTab } from './views/cs/tabs/InquiryTab';
 import { ReportTab } from './views/cs/tabs/ReportTab';
 import CSLayout from './views/cs/CSLayout';
+import { CreatorQnATab } from './views/creator/pages/CreatorQnATab';
 import CreatorProjectDetail from './views/creator/pages/CreatorProjectDetail';
 import { CreatorShippingList } from './views/creator/pages/CreatorShippingList';
 import { CreatorShippingDetail } from './views/creator/pages/CreatorShippingDetail';
 import CreatorBacking from './views/creator/pages/CreatorBacking';
 import CreatorAddReward from './views/creator/pages/CreatorAddReward';
 import CreatorSettlementPage from './views/creator/pages/CreatorSettlementPage';
+
+const AdminTabs = lazy(() =>
+  import('./views/admin/AdminTabs').then((module) => ({
+    default: module.AdminTabs,
+  }))
+);
 
 const AdminTabs = lazy(() =>
   import('./views/admin/AdminTabs').then((module) => ({
@@ -133,6 +140,9 @@ export default function App() {
               />
               <Route path="qna" />
               <Route path="settlement" element={<CreatorSettlementPage />} />
+              =======
+              <Route path="qna" element={<CreatorQnATab />} />
+              <Route path="settlement" />
             </Route>
 
             <Route path="/admin" element={<AdminConsole />}>
@@ -147,6 +157,25 @@ export default function App() {
               <Route path="notice/:noticeId" element={<NoticeDetailPage />} />
               <Route path="inquiry" element={<InquiryTab />} />
               <Route path="report" element={<ReportTab />} />
+            </Route>
+
+            <Route path="/creator" element={<CreatorLayout />}>
+              <Route index element={<CreatorDashboard />} />
+              <Route path="dashboard" element={<CreatorDashboard />} />
+              <Route path="project/new" element={<CreateProject />} />
+              <Route path="project/:projectId" element={<CreateProject />} />
+              <Route path="projects">
+                <Route index element={<CreatorProjects />} />
+                <Route path=":projectId" element={<CreatorProjectDetail />} />
+                <Route
+                  path=":projectId/reward"
+                  element={<CreatorAddReward />}
+                />
+              </Route>
+              <Route path="backings" />
+              <Route path="shipping" />
+              <Route path="qna" />
+              <Route path="settlement" />
             </Route>
 
             <Route path="/error" element={<ErrorPage />} />

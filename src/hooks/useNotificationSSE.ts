@@ -1,4 +1,3 @@
-import { endpoints } from "@/api/apis";
 import type { Notification } from "@/types/notification";
 import { useEffect, useRef } from "react";
 

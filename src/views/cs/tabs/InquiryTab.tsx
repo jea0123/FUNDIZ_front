@@ -24,7 +24,7 @@ export function InquiryTab() {
         content : "",
         createdAt : new Date(Date.now()),
         isCanceled : "N",
-        ctgr : "GENERAL",
+        ctgr : "",
         isAnswer : "N"
     });
 
@@ -47,6 +47,23 @@ export function InquiryTab() {
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                        <div>
+                            <Label className="mb-1 block">유형</Label>
+                            <select
+                                id="select-option"
+                                value={inqAdd.ctgr}
+                                onChange={e => setInqAdd({ ...inqAdd, ctgr: e.target.value })}
+                                >
+                                <option value="">분류</option>
+                                <option value="GENERAL">일반</option>
+                                <option value="ACCOUNT">회원/계정</option>
+                                <option value="PAYMENT/REFUNDS">결제/환불</option>
+                                <option value="SHIPPING/DELIVERY">배송/수령</option>
+                                <option value="BACKING">후원</option>
+                                <option value="PROJECT/REWARDS">프로젝트/리워드</option>
+                                <option value="OTHER">기타</option>
+                            </select>
+                        </div>
                         <div>
                             <Label className="mb-1 block">제목</Label>
                             <Input
