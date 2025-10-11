@@ -1,75 +1,75 @@
-import type { Reward, RewardCreateRequestDto } from "./reward";
-import type { Tag } from "./tag";
+import type { Reward, RewardCreateRequestDto } from './reward';
+import type { Tag } from './tag';
 
 export interface CreatorProjectListDto {
-    projectId: number;
-    title: string;
-    projectStatus: string;
-    startDate: Date;
-    endDate: Date;
-    goalAmount: number;
-    currAmount: number;
-    backerCnt: number;
-    ctgrName: string;
-    subctgrName: string;
-    percentNow: number;
-    requestedAt?: string;
+  projectId: number;
+  title: string;
+  projectStatus: string;
+  startDate: Date;
+  endDate: Date;
+  goalAmount: number;
+  currAmount: number;
+  backerCnt: number;
+  ctgrName: string;
+  subctgrName: string;
+  percentNow: number;
+  requestedAt?: string;
 }
 
 export interface SearchCreatorProjectDto {
-    page: number;
-    size: number;
+  page: number;
+  size: number;
 
-    projectStatus?: string;
-    rangeType?: string;
+  projectStatus?: string;
+  rangeType?: string;
 }
 
 export interface CreatorProjectDetailDto {
-    projectId: number;
-    creatorId: number;
-    title: string;
-    content: string;
-    thumbnail: string;
-    goalAmount: number;
-    currAmount: number;
-    startDate: Date;
-    endDate: Date;
+  projectId: number;
+  creatorId: number;
+  title: string;
+  content: string;
+  thumbnail: string;
+  goalAmount: number;
+  currAmount: number;
+  startDate: Date;
+  endDate: Date;
 
-    ctgrId: number;
-    ctgrName: string;
-    subctgrId: number;
-    subctgrName: string;
+  ctgrId: number;
+  ctgrName: string;
+  subctgrId: number;
+  subctgrName: string;
 
-    creatorName: string;
-    businessNum: string;
-    email: string;
-    phone: string;
+  creatorName: string;
+  businessNum: string;
+  email: string;
+  phone: string;
 
-    tagList: Tag[];
-    rewardList: Reward[];
+  tagList: Tag[];
+  rewardList: Reward[];
 }
 
 export interface ProjectCreateRequestDto {
-    projectId: number;
-    ctgrId: number; //프론트에서만 사용
-    subctgrId: number;
-    creatorId: number;
+  projectId: number;
+  ctgrId: number; //프론트에서만 사용
+  subctgrId: number;
+  creatorId: number;
 
-    title: string;
-    content: string;
-    thumbnail: string;
-    goalAmount: number;
-    startDate: Date;
-    endDate: Date;
+  title: string;
+  content: string;
+  thumbnail: string;
+  goalAmount: number;
+  startDate: Date;
+  endDate: Date;
 
-    tagList: string[];
+  tagList: string[];
 
-    rewardList: RewardCreateRequestDto[];
+  rewardList: RewardCreateRequestDto[];
 
-    creatorName: string;
-    businessNum: string;
-    email: string;
-    phone: string;
+  creatorName: string;
+  businessNum: string;
+  email: string;
+  phone: string;
 }
 
 export interface ProjectSummaryDto {
@@ -77,4 +77,30 @@ export interface ProjectSummaryDto {
   title: string;
   endDate: Date;
   projectStatus: string;
+}
+
+export interface CreatorDashboardRanking {
+  projectId: number;
+  title: string;
+  backerCnt: number;
+  likeCnt: number;
+  viewCnt: number;
+}
+
+export interface CreatorDashboard {
+  creatorId: number;
+
+  projectTotal: number;
+  totalAmount: number;
+  totalBackingCnt: number;
+  totalVerifyingCnt: number;
+
+  totalProjectCnt: number;
+  projectFailedCnt: number;
+  projectFailedPercentage: number;
+  projectSuccessPercentage: number;
+
+  to3BackerCnt: CreatorDashboardRanking[];
+  to3LikeCnt: CreatorDashboardRanking[];
+  to3ViewCnt: CreatorDashboardRanking[];
 }

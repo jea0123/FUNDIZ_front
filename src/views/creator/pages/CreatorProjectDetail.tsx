@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import FundingLoader from "@/components/FundingLoader";
-import { axiosInstance, endpoints, getData } from "@/api/apis";
+import { endpoints, getData, kyInstance } from "@/api/apis";
 import type { ProjectCreateRequestDto } from "@/types/creator";
 import type { RewardCreateRequestDto } from "@/types/reward";
 import type { Category } from "@/types/admin";
@@ -69,12 +69,13 @@ export default function CreatorProjectDetail() {
                 setSubcategories(Array.isArray(subRes?.data) ? subRes.data : []);
 
                 //TODO: dev 헤더에 creatorId 주입
-                const res = await axiosInstance.get(endpoints.getCreatorProjectDetail(projectId), {
+                const res = await kyInstance.get(endpoints.getCreatorProjectDetail(projectId), {
                     headers: { "X-DEV-CREATOR-ID": String(creatorId) },
                 });
-
+                
                 if (!mounted) return;
-                const draft = res?.data?.data ?? res?.data ?? {};
+                const body = await res.json<any>();
+                const draft = body?.data ?? body ?? {};
 
                 const project: ProjectCreateRequestDto = {
                     projectId: Number(draft.projectId) || 0,

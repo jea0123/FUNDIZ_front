@@ -1,4 +1,4 @@
-import { axiosInstance, getData } from "@/api/apis";
+import { kyInstance, getData } from "@/api/apis";
 import { useEffect, useState } from "react";
 
 export function useCreatorId(fallbackId?: number) {
@@ -41,35 +41,39 @@ export function useCreatorId(fallbackId?: number) {
                 // DEV에서만 헤더로 주입
                 if (import.meta.env.DEV) {
                     if (id != null) {
-                        axiosInstance.defaults.headers.common["X-Dev-Creator-Id"] = String(id);
+                        kyInstance.extend({
+                            headers: { "X-Dev-Creator-Id": String(id) },
+                        });
                         if (fromQuery) {
                             localStorage.setItem("devCreatorId", String(id));
                         }
                     } else {
-                        delete axiosInstance.defaults.headers.common["X-Dev-Creator-Id"];
+                        kyInstance.extend({ headers: {} });
                         localStorage.removeItem("devCreatorId");
                     }
                 }
                 console.debug("[useCreatorId] devCandidate=", devCandidate, "resolved id=", id, "DEV=", import.meta.env.DEV);
             } catch (e) {
-                    if (!alive) return;
+                if (!alive) return;
 
-                    //실패 시 폴백 id 사용
-                    const id = fallbackId ?? null;
-                    setCreatorId(id);
+                //실패 시 폴백 id 사용
+                const id = fallbackId ?? null;
+                setCreatorId(id);
 
-                    if (import.meta.env.DEV) {
-                        if (id != null) {
-                            axiosInstance.defaults.headers.common["X-Dev-Creator-Id"] = String(id);
-                        } else {
-                            delete axiosInstance.defaults.headers.common["X-Dev-Creator-Id"];
-                        }
+                if (import.meta.env.DEV) {
+                    if (id != null) {
+                        kyInstance.extend({
+                            headers: { "X-Dev-Creator-Id": String(id) },
+                        });
+                    } else {
+                        kyInstance.extend({ headers: {} });
                     }
-                    console.warn("[useCreatorId] fallback due to error:", e);
-                } finally {
-                    if (alive) setLoading(false);
                 }
-            })();
+                console.warn("[useCreatorId] fallback due to error:", e);
+            } finally {
+                if (alive) setLoading(false);
+            }
+        })();
 
         return () => { alive = false; };
     }, [fallbackId]);
