@@ -11,7 +11,11 @@ import ErrorPage from './views/ErrorPage';
 import MainPage from './views/MainPage';
 import { setNavigator } from './utils/navigator';
 import { NoticeDetailPage } from './views/cs/NoticeDetail';
-import ProjectsAllPage, { ProjectByCategoryPage, ProjectBySubcategoryPage, SearchProjectPage, } from './views/project/ProjectAllPage';
+import ProjectsAllPage, {
+  ProjectByCategoryPage,
+  ProjectBySubcategoryPage,
+  SearchProjectPage,
+} from './views/project/ProjectAllPage';
 import { FundingPage } from './views/backing/backingPage';
 import FundingLoader from './components/FundingLoader';
 import { ApprovalDetail } from './views/admin/tabs/ApprovalDetail';
@@ -29,14 +33,23 @@ import { ReportTab } from './views/cs/tabs/ReportTab';
 import CSLayout from './views/cs/CSLayout';
 import { CreatorQnATab } from './views/creator/pages/CreatorQnATab';
 import CreatorProjectDetail from './views/creator/pages/CreatorProjectDetail';
-
 import { CreatorShippingList } from './views/creator/pages/CreatorShippingList';
 import { CreatorShippingDetail } from './views/creator/pages/CreatorShippingDetail';
 import CreatorBacking from './views/creator/pages/CreatorBacking';
-
 import CreatorAddReward from './views/creator/pages/CreatorAddReward';
+import CreatorSettlementPage from './views/creator/pages/CreatorSettlementPage';
 
-const AdminTabs = lazy(() => import('./views/admin/AdminTabs').then((module) => ({ default: module.AdminTabs, })));
+const AdminTabs = lazy(() =>
+  import('./views/admin/AdminTabs').then((module) => ({
+    default: module.AdminTabs,
+  }))
+);
+
+const AdminTabs = lazy(() =>
+  import('./views/admin/AdminTabs').then((module) => ({
+    default: module.AdminTabs,
+  }))
+);
 
 export default function App() {
   const { setLoginUser, resetLoginUser } = useLoginUserStore();
@@ -118,13 +131,17 @@ export default function App() {
                 <Route index element={<CreatorProjects />} />
                 <Route path=":projectId" element={<CreatorProjectDetail />} />
               </Route>
+              <Route path=":projectId/reward" element={<CreatorAddReward />} />
               <Route path="backings" element={<CreatorBacking />} />
               <Route path="shipping" element={<CreatorShippingList />} />
               <Route
                 path="shipping/:projectId"
                 element={<CreatorShippingDetail />}
               />
-              <Route path='qna' element={<CreatorQnATab/>}/>
+              <Route path="qna" />
+              <Route path="settlement" element={<CreatorSettlementPage />} />
+              =======
+              <Route path="qna" element={<CreatorQnATab />} />
               <Route path="settlement" />
             </Route>
 
@@ -134,7 +151,6 @@ export default function App() {
               <Route path="project/:projectId" element={<AdminProjectEdit />} />
             </Route>
 
-
             <Route path="/cs" element={<CSLayout />}>
               <Route index element={<NoticeTab />} />
               <Route path="notice" element={<NoticeTab />} />
@@ -143,20 +159,23 @@ export default function App() {
               <Route path="report" element={<ReportTab />} />
             </Route>
 
-            <Route path='/creator' element={<CreatorLayout />}>
+            <Route path="/creator" element={<CreatorLayout />}>
               <Route index element={<CreatorDashboard />} />
-              <Route path='dashboard' element={<CreatorDashboard />} />
-              <Route path='project/new' element={<CreateProject />} />
-              <Route path='project/:projectId' element={<CreateProject />} />
-              <Route path='projects'>
+              <Route path="dashboard" element={<CreatorDashboard />} />
+              <Route path="project/new" element={<CreateProject />} />
+              <Route path="project/:projectId" element={<CreateProject />} />
+              <Route path="projects">
                 <Route index element={<CreatorProjects />} />
-                <Route path=':projectId' element={<CreatorProjectDetail />} />
-                <Route path=':projectId/reward' element={<CreatorAddReward />} />
+                <Route path=":projectId" element={<CreatorProjectDetail />} />
+                <Route
+                  path=":projectId/reward"
+                  element={<CreatorAddReward />}
+                />
               </Route>
-              <Route path='backings' />
-              <Route path='shipping' />
-              <Route path='qna' />
-              <Route path='settlement' />
+              <Route path="backings" />
+              <Route path="shipping" />
+              <Route path="qna" />
+              <Route path="settlement" />
             </Route>
 
             <Route path="/error" element={<ErrorPage />} />

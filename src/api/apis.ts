@@ -68,12 +68,13 @@ export const endpoints = {
   signIn: 'auth/signIn',
 
   // ==================== User API ====================
-  getLoginUser: 'user/loginUser',
-  getMypage: (userId: number) => `user/userPage/${userId}`,
-  getLikedList: (userId: number) => `user/likedList/${userId}`,
-  getQnAList: (userId: number) => `user/QnAList/${userId}`,
-  getRecentView: (userId: number) => `user/recentViewProjects/${userId}`,
-  getQnAListDetail: (userId: number, projectId: number) => `user/QnAListDetail/${userId}/project/${projectId}`,
+  getLoginUser: '/user/loginUser',
+  getMypage: (userId: number) => `/user/userPage/${userId}`,
+  getLikedList: (userId: number) => `/user/likedList/${userId}`,
+  getQnAList: (userId: number) => `/user/QnAList/${userId}`,
+  getRecentView: (userId: number) => `/user/recentViewProjects/${userId}`,
+  getQnAListDetail: (userId: number, projectId: number) =>`/user/QnAListDetail/${userId}/project/${projectId}`,
+
 
   // ==================== Creator API ====================
   getCreatorProjectList: (p: SearchCreatorProjectDto) => `creator/projects?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined, })}`,
@@ -86,6 +87,10 @@ export const endpoints = {
   getCreatorRewardList: (projectId: number) => `creator/projects/${projectId}/reward`,
   addReward: (projectId: number) => `creator/projects/${projectId}/reward`,
   getQnAListOfCreator: (p: SearchQnaParams) => `creator/qna?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup })}`,
+  creatorDashboard: '/creator/dashboard',
+  creatorBackingList: '/creator/backingList',
+  creatorShippingList: '/creator/shippingList',
+  creatorShippingBackerList: (projectId: number) =>`/creator/shippingList/${projectId}`,
 
   // ==================== Project API ====================
   getFeatured: 'project/featured',
