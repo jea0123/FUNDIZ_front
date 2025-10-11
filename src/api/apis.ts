@@ -65,6 +65,7 @@ export const endpoints = {
     getCreatorProjectSummary: (projectId: number) => `/creator/projects/${projectId}/summary`,
     getCreatorRewardList: (projectId: number) => `/creator/projects/${projectId}/reward`,
     addReward: (projectId: number) => `/creator/projects/${projectId}/reward`,
+    getCreatorInfoSummary: "/creator/info",
 
     // ==================== Project API ====================
     getFeatured: '/project/featured',
