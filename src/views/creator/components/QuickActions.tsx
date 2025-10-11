@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import type { CreatorProjectListDto } from "@/types/creator"
 import type { Status } from "@/views/admin/tabs/ProjectsTab";
-import { ExternalLink, Eye, Gift, Pencil, XCircle } from "lucide-react";
+import { ExternalLink, Eye, Gift, Megaphone, MessageSquareMore, Pencil, XCircle } from "lucide-react";
 
 type Props = {
     project: CreatorProjectListDto;
@@ -10,10 +10,13 @@ type Props = {
     onEdit: (id: number) => void;
     onDelete: (id: number) => void;
     onAddReward: (id: number) => void;
+    onWriteNews?: (id: number) => void;
+    onManageReviews?: (id: number) => void;
 };
 
-export default function QuickActions({ project, deletingId, onDetail, onEdit, onDelete, onAddReward }: Props) {
+export default function QuickActions({ project, deletingId, onDetail, onEdit, onDelete, onAddReward, onWriteNews, onManageReviews }: Props) {
     const status = project.projectStatus as Status;
+    const isOper = status === "UPCOMING" || status === "OPEN";
 
     const publicUrl = `${window.location.origin}/project/${(project as any).slug ?? project.projectId}`;
 
@@ -55,6 +58,26 @@ export default function QuickActions({ project, deletingId, onDetail, onEdit, on
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => onAddReward(project.projectId)}>
                     <Gift className="h-4 w-4 mr-1" /> 리워드 추가
+                </Button>
+
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onWriteNews?.(project.projectId)}
+                    disabled={!onWriteNews || !isOper}
+                    title={!isOper ? "오픈 예정/진행 중에서만 새소식 등록 가능" : undefined}
+                >
+                    <Megaphone className="h-4 w-4 mr-1" /> 새소식 등록
+                </Button>
+
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onManageReviews?.(project.projectId)}
+                    disabled={!onManageReviews || !isOper}
+                    title={!isOper ? "오픈 예정/진행 중에서만 후기 관리 가능" : undefined}
+                >
+                    <MessageSquareMore className="h-4 w-4 mr-1" /> 후기 관리
                 </Button>
             </>
         );

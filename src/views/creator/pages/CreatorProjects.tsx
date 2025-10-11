@@ -11,6 +11,10 @@ import { useQueryState } from "@/views/admin/tabs/ApprovalsTab";
 import { Pagination } from "@/views/project/ProjectAllPage";
 import { formatDate, getDaysLeft } from "@/utils/utils";
 import QuickActions from "../components/QuickActions";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import NewsSheet from "../components/NewsSheet";
+import ReviewsSheet from "../components/ReviewsSheet";
 
 /* --------------------------------- Status --------------------------------- */
 const PREP_STATUSES: Status[] = ["DRAFT", "VERIFYING"];
@@ -29,6 +33,10 @@ export default function CreatorProjects() {
     const [error, setError] = useState<unknown>(null);
 
     const [deletingId, setDeletingId] = useState<number | null>(null);
+
+    const [newsOpen, setNewsOpen] = useState(false);
+    const [reviewsOpen, setReviewsOpen] = useState(false);
+    const [activeProject, setActiveProject] = useState<{ id: number; title: string } | null>(null);
 
     const navigate = useNavigate();
     const goDetail = (projectId: number) => navigate(`/creator/projects/${projectId}`);
@@ -166,6 +174,18 @@ export default function CreatorProjects() {
         }
     }, [fetchData]);
 
+    const openNewsById = useCallback((projectId: number) => {
+        const p = projects.find(x => x.projectId === projectId);
+        setActiveProject({ id: projectId, title: p?.title ?? "" });
+        setNewsOpen(true);
+    }, [projects]);
+
+    const openReviewsById = useCallback((projectId: number) => {
+        const p = projects.find(x => x.projectId === projectId);
+        setActiveProject({ id: projectId, title: p?.title ?? "" });
+        setReviewsOpen(true);
+    }, [projects]);
+
     /* -------------------------------- Safe Filtering --------------------------------- */
 
     // 서버가 콤마 분리 다중 상태를 지원하지 않을 경우를 대비한 클라이언트 필터
@@ -264,6 +284,28 @@ export default function CreatorProjects() {
                                                 {OPER_STATUSES.includes(st) && (
                                                     <span>({getDaysLeft(p.endDate)}일 남음)</span>
                                                 )}
+
+                                                <span className="ml-2 inline-flex items-center gap-1 text-xs text-muted-foreground">
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <span className="rounded-full bg-muted px-2 py-0.5">
+                                                                    새소식 {p.newsCount ?? 0}
+                                                                </span>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>마지막: {p.lastNewsAt ? formatDate(p.lastNewsAt) : "없음"}</TooltipContent>
+                                                        </Tooltip>
+
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <span className="rounded-full bg-muted px-2 py-0.5">
+                                                                    후기 {p.reviewNewCount ?? 0} / 미답글 {p.reviewPendingCount ?? 0}
+                                                                </span>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>마지막: {p.lastReviewAt ? formatDate(p.lastReviewAt) : "없음"}</TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                </span>
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent>
@@ -278,7 +320,7 @@ export default function CreatorProjects() {
                                             </div>
                                         </CardContent>
 
-                                        <CardFooter className="justify-end gap-2 pt-2">
+                                        <CardFooter className="justify-end gap-2 pt-5">
                                             <QuickActions
                                                 project={p}
                                                 deletingId={deletingId}
@@ -286,6 +328,8 @@ export default function CreatorProjects() {
                                                 onEdit={goEdit}
                                                 onDelete={deleteProject}
                                                 onAddReward={goAddReward}
+                                                onWriteNews={openNewsById}
+                                                onManageReviews={openReviewsById}
                                             />
                                         </CardFooter>
                                     </Card>
@@ -300,6 +344,64 @@ export default function CreatorProjects() {
                     page={page} size={size} total={total} onPage={setPage}
                 />
             </CardContent>
-        </Card>
+
+            {/* === 새소식 등록 시트 === */}
+            {activeProject && (
+                <Sheet
+                    open={newsOpen}
+                    onOpenChange={(open) => {
+                        setNewsOpen(open);
+                        if (!open) setActiveProject(null); // 닫히면 초기화
+                    }}
+                >
+                    <SheetContent className="w-[860px] max-w-full">
+                        <SheetHeader>
+                            <SheetTitle>새소식 등록</SheetTitle>
+                            <SheetDescription>{activeProject.title}</SheetDescription>
+                        </SheetHeader>
+
+                        <NewsSheet
+                            open={newsOpen}
+                            projectId={activeProject.id}
+                            projectTitle={activeProject.title}
+                            onClose={() => {
+                                setNewsOpen(false);
+                                setActiveProject(null);
+                            }}
+                            onPosted={fetchData}
+                        />
+                    </SheetContent>
+                </Sheet>
+            )}
+
+            {/* === 후기 관리 시트 === */}
+            {activeProject && (
+                <Sheet
+                    open={reviewsOpen}
+                    onOpenChange={(open) => {
+                        setReviewsOpen(open);
+                        if (!open) setActiveProject(null); // 닫히면 초기화
+                    }}
+                >
+                    <SheetContent className="w-[860px] max-w-full overflow-y-auto">
+                        <SheetHeader>
+                            <SheetTitle>후기 관리</SheetTitle>
+                            <SheetDescription>{activeProject.title}</SheetDescription>
+                        </SheetHeader>
+
+                        <ReviewsSheet
+                            open={reviewsOpen}
+                            projectId={activeProject.id}
+                            projectTitle={activeProject.title}
+                            onClose={() => {
+                                setReviewsOpen(false);
+                                setActiveProject(null);
+                            }}
+                            onReplied={fetchData}
+                        />
+                    </SheetContent>
+                </Sheet>
+            )}
+        </Card >
     );
 }
