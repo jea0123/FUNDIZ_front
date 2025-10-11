@@ -14,8 +14,8 @@ export default function ErrorPage() {
     const state = (location.state as { message?: string; status?: number } | null) || {};
 
     const title = "문제가 발생했어요";
-    const message = state.message || "요청을 처리하는 중 오류가 발생했습니다.";
-    const status = state.status;
+    const message = state.message || "존재하지 않는 페이지이거나, 일시적인 오류가 발생했을 수 있어요.";
+    const status = state.status || 404;
     const canGoBack = typeof window !== "undefined" && window.history.length > 1;
 
     return (
