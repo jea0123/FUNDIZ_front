@@ -11,11 +11,7 @@ import ErrorPage from './views/ErrorPage';
 import MainPage from './views/MainPage';
 import { setNavigator } from './utils/navigator';
 import { NoticeDetailPage } from './views/cs/NoticeDetail';
-import ProjectsAllPage, {
-  ProjectByCategoryPage,
-  ProjectBySubcategoryPage,
-  SearchProjectPage,
-} from './views/project/ProjectAllPage';
+import ProjectsAllPage, { ProjectByCategoryPage, ProjectBySubcategoryPage, SearchProjectPage, } from './views/project/ProjectAllPage';
 import { FundingPage } from './views/backing/backingPage';
 import FundingLoader from './components/FundingLoader';
 import { ApprovalDetail } from './views/admin/tabs/ApprovalDetail';
@@ -39,16 +35,16 @@ import CreatorBacking from './views/creator/pages/CreatorBacking';
 import CreatorAddReward from './views/creator/pages/CreatorAddReward';
 import CreatorSettlementPage from './views/creator/pages/CreatorSettlementPage';
 
-const AdminTabs = lazy(() =>
-  import('./views/admin/AdminTabs').then((module) => ({
-    default: module.AdminTabs,
-  }))
-);
+const AdminTabs = lazy(() => import('./views/admin/AdminTabs').then((module) => ({ default: module.AdminTabs, })));
 
 export default function App() {
   const { setLoginUser, resetLoginUser } = useLoginUserStore();
   const [cookie] = useCookies();
 
+  /**
+   * @description Navigator를 전역 상태로 설정
+   * @returns {null} 렌더링 없음
+   */
   function NavigatorRegistrar() {
     const navigate = useNavigate();
     useEffect(() => setNavigator(navigate), [navigate]);
@@ -117,21 +113,21 @@ export default function App() {
             </Route>
 
             <Route path="/creator" element={<CreatorLayout />}>
-              <Route index element={<CreatorDashboard />} />
-              <Route path="dashboard" element={<CreatorDashboard />} />
-              <Route path="project/new" element={<CreateProject />} />
-              <Route path="project/:projectId" element={<CreateProject />} />
-              <Route path="projects">
-                <Route index element={<CreatorProjects />} />
-                <Route path=":projectId" element={<CreatorProjectDetail />} />
-              </Route>
-              <Route path=":projectId/reward" element={<CreatorAddReward />} />
-              <Route path="backings" element={<CreatorBacking />} />
-              <Route path="shipping" element={<CreatorShippingList />} />
-              <Route path="shipping/:projectId" element={<CreatorShippingDetail />} />
-              <Route path="qna" element={<CreatorQnATab />} />
-              <Route path="settlement" element={<CreatorSettlementPage />} />
-            </Route>
+              <Route index element={<CreatorDashboard />} />
+              <Route path="dashboard" element={<CreatorDashboard />} />
+              <Route path="project/new" element={<CreateProject />} />
+              <Route path="project/:projectId" element={<CreateProject />} />
+              <Route path="projects">
+                <Route index element={<CreatorProjects />} />
+                <Route path=":projectId" element={<CreatorProjectDetail />} />
+              </Route>
+              <Route path=":projectId/reward" element={<CreatorAddReward />} />
+              <Route path="backings" element={<CreatorBacking />} />
+              <Route path="shipping" element={<CreatorShippingList />} />
+              <Route path="shipping/:projectId" element={<CreatorShippingDetail />} />
+              <Route path="qna" element={<CreatorQnATab />} />
+              <Route path="settlement" element={<CreatorSettlementPage />} />
+            </Route>
 
 
             <Route path="/admin" element={<AdminConsole />}>

@@ -48,6 +48,13 @@ export function Header() {
             }
         });
 
+    /**
+     * @description 특정 알림을 읽음 처리
+     * @param id 알림 ID
+     * @returns void
+     * @example
+     * markRead(123);
+     */
     const markRead = async (id: number) => {
         const response = await putData(endpoints.markAsRead(id), cookie.accessToken);
         if (response && response.status === 200) {
@@ -59,6 +66,12 @@ export function Header() {
         }
     };
 
+    /**
+     * @description 모든 알림을 읽음 처리
+     * @returns void
+     * @example
+     * markAllRead();
+     */
     const markAllRead = async () => {
         const ids = notis.filter(n => n.isRead === 'N').map(n => n.notificationId);
         if (ids.length === 0) return;
@@ -72,6 +85,13 @@ export function Header() {
         }
     };
 
+    /**
+     * @description 특정 알림을 삭제
+     * @param id 알림 ID
+     * @returns void
+     * @example
+     * deleteNoti(123);
+     */
     const deleteNoti = async (id: number) => {
         const response = await deleteData(endpoints.deleteNotification(id), cookie.accessToken);
         if (response && response.status === 200) {
@@ -83,6 +103,13 @@ export function Header() {
         }
     };
 
+    /**
+     * @description 알림 클릭 시 상세 페이지로 이동
+     * @param noti 알림 객체
+     * @returns void
+     * @example
+     * navigateDetail(noti);
+     */
     const navigateDetail = (noti: Notification) => {
         // ✔ 카드 클릭은 상세로 이동만 (읽음 처리 X)
         if (noti.type?.startsWith('SHIPPING')) navigate('/orders/123/shipping');
@@ -98,6 +125,13 @@ export function Header() {
         setCookie('accessToken', '', { path: '/', expires: new Date() })
     };
 
+    /**
+     * @description 검색어 입력 후 Enter 키 핸들러
+     * @param e 키보드 이벤트
+     * @returns void
+     * @example
+     * searchKeyHandler(e);
+     */
     const searchKeyHandler = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter' && searchQuery.trim() !== '') {
             navigate(`/project/search?keyword=${encodeURIComponent(searchQuery.trim())}`);

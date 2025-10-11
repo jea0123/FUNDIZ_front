@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useState, type JSX } from "react";
 import { Button } from "@/components/ui/button";
-import {
-    Loader2, Bell, CreditCard, Truck, Package, MessageCircle,
-    CheckCircle2, X, Trash2
-} from "lucide-react";
+import { Loader2, Bell, CreditCard, Truck, Package, MessageCircle, CheckCircle2, X, Trash2 } from "lucide-react";
 import { endpoints, getData, putData, deleteData } from "@/api/apis";
 import { useCookies } from "react-cookie";
 import type { Notification } from "@/types/notification";
@@ -24,11 +21,18 @@ export default function NotificationsPage() {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [loading, setLoading] = useState(false);
 
+    /** 읽지 않은 알림 개수 */
     const unreadCount = useMemo(
         () => notifications.filter(n => n.isRead === "N").length,
         [notifications]
     );
 
+    /**
+     * @description 알림 목록 불러오기
+     * @returns void
+     * @example
+     * fetchNotifications();
+     */
     const fetchNotifications = async () => {
         setLoading(true);
         const res = await getData(endpoints.getNotifications, cookie.accessToken);
@@ -38,6 +42,13 @@ export default function NotificationsPage() {
         setLoading(false);
     };
 
+    /**
+     * @description 특정 알림을 읽음 처리
+     * @param id 알림 ID
+     * @returns void
+     * @example
+     * markRead(1);
+     */
     const markRead = async (id: number) => {
         const res = await putData(endpoints.markAsRead(id), cookie.accessToken);
         if (res && res.status === 200) {
@@ -50,6 +61,12 @@ export default function NotificationsPage() {
         }
     };
 
+    /**
+     * @description 모든 알림을 읽음 처리
+     * @returns void
+     * @example
+     * markAllRead();
+     */
     const markAllRead = async () => {
         if (unreadCount === 0) return;
         const res = await putData(endpoints.markAllAsRead, cookie.accessToken);
@@ -61,6 +78,13 @@ export default function NotificationsPage() {
         }
     };
 
+    /**
+     * @description 특정 알림을 삭제
+     * @param id 알림 ID
+     * @returns void
+     * @example
+     * deleteOne(1);
+     */
     const deleteOne = async (id: number) => {
         const res = await deleteData(endpoints.deleteNotification(id), cookie.accessToken);
         if (res && res.status === 200) {
@@ -71,6 +95,12 @@ export default function NotificationsPage() {
         }
     };
 
+    /**
+     * @description 모든 알림을 삭제
+     * @returns void
+     * @example
+     * deleteAll();
+     */
     const deleteAll = async () => {
         const res = await deleteData(endpoints.deleteAllNotifications, cookie.accessToken);
         if (res && res.status === 200) {

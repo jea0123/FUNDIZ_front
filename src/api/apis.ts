@@ -28,6 +28,23 @@ export const kyInstance = ky.create({
 
 type ApiResult<T = any> = { status: number; data: T | null };
 
+/**
+ * @description
+ * Fetch Response 객체를 표준 ApiResult 형태로 변환.
+ *
+ * - JSON 파싱을 우선 시도하고, 실패 시 본문 텍스트를 data로 설정.
+ * - 응답 객체가 없거나 falsy하면 status 0과 data null을 반환.
+ * - JSON 본문에 message가 있으면 반환 객체의 message로 전달.
+ *
+ * @template T 응답 데이터의 제네릭 타입(기본값: any).
+ * @param res 처리할 Fetch API의 Response 객체.
+ * @returns Promise<ApiResult<T>> 변환된 결과. status는 HTTP 상태 코드, data는 body.data(또는 텍스트/없으면 null), message는 body.message(없으면 null).
+ *
+ * @remarks
+ * - JSON이 아닌 응답의 경우, 본문 텍스트가 data에 문자열로 설정.
+ * - JSON 응답은 { data, message } 구조를 기대하며, 각 필드가 없으면 null로 대체.
+ * - 이 함수는 예외를 던지지 않고, 파싱 실패/비정상 응답은 반환값으로 표현.
+ */
 const responseHandler = async <T = any>(res: Response): Promise<ApiResult<T>> => {
   if (!res) return { status: 0, data: null };
   let body: any = null;
@@ -153,21 +170,47 @@ export const endpoints = {
   deleteAllNotifications: 'notifications/deleteAll',
 };
 
+/**
+ * @description API에서 데이터 가져오기
+ * @param {string} url - API 엔드포인트 URL
+ * @param {string} [accessToken] - 인증을 위한 액세스 토큰 (선택 사항)
+ * @returns {Promise<Response>} - API로부터의 응답
+ */
 export const getData = async (url: string, accessToken?: string) => {
   const response = await api.get(url, accessToken);
   return response;
 };
 
+/**
+ * @description 데이터 생성
+ * @param {string} url - API 엔드포인트 URL
+ * @param {*} [data] - API에 전송할 데이터
+ * @param {string} [accessToken] - 인증을 위한 액세스 토큰 (선택 사항)
+ * @returns {Promise<Response>} - API로부터의 응답
+ */
 export const postData = async (url: string, data?: any, accessToken?: string) => {
   const response = await api.post(url, data, accessToken);
   return response;
 };
 
+/**
+ * @description 데이터 수정
+ * @param {string} url - API 엔드포인트 URL
+ * @param {*} [data] - API에 전송할 데이터
+ * @param {string} [accessToken] - 인증을 위한 액세스 토큰 (선택 사항)
+ * @returns {Promise<Response>} - API로부터의 응답
+ */
 export const putData = async (url: string, data?: any, accessToken?: string) => {
   const response = await api.put(url, data, accessToken);
   return response;
 };
 
+/**
+ * @description 데이터 삭제
+ * @param {string} url - API 엔드포인트 URL
+ * @param {string} [accessToken] - 인증을 위한 액세스 토큰 (선택 사항)
+ * @returns {Promise<Response>} - API로부터의 응답
+ */
 export const deleteData = async (url: string, accessToken?: string) => {
   const response = await api.delete(url, accessToken);
   return response;

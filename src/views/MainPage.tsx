@@ -15,6 +15,12 @@ export default function Main() {
     const [cookie] = useCookies();
     const [featuredProjects, setFeaturedProjects] = useState<Featured[]>([]);
 
+    /**
+     * @description 주목할 만한 프로젝트 불러오기
+     * @returns void
+     * @example
+     * getFeaturedProjects();
+     */
     const getFeaturedProjects = async () => {
         const response = await getData(endpoints.getFeatured);
         if (response.status === 200) {
@@ -91,6 +97,12 @@ function PopularSidebar() {
 
     const [recentProjects, setRecentProjects] = useState<RecentTop10[]>([]);
 
+    /**
+     * @description 인기 프로젝트 불러오기
+     * @returns void
+     * @example
+     * getRecentProjects();
+     */
     const getRecentProjects = async () => {
         const response = await getData(endpoints.getRecentTop10);
         if (response.status === 200) {
@@ -102,6 +114,13 @@ function PopularSidebar() {
         getRecentProjects();
     }, []);
 
+    /**
+     * @description 카드 클릭 핸들러
+     * @param {number} projectId - 프로젝트 ID
+     * @returns void
+     * @example
+     * onClickCard(1);
+     */
     function onClickCard(projectId: number) {
         navigate(`/project/${projectId}`);
     }
@@ -152,6 +171,12 @@ export function RecentView({ title, perRow = 5, }: { title?: string; perRow?: nu
     const pages = useMemo(() => chunk(recentView ?? [], perRow), [recentView, perRow]);
     const [page, setPage] = useState(0);
 
+    /**
+     * @description 최근 본 프로젝트 불러오기
+     * @returns void
+     * @example
+     * getRecentViewProjects();
+     */
     const getRecentViewProjects = async () => {
         const userId = 20; // 임시 userId
         const response = await getData(endpoints.getRecentView(userId));
@@ -255,6 +280,12 @@ export function ProjectCard({ items }: { items: any; }) {
     }
 }
 
+/**
+ * @description 배열을 청크 단위로 나누기
+ * @param arr 나눌 배열
+ * @param size 청크 크기
+ * @returns 청크 배열
+ */
 function chunk<T>(arr: T[], size: number) {
     const out: T[][] = [];
     for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
