@@ -86,6 +86,7 @@ export const endpoints = {
   getCreatorProjectSummary: (projectId: number) => `creator/projects/${projectId}/summary`,
   getCreatorRewardList: (projectId: number) => `creator/projects/${projectId}/reward`,
   addReward: (projectId: number) => `creator/projects/${projectId}/reward`,
+  getCreatorInfoSummary: "/creator/info",
   getQnAListOfCreator: (p: SearchQnaParams) => `creator/qna?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup })}`,
   creatorDashboard: '/creator/dashboard',
   creatorBackingList: '/creator/backingList',

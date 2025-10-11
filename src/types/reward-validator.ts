@@ -73,23 +73,23 @@ export function validateReward(
     // 리워드명
     const name = (input.rewardName ?? "").toString().trim();
     if (!name) {
-        errors.rewardName = "리워드명이 필요합니다.";
-    } else if (name.length > MAX_REWARD_NAME_LEN) {
-        errors.rewardName = `리워드명이 ${MAX_REWARD_NAME_LEN}자를 초과합니다.`;
+        errors.rewardName = "리워드명은 필수입니다.";
+    } else if (name.length < 1 || name.length > MAX_REWARD_NAME_LEN) {
+        errors.rewardName = `리워드명 길이는 1~${MAX_REWARD_NAME_LEN}자여야 합니다.`;
     }
 
-    // 리워드 금액
+    // 리워드 가격
     const price = input.price == null ? null : Number(input.price);
     if (price == null || isNaN(price) || price < MIN_REWARD_PRICE) {
-        errors.price = `리워드 금액은 최소 ${MIN_REWARD_PRICE.toLocaleString()}원 이상이어야 합니다.`;
+        errors.price = `리워드 가격은 최소 ${MIN_REWARD_PRICE.toLocaleString()}원 이상이어야 합니다.`;
     }
 
     // 리워드 내용
     const content = (input.rewardContent ?? "").toString().trim();
     if (!content) {
-        errors.rewardContent = "리워드 내용이 필요합니다.";
-    } else if (content.length > MAX_REWARD_CONTENT_LEN) {
-        errors.rewardContent = `리워드 내용이 ${MAX_REWARD_CONTENT_LEN}자를 초과합니다.`;
+        errors.rewardContent = "리워드 내용은 필수입니다.";
+    } else if (content.length < 1 || content.length > MAX_REWARD_CONTENT_LEN) {
+        errors.rewardContent = `리워드 내용 길이는 1~${MAX_REWARD_CONTENT_LEN}자여야 합니다.`;
     }
 
     // 배송 필요 여부
@@ -103,7 +103,7 @@ export function validateReward(
     const del = toDate(input.deliveryDate);
     const end = toDate(opts?.fundingEndDate);
     if (!del) {
-        errors.deliveryDate = `${label}을 선택하세요.`;
+        errors.deliveryDate = `리워드 ${label}은 필수입니다.`;
     } else if (!end){
         errors.deliveryDate = "펀딩 종료일을 먼저 설정하세요.";
     } else {
@@ -114,10 +114,10 @@ export function validateReward(
         }
     }
 
-    // 리워드 수량: null=무제한, 0=품절 허용, 음수만 금지
+    // 리워드 수량: null=무제한, 0=품절
     const cnt = input.rewardCnt;
     if (cnt != null && Number(cnt) < 0) {
-        errors.rewardCnt = "리워드 수량은 0 이상이어야 합니다.";
+        errors.rewardCnt = "리워드 수량은 1개 이상이거나 비워두세요(무제한).";
     }
 
     for (const v of Object.values(errors)) if (v) allErrors.push(v);

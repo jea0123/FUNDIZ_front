@@ -138,6 +138,8 @@ export function CreateProjectSteps(props: {
     if (step === 2) {
         const MIN_DAYS = 7;
         const MAX_DAYS = 60;
+        const END_MIN_OFFSET = MIN_DAYS - 1;
+        const END_MAX_OFFSET = MAX_DAYS - 1;
 
         const parseLocalDate = (s: string) => {
             const [y, m, d] = s.split("-").map(Number);
@@ -148,7 +150,7 @@ export function CreateProjectSteps(props: {
 
         const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             const start = parseLocalDate(e.target.value);
-            const end = addDays(start, MIN_DAYS);
+            const end = addDays(start, END_MIN_OFFSET);
             setProject(prev => ({ ...prev, startDate: start, endDate: end }));
         }
 
@@ -158,8 +160,8 @@ export function CreateProjectSteps(props: {
                 setProject(prev => ({ ...prev, endDate: pick }));
                 return;
             }
-            const minEnd = addDays(project.startDate, MIN_DAYS);
-            const maxEnd = addDays(project.startDate, MAX_DAYS);
+            const minEnd = addDays(project.startDate, END_MIN_OFFSET);
+            const maxEnd = addDays(project.startDate, END_MAX_OFFSET);
             setProject(prev => ({ ...prev, endDate: clampDate(pick, minEnd, maxEnd) }));
         };
 
@@ -195,8 +197,8 @@ export function CreateProjectSteps(props: {
                         <Input
                             id="endDate"
                             type="date"
-                            min={project.startDate ? formatDate(addDays(project.startDate, MIN_DAYS)) : undefined}
-                            max={project.startDate ? formatDate(addDays(project.startDate, MAX_DAYS)) : undefined}
+                            min={project.startDate ? formatDate(addDays(project.startDate, END_MIN_OFFSET)) : undefined}
+                            max={project.startDate ? formatDate(addDays(project.startDate, END_MAX_OFFSET)) : undefined}
                             value={project.endDate ? formatDate(project.endDate) : ""}
                             onChange={handleEndDateChange}
                         />
