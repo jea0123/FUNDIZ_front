@@ -1,9 +1,3 @@
-/**
- * FundingLoader — 스피너 전용(극심플)
- * - 풀스크린 중앙 정렬, 스피너만 표시
- * - Tailwind `animate-spin` 사용 (회전 보장)
- */
-
 export default function FundingLoader() {
     return (
         <div
@@ -16,6 +10,11 @@ export default function FundingLoader() {
     );
 }
 
+/**
+ * @description 로딩 스피너 컴포넌트
+ * @param {string} ariaLabel 접근성 라벨 (기본값: "Loading")
+ * @returns {JSX.Element} 로딩 스피너 JSX 요소
+ */
 function Spinner({ ariaLabel = "Loading" }: { ariaLabel?: string }) {
     return (
         <div

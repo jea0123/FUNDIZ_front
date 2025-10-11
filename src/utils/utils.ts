@@ -6,8 +6,28 @@ import { toast } from "sonner";
 dayjs.extend(relativeTime);
 dayjs.locale("ko");
 
+/**
+ * @description 주어진 날짜로부터 경과된 시간을 "몇 분 전", "몇 시간 전" 등의 형식으로 반환
+ * @param {Date} createdAt 기준이 되는 날짜
+ * @returns {string} 경과된 시간 문자열
+ * @example
+ * getElapsedTime(new Date(Date.now() - 60000)) // "1분 전"
+ * getElapsedTime(new Date(Date.now() - 600000)) // "10분 전"
+ * getElapsedTime(new Date(Date.now() - 6000000)) // "1시간 전"
+ * getElapsedTime(new Date(Date.now() - 60000000)) // "10시간 전"
+ */
 export const getElapsedTime = (createdAt: Date) => dayjs(createdAt).fromNow();
 
+/**
+ * @description 숫자를 한국 원화(KRW) 단위로 변환
+ * @param {number} amount 변환할 금액
+ * @returns {string} 원화 단위로 변환
+ * @example
+ * toWonPlus(1200) // "1,200 원"
+ * toWonPlus(12000) // "1만 원+"
+ * toWonPlus(120000000) // "1억 원+"
+ * toWonPlus() // "-"
+ */
 export const toWonPlus = (amount?: number) => {
     if (amount === undefined) return "-";
     if (amount >= 100_000_000) return `${Math.round(amount / 100_000_000)}억 원+`;
@@ -15,7 +35,16 @@ export const toWonPlus = (amount?: number) => {
     return `${amount.toLocaleString()} 원`;
 }
 
-
+/**
+ * @description 숫자를 한국 원화(KRW) 단위로 변환
+ * @param {number} amount 변환할 금액
+ * @returns {string} 원화 단위로 변환
+ * @example
+ * toWon(1200) // "1,200 원"
+ * toWon(12000) // "1만 원"
+ * toWon(120000000) // "1억 원"
+ * toWon() // "-"
+ */
 export const toWon = (amount?: number) => {
     if (amount === undefined) return "-";
     if (amount >= 100_000_000) return `${Math.round(amount / 100_000_000)}억 원`;
@@ -23,10 +52,25 @@ export const toWon = (amount?: number) => {
     return `${amount.toLocaleString()} 원`;
 }
 
+/**
+ * @description 한국 표준시(KST)로 해당 날짜의 23:59:59 시각을 반환
+ * @param {string | Date} date 날짜 문자열 또는 Date 객체
+ * @returns {Date} 해당 날짜의 23:59:59 시각을 나타내는 Date 객체
+ * @example
+ * toKstEndOfDay("2023-10-05") // 2023-10-05T23:59:59+09:00
+ * toKstEndOfDay(new Date("2023-10-05")) // 2023-10-05T23:59:59+09:00
+ */
 function toKstEndOfDay(date: string | Date): Date {
     return new Date(`${date}T23:59:59+09:00`);
 }
 
+/**
+ * @description 특정 날짜까지 남은 일수를 계산하여 문자열로 반환
+ * @param {string | Date} date 날짜 문자열 또는 Date 객체
+ * @return {string} 남은 일수를 나타내는 문자열 (예: "5"), 이미 지난 날짜인 경우 "0", 잘못된 날짜 포맷인 경우 "-"
+ * @example
+ * getDaysLeft("2023-10-10") // "5" (오늘이 2023-10-05인 경우)
+ */
 export function getDaysLeft(date: string | Date) {
     const end = toKstEndOfDay(date);
     const diffMs = end.getTime() - Date.now();
@@ -43,6 +87,15 @@ export function getDaysLeft(date: string | Date) {
     return `${diffDays}`;
 }
 
+/**
+ * @description 특정 날짜까지 남은 시간을 계산하여 사람이 읽을 수 있는 형식으로 반환
+ * @param {string | Date} date 날짜 문자열 또는 Date 객체
+ * @returns {string} 남은 시간을 나타내는 문자열 (예: "1일", "2주", "1시간", "1분", "방금", "-")
+ * @example
+ * getDaysBefore("2023-10-05") // "5일" (오늘이 2023-09-30인 경우)
+ * getDaysBefore("2023-10-15") // "2주" (오늘이 2023-10-01인 경우)
+ * getDaysBefore("2023-10-05T15:00:00") // "1시간" (현재 시간이 2023-10-05T14:00:00인 경우)
+ */
 export const getDaysBefore = (date: string | Date) => {
     const end = new Date(date);
     const diffMs = end.getTime() - Date.now();
@@ -81,6 +134,11 @@ export const getDaysBefore = (date: string | Date) => {
     return `0일`;
 }
 
+/**
+ * @description 날짜를 "YYYY-MM-DD" 형식으로 변환
+ * @param {string | Date} date 날짜 문자열 또는 Date 객체
+ * @returns {string} "YYYY-MM-DD" 형식의 날짜 문자열
+ */
 export const formatDate = (date: string | Date) => {
     const d = new Date(date);
 
