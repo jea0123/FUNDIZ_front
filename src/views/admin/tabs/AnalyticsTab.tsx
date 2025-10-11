@@ -59,6 +59,9 @@ export function AnalyticsTab() {
         if (response.status === 200) {
             setAnalytics(response.data);
             setRewardSalesTops((response.data as Analytics).rewardSalesTops ?? []);
+        } else {
+            setAnalytics(null);
+            setRewardSalesTops([]);
         }
     };
 
@@ -70,7 +73,12 @@ export function AnalyticsTab() {
     const getRewardSalesTop = async () => {
         setLoadingRewardTop(true);
         const response = await getData(endpoints.getRewardSalesTop(selectedPeriod, metric));
-        if (response.status === 200) setRewardSalesTops(response.data ?? []);
+        if (response.status === 200) {
+            setRewardSalesTops(response.data ?? []);
+        }
+        else {
+            setRewardSalesTops([]);
+        }
         setLoadingRewardTop(false);
     };
 
@@ -215,20 +223,35 @@ export function AnalyticsTab() {
                     <CardContent>
                         {loadingAnalytics ? (
                             <div className="text-sm text-muted-foreground">불러오는 중…</div>
+                        ) : revenueTrendForChart.length === 0 ? (
+                            <div className="text-sm text-muted-foreground">해당 기간에 수익 분석 데이터가 없습니다</div>
                         ) : (
                             <ResponsiveContainer width="100%" height={HEIGHT}>
-                                <ComposedChart data={revenueTrendForChart}>
+                                <ComposedChart data={revenueTrendForChart}
+                                    margin={{ top: 16, right: 30 }}>
                                     <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="month" tickFormatter={monthTick} />
-                                    <YAxis yAxisId="left" />
-                                    <YAxis yAxisId="right" orientation="right" />
-                                    <Tooltip
-                                        formatter={(value: unknown, name: unknown) => [
-                                            name === "revenue" ? currency(value as number) : (value as number),
-                                            name === "revenue" ? "후원금" : "프로젝트 수",
-                                        ]}
+                                    <XAxis dataKey="month" tickFormatter={monthTick}
+                                        padding={{ left: 8, right: 8 }}
                                     />
-                                    <Legend />
+                                    <YAxis yAxisId="left"
+                                        domain={[0, (max: number) => max * 1.1]}
+                                    />
+                                    <YAxis yAxisId="right" orientation="right"
+                                        domain={[0, (max: number) => max * 1.1]}
+                                        tickMargin={12}
+                                        tickFormatter={(v) => currency(v)}
+                                    />
+                                    <Tooltip
+                                        labelFormatter={(label) => label}
+                                        formatter={(value: any, _name: any, item: any) => {
+                                            const isRevenue = item?.dataKey === 'revenue';
+                                            return [
+                                                isRevenue ? currency(Number(value)) : Number(value),
+                                                isRevenue ? '후원금' : '프로젝트 수',
+                                            ];
+                                        }}
+                                    />
+                                    <Legend verticalAlign="bottom" height={28} />
                                     <Area
                                         yAxisId="left"
                                         type="monotone"
@@ -261,6 +284,8 @@ export function AnalyticsTab() {
                     <CardContent>
                         {loadingAnalytics || loadingRewardTop ? (
                             <div className="text-sm text-muted-foreground">불러오는 중…</div>
+                        ) : rewardSalesTopForChart.length === 0 ? (
+                            <div className="text-sm text-muted-foreground">해당 기간에 리워드 판매/매출 데이터가 없습니다.</div>
                         ) : (
                             <ResponsiveContainer width="100%" height={HEIGHT}>
                                 <BarChart data={rewardSalesTopForChart} layout="vertical" margin={{ left: 24 }}>
@@ -321,10 +346,12 @@ export function AnalyticsTab() {
                     <CardContent>
                         {loadingAnalytics ? (
                             <div className="text-sm text-muted-foreground">불러오는 중…</div>
+                        ) : paymentPie.length === 0 ? (
+                            <div className="text-sm text-muted-foreground">해당 기간에 결제 수단 데이터가 없습니다.</div>
                         ) : (
                             <ResponsiveContainer width="100%" height={HEIGHT}>
                                 <PieChart>
-                                    <Pie data={paymentPie} dataKey="valuePct" nameKey="method" outerRadius={100} label>
+                                    <Pie data={paymentPie} dataKey="valuePct" nameKey="method" outerRadius={80} label labelLine>
                                         {paymentPie.map((_, i) => (
                                             <Cell key={`cell-${i}`} fill={[COLORS.blue, COLORS.green, COLORS.amber, COLORS.rose][i % 4]} />
                                         ))}
@@ -362,6 +389,8 @@ export function AnalyticsTab() {
                     <CardContent>
                         {loadingSubcat ? (
                             <div className="text-sm text-muted-foreground">불러오는 중…</div>
+                        ) : subcatRate.length === 0 ? (
+                            <div className="text-sm text-muted-foreground">해당 카테고리에 서브카테고리가 없습니다.</div>
                         ) : subcatRate.length > 0 ? (
                             <ResponsiveContainer width="100%" height={HEIGHT}>
                                 <BarChart data={subcatRate}>
@@ -373,11 +402,9 @@ export function AnalyticsTab() {
                                     <Bar dataKey="success" name="성공률(%)" stackId="a" fill={COLORS.green} />
                                     <Bar dataKey="fail" name="실패율(%)" stackId="a" fill={COLORS.rose} />
                                 </BarChart>
-                            </ResponsiveContainer>
+                                    </ResponsiveContainer>
                         ) : (
-                            <div className="text-sm text-muted-foreground">
-                                {selectedCtgr ? "해당 카테고리의 서브카테고리가 없습니다." : "카테고리를 선택하세요."}
-                            </div>
+                            <div className="text-sm text-muted-foreground">카테고리를 선택해주세요.</div>
                         )}
                     </CardContent>
                 </Card>

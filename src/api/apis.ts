@@ -16,7 +16,8 @@ export const kyInstance = ky.create({
         if (res.status >= 400) {
           const body = await res.clone().json().catch(() => null);
           const msg = body?.message ?? res.statusText;
-          console.error(`${res.status} ${msg}`);
+          const reqURI = _req.url.replace(String(_opts.prefixUrl ?? ''), '');
+          console.error(`${res.status} ${msg}`, reqURI);
           // appNavigate('/error', { state: { message: msg, status: res.status } });
         }
         return res;
@@ -36,7 +37,7 @@ const responseHandler = async <T = any>(res: Response): Promise<ApiResult<T>> =>
     const txt = await res.text();
     body = { data: txt };
   }
-  return { status: res.status, data: body?.data ?? null };
+  return { status: res.status, data: body?.data ?? null, message: body.message ?? null } as ApiResult<T>;
 };
 
 const authorization = (accessToken: string | undefined) => {
