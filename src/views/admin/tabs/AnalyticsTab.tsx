@@ -5,13 +5,28 @@ import { ResponsiveContainer, CartesianGrid, XAxis, YAxis, Tooltip, Line, BarCha
 import { endpoints, getData } from "@/api/apis";
 import type { Analytics, Category, RewardSalesTop, SubcategorySuccess } from "@/types/admin";
 
-// -------- utils --------
+/**
+ * @description 숫자를 한국 원화(KRW) 통화 형식으로 변환 (예: 1200 → "₩1.2K", 1000000 → "₩1M")
+ * @param {number} amount 변환할 금액
+ * @returns {string} 한국 원화 통화 형식 문자열
+ */
 const currency = (amount: number) =>
     new Intl.NumberFormat("ko-KR", { style: "currency", currency: "KRW", notation: "compact", maximumFractionDigits: 1 }).format(amount ?? 0);
 
+/**
+ * @description 숫자를 1,200 → 1.2K, 1,000,000 → 1M 등으로 축약
+ * @param {number} n 축약할 숫자
+ * @returns {string} 축약된 문자열
+ */
 const numberCompact = (n: number) =>
     new Intl.NumberFormat("ko-KR", { notation: "compact", maximumFractionDigits: 1 }).format(n ?? 0);
 
+/**
+ * @description 문자열을 최대 길이로 자르고, 초과 시 "…" 추가
+ * @param {string} s 자를 문자열
+ * @param {number} max 최대 길이 (기본값: 16)
+ * @returns {string} 자른 문자열
+ */
 const shortenLabel = (s: string, max = 16) => (s && s.length > max ? s.slice(0, max - 1) + "…" : s);
 
 const percent = (v: number, fixed = 1) => `${(v ?? 0).toFixed(fixed)}%`;
@@ -28,20 +43,18 @@ const COLORS = {
 
 const HEIGHT = 260;
 
-// -------- component --------
 export function AnalyticsTab() {
     const [analytics, setAnalytics] = useState<Analytics | null>(null);
     const [categories, setCategories] = useState<Category[]>([]);
     const [selectedCtgr, setSelectedCtgr] = useState<number | null>(null);
-    const [subcatRows, setSubcatRows] = useState<SubcategorySuccess[] | null>(null);
+    const [subCatRows, setSubCatRows] = useState<SubcategorySuccess[] | null>(null);
     const [rewardSalesTops, setRewardSalesTops] = useState<RewardSalesTop[]>([]);
 
     const [loadingAnalytics, setLoadingAnalytics] = useState(false);
     const [loadingCategories, setLoadingCategories] = useState(false);
-    const [loadingSubcat, setLoadingSubcat] = useState(false);
+    const [loadingSubCat, setLoadingSubCat] = useState(false);
     const [loadingRewardTop, setLoadingRewardTop] = useState(false);
 
-    // 기간 선택: 상단 우측
     const [selectedPeriod, setSelectedPeriod] = useState<"all" | "1m" | "3m" | "6m" | "1y">("6m");
     const periodLabel =
         selectedPeriod === "all"
@@ -50,11 +63,15 @@ export function AnalyticsTab() {
             "최근 6개월";
     const [metric, setMetric] = useState<'qty' | 'revenue'>('qty');
 
-    // cache for subcategory api
-    const subcatCache = useRef(new Map<number, SubcategorySuccess[]>());
+    const subCatCache = useRef(new Map<number, SubcategorySuccess[]>());
 
-    // --- API helpers ---
-    const getAdminAnalytics = async () => {
+    /**
+     * @description 관리자 대시보드의 카테고리, 프로젝트 수, 후원금, 성공률, 등을 조회
+     * @param {string} selectedPeriod "all" | "1m" | "3m" | "6m" | "1y" - 기간 선택
+     * @param {string} metric "qty" | "revenue" - 지표 선택
+     * @returns {Promise<void>} - analytics state를 업데이트
+     */
+    const getAdminAnalytics = async (): Promise<void> => {
         const response = await getData(endpoints.getAdminAnalytics(selectedPeriod, metric));
         if (response.status === 200) {
             setAnalytics(response.data);
@@ -65,12 +82,26 @@ export function AnalyticsTab() {
         }
     };
 
-    const getCategories = async () => {
+    /**
+     * @description 관리자 대시보드의 카테고리 목록을 조회
+     * @returns {Promise<Category[]>} 카테고리 목록
+     */
+    const getCategories = async (): Promise<Category[]> => {
         const response = await getData(endpoints.getCategories);
-        if (response.status === 200) setCategories(response.data);
+        if (response.status === 200) {
+            setCategories(response.data);
+            return response.data;
+        }
+        return [];
     };
 
-    const getRewardSalesTop = async () => {
+    /**
+     * @description 관리자 대시보드의 카테고리별 프로젝트 수, 후원금, 성공률, 등을 조회
+     * @param {string} selectedPeriod "all" | "1m" | "3m" | "6m" | "1y" - 기간 선택
+     * @param {string} metric "qty" | "revenue" - 지표 선택
+     * @returns {Promise<void>} - rewardSalesTops state를 업데이트
+     */
+    const getRewardSalesTop = async (): Promise<void> => {
         setLoadingRewardTop(true);
         const response = await getData(endpoints.getRewardSalesTop(selectedPeriod, metric));
         if (response.status === 200) {
@@ -82,11 +113,16 @@ export function AnalyticsTab() {
         setLoadingRewardTop(false);
     };
 
-    const getCategorySuccess = async (ctgrId: number) => {
+    /**
+     * @description 관리자 대시보드의 카테고리별 프로젝트 수, 후원금, 성공률, 등을 조회
+     * @param {number} ctgrId 카테고리 ID
+     * @returns {Promise<SubcategorySuccess[] | null>} 카테고리별 프로젝트 수, 후원금, 성공률, ... etc.의 목록
+     */
+    const getCategorySuccess = async (ctgrId: number): Promise<SubcategorySuccess[] | null> => {
         const response = await getData(endpoints.getCategorySuccess(ctgrId));
         if (response.status === 200) {
             const rows = response.data ?? [];
-            setSubcatRows(rows);
+            setSubCatRows(rows);
             return rows as SubcategorySuccess[];
         }
         return null;
@@ -97,13 +133,12 @@ export function AnalyticsTab() {
         getAdminAnalytics().finally(() => setLoadingAnalytics(false));
     }, [selectedPeriod]);
 
-    // 카테고리 목록은 1회 로딩
     useEffect(() => {
         setLoadingCategories(true);
         getCategories().finally(() => setLoadingCategories(false));
     }, []);
 
-    // 첫 로딩 시 기본 선택(첫 번째 카테고리)
+    /** 첫 로딩 시 기본 선택(첫 번째 카테고리) */
     useEffect(() => {
         if (categories.length && selectedCtgr == null) setSelectedCtgr(categories[0].ctgrId);
     }, [categories, selectedCtgr]);
@@ -114,27 +149,35 @@ export function AnalyticsTab() {
         getRewardSalesTop().finally(() => setLoadingRewardTop(false));
     }, [metric, selectedPeriod]);
 
-    // 카테고리 선택 시 서브카테고리 성공률
+    /** 카테고리 선택 시 서브카테고리 성공률 조회 */
     useEffect(() => {
         if (!selectedCtgr) {
-            setSubcatRows(null);
+            setSubCatRows(null);
             return;
         }
-        const cached = subcatCache.current.get(selectedCtgr);
+        const cached = subCatCache.current.get(selectedCtgr);
         if (cached) {
-            setSubcatRows(cached);
+            setSubCatRows(cached);
             return;
         }
-        setLoadingSubcat(true);
+        setLoadingSubCat(true);
         getCategorySuccess(selectedCtgr)
             .then((rows) => {
-                if (rows) subcatCache.current.set(selectedCtgr, rows);
-                else subcatCache.current.delete(selectedCtgr);
+                if (rows) subCatCache.current.set(selectedCtgr, rows);
+                else subCatCache.current.delete(selectedCtgr);
             })
-            .finally(() => setLoadingSubcat(false));
+            .finally(() => setLoadingSubCat(false));
     }, [selectedCtgr]);
 
-    const kpis = useMemo(() => {
+    /**
+     * @description KPI 데이터: 총 후원금, 플랫폼 수수료, 성공률, 평균 후원금
+     * @returns {Object} kpi - KPI 데이터 객체
+     * @property {number} totalRevenue - 총 후원금
+     * @property {number} platformFee - 플랫폼 수수료
+     * @property {number} successRate - 성공률
+     * @property {number} avgPledge - 평균 후원금
+     */
+    const kpi = useMemo(() => {
         if (!analytics) return { totalRevenue: 0, platformFee: 0, successRate: 0, avgPledge: 0 };
         return {
             totalRevenue: analytics.kpi.totalBackingAmount,
@@ -146,11 +189,20 @@ export function AnalyticsTab() {
 
     const revenueTrendForChart = useMemo(() => analytics?.revenueTrends ?? [], [analytics]);
 
+    /**
+     * @description 리워드 판매 Top N 데이터 (리워드명, 수량, 매출)
+     * @returns {Array} rewardSalesTopForChart - 리워드 판매 Top N 데이터 배열
+     * 각 항목은 { reward: string; qty: number; revenue: number } 형태
+     */
     const rewardSalesTopForChart = useMemo(() => {
         if (!rewardSalesTops) return [] as { reward: string; qty: number; revenue: number }[];
         return rewardSalesTops.map((d) => ({ reward: d.rewardName, qty: d.qty, revenue: d.revenue }));
     }, [rewardSalesTops]);
 
+    /** @description 결제 수단 비율 데이터 (결제수단, 비율, 건수)
+     * @returns {Array} paymentPie - 결제 수단 비율 데이터 배열
+     * 각 항목은 { method: string; valuePct: number; cnt: number } 형태
+     */
     const paymentPie = useMemo(() => {
         if (!analytics) return [] as { method: string; valuePct: number; cnt: number }[];
         const total = analytics.paymentMethods.reduce((a, b) => a + (b?.cnt ?? 0), 0) || 1;
@@ -162,19 +214,28 @@ export function AnalyticsTab() {
         }));
     }, [analytics]);
 
-    const subcatRate = useMemo(() => {
-        if (!subcatRows) return [] as { category: string; success: number; fail: number }[];
-        return subcatRows.map((r) => {
+    /**
+     * @description 서브카테고리별 성공률 데이터 (서브카테고리명, 성공률, 실패율)
+     * @returns {Array} subCatRate - 서브카테고리별 성공률 데이터 배열
+     * 각 항목은 { category: string; success: number; fail: number } 형태
+     */
+    const subCatRate = useMemo(() => {
+        if (!subCatRows) return [] as { category: string; success: number; fail: number }[];
+        return subCatRows.map((r) => {
             const total = (r.successCnt ?? 0) + (r.failCnt ?? 0);
             const success = total ? Math.round((r.successCnt / total) * 100) : 0;
             const fail = 100 - success;
             return { category: r.categoryName, success, fail };
         });
-    }, [subcatRows]);
+    }, [subCatRows]);
 
-    const monthTick = (m: string) => (m?.includes("-") ? `${m.split("-")[1]}월` : m);
+    /**
+     * @description X축 월 레이블 포맷터 (예: "2023-01" → "1월", "2023-12" → "12월", "03" → "3월")
+     * @param {string} m - 원본 월 문자열
+     * @returns {string} 포맷된 월 문자열
+     */
+    const monthTick = (m: string): string => (m?.includes("-") ? `${m.split("-")[1]}월` : m);
 
-    // --- render ---
     return (
         <div className="space-y-6">
             {/* 상단 오른쪽 기간 선택 */}
@@ -196,10 +257,10 @@ export function AnalyticsTab() {
             {/* KPI */}
             <div className="grid grid-cols-12 gap-6">
                 {[
-                    { title: "총 후원금", value: currency(kpis.totalRevenue), sub: `기간: ${periodLabel}` },
-                    { title: "플랫폼 수수료(5%)", value: currency(kpis.platformFee), sub: "정책 가정치" },
-                    { title: "성공률", value: percent(kpis.successRate), sub: "전체 프로젝트 대비" },
-                    { title: "평균 후원금", value: currency(kpis.avgPledge), sub: "후원자당 평균" },
+                    { title: "총 후원금", value: currency(kpi.totalRevenue), sub: `기간: ${periodLabel}` },
+                    { title: "플랫폼 수수료(5%)", value: currency(kpi.platformFee), sub: "정책 가정치" },
+                    { title: "성공률", value: percent(kpi.successRate), sub: "전체 프로젝트 대비" },
+                    { title: "평균 후원금", value: currency(kpi.avgPledge), sub: "후원자당 평균" },
                 ].map((k, i) => (
                     <Card key={i} className="col-span-12 sm:col-span-6 lg:col-span-3">
                         <CardHeader>
@@ -387,13 +448,13 @@ export function AnalyticsTab() {
                         </Select>
                     </CardHeader>
                     <CardContent>
-                        {loadingSubcat ? (
+                        {loadingSubCat ? (
                             <div className="text-sm text-muted-foreground">불러오는 중…</div>
-                        ) : subcatRate.length === 0 ? (
+                        ) : subCatRate.length === 0 ? (
                             <div className="text-sm text-muted-foreground">해당 카테고리에 서브카테고리가 없습니다.</div>
-                        ) : subcatRate.length > 0 ? (
+                        ) : subCatRate.length > 0 ? (
                             <ResponsiveContainer width="100%" height={HEIGHT}>
-                                <BarChart data={subcatRate}>
+                                <BarChart data={subCatRate}>
                                     <CartesianGrid strokeDasharray="3 3" />
                                     <XAxis dataKey="category" />
                                     <YAxis />
@@ -402,7 +463,7 @@ export function AnalyticsTab() {
                                     <Bar dataKey="success" name="성공률(%)" stackId="a" fill={COLORS.green} />
                                     <Bar dataKey="fail" name="실패율(%)" stackId="a" fill={COLORS.rose} />
                                 </BarChart>
-                                    </ResponsiveContainer>
+                            </ResponsiveContainer>
                         ) : (
                             <div className="text-sm text-muted-foreground">카테고리를 선택해주세요.</div>
                         )}

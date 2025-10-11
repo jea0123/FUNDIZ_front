@@ -4,9 +4,8 @@ import { AlertTriangle, ArrowLeft, Home } from "lucide-react";
 import { motion } from "framer-motion";
 
 /**
- * 에러 전용 페이지 (BrowserRouter 호환)
- * - react-router data router 훅(useRouteError) 사용 제거 버전
- * - navigate('/error', { state: { message: '...', status: 400 } }) 형태로 사용
+ * @description 에러 페이지 컴포넌트
+ * @returns {JSX.Element} 에러 페이지 JSX 요소
  */
 export default function ErrorPage() {
     const navigate = useNavigate();
