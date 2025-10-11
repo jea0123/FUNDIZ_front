@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   ResponsiveContainer,
@@ -17,14 +16,28 @@ import {
   AreaChart,
 } from 'recharts';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useEffect, useState } from 'react';
+import type { CreatorDashboard } from '@/types/creator';
+import { useCreatorId } from '../useCreatorId';
+import { endpoints, getData } from '@/api/apis';
+import { kyInstance } from '@/api/apis';
 
-// ✅ 프로젝트 성공률
-const successData = [
-  { name: '성공', value: 78 },
-  { name: '실패', value: 22 },
-];
+const defaultCreatorDashboard: CreatorDashboard = {
+  creatorId: 0,
+  projectTotal: 0,
+  totalAmount: 0,
+  totalBackingCnt: 0,
+  totalVerifyingCnt: 0,
+  totalProjectCnt: 0,
+  projectFailedCnt: 0,
+  projectFailedPercentage: 0,
+  projectSuccessPercentage: 0,
+  to3BackerCnt: [],
+  to3LikeCnt: [],
+  to3ViewCnt: [],
+};
 
-// ✅ 최근 7일 (현재 요일이 오른쪽 끝)
+// 최근 7일 (현재 요일이 오른쪽 끝)
 const now = new Date();
 const daysOfWeek = ['일', '월', '화', '수', '목', '금', '토'];
 const dailyViewData = Array.from({ length: 7 }).map((_, i) => {
@@ -38,7 +51,7 @@ const dailyViewData = Array.from({ length: 7 }).map((_, i) => {
   };
 });
 
-// ✅ 최근 12개월 (현재 월이 오른쪽 끝)
+// 최근 12개월 (현재 월이 오른쪽 끝)
 const currentMonth = now.getMonth() + 1;
 const monthNames = [
   '1월',
@@ -62,7 +75,7 @@ const monthlyData = Array.from({ length: 12 }).map((_, i) => {
   };
 });
 
-// ✅ 프로젝트 랭킹 데이터 (조회수 / 후원자 / 좋아요)
+//  프로젝트 랭킹 데이터 (조회수 / 후원자 / 좋아요)
 const rankData = {
   views: [
     { rank: 1, title: '감성 조명 프로젝트', value: 54200 },
@@ -81,12 +94,16 @@ const rankData = {
   ],
 };
 
-// ✅ 시각적 요소
+// 시각적 요소
 const COLORS = ['#b45309', '#facc15', '#9ca3af'];
 const BADGES = ['🥉', '🥇', '🥈'];
-const CUSTOM_ORDER = [3, 1, 2]; // ✅ 표시 순서 변경
+const CUSTOM_ORDER = [3, 1, 2]; // 표시 순서 변경
 
 export default function CreatorDashboard() {
+  const { creatorId, loading: idLoading } = useCreatorId(21);
+  const [successRate, setSuccessRate] = useState<number>(0);
+  const [failRate, setFailRate] = useState<number>(0);
+  const [data, setData] = useState<CreatorDashboard>(defaultCreatorDashboard);
   const [rankType, setRankType] = useState<'views' | 'backers' | 'likes'>(
     'views'
   );
@@ -97,10 +114,54 @@ export default function CreatorDashboard() {
     likes: '누적 좋아요 수',
   };
 
-  // ✅ 랭킹 순서 커스텀 정렬
+  // 랭킹 순서 커스텀 정렬
   const orderedData = CUSTOM_ORDER.map((r) =>
     rankData[rankType].find((item) => item.rank === r)
   );
+
+  useEffect(() => {
+    if (idLoading || !creatorId) return;
+
+    (async () => {
+      try {
+        const res = await fetch(
+          `http://localhost:9099/api/v1${endpoints.creatorDashboard}`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Dev-Creator-Id': String(creatorId),
+            },
+          }
+        );
+
+        const json = await res.json();
+        const data = json?.data;
+
+        if (res.status === 200 && data) {
+          setSuccessRate(data.projectSuccessPercentage ?? 0);
+          setFailRate(data.projectFailedPercentage ?? 0);
+          setData(data);
+        } else {
+          console.warn(
+            '대시보드 데이터 로드 실패:',
+            json?.message ?? res.statusText
+          );
+          setSuccessRate(0);
+          setFailRate(0);
+        }
+      } catch (err) {
+        console.error('대시보드 데이터 요청 중 오류 발생:', err);
+        setSuccessRate(0);
+        setFailRate(0);
+      }
+    })();
+  }, [idLoading, creatorId]);
+
+  const successData = [
+    { name: '성공', value: successRate },
+    { name: '실패', value: 100 - successRate },
+  ];
 
   return (
     <div className="max-w-[1750px] mx-auto px-2">
@@ -112,25 +173,37 @@ export default function CreatorDashboard() {
         </CardHeader>
 
         <CardContent>
-          {/* ✅ 상단 요약 */}
+          {/* 상단 요약 */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            {[
-              ['총 프로젝트', '1,247'],
-              ['총 후원금', '₩154.2억'],
-              ['총 후원 수', '34,567'],
-              ['승인 대기', '23'],
-            ].map(([label, value], i) => (
-              <div
-                key={i}
-                className="bg-gray-50 rounded-xl p-3 text-center shadow-sm"
-              >
-                <h3 className="text-gray-600 mb-1">{label}</h3>
-                <p className="text-2xl font-bold text-gray-900">{value}</p>
-              </div>
-            ))}
-          </div>
+            <div className="bg-gray-50 rounded-xl p-3 text-center shadow-sm">
+              <h3 className="text-gray-600 mb-1">총 프로젝트</h3>
+              <p className="text-2xl font-bold text-gray-900">
+                {data.projectTotal.toLocaleString()}
+              </p>
+            </div>
 
-          {/* ✅ (1) TOP3 + 성공률 */}
+            <div className="bg-gray-50 rounded-xl p-3 text-center shadow-sm">
+              <h3 className="text-gray-600 mb-1">총 후원금</h3>
+              <p className="text-2xl font-bold text-gray-900">
+                ₩{data.totalAmount.toLocaleString()}
+              </p>
+            </div>
+
+            <div className="bg-gray-50 rounded-xl p-3 text-center shadow-sm">
+              <h3 className="text-gray-600 mb-1">총 후원 수</h3>
+              <p className="text-2xl font-bold text-gray-900">
+                {data.totalBackingCnt.toLocaleString()}
+              </p>
+            </div>
+
+            <div className="bg-gray-50 rounded-xl p-3 text-center shadow-sm">
+              <h3 className="text-gray-600 mb-1">승인 대기</h3>
+              <p className="text-2xl font-bold text-gray-900">
+                {data.totalVerifyingCnt.toLocaleString()}
+              </p>
+            </div>
+          </div>
+          {/* (1) TOP3 + 성공률 */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* TOP3 */}
             <Card className="p-3 shadow-md">
@@ -239,8 +312,8 @@ export default function CreatorDashboard() {
                       cy="50%"
                       outerRadius={70}
                       dataKey="value"
-                      label={({ percent, name }) =>
-                        `${name} ${(percent * 100).toFixed(0)}%`
+                      label={({ value, name }) =>
+                        `${name} ${value.toFixed(1)}%`
                       }
                       labelLine={false}
                     >
@@ -259,7 +332,7 @@ export default function CreatorDashboard() {
             </Card>
           </div>
 
-          {/* ✅ (2) 일간 프로젝트 후원수 */}
+          {/*(2) 일간 프로젝트 후원수 */}
           <Card className="p-3 shadow-md mb-8">
             <CardHeader>
               <CardTitle className="text-lg font-semibold mb-2">
@@ -301,7 +374,7 @@ export default function CreatorDashboard() {
             </CardContent>
           </Card>
 
-          {/* ✅ (3) 월별 프로젝트 후원수 */}
+          {/* (3) 월별 프로젝트 후원수 */}
           <Card className="p-3 shadow-md">
             <CardHeader>
               <CardTitle className="text-lg font-semibold mb-2">
