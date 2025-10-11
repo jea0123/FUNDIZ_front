@@ -11,11 +11,7 @@ import ErrorPage from './views/ErrorPage';
 import MainPage from './views/MainPage';
 import { setNavigator } from './utils/navigator';
 import { NoticeDetailPage } from './views/cs/NoticeDetail';
-
 import ProjectsAllPage, { ProjectByCategoryPage, ProjectBySubcategoryPage, SearchProjectPage, } from './views/project/ProjectAllPage';
-
-import ProjectsAllPage, {ProjectByCategoryPage,ProjectBySubcategoryPage,SearchProjectPage,} from './views/project/ProjectAllPage';
-
 import { FundingPage } from './views/backing/backingPage';
 import FundingLoader from './components/FundingLoader';
 import { ApprovalDetail } from './views/admin/tabs/ApprovalDetail';
@@ -39,11 +35,7 @@ import CreatorBacking from './views/creator/pages/CreatorBacking';
 import CreatorAddReward from './views/creator/pages/CreatorAddReward';
 import CreatorSettlementPage from './views/creator/pages/CreatorSettlementPage';
 
-
 const AdminTabs = lazy(() => import('./views/admin/AdminTabs').then((module) => ({ default: module.AdminTabs, })));
-
-const AdminTabs = lazy(() =>import('./views/admin/AdminTabs').then((module) => ({default: module.AdminTabs,})));
-
 
 export default function App() {
   const { setLoginUser, resetLoginUser } = useLoginUserStore();
@@ -128,21 +120,18 @@ export default function App() {
               <Route path="projects">
                 <Route index element={<CreatorProjects />} />
                 <Route path=":projectId" element={<CreatorProjectDetail />} />
+                // 프로젝트/rewardId 두개가 따로있음 아래꺼하고 비교해서 만든사람이 바꿀 필요가있을듯
+                <Route path=":projectId/reward" element={<CreatorAddReward />}/>
               </Route>
+              // 이거랑 겹침
               <Route path=":projectId/reward" element={<CreatorAddReward />} />
               <Route path="backings" element={<CreatorBacking />} />
               <Route path="shipping" element={<CreatorShippingList />} />
-
               <Route path="shipping/:projectId" element={<CreatorShippingDetail />} />
-
-              <Route path="shipping/:projectId" element={<CreatorShippingDetail />}/>
-              <Route path="qna" />
               <Route path="settlement" element={<CreatorSettlementPage />} />
-
               <Route path="qna" element={<CreatorQnATab />} />
               <Route path="settlement" element={<CreatorSettlementPage />} />
             </Route>
-
 
             <Route path="/admin" element={<AdminConsole />}>
               <Route index element={<AdminTabs />} />
@@ -157,24 +146,7 @@ export default function App() {
               <Route path="inquiry" element={<InquiryTab />} />
               <Route path="report" element={<ReportTab />} />
             </Route>
-
-            <Route path="/creator" element={<CreatorLayout />}>
-              <Route index element={<CreatorDashboard />} />
-              <Route path="dashboard" element={<CreatorDashboard />} />
-              <Route path="project/new" element={<CreateProject />} />
-              <Route path="project/:projectId" element={<CreateProject />} />
-              <Route path="projects">
-                <Route index element={<CreatorProjects />} />
-                <Route path=":projectId" element={<CreatorProjectDetail />} />
-                <Route path=":projectId/reward" element={<CreatorAddReward />}/>
-              </Route>
-              <Route path="backings" />
-              <Route path="shipping" />
-              <Route path="qna" />
-              <Route path="settlement" />
-            </Route>
-
-
+            
             <Route path="/error" element={<ErrorPage />} />
             <Route path="*" element={<ErrorPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
