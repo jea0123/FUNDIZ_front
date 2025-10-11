@@ -11,11 +11,11 @@ import ErrorPage from './views/ErrorPage';
 import MainPage from './views/MainPage';
 import { setNavigator } from './utils/navigator';
 import { NoticeDetailPage } from './views/cs/NoticeDetail';
-<<<<<<< HEAD
+
 import ProjectsAllPage, { ProjectByCategoryPage, ProjectBySubcategoryPage, SearchProjectPage, } from './views/project/ProjectAllPage';
-=======
+
 import ProjectsAllPage, {ProjectByCategoryPage,ProjectBySubcategoryPage,SearchProjectPage,} from './views/project/ProjectAllPage';
->>>>>>> 0deec91a7a7ad05a624ad4d783a8baf9efd4f189
+
 import { FundingPage } from './views/backing/backingPage';
 import FundingLoader from './components/FundingLoader';
 import { ApprovalDetail } from './views/admin/tabs/ApprovalDetail';
@@ -39,11 +39,11 @@ import CreatorBacking from './views/creator/pages/CreatorBacking';
 import CreatorAddReward from './views/creator/pages/CreatorAddReward';
 import CreatorSettlementPage from './views/creator/pages/CreatorSettlementPage';
 
-<<<<<<< HEAD
+
 const AdminTabs = lazy(() => import('./views/admin/AdminTabs').then((module) => ({ default: module.AdminTabs, })));
-=======
+
 const AdminTabs = lazy(() =>import('./views/admin/AdminTabs').then((module) => ({default: module.AdminTabs,})));
->>>>>>> 0deec91a7a7ad05a624ad4d783a8baf9efd4f189
+
 
 export default function App() {
   const { setLoginUser, resetLoginUser } = useLoginUserStore();
