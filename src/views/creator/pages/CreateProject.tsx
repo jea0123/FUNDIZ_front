@@ -255,7 +255,7 @@ export default function CreateProject() {
                 const [catRes, subRes, infoRes] = await Promise.all([
                     getData(endpoints.getCategories),
                     getData(endpoints.getSubcategories),
-                    getData(endpoints.getCreatorInfoSummary),
+                    getData(endpoints.getCreatorProfileSummary),
                 ]);
                 if (!alive) return;
 

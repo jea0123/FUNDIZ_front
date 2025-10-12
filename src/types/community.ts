@@ -9,8 +9,6 @@ export interface CommunityDto {
 
     nickname: string;
     profileImg: string | null;
-
-    replyList: ReplyDto[];
 }
 
 export interface ReviewDto {
