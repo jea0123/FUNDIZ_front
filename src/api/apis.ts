@@ -34,7 +34,10 @@ export const kyInstance = ky.create({
     afterResponse: [
       async (_req, _opts, res) => {
         if (res.status >= 400) {
-          const body = await res.clone().json().catch(() => null);
+          const body = await res
+            .clone()
+            .json()
+            .catch(() => null);
           const msg = body?.message ?? res.statusText;
           const reqURI = _req.url.replace(String(_opts.prefixUrl ?? ''), '');
           console.error(`${res.status} ${msg}`, reqURI);
@@ -69,7 +72,7 @@ const responseHandler = async <T = any>(res: Response): Promise<ApiResult<T>> =>
   if (!res) return { status: 0, data: null };
   let body: any = null;
   try {
-    body = await res.json();
+    body = res.status !== 204 ? await res.json() : null;
   } catch {
     const txt = await res.text();
     body = { data: txt };
@@ -81,11 +84,13 @@ const authorization = (accessToken: string | undefined) => {
   return { headers: { Authorization: `Bearer ${accessToken}` } };
 };
 
+const withBody = (data: any) => (typeof FormData !== 'undefined' && data instanceof FormData ? { body: data } : { json: data ?? {} });
+
 export const api = {
-  get: <T = any>(url: string, accessToken?: string) => kyInstance.get(url, { ...authorization(accessToken) }).then(res => responseHandler<T>(res)),
-  post: <T = any>(url: string, data: any, accessToken?: string) => kyInstance.post(url, { json: data, ...authorization(accessToken) }).then(res => responseHandler<T>(res)),
-  put: <T = any>(url: string, data: any, accessToken?: string) => kyInstance.put(url, { json: data, ...authorization(accessToken) }).then(res => responseHandler<T>(res)),
-  delete: <T = any>(url: string, accessToken?: string) => kyInstance.delete(url, { ...authorization(accessToken) }).then(res => responseHandler<T>(res)),
+  get: <T = any>(url: string, accessToken?: string) => kyInstance.get(url, { ...authorization(accessToken) }).then((res) => responseHandler<T>(res)),
+  post: <T = any>(url: string, data: any, accessToken?: string) => kyInstance.post(url, { json: data, ...authorization(accessToken) }).then((res) => responseHandler<T>(res)),
+  put: <T = any>(url: string, data: any, accessToken?: string) => kyInstance.put(url, { json: data, ...authorization(accessToken) }).then((res) => responseHandler<T>(res)),
+  delete: <T = any>(url: string, accessToken?: string) => kyInstance.delete(url, { ...authorization(accessToken) }).then((res) => responseHandler<T>(res)),
 };
 
 const toQueryString = (params: Record<string, unknown>) => {
@@ -97,7 +102,6 @@ const toQueryString = (params: Record<string, unknown>) => {
 };
 
 export const endpoints = {
-
   // ==================== Auth API ====================
   checkEmail: 'auth/checkEmail',
   checkNickname: 'auth/checkNickname',
@@ -108,13 +112,14 @@ export const endpoints = {
   getLoginUser: '/user/loginUser',
   getMypage: (userId: number) => `user/userPage/${userId}`,
   getLikedList: (userId: number) => `user/likedList/${userId}`,
-  getQnAList: (userId: number) => `/user/QnAList/${userId}`,
+  getQnAListOfUser: (userId: number, p: SearchQnaParams) => `user/qna/${userId}?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup })}`,
   getRecentView: (userId: number) => `/user/recentViewProjects/${userId}`,
-  getQnAListDetail: (userId: number, projectId: number) =>`/user/QnAListDetail/${userId}/project/${projectId}`,
-
+  getQnAListDetail: (userId: number, projectId: number) => `/user/QnAListDetail/${userId}/project/${projectId}`,
 
   // ==================== Creator API ====================
-  getCreatorProjectList: (p: SearchCreatorProjectDto) => `creator/projects?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined, })}`,
+
+  getCreatorProjectList: (p: SearchCreatorProjectDto) => `creator/projects?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
+  registerCreator: 'creator/register',
   getCreatorProjectDetail: (projectId: number) => `creator/projects/${projectId}`,
   getCreatorProjectSummary: (projectId: number) => `creator/projects/${projectId}/summary`,
   createProject: 'creator/project/new',
@@ -126,9 +131,10 @@ export const endpoints = {
   getCreatorProfileSummary: "/creator/summary",
   getQnAListOfCreator: (p: SearchQnaParams) => `creator/qna?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup })}`,
   creatorDashboard: 'creator/dashBoard',
-  creatorBackingList: '/creator/backingList',
-  creatorShippingList: '/creator/shippingList',
-  creatorShippingBackerList: (projectId: number) =>`/creator/shippingList/${projectId}`,
+
+  creatorBackingList: 'creator/backingList',
+  creatorShippingList: 'creator/shippingList',
+  creatorShippingBackerList: (projectId: number) => `creator/shippingBackerList/${projectId}`,
   postCreatorNews: (projectId: number) => `creator/projects/${projectId}/news`,
 
   // ==================== Project API ====================
@@ -141,7 +147,7 @@ export const endpoints = {
   getReviewList: (projectId: number) => `project/${projectId}/review`,
   getReplyList: (cmId: number) => `project/community/${cmId}/reply`,
   postReply: (cmId: number) => `project/community/${cmId}/reply`,
-  getQnaListOfPJ: (projectId: number, p: SearchQnaParams) => `project/${projectId}/qna?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup })}`,
+  getQnaListOfProject: (projectId: number) => `project/${projectId}/qna`,
   addQuestion: (projectId: number, userId: number) => `project/${projectId}/qna/${userId}/add`,
 
   // ==================== Shipping API ====================
@@ -159,31 +165,31 @@ export const endpoints = {
   getAdminAnalytics: (period: string, metric: string) => `admin/analytics?period=${period}&metric=${metric}`,
   getCategorySuccess: (ctgrId: number) => `admin/category-success?ctgrId=${ctgrId}`,
   getRewardSalesTop: (period: string, metric: string) => `admin/reward-sales-top?period=${period}&metric=${metric}`,
-  getProjectVerifyList: (p: SearchProjectDto) => `admin/verify?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined, })}`,
+  getProjectVerifyList: (p: SearchProjectDto) => `admin/verify?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
   getProjectVerifyDetail: (projectId: number) => `admin/verify/${projectId}`,
   approveProject: (projectId: number) => `admin/verify/${projectId}/approve`,
   rejectProject: (projectId: number) => `admin/verify/${projectId}/reject`,
-  getAdminProjectList: (p: SearchProjectDto) => `admin/project?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined, })}`,
+  getAdminProjectList: (p: SearchProjectDto) => `admin/project?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
   adminUpdateProject: (projectId: number) => `admin/project/${projectId}`,
   cancelProject: (projectId: number) => `admin/project/${projectId}/cancel`,
-  getUsers: (p: SearchUserParams) => `admin/user/list?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword, })}`,
+  getUsers: (p: SearchUserParams) => `admin/user/list?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
 
   // ==================== Category API ====================
   getCategories: 'categories',
   getSubcategories: 'categories/subcategories',
 
   // ==================== Customer Service API ====================
-  getNotices: (p: SearchNoticeParams) => `cs/notice/list?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword, })}`,
+  getNotices: (p: SearchNoticeParams) => `cs/notice/list?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
   getNoticeDetail: (noticeId: number) => `cs/notice/${noticeId}`,
   addNotice: 'cs/notice/add',
   updateNotice: (noticeId: number) => `cs/notice/update/${noticeId}`,
   deleteNotice: (noticeId: number) => `cs/notice/delete/${noticeId}`,
-  getInquiries: (p: SearchIqrParams) => `cs/inquiry/list?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword, })}`,
-  getMyInquiries: (userId: number, p: SearchIqrParams) => `cs/inquiry/mylist/${userId}?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword, })}`,
+  getInquiries: (p: SearchIqrParams) => `cs/inquiry/list?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
+  getMyInquiries: (userId: number, p: SearchIqrParams) => `cs/inquiry/mylist/${userId}?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
   getInqDetail: (inqId: number) => `cs/inquiry/${inqId}`,
   addInquiry: (userId: number) => `cs/inquiry/${userId}/add`,
-  getReports: (p: SearchIqrParams) => `cs/report/list?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword, })}`,
-  getMyReports: (userId: number, p: SearchIqrParams) => `cs/report/mylist/${userId}?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword, })}`,
+  getReports: (p: SearchIqrParams) => `cs/report/list?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
+  getMyReports: (userId: number, p: SearchIqrParams) => `cs/report/mylist/${userId}?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
   getReportDetail: (reportId: number) => `cs/report/${reportId}`,
   addReport: (userId: number) => `cs/report/${userId}/add`,
 
@@ -202,21 +208,19 @@ export const endpoints = {
  * @param {string} [accessToken] - 인증을 위한 액세스 토큰 (선택 사항)
  * @returns {Promise<Response>} - API로부터의 응답
  */
-export const getData = async (url: string, accessToken?: string) => {
-  const response = await api.get(url, accessToken);
-  return response;
+export const getData = async <T = any>(url: string, accessToken?: string) => {
+  return api.get<T>(url, accessToken);
 };
 
 /**
- * @description 데이터 생성
+ * @description API에 데이터 전송
  * @param {string} url - API 엔드포인트 URL
  * @param {*} [data] - API에 전송할 데이터
  * @param {string} [accessToken] - 인증을 위한 액세스 토큰 (선택 사항)
  * @returns {Promise<Response>} - API로부터의 응답
  */
-export const postData = async (url: string, data?: any, accessToken?: string) => {
-  const response = await api.post(url, data, accessToken);
-  return response;
+export const postData = async <T = any>(url: string, data?: any, accessToken?: string) => {
+  return api.post<T>(url, data, accessToken);
 };
 
 /**
@@ -226,9 +230,8 @@ export const postData = async (url: string, data?: any, accessToken?: string) =>
  * @param {string} [accessToken] - 인증을 위한 액세스 토큰 (선택 사항)
  * @returns {Promise<Response>} - API로부터의 응답
  */
-export const putData = async (url: string, data?: any, accessToken?: string) => {
-  const response = await api.put(url, data, accessToken);
-  return response;
+export const putData = async <T = any>(url: string, data?: any, accessToken?: string) => {
+  return api.put<T>(url, data, accessToken);
 };
 
 /**
@@ -237,7 +240,6 @@ export const putData = async (url: string, data?: any, accessToken?: string) => 
  * @param {string} [accessToken] - 인증을 위한 액세스 토큰 (선택 사항)
  * @returns {Promise<Response>} - API로부터의 응답
  */
-export const deleteData = async (url: string, accessToken?: string) => {
-  const response = await api.delete(url, accessToken);
-  return response;
+export const deleteData = async <T = any>(url: string, accessToken?: string) => {
+  return api.delete<T>(url, accessToken);
 };

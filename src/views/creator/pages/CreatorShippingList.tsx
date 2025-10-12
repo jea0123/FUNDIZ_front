@@ -1,152 +1,92 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { useNavigate } from 'react-router-dom';
+import { useCreatorId } from '../useCreatorId';
+import { getData, endpoints } from '@/api/apis';
+import FundingLoader from '@/components/FundingLoader';
+import type { CreaotrShippingProjectList } from '@/types/shipping';
 
-interface ProjectItem {
-  id: number;
-  title: string;
-  totalBackers: number;
-  totalShipCount: number;
-  shippedCount: number;
-  status: 'READY' | 'SHIPPING' | 'DONE';
-}
-
-const MOCK_PROJECTS: ProjectItem[] = [
-  {
-    id: 1,
-    title: '따뜻한 머그컵 만들기',
-    totalBackers: 52,
-    totalShipCount: 52,
-    shippedCount: 12,
-    status: 'SHIPPING',
-  },
-  {
-    id: 2,
-    title: '감성 조명 프로젝트',
-    totalBackers: 38,
-    totalShipCount: 38,
-    shippedCount: 38,
-    status: 'DONE',
-  },
-  {
-    id: 3,
-    title: '친환경 키링 제작',
-    totalBackers: 21,
-    totalShipCount: 21,
-    shippedCount: 5,
-    status: 'READY',
-  },
-  {
-    id: 4,
-    title: '손뜨개 인형 만들기',
-    totalBackers: 14,
-    totalShipCount: 14,
-    shippedCount: 8,
-    status: 'SHIPPING',
-  },
-  {
-    id: 5,
-    title: '커스텀 폰케이스 제작',
-    totalBackers: 41,
-    totalShipCount: 41,
-    shippedCount: 0,
-    status: 'READY',
-  },
-  {
-    id: 6,
-    title: '아트 포스터 시리즈',
-    totalBackers: 23,
-    totalShipCount: 23,
-    shippedCount: 23,
-    status: 'DONE',
-  },
-  {
-    id: 7,
-    title: '핸드메이드 향초 프로젝트',
-    totalBackers: 18,
-    totalShipCount: 18,
-    shippedCount: 10,
-    status: 'SHIPPING',
-  },
-  {
-    id: 8,
-    title: '재활용 에코백 만들기',
-    totalBackers: 30,
-    totalShipCount: 30,
-    shippedCount: 5,
-    status: 'READY',
-  },
-  {
-    id: 9,
-    title: '일러스트 캘린더 제작',
-    totalBackers: 27,
-    totalShipCount: 27,
-    shippedCount: 27,
-    status: 'DONE',
-  },
-  {
-    id: 10,
-    title: '목제 인테리어 소품',
-    totalBackers: 20,
-    totalShipCount: 20,
-    shippedCount: 2,
-    status: 'READY',
-  },
-];
-
-export function CreatorShippingList() {
+export default function CreatorShippingList() {
   const navigate = useNavigate();
+  const { creatorId, loading: idLoading } = useCreatorId();
+  const [projects, setProjects] = useState<CreaotrShippingProjectList[]>([]);
+  const [loading, setLoading] = useState(true);
+  const fetched = useRef(false);
 
   const [searchInput, setSearchInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<'recent' | 'oldest' | 'status'>(
-    'recent'
-  );
+  const [sortBy, setSortBy] = useState<'backerCnt' | 'completed' | 'status'>('backerCnt');
+  //페이지네이션
   const [page, setPage] = useState(1);
-  const itemsPerPage = 5; // 페이지당 5개
+  const itemsPerPage = 5; //한 페이지에서 보여줄 개수
 
-  // 🔍 검색 + 정렬
-  const filteredProjects = MOCK_PROJECTS.filter((p) =>
-    p.title.toLowerCase().includes(searchTerm.toLowerCase())
-  ).sort((a, b) => {
-    switch (sortBy) {
-      case 'recent':
-        return b.id - a.id;
-      case 'oldest':
-        return a.id - b.id;
-      case 'status':
-        const order = { READY: 1, SHIPPING: 2, DONE: 3 };
-        return order[a.status] - order[b.status];
-      default:
-        return 0;
-    }
-  });
+  const effectiveCreatorId = creatorId || Number(localStorage.getItem('DEV_CREATOR_ID')) || Number(import.meta.env.VITE_DEV_CREATOR_ID) || 4;
 
-  // 📑 페이지네이션
+  // 배송 리스트 불러오기
+  useEffect(() => {
+    if (idLoading || !effectiveCreatorId || fetched.current) return;
+    fetched.current = true;
+
+    (async () => {
+      try {
+        setLoading(true);
+        const res = await getData(endpoints.creatorShippingList);
+        if (res.status === 200 && Array.isArray(res.data)) {
+          setProjects(res.data);
+        } else {
+          setProjects([]);
+        }
+      } catch (err) {
+        console.error('🚫 배송 리스트 로드 실패:', err);
+        setProjects([]);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [idLoading, effectiveCreatorId]);
+
+  // 상태 계산
+  const getStatus = (p: CreaotrShippingProjectList) => {
+    if (p.completedShippingCnt === 0) return 'READY'; // 0이면 배송 준비중
+    if (p.completedShippingCnt < p.backerCnt) return 'SHIPPING'; // 0 < 완료수 < 총배송수 -> 배송중
+    if (p.completedShippingCnt === p.backerCnt) return 'DONE'; // 완료수 = 총배송수 -> 배송완료
+    return 'READY';
+  };
+
+  // 검색 + 정렬
+  const filteredProjects = useMemo(() => {
+    const term = searchTerm.toLowerCase();
+    return [...projects]
+      .filter((p) => p.title.toLowerCase().includes(term))
+      .sort((a, b) => {
+        switch (sortBy) {
+          case 'backerCnt':
+            return b.backerCnt - a.backerCnt; // 총 후원자 많은 순
+          case 'completed':
+            return b.completedShippingCnt - a.completedShippingCnt; // 배송 완료 많은 순
+          case 'status':
+            const order = { READY: 1, SHIPPING: 2, DONE: 3 };
+            return order[getStatus(a)] - order[getStatus(b)];
+          default:
+            return 0;
+        }
+      });
+  }, [projects, searchTerm, sortBy]);
+
+  // 페이지네이션
   const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
   const startIndex = (page - 1) * itemsPerPage;
-  const pagedProjects = filteredProjects.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  );
+  const pagedProjects = filteredProjects.slice(startIndex, startIndex + itemsPerPage);
 
-  // 🚚 상태 뱃지
+  // 상태 뱃지
   const statusLabel = (status: string) => {
     switch (status) {
       case 'READY':
-        return (
-          <Badge className="bg-yellow-100 text-yellow-700">배송 준비중</Badge>
-        );
+        return <Badge className="bg-yellow-100 text-yellow-700">배송 준비중</Badge>;
       case 'SHIPPING':
         return <Badge className="bg-blue-100 text-blue-700">배송중</Badge>;
       case 'DONE':
@@ -156,25 +96,22 @@ export function CreatorShippingList() {
     }
   };
 
+  // 로딩 중
+  if (loading || idLoading) return <FundingLoader />;
+
+  // UI 동일 유지
   return (
     <div className="p-6">
       <Card className="shadow-md">
         <CardHeader>
-          <CardTitle className="text-lg font-bold">
-            📦 프로젝트별 배송 관리
-          </CardTitle>
+          <CardTitle className="text-lg font-bold">📦 프로젝트별 배송 관리</CardTitle>
         </CardHeader>
         <CardContent>
           {/* 검색 & 정렬 */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
             {/* 검색 */}
             <div className="flex gap-2">
-              <Input
-                placeholder="프로젝트명 검색"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                className="w-64"
-              />
+              <Input placeholder="프로젝트명 검색" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} className="w-64" />
               <Button
                 variant="secondary"
                 onClick={() => {
@@ -189,7 +126,7 @@ export function CreatorShippingList() {
             {/* 정렬 */}
             <Select
               value={sortBy}
-              onValueChange={(v: 'recent' | 'oldest' | 'status') => {
+              onValueChange={(v: 'backerCnt' | 'completed' | 'status') => {
                 setSortBy(v);
                 setPage(1);
               }}
@@ -198,8 +135,8 @@ export function CreatorShippingList() {
                 <SelectValue placeholder="정렬 기준" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="recent">최신순</SelectItem>
-                <SelectItem value="oldest">오래된순</SelectItem>
+                <SelectItem value="backerCnt">총 후원자순</SelectItem>
+                <SelectItem value="completed">배송 완료순</SelectItem>
                 <SelectItem value="status">배송 상태순</SelectItem>
               </SelectContent>
             </Select>
@@ -218,24 +155,24 @@ export function CreatorShippingList() {
                 </tr>
               </thead>
               <tbody>
-                {pagedProjects.map((p) => (
-                  <tr key={p.id} className="border-b hover:bg-gray-50">
-                    <td className="p-2">{p.title}</td>
-                    <td className="p-2 text-center">{p.totalBackers}</td>
-                    <td className="p-2 text-center">
-                      {p.shippedCount} / {p.totalShipCount}
-                    </td>
-                    <td className="p-2 text-center">{statusLabel(p.status)}</td>
-                    <td className="p-2 text-center">
-                      <Button
-                        variant="default"
-                        onClick={() => navigate(`/creator/shipping/${p.id}`)}
-                      >
-                        상세 보기
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
+                {pagedProjects.map((p) => {
+                  const status = getStatus(p);
+                  return (
+                    <tr key={p.projectId} className="border-b hover:bg-gray-50">
+                      <td className="p-2">{p.title}</td>
+                      <td className="p-2 text-center">{p.backerCnt}</td>
+                      <td className="p-2 text-center">
+                        {p.completedShippingCnt} / {p.backerCnt}
+                      </td>
+                      <td className="p-2 text-center">{statusLabel(status)}</td>
+                      <td className="p-2 text-center">
+                        <Button variant="default" onClick={() => navigate(`/creator/shipping/${p.projectId}`)}>
+                          상세 보기
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
 
                 {pagedProjects.length === 0 && (
                   <tr>
@@ -250,29 +187,17 @@ export function CreatorShippingList() {
 
           {/* 페이지네이션 */}
           <div className="flex justify-center gap-2 mt-4">
-            <Button
-              variant="outline"
-              disabled={page === 1}
-              onClick={() => setPage((p) => p - 1)}
-            >
+            <Button variant="outline" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
               이전
             </Button>
 
             {Array.from({ length: totalPages }).map((_, i) => (
-              <Button
-                key={i}
-                variant={page === i + 1 ? 'default' : 'outline'}
-                onClick={() => setPage(i + 1)}
-              >
+              <Button key={i} variant={page === i + 1 ? 'default' : 'outline'} onClick={() => setPage(i + 1)}>
                 {i + 1}
               </Button>
             ))}
 
-            <Button
-              variant="outline"
-              disabled={page === totalPages}
-              onClick={() => setPage((p) => p + 1)}
-            >
+            <Button variant="outline" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>
               다음
             </Button>
           </div>

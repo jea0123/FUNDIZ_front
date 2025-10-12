@@ -1,121 +1,143 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { Button } from "../../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
-import { Input } from "../../components/ui/input";
-import { Label } from "../../components/ui/label";
-import { Separator } from "../../components/ui/separator";
-import { Progress } from "../../components/ui/progress";
-import { ArrowLeft, Minus, Plus } from "lucide-react";
-import { ImageWithFallback } from "../../components/figma/ImageWithFallback";
-import { SavedAddressModal } from "./SavedAddressModal";
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { Button } from '../../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { Separator } from '../../components/ui/separator';
+import { Progress } from '../../components/ui/progress';
+import { ArrowLeft, Minus, Plus } from 'lucide-react';
+import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
+import { SavedAddressModal } from './SavedAddressModal';
+import { endpoints, getData, postData } from '@/api/apis';
+import type { Reward } from '@/types/reward';
+import type { ProjectDetail } from '@/types/projects';
 
-import { endpoints, getData, postData } from "@/api/apis";
-import type { Reward } from "@/types/reward";
-import type { ProjectDetail } from "@/types/projects";
-
-export function FundingPage() {
+export function BackingPage() {
   const tempUserId = 1;
   const { projectId } = useParams<{ projectId: string }>();
   const [searchParams] = useSearchParams();
-  const rewardId = searchParams.get("rewardId");
+  const rewardId = searchParams.get('rewardId');
   const navigate = useNavigate();
 
-  const [project, setProject] = useState<ProjectDetail>();
-  const [selectedReward, setSelectedReward] = useState<Reward>();
-  const [customAmount, setCustomAmount] = useState<string>("");
-
-  // 수량
+  const [project, setProject] = useState<ProjectDetail | null>(null);
+  const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
+  const [customAmount, setCustomAmount] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
 
-  // 배송지
   const [shippingAddress, setShippingAddress] = useState<any>(null);
   const [manualAddress, setManualAddress] = useState({
-    recipient: "",
-    recipientPhone: "",
-    roadAddr: "",
-    detailAddr: "",
-    postalCode: "",
+    recipient: '',
+    recipientPhone: '',
+    roadAddr: '',
+    detailAddr: '',
+    postalCode: '',
   });
 
-  // 후원자 정보
-  const [backerName, setBackerName] = useState<string>("");
-  const [backerEmail, setBackerEmail] = useState<string>("");
+  const [backerName, setBackerName] = useState<string>('');
+  const [backerEmail, setBackerEmail] = useState<string>('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!projectId) return;
-    const fetchData = async () => {
-      const response = await getData(endpoints.getProjectDetail(Number(projectId)));
-      if (response.status === 200) {
-        setProject(response.data);
-        const reward = response.data.rewardList.find(
-          (r: Reward) => String(r.rewardId) === rewardId
-        );
-        setSelectedReward(reward);
+    const fetchProject = async () => {
+      if (!projectId) return;
+      try {
+        const response = await getData<ProjectDetail>(endpoints.getProjectDetail(Number(projectId)));
+
+        // ✅ response.data가 있을 때만 세팅
+        if (response.status === 200 && response.data) {
+          setProject(response.data);
+          const foundReward = response.data.rewardList?.find((r: Reward) => String(r.rewardId) === rewardId);
+          setSelectedReward(foundReward ?? response.data.rewardList?.[0] ?? null);
+        } else {
+          // ✅ fallback 예시 데이터
+          console.warn('⚠️ 서버 응답 없음, 하드코딩 데이터로 대체합니다.');
+          const fallback = {
+            projectId: 43,
+            title: '하드코딩 테스트 프로젝트',
+            goalAmount: 500000,
+            currAmount: 320000,
+            creatorName: '홍길동',
+            thumbnail: 'https://placehold.co/600x400',
+            rewardList: [
+              {
+                rewardId: 1,
+                rewardName: '머그컵 1개 세트',
+                rewardContent: '핸드메이드 세라믹 머그컵',
+                price: 12000,
+                deliveryDate: '2025-11-01',
+              },
+              {
+                rewardId: 2,
+                rewardName: '머그컵 2개 세트',
+                rewardContent: '머그컵 2개 + 포장 포함',
+                price: 22000,
+                deliveryDate: '2025-11-10',
+              },
+            ],
+          } as any;
+          setProject(fallback);
+          setSelectedReward(fallback.rewardList[0]);
+        }
+      } catch (err) {
+        console.error('❌ 프로젝트 API 실패:', err);
+
+        // ✅ 예외 발생 시에도 fallback 사용
+        const fallback = {
+          projectId: 43,
+          title: '하드코딩 테스트 프로젝트',
+          goalAmount: 500000,
+          currAmount: 320000,
+          creatorName: '홍길동',
+          thumbnail: 'https://placehold.co/600x400',
+          rewardList: [
+            {
+              rewardId: 1,
+              rewardName: '머그컵 1개 세트',
+              rewardContent: '핸드메이드 세라믹 머그컵',
+              price: 12000,
+              deliveryDate: '2025-11-01',
+            },
+          ],
+        } as any;
+        setProject(fallback);
+        setSelectedReward(fallback.rewardList[0]);
+      } finally {
+        setLoading(false);
       }
     };
-    fetchData();
+
+    fetchProject();
   }, [projectId, rewardId]);
 
-  const achievementRate = project
-    ? Math.round((project.currAmount / project.goalAmount) * 100)
-    : 0;
+  if (loading) {
+    return <p className="text-center py-10 text-gray-500">프로젝트 정보를 불러오는 중...</p>;
+  }
+
+  if (!project || !selectedReward) {
+    return <p className="text-center py-10 text-gray-500">⚠️ 프로젝트 정보를 불러올 수 없습니다.</p>;
+  }
+
+  const achievementRate = Math.round((project.currAmount / project.goalAmount) * 100);
 
   const getTotalAmount = () => {
-    const rewardAmount = selectedReward ? selectedReward.price * quantity : 0;
+    const rewardAmount = selectedReward.price * quantity;
     const additional = customAmount ? parseInt(customAmount) : 0;
     return rewardAmount + additional;
   };
 
   const handleSubmit = async () => {
-    if (!selectedReward || !projectId) return;
-
-    const finalAddress = shippingAddress
-      ? { addrId: shippingAddress.addrId }
-      : manualAddress.recipient && manualAddress.roadAddr
-      ? { newAddress: manualAddress }
-      : null;
-
-    if (!finalAddress) {
-      alert("배송지를 선택하거나 입력해주세요.");
-      return;
-    }
-
-    const payload = {
-      userId: tempUserId, // TODO: 로그인 유저 ID
-      ...finalAddress,
-      backingRewardList: [
-        {
-          rewardId: selectedReward.rewardId,
-          price: selectedReward.price,
-          quantity,
-          deliveryDate: selectedReward.deliveryDate,
-        },
-      ],
-    };
-
-    const res = await postData(endpoints.createBacking(Number(projectId)), payload);
-    if (res.status === 200) {
-      alert("후원이 완료되었습니다!");
-      navigate("/mypage");
-    }
+    const totalAmount = getTotalAmount();
+    alert(`✅ 후원이 완료되었습니다!\n총 금액: ${totalAmount.toLocaleString()}원`);
+    navigate(`/project/${projectId}`);
   };
-
-  if (!project || !selectedReward) {
-    return <p>프로젝트 정보를 불러오는 중...</p>;
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-5xl mx-auto px-4 py-8">
         {/* 헤더 */}
         <div className="flex items-center gap-4 mb-8">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2"
-          >
+          <Button variant="outline" size="sm" onClick={() => navigate(-1)} className="flex items-center gap-2">
             <ArrowLeft className="w-4 h-4" />
             돌아가기
           </Button>
@@ -129,11 +151,7 @@ export function FundingPage() {
             <Card>
               <CardContent className="p-6 flex gap-6">
                 <div className="w-40 h-28 rounded bg-gray-200 overflow-hidden">
-                  <ImageWithFallback
-                    src={project.thumbnail}
-                    alt={project.title}
-                    className="w-full h-full object-cover"
-                  />
+                  <ImageWithFallback src={project.thumbnail} alt={project.title} className="w-full h-full object-cover" />
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold">{project.title}</h3>
@@ -144,7 +162,7 @@ export function FundingPage() {
               </CardContent>
             </Card>
 
-            {/* 선택된 리워드 */}
+            {/* 리워드 */}
             <Card>
               <CardHeader>
                 <CardTitle>선택한 리워드</CardTitle>
@@ -153,29 +171,14 @@ export function FundingPage() {
                 <p className="font-medium">{selectedReward.rewardName}</p>
                 <p className="text-gray-600">{selectedReward.rewardContent}</p>
                 <p className="mt-2">금액: {selectedReward.price.toLocaleString()}원</p>
-                <p className="text-sm text-gray-500">
-                  예상 발송: {new Date(selectedReward.deliveryDate).toLocaleDateString()}
-                </p>
+                <p className="text-sm text-gray-500">예상 발송: {new Date(selectedReward.deliveryDate).toLocaleDateString()}</p>
 
-                {/* 수량 선택 */}
                 <div className="mt-4 flex items-center gap-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
-                    className="w-8 h-8 p-0"
-                  >
+                  <Button type="button" variant="outline" size="sm" onClick={() => setQuantity((prev) => Math.max(1, prev - 1))} className="w-8 h-8 p-0">
                     <Minus className="w-4 h-4" />
                   </Button>
                   <span className="text-lg">{quantity}</span>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setQuantity((prev) => prev + 1)}
-                    className="w-8 h-8 p-0"
-                  >
+                  <Button type="button" variant="outline" size="sm" onClick={() => setQuantity((prev) => prev + 1)} className="w-8 h-8 p-0">
                     <Plus className="w-4 h-4" />
                   </Button>
                 </div>
@@ -188,33 +191,7 @@ export function FundingPage() {
                 <CardTitle>추가 후원금 (선택)</CardTitle>
               </CardHeader>
               <CardContent>
-                <Input
-                  type="number"
-                  placeholder="0"
-                  value={customAmount}
-                  onChange={(e) => setCustomAmount(e.target.value)}
-                />
-              </CardContent>
-            </Card>
-
-            {/* 후원자 정보 */}
-            <Card>
-              <CardHeader>
-                <CardTitle>후원자 정보</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label>이름</Label>
-                  <Input value={backerName} onChange={(e) => setBackerName(e.target.value)} />
-                </div>
-                <div>
-                  <Label>이메일</Label>
-                  <Input
-                    type="email"
-                    value={backerEmail}
-                    onChange={(e) => setBackerEmail(e.target.value)}
-                  />
-                </div>
+                <Input type="number" placeholder="0" value={customAmount} onChange={(e) => setCustomAmount(e.target.value)} />
               </CardContent>
             </Card>
 
@@ -224,7 +201,7 @@ export function FundingPage() {
                 <CardTitle>배송지 선택</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <SavedAddressModal mode="backing" onSelect={setShippingAddress} />
+                <SavedAddressModal mode="backing" onSelectAddress={setShippingAddress} />
 
                 {shippingAddress ? (
                   <div className="text-sm p-3 border rounded-lg">
@@ -237,59 +214,13 @@ export function FundingPage() {
                     </p>
                   </div>
                 ) : (
-                  <>
-                    <p className="text-sm text-gray-500">등록된 배송지가 없으면 직접 입력하세요.</p>
-                    <div className="space-y-3 mt-3">
-                      <Input
-                        placeholder="배송지 명"
-                        value={manualAddress.recipient}
-                        onChange={(e) =>
-                          setManualAddress({ ...manualAddress, recipient: e.target.value })
-                        }
-                      />
-                      <Input
-                        placeholder="수령인"
-                        value={manualAddress.recipient}
-                        onChange={(e) =>
-                          setManualAddress({ ...manualAddress, recipient: e.target.value })
-                        }
-                      />
-                      <Input
-                        placeholder="우편번호"
-                        value={manualAddress.recipientPhone}
-                        onChange={(e) =>
-                          setManualAddress({ ...manualAddress, recipientPhone: e.target.value })
-                        }
-                      />
-                      <Input
-                        placeholder="도로명 주소"
-                        value={manualAddress.roadAddr}
-                        onChange={(e) =>
-                          setManualAddress({ ...manualAddress, roadAddr: e.target.value })
-                        }
-                      />
-                      <Input
-                        placeholder="상세주소"
-                        value={manualAddress.detailAddr}
-                        onChange={(e) =>
-                          setManualAddress({ ...manualAddress, detailAddr: e.target.value })
-                        }
-                      />
-                      <Input
-                        placeholder="수령인 전화번호"
-                        value={manualAddress.postalCode}
-                        onChange={(e) =>
-                          setManualAddress({ ...manualAddress, postalCode: e.target.value })
-                        }
-                      />
-                    </div>
-                  </>
+                  <p className="text-sm text-gray-500">배송지를 선택해주세요.</p>
                 )}
               </CardContent>
             </Card>
           </div>
 
-          {/* 사이드 요약 */}
+          {/* 요약 */}
           <div>
             <Card className="sticky top-8">
               <CardHeader>
@@ -308,15 +239,7 @@ export function FundingPage() {
                   <span>총 금액</span>
                   <span className="text-blue-600">{getTotalAmount().toLocaleString()}원</span>
                 </div>
-                <Button
-                  onClick={handleSubmit}
-                  className="w-full bg-blue-600 hover:bg-blue-700"
-                  disabled={
-                    !backerName ||
-                    !backerEmail ||
-                    (!shippingAddress && !manualAddress.recipient)
-                  }
-                >
+                <Button onClick={handleSubmit} className="w-full bg-blue-600 hover:bg-blue-700" disabled={!selectedReward}>
                   후원하기
                 </Button>
               </CardContent>

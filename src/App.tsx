@@ -11,8 +11,8 @@ import ErrorPage from './views/ErrorPage';
 import MainPage from './views/MainPage';
 import { setNavigator } from './utils/navigator';
 import { NoticeDetailPage } from './views/cs/NoticeDetail';
-import ProjectsAllPage, { ProjectByCategoryPage, ProjectBySubcategoryPage, SearchProjectPage, } from './views/project/ProjectAllPage';
-import { FundingPage } from './views/backing/backingPage';
+import ProjectsAllPage, { ProjectByCategoryPage, ProjectBySubcategoryPage, SearchProjectPage } from './views/project/ProjectAllPage';
+import { BackingPage } from './views/backing/backingPage';
 import FundingLoader from './components/FundingLoader';
 import { ApprovalDetail } from './views/admin/tabs/ApprovalDetail';
 import AdminProjectEdit from './views/admin/tabs/AdminProjectEdit';
@@ -29,13 +29,14 @@ import { ReportTab } from './views/cs/tabs/ReportTab';
 import CSLayout from './views/cs/CSLayout';
 import { CreatorQnATab } from './views/creator/pages/CreatorQnATab';
 import CreatorProjectDetail from './views/creator/pages/CreatorProjectDetail';
-import { CreatorShippingList } from './views/creator/pages/CreatorShippingList';
-import { CreatorShippingDetail } from './views/creator/pages/CreatorShippingDetail';
+import CreatorShippingList from './views/creator/pages/CreatorShippingList';
+import CreatorShippingDetail from './views/creator/pages/CreatorShippingDetail';
 import CreatorBacking from './views/creator/pages/CreatorBacking';
 import CreatorAddReward from './views/creator/pages/CreatorAddReward';
 import CreatorSettlementPage from './views/creator/pages/CreatorSettlementPage';
+import RegisterCreator from './views/creator/RegistCreator';
 
-const AdminTabs = lazy(() => import('./views/admin/AdminTabs').then((module) => ({ default: module.AdminTabs, })));
+const AdminTabs = lazy(() => import('./views/admin/AdminTabs').then((module) => ({ default: module.AdminTabs })));
 
 export default function App() {
   const { setLoginUser, resetLoginUser } = useLoginUserStore();
@@ -61,9 +62,7 @@ export default function App() {
     };
 
     if (cookie.accessToken) {
-      getData(endpoints.getLoginUser, cookie.accessToken).then(
-        getLoginUserResponse
-      );
+      getData(endpoints.getLoginUser, cookie.accessToken).then(getLoginUserResponse);
     }
   }, [cookie.accessToken]);
 
@@ -87,25 +86,14 @@ export default function App() {
               <Route path="category/:ctgrId" element={<ProjectByCategoryPage />} />
               <Route path="category/:ctgrId/subcategory/:subctgrId" element={<ProjectBySubcategoryPage />} />
               <Route path=":projectId" element={<ProjectDetailPage />} />
-              <Route
-                path=":projectId/backing"
-                element={
-                  <FundingPage
-                    onBackClick={function (): void {
-                      throw new Error('Function not implemented.');
-                    }}
-                    onCompleteClick={function (): void {
-                      throw new Error('Function not implemented.');
-                    }}
-                  />
-                }
-              />
+              <Route path=":projectId/backing" element={<BackingPage />} />
             </Route>
 
             <Route path="/user">
               <Route path="Mypage" element={<MyPage />} />
             </Route>
 
+            <Route path="/creator/register" element={<RegisterCreator />} />
             <Route path="/creator" element={<CreatorLayout />}>
               <Route index element={<CreatorDashboard />} />
               <Route path="dashboard" element={<CreatorDashboard />} />
@@ -114,7 +102,7 @@ export default function App() {
               <Route path="projects">
                 <Route index element={<CreatorProjects />} />
                 <Route path=":projectId" element={<CreatorProjectDetail />} />
-                <Route path=":projectId/reward" element={<CreatorAddReward />}/>
+                <Route path=":projectId/reward" element={<CreatorAddReward />} />
               </Route>
               <Route path="backings" element={<CreatorBacking />} />
               <Route path="shipping" element={<CreatorShippingList />} />
@@ -137,7 +125,7 @@ export default function App() {
               <Route path="inquiry" element={<InquiryTab />} />
               <Route path="report" element={<ReportTab />} />
             </Route>
-            
+
             <Route path="/error" element={<ErrorPage />} />
             <Route path="*" element={<ErrorPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
