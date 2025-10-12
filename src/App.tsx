@@ -84,14 +84,8 @@ export default function App() {
             <Route path="/project">
               <Route index element={<ProjectsAllPage />} />
               <Route path="search" element={<SearchProjectPage />} />
-              <Route
-                path="category/:ctgrId"
-                element={<ProjectByCategoryPage />}
-              />
-              <Route
-                path="category/:ctgrId/subcategory/:subctgrId"
-                element={<ProjectBySubcategoryPage />}
-              />
+              <Route path="category/:ctgrId" element={<ProjectByCategoryPage />} />
+              <Route path="category/:ctgrId/subcategory/:subctgrId" element={<ProjectBySubcategoryPage />} />
               <Route path=":projectId" element={<ProjectDetailPage />} />
               <Route
                 path=":projectId/backing"

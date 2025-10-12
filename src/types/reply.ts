@@ -16,5 +16,9 @@ export interface ReplyDto {
     cmId: number;
     userId: number;
     content: string;
+    isSecret: string;
     createdAt: Date;
+
+    nickname: string;
+    profileImg: string | null;
 }

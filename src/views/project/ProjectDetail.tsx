@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Heart, Share2, Calendar, Users, MessageCircle, Star, MessageSquarePlus, Pencil } from 'lucide-react';
+import { Heart, Share2, Calendar, Users, MessageCircle, Star, MessageSquarePlus, X } from 'lucide-react';
 import type { ProjectDetail } from '@/types/projects';
 import { endpoints, getData, postData } from '@/api/apis';
-import { useLocation, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { formatDate, getDaysBefore, getDaysLeft } from '@/utils/utils';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,9 +15,9 @@ import { useNavigate } from 'react-router-dom';
 import type { Reward } from '@/types/reward';
 import FundingLoader from '@/components/FundingLoader';
 import type { CommunityDto, Cursor, CursorPage, ReviewDto } from '@/types/community';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import type { ReplyDto } from '@/types/reply';
 
 const CM_MAX = 1000;
 const getByteLen = (s: string) => new TextEncoder().encode(s).length;
@@ -28,7 +28,6 @@ export function ProjectDetailPage() {
     /* ----------------------------- Router helpers ----------------------------- */
 
     const navigate = useNavigate();
-    const location = useLocation();
     const { projectId } = useParams();
 
     /* --------------------------------- Auth helper ---------------------------------- */
@@ -45,29 +44,35 @@ export function ProjectDetailPage() {
     /* --------------------------------- Refs ---------------------------------- */
 
     const cartRef = useRef<HTMLDivElement>(null);
+
+    // 커뮤니티/후기 무한스크롤
     const communitySentinelRef = useRef<HTMLDivElement | null>(null);
     const reviewSentinelRef = useRef<HTMLDivElement | null>(null);
-
-    // 중복 호출 방지용 락
-    const communityLoadingLockRef = useRef(false);
-    const reviewLoadingLockRef = useRef(false);
+    const communityLoadingLockRef = useRef(false); // 중복 호출 방지용 락
+    const reviewLoadingLockRef = useRef(false); // 중복 호출 방지용 락
 
     // 글자수 초과 알림 1회 제한
     const exceededAlertedRef = useRef(false);
 
+    // 댓글 무한스크롤
+    const replySentinelRef = useRef<Record<number, HTMLDivElement | null>>({});
+    const replyLoadingLockRef = useRef<Record<number, boolean>>({}); // 중복 호출 방지용 락
+
     /* --------------------------------- State --------------------------------- */
 
     const [project, setProject] = useState<ProjectDetail>();
+    const [loadingProject, setLoadingProject] = useState(false);
+
     const [community, setCommunity] = useState<CommunityDto[]>([]);
     const [communityCursor, setCommunityCursor] = useState<Cursor | null>(null);
+    const [loadingCommunity, setLoadingCommunity] = useState(false);
+
     const [review, setReview] = useState<ReviewDto[]>([]);
     const [reviewCursor, setReviewCursor] = useState<Cursor | null>(null);
+    const [loadingReview, setLoadingReview] = useState(false);
+
     const [tab, setTab] = useState<"description" | "news" | "community" | "review">("description");
     const [isLiked, setIsLiked] = useState(false);
-
-    const [loadingProject, setLoadingProject] = useState(false);
-    const [loadingCommunity, setLoadingCommunity] = useState(false);
-    const [loadingReview, setLoadingReview] = useState(false);
 
     const [cart, setCart] = useState<Record<number, number>>({});
     const [cartPing, setCartPing] = useState(false);
@@ -77,6 +82,15 @@ export function ProjectDetailPage() {
     const [openCm, setOpenCm] = useState(false);
     const [cmContent, setCmContent] = useState("");
     const [postingCm, setPostingCm] = useState(false);
+
+    // 댓글
+    const [reply, setReply] = useState<Record<number, ReplyDto[]>>({});
+    const [replyCursor, setReplyCursor] = useState<Record<number, Cursor | null>>({});
+    const [loadingReply, setLoadingReply] = useState<Record<number, boolean>>({});
+    const [openReply, setOpenReply] = useState<Record<number, boolean>>({});
+    const [postingReply, setPostingReply] = useState<Record<number, boolean>>({});
+    const [replyInput, setReplyInput] = useState<Record<number, string>>({});
+    const [replySecret, setReplySecret] = useState<Record<number, boolean>>({});
 
     /* ------------------------------- Derived ---------------------------------- */
 
@@ -92,6 +106,9 @@ export function ProjectDetailPage() {
         }
         return { totalQty, totalAmount };
     }, [project, cart]);
+
+    // 로컬 댓글 수
+    const getLocalReplyCnt = (cmId: number) => (reply[cmId]?.length ?? 0);
 
     /* ----------------------------- Data fetchers ----------------------------- */
 
@@ -163,6 +180,33 @@ export function ProjectDetailPage() {
             setLoadingReview(false);
         }
     }, [projectId]);
+
+    const replyData = useCallback(async (cmId: number, cursor: Cursor | null) => {
+        setLoadingReply(prev => ({ ...prev, [cmId]: true }));
+        try {
+            const params = new URLSearchParams();
+            if (cursor) {
+                if (cursor.lastCreatedAt) params.set("lastCreatedAt", cursor.lastCreatedAt);
+                if (cursor.lastId != null) params.set("lastId", String(cursor.lastId));
+            }
+            params.set("size", "10");
+
+            const url = `${endpoints.getReplyList(cmId)}?${params.toString()}`;
+            const { status, data } = await getData(url);
+
+            if (status !== 200 || !data) {
+                if (!cursor) setReply(prev => ({ ...prev, [cmId]: [] }));
+                setReplyCursor(prev => ({ ...prev, [cmId]: null }));
+                return;
+            }
+            const page = data as CursorPage<ReplyDto>;
+            const items = Array.isArray(page?.items) ? page.items.filter(Boolean) : [];
+            setReply(prev => ({ ...prev, [cmId]: cursor ? ([...(prev[cmId] ?? []), ...items]) : items }));
+            setReplyCursor(prev => ({ ...prev, [cmId]: page?.nextCursor ?? null }));
+        } finally {
+            setLoadingReply(prev => ({ ...prev, [cmId]: false }));
+        }
+    }, []);
 
     /* ------------------------------- UI handlers ---------------------------------- */
 
@@ -274,7 +318,7 @@ export function ProjectDetailPage() {
             return;
         }
         if (getByteLen(content) > CM_MAX) {
-            alert("내용은 (한글 약 330자) 이내로 입력해 주세요.");
+            alert("최대 (한글 약 330자)까지 입력할 수 있습니다.");
             return;
         }
 
@@ -302,21 +346,60 @@ export function ProjectDetailPage() {
         }
     }, [projectId, ensureLogin, cmContent, communityData]);
 
-    // 후기 페이지
-    const handleWriteReview = useCallback(() => {
-        if (!projectId || !project) return;
-        if (!ensureLogin()) return;
+    // 렌더 시 문자열 강제
+    const replyText = useCallback((id: number) => {
+        const v = replyInput?.[id];
+        return typeof v === "string" ? v : "";
+    }, [replyInput]);
 
-        //TODO: 후원자 전용 가드 (나중에 주석 해제)
-        // if (!project.isBackedByMe) {
-        //     alert("후원자만 작성할 수 있습니다.");
-        //     return;
-        // }
-        // if (!project.canWriteReview) {
-        //     alert("아직 후기를 작성할 수 있는 상태가 아닙니다.");
-        //     return;
-        // }
-    }, [projectId, project, ensureLogin]);
+    // 댓글 패널 토글 (처음 열 때만 로드, 기본값 문자열로 강제)
+    const toggleReplies = useCallback((cmId: number) => {
+        setOpenReply(prev => ({ ...prev, [cmId]: !prev?.[cmId] }));
+
+        setReply((prev) => ({ ...prev, [cmId]: Array.isArray(prev?.[cmId]) ? prev[cmId] : [] }));
+        setReplyInput((prev) => ({ ...prev, [cmId]: typeof prev?.[cmId] === "string" ? prev[cmId] : "" }));
+        setReplySecret((prev) => ({ ...prev, [cmId]: prev[cmId] ?? false }));
+        setLoadingReply((prev) => ({ ...prev, [cmId]: !!prev?.[cmId] }));
+
+        if (!reply?.[cmId]) replyData(cmId, null);
+    }, [reply, replyData]);
+
+    // 댓글 등록
+    const submitReply = useCallback(async (cmId: number) => {
+        if (!ensureLogin()) return;
+        const content = (replyInput[cmId] ?? "").trim();
+        if (content.length === 0) return;
+        if (getByteLen(content) > 1000) {
+            alert("최대 (한글 약 330자)까지 입력할 수 있습니다.");
+            return;
+        }
+
+        setPostingReply(prev => ({ ...prev, [cmId]: true }));
+        try {
+            const body = { content, isSecret: replySecret[cmId] ? 'Y' : 'N' };
+            const response = await postData(endpoints.postReply(cmId), body);
+            if (response.status === 200) {
+                const posted = response.data as ReplyDto;
+
+                if (posted) {
+                    setReply(prev => ({ ...prev, [cmId]: [posted, ...(prev[cmId] ?? [])] }));
+                } else {
+                    setReplyCursor(prev => ({ ...prev, [cmId]: null }));
+                    await replyData(cmId, null);
+                }
+                
+                setReplyInput(prev => ({ ...prev, [cmId]: "" }));
+                setReplySecret(prev => ({ ...prev, [cmId]: false }));
+            } else {
+                alert("등록에 실패했습니다. 잠시 후 다시 시도해주세요.");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("네트워크 오류가 발생했습니다.");
+        } finally {
+            setPostingReply(prev => ({ ...prev, [cmId]: false }));
+        }
+    }, [ensureLogin, replyInput, replySecret]);
 
     /* -------------------------------- Effects -------------------------------- */
 
@@ -331,6 +414,7 @@ export function ProjectDetailPage() {
         reviewData(null);
     }, [projectId, projectData, communityData, reviewData]);
 
+    // 커뮤니티 무한스크롤
     useEffect(() => {
         if (tab !== "community") return; //옵저버 탭이 켜졌을 때만 붙이기
         const el = communitySentinelRef.current;
@@ -350,6 +434,7 @@ export function ProjectDetailPage() {
         return () => io.disconnect();
     }, [tab, communityCursor, loadingCommunity, communityData]);
 
+    // 후기 무한스크롤
     useEffect(() => {
         if (tab !== "review") return; //옵저버 탭이 켜졌을 때만 붙이기
         const el = reviewSentinelRef.current;
@@ -368,6 +453,35 @@ export function ProjectDetailPage() {
         io.observe(el);
         return () => io.disconnect();
     }, [tab, reviewCursor, loadingReview, reviewData]);
+
+    // 댓글 무한스크롤 (지금은 커뮤니티 댓글만)
+    useEffect(() => {
+        if (tab !== "community") return;
+
+        const observers: IntersectionObserver[] = [];
+
+        Object.entries(replySentinelRef.current).forEach(([id, el]) => {
+            const cmId = Number(id);
+            if (!el) return;
+            const cursor = replyCursor[cmId];
+            const isLoading = loadingReply[cmId];
+            if (!cursor || isLoading) return;
+
+            const io = new IntersectionObserver((entries) => {
+                const first = entries[0];
+                if (first.isIntersecting && !replyLoadingLockRef.current[cmId]) {
+                    replyLoadingLockRef.current[cmId] = true;
+                    replyData(cmId, cursor).finally(() => {
+                        replyLoadingLockRef.current[cmId] = false;
+                    });
+                }
+            }, { root: null, rootMargin: "300px", threshold: 0.01 });
+
+            io.observe(el);
+            observers.push(io);
+        });
+        return () => observers.forEach(o => o.disconnect());
+    }, [tab, replyCursor, loadingReply, replyData]);
 
     /* --------------------------------- Render --------------------------------- */
 
@@ -464,6 +578,7 @@ export function ProjectDetailPage() {
                             />
                         </TabsContent>
 
+                        {/* 새소식 */}
                         <TabsContent value="news">
                             {project.newsList.length == 0 ? (
                                 <div className="text-sm text-muted-foreground">게시글이 존재하지 않습니다.</div>
@@ -485,14 +600,18 @@ export function ProjectDetailPage() {
                             )}
                         </TabsContent>
 
+                        {/* 커뮤니티 */}
                         <TabsContent value="community">
                             <div className="flex items-center justify-between mt-2">
-                                <div className="text-sm text-muted-foreground">
-                                    커뮤니티 <span className="font-medium text-foreground">{community.length}</span>개
+                                <div className="flex items-center gap-2">
+                                    <span className="inline-flex items-center gap-1 text-sm font-medium text-foreground rounded-md px-2 py-0.5 ring-1 ring-blue-100 bg-blue-50/40">
+                                        커뮤니티
+                                    </span>
+                                    <span className="inline-flex items-center rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 text-xs font-semibold ring-1 ring-blue-200">
+                                        <MessageCircle className="h-3 w-3 mr-1" />{community.length}
+                                    </span>
                                 </div>
-                                <Button size="sm" onClick={openCommunityModal}>
-                                    글쓰기
-                                </Button>
+                                <Button size="sm" onClick={openCommunityModal}>글쓰기</Button>
                             </div>
 
                             <Dialog open={openCm} onOpenChange={setOpenCm}>
@@ -550,12 +669,134 @@ export function ProjectDetailPage() {
                                                             <p className="text-sm w-full max-w-full whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
                                                                 {cm.cmContent}
                                                             </p>
-                                                            <div className="flex items-center space-x-2 mt-2">
-                                                                <Button variant="ghost" size="sm">
+
+                                                            <div className="flex items-center gap-2 mt-3">
+                                                                <Button variant="ghost" size="sm" onClick={() => toggleReplies(cm.cmId)}>
                                                                     <MessageCircle className="h-3 w-3 mr-1" />
                                                                     댓글
+                                                                    {getLocalReplyCnt(cm.cmId) > 0 && (
+                                                                        <span className="ml-1 rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 ring-1 ring-blue-200">
+                                                                            {getLocalReplyCnt(cm.cmId)}
+                                                                        </span>
+                                                                    )}
                                                                 </Button>
                                                             </div>
+
+                                                            {/* 댓글 패널 */}
+                                                            {openReply[cm.cmId] && (
+                                                                <div className="mt-3 relative rounded-lg border bg-gray-50/70 p-3">
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="absolute right-2 top-2 h-7 w-7 text-gray-500 hover:text-gray-700"
+                                                                        onClick={() => {
+                                                                            setOpenReply((prev) => ({ ...prev, [cm.cmId]: false }))
+                                                                            setReplyInput((prev) => ({ ...prev, [cm.cmId]: "" }))
+                                                                        }}
+                                                                    >
+                                                                        <X className="h-4 w-4" />
+                                                                    </Button>
+                                                                    {/* 목록 */}
+                                                                    {(!loadingReply?.[cm.cmId] && (!Array.isArray(reply?.[cm.cmId]) || reply[cm.cmId].length === 0)) ? (
+                                                                        <div className="text-xs text-muted-foreground pr-8">아직 댓글이 없습니다. 첫 댓글을 남겨보세요.</div>
+                                                                    ) : (
+                                                                        <div className="space-y-3">
+                                                                            {(reply?.[cm.cmId] ?? []).filter(Boolean).map((rp) => (
+                                                                                <div key={rp.replyId} className="flex items-start gap-2">
+                                                                                    {/* TODO: 프로필 수정 필요 */}
+                                                                                    <Avatar className="w-7 h-7">
+                                                                                        {rp?.profileImg ? (
+                                                                                            <AvatarImage src={rp.profileImg} />
+                                                                                        ) : null}
+                                                                                        <AvatarFallback>{(rp.nickname).slice(0,2)}</AvatarFallback>
+                                                                                    </Avatar>
+                                                                                    <div className="flex-1 min-w-0">
+                                                                                        <div className="flex items-center gap-2">
+                                                                                            <span className="text-sm font-medium truncate">{rp.nickname}</span>
+                                                                                            {rp.isSecret === 'Y' && (
+                                                                                                <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-600 ring-1 ring-gray-200">
+                                                                                                    🔒 비밀글
+                                                                                                </span>
+                                                                                            )}
+                                                                                            <span className="text-[11px] text-gray-500">{getDaysBefore(rp.createdAt)} 전</span>
+                                                                                        </div>
+                                                                                        <p className="text-sm whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+                                                                                            {rp.content}
+                                                                                        </p>
+                                                                                    </div>
+                                                                                </div>
+                                                                            ))}
+
+                                                                            {loadingReply?.[cm.cmId] && (
+                                                                                <div className="space-y-2">
+                                                                                    <div className="h-12 animate-pulse rounded-md bg-gray-100" />
+                                                                                    <div className="h-12 animate-pulse rounded-md bg-gray-100" />
+                                                                                </div>
+                                                                            )}
+
+                                                                            {/* 무한스크롤 sentinel */}
+                                                                            {replyCursor?.[cm.cmId] && (
+                                                                                <div
+                                                                                    ref={(el) => {
+                                                                                        if (!replySentinelRef.current) replySentinelRef.current = {};
+                                                                                        replySentinelRef.current[cm.cmId] = el;
+                                                                                    }}
+                                                                                    className="h-1 w-full"
+                                                                                />
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+
+                                                                    {/* 입력창 */}
+                                                                    <div className="mt-3">
+                                                                        <div className="rounded-md border bg-white">
+                                                                            <Textarea
+                                                                                value={replyText(cm.cmId)}
+                                                                                onChange={(e) => setReplyInput((prev) => ({ ...prev, [cm.cmId]: e.target.value }))}
+                                                                                placeholder="댓글을 입력하세요"
+                                                                                className="min-h-[64px] resize-y"
+                                                                            />
+                                                                        </div>
+
+                                                                        <div className="mt-2 flex items-center justify-between">
+                                                                            <div className="flex items-center gap-3">
+                                                                                {/* 비밀글 체크박스 */}
+                                                                                <label className="flex items-center gap-2 text-xs text-gray-600">
+                                                                                    <input
+                                                                                        type="checkbox"
+                                                                                        checked={!!replySecret[cm.cmId]}
+                                                                                        onChange={(e) => setReplySecret(prev => ({ ...prev, [cm.cmId]: e.target.checked }))}
+                                                                                    />
+                                                                                    비밀글
+                                                                                </label>
+                                                                                <span className="text-[11px] text-gray-500">
+                                                                                    약 {replyText(cm.cmId).length}자
+                                                                                </span>
+                                                                            </div>
+
+                                                                            <div className="flex items-center gap-3">
+                                                                                {replyText(cm.cmId).trim().length > 0 && (
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() => setReplyInput((prev) => ({ ...prev, [cm.cmId]: "" }))}
+                                                                                        className="text-xs text-gray-500 hover:underline"
+                                                                                        disabled={!!postingReply?.[cm.cmId]}
+                                                                                    >
+                                                                                        지우기
+                                                                                    </button>
+                                                                                )}
+                                                                                <Button
+                                                                                    size="sm"
+                                                                                    onClick={() => submitReply(cm.cmId)}
+                                                                                    disabled={!!postingReply?.[cm.cmId] || replyText(cm.cmId).trim().length === 0}
+                                                                                >
+                                                                                    {postingReply?.[cm.cmId] ? "등록중" : "등록"}
+                                                                                </Button>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </CardContent>
@@ -570,46 +811,28 @@ export function ProjectDetailPage() {
                                         </div>
                                     )}
 
+                                    {/* 무한스크롤 sentinel */}
                                     {communityCursor && <div ref={communitySentinelRef} className="h-1 w-full" />}
                                 </>
                             )}
                         </TabsContent>
 
+                        {/* 후기 */}
                         <TabsContent value="review">
-                            <TooltipProvider>
-                                <div className="flex items-center justify-between mt-2">
-                                    <div className="text-sm text-muted-foreground">
-                                        후기 <span className="font-medium text-foreground">{review.length}</span>개
-                                    </div>
-
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <span>
-                                                <Button
-                                                    size="sm"
-                                                    onClick={handleWriteReview}
-                                                    disabled={!project?.isBackedByMe || !project?.canWriteReview}
-                                                >
-                                                    후기 작성
-                                                </Button>
-                                            </span>
-                                        </TooltipTrigger>
-                                        {!project?.isBackedByMe ? (
-                                            <TooltipContent>후원자만 작성할 수 있습니다</TooltipContent>
-                                        ) : !project?.canWriteReview ? (
-                                            <TooltipContent>아직 후기를 작성할 수 있는 상태가 아닙니다</TooltipContent>
-                                        ) : null}
-                                    </Tooltip>
+                            <div className="flex items-center justify-between mt-2">
+                                <div className="flex items-center gap-2">
+                                    <span className="inline-flex items-center gap-1 text-sm font-medium text-foreground rounded-md px-2 py-0.5 ring-1 ring-blue-100 bg-blue-50/40">
+                                        후기
+                                    </span>
+                                    <span className="inline-flex items-center rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 text-xs font-semibold ring-1 ring-blue-200">
+                                        <MessageCircle className="h-3 w-3 mr-1" />{review.length}
+                                    </span>
                                 </div>
-                            </TooltipProvider>
+                            </div>
 
                             {review.length == 0 ? (
                                 <div className="mt-4 rounded-lg border p-6 text-center">
-                                    <p className="text-sm text-muted-foreground mb-3">게시글이 존재하지 않습니다.</p>
-                                    <Button size="sm" onClick={handleWriteReview}>
-                                        <Pencil className="h-4 w-4 mr-1" />
-                                        첫 후기 남기기
-                                    </Button>
+                                    <p className="text-sm text-muted-foreground">게시글이 존재하지 않습니다.</p>
                                 </div>
                             ) : (
                                 <>
@@ -634,8 +857,7 @@ export function ProjectDetailPage() {
                                                             <p className="text-sm">{rv.cmContent}</p>
                                                             <div className="flex items-center space-x-2 mt-2">
                                                                 <Button variant="ghost" size="sm">
-                                                                    <MessageCircle className="h-3 w-3 mr-1" />
-                                                                    댓글
+                                                                    <MessageCircle className="h-3 w-3 mr-1" /> 댓글
                                                                 </Button>
                                                             </div>
                                                         </div>
@@ -652,6 +874,7 @@ export function ProjectDetailPage() {
                                         </div>
                                     )}
 
+                                    {/* 무한스크롤 sentinel */}
                                     {reviewCursor && <div ref={reviewSentinelRef} className="h-1 w-full" />}
                                 </>
                             )}
@@ -659,6 +882,7 @@ export function ProjectDetailPage() {
                     </Tabs>
                 </div>
 
+                {/* 오른쪽 사이드 */}
                 <div className="lg:col-span-1">
                     <div className="space-y-6">
                         <Card>
