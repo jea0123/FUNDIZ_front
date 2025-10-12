@@ -69,7 +69,7 @@ const responseHandler = async <T = any>(res: Response): Promise<ApiResult<T>> =>
   if (!res) return { status: 0, data: null };
   let body: any = null;
   try {
-    body = await res.json();
+    body = res.status !== 204 ? await res.json() : null;
   } catch {
     const txt = await res.text();
     body = { data: txt };
@@ -81,10 +81,13 @@ const authorization = (accessToken: string | undefined) => {
   return { headers: { Authorization: `Bearer ${accessToken}` } };
 };
 
+const withBody = (data: any) =>
+  typeof FormData !== "undefined" && data instanceof FormData ? { body: data } : { json: data ?? {} };
+
 export const api = {
   get: <T = any>(url: string, accessToken?: string) => kyInstance.get(url, { ...authorization(accessToken) }).then(res => responseHandler<T>(res)),
-  post: <T = any>(url: string, data: any, accessToken?: string) => kyInstance.post(url, { json: data, ...authorization(accessToken) }).then(res => responseHandler<T>(res)),
-  put: <T = any>(url: string, data: any, accessToken?: string) => kyInstance.put(url, { json: data, ...authorization(accessToken) }).then(res => responseHandler<T>(res)),
+  post: <T = any>(url: string, data: any, accessToken?: string) => kyInstance.post(url, { ...withBody(data), ...authorization(accessToken) }).then(res => responseHandler<T>(res)),
+  put: <T = any>(url: string, data: any, accessToken?: string) => kyInstance.put(url, { ...withBody(data), ...authorization(accessToken) }).then(res => responseHandler<T>(res)),
   delete: <T = any>(url: string, accessToken?: string) => kyInstance.delete(url, { ...authorization(accessToken) }).then(res => responseHandler<T>(res)),
 };
 
@@ -110,10 +113,10 @@ export const endpoints = {
   getLikedList: (userId: number) => `user/likedList/${userId}`,
   getQnAList: (userId: number) => `/user/QnAList/${userId}`,
   getRecentView: (userId: number) => `/user/recentViewProjects/${userId}`,
-  getQnAListDetail: (userId: number, projectId: number) =>`/user/QnAListDetail/${userId}/project/${projectId}`,
-
+  getQnAListDetail: (userId: number, projectId: number) => `/user/QnAListDetail/${userId}/project/${projectId}`,
 
   // ==================== Creator API ====================
+  registerCreator: 'creator/register',
   getCreatorProjectList: (p: SearchCreatorProjectDto) => `creator/projects?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined, })}`,
   getCreatorProjectDetail: (projectId: number) => `creator/projects/${projectId}`,
   createProject: 'creator/project/new',
@@ -128,7 +131,7 @@ export const endpoints = {
   creatorDashboard: 'creator/dashBoard',
   creatorBackingList: '/creator/backingList',
   creatorShippingList: '/creator/shippingList',
-  creatorShippingBackerList: (projectId: number) =>`/creator/shippingList/${projectId}`,
+  creatorShippingBackerList: (projectId: number) => `/creator/shippingList/${projectId}`,
   postCreatorNews: (projectId: number) => `creator/projects/${projectId}/news`,
 
   // ==================== Project API ====================
@@ -199,21 +202,19 @@ export const endpoints = {
  * @param {string} [accessToken] - 인증을 위한 액세스 토큰 (선택 사항)
  * @returns {Promise<Response>} - API로부터의 응답
  */
-export const getData = async (url: string, accessToken?: string) => {
-  const response = await api.get(url, accessToken);
-  return response;
+export const getData = async <T = any> (url: string, accessToken?: string) => {
+  return api.get<T>(url, accessToken);
 };
 
 /**
- * @description 데이터 생성
- * @param {string} url - API 엔드포인트 URL
- * @param {*} [data] - API에 전송할 데이터
- * @param {string} [accessToken] - 인증을 위한 액세스 토큰 (선택 사항)
- * @returns {Promise<Response>} - API로부터의 응답
+  * @description API에 데이터 전송
+  * @param {string} url - API 엔드포인트 URL
+  * @param {*} [data] - API에 전송할 데이터
+  * @param {string} [accessToken] - 인증을 위한 액세스 토큰 (선택 사항)
+  * @returns {Promise<Response>} - API로부터의 응답
  */
-export const postData = async (url: string, data?: any, accessToken?: string) => {
-  const response = await api.post(url, data, accessToken);
-  return response;
+export const postData = async <T = any> (url: string, data?: any, accessToken?: string) => {
+  return api.post<T>(url, data, accessToken);
 };
 
 /**
@@ -223,9 +224,8 @@ export const postData = async (url: string, data?: any, accessToken?: string) =>
  * @param {string} [accessToken] - 인증을 위한 액세스 토큰 (선택 사항)
  * @returns {Promise<Response>} - API로부터의 응답
  */
-export const putData = async (url: string, data?: any, accessToken?: string) => {
-  const response = await api.put(url, data, accessToken);
-  return response;
+export const putData = async <T = any> (url: string, data?: any, accessToken?: string) => {
+  return api.put<T>(url, data, accessToken);
 };
 
 /**
@@ -234,7 +234,6 @@ export const putData = async (url: string, data?: any, accessToken?: string) => 
  * @param {string} [accessToken] - 인증을 위한 액세스 토큰 (선택 사항)
  * @returns {Promise<Response>} - API로부터의 응답
  */
-export const deleteData = async (url: string, accessToken?: string) => {
-  const response = await api.delete(url, accessToken);
-  return response;
+export const deleteData = async <T = any> (url: string, accessToken?: string) => {
+  return api.delete<T>(url, accessToken);
 };

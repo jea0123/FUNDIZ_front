@@ -34,6 +34,7 @@ import { CreatorShippingDetail } from './views/creator/pages/CreatorShippingDeta
 import CreatorBacking from './views/creator/pages/CreatorBacking';
 import CreatorAddReward from './views/creator/pages/CreatorAddReward';
 import CreatorSettlementPage from './views/creator/pages/CreatorSettlementPage';
+import RegisterCreator from './views/creator/RegistCreator';
 
 const AdminTabs = lazy(() => import('./views/admin/AdminTabs').then((module) => ({ default: module.AdminTabs, })));
 
@@ -112,6 +113,7 @@ export default function App() {
               <Route path="Mypage" element={<MyPage />} />
             </Route>
 
+            <Route path="/creator/register" element={<RegisterCreator />} />
             <Route path="/creator" element={<CreatorLayout />}>
               <Route index element={<CreatorDashboard />} />
               <Route path="dashboard" element={<CreatorDashboard />} />
