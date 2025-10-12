@@ -1,5 +1,4 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,30 +36,19 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
-      DialogDescription,
-    DialogClose,
+    DialogFooter
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { endpoints, getData, postData } from "@/api/apis";
 import { formatDate } from '@/utils/utils';
-import type { Qna, SearchQnaParams, QnaAddRequest } from "@/types/qna";
+import type { Qna, SearchQnaParams } from "@/types/qna";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 // ========= 공용 타입 (DB 스키마 기반) =========
 
-const tempProjectId = 71;
-
-export type Reply = {
-    replyId: number;
-    userId?: number;
-    content: string;
-    isSecret: 'Y' | 'N';
-    createdAt: string;
-    updatedAt?: string | null;
-    isDeleted: 'Y' | 'N';
-    deletedAt?: string | null;
-};
+//TODO: 임시용 폴백 id (나중에 삭제하기)
+const tempUserId = 24;
 
 
 function useQueryState() {
@@ -68,7 +56,7 @@ function useQueryState() {
 
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
     const size = Math.max(1, parseInt(searchParams.get("size") || "10", 10));
-    const perGroup = Math.max(1, parseInt(searchParams.get("perGroup") || "10", 10));
+    const perGroup = Math.max(1, parseInt(searchParams.get("perGroup") || "5", 10));
 
     const setParam = (patch: Record<string, string | undefined>) => {
         const next = new URLSearchParams(searchParams);
@@ -92,7 +80,7 @@ function useQna(params: SearchQnaParams) {
     const [total, setTotal] = useState(0);
 
     const url = useMemo(() => {
-        return endpoints.getQnaListOfPJ(tempProjectId, params);
+        return endpoints.getQnAListOfUser(tempUserId, params);
     }, [page, size, perGroup]);
 
     useEffect(() => {( async () => {
@@ -104,11 +92,10 @@ function useQna(params: SearchQnaParams) {
             })();
         }, [url]);
 
-    console.log(items);
-
     return { items, total };
 
 }
+
 
 export function Pagination({ page, size, perGroup, total, onPage }: { page: number; size: number; perGroup: number; total: number; onPage: (p: number) => void }) {
     const lastPage = Math.max(1, Math.ceil(total / size));
@@ -122,7 +109,8 @@ export function Pagination({ page, size, perGroup, total, onPage }: { page: numb
     );
 }
 
-export function QnATab() {
+
+export function MyQnATab() {
 
     const { page, size, perGroup, setPage } = useQueryState();
     const { items, total } = useQna({ page, size, perGroup });
@@ -133,25 +121,29 @@ export function QnATab() {
         <div>
             <div>
                         <Card>
+                            <CardHeader><CardTitle>내 Q&A 내역</CardTitle></CardHeader>
                             <CardContent>
                                 <Accordion type="single" collapsible value={openQna} onValueChange={setOpenQna}>
                                     <div className="grid grid-cols-12 gap-2 w-full items-center">
-                                        <div className="col-span-8">내용</div>
-                                        <div className="col-span-2">작성자</div>
+                                        <div className="col-span-4">프로젝트명</div>
+                                        <div className="col-span-6">내용</div>
                                         <div className="col-span-2">등록일</div>
                                     </div>
-                                    {items.map(qna => (
-                                        <AccordionItem key={qna.qnaId} value={String(qna.qnaId)}>
+                                    {items.map(inq => (
+                                        <AccordionItem key={inq.qnaId} value={String(inq.qnaId)}>
                                             <AccordionTrigger>
                                                 <div className="grid grid-cols-12 gap-2 w-full items-center">
-                                                    <div className="col-span-8 font-medium truncate">{qna.content}</div>
-                                                    <div className="col-span-2 font-medium truncate">{qna.userId}</div>
-                                                    <div className="col-span-2 text-xs text-zinc-500">{formatDate(qna.createdAt)}</div>
+                                                    <div className="col-span-4 font-medium truncate">
+                                                        <a href={`/project/${inq.projectId}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer">{inq.title}</a></div>
+                                                    <div className="col-span-6 font-medium truncate">{inq.content}</div>
+                                                    <div className="col-span-2 text-xs text-zinc-500">{formatDate(inq.createdAt)}</div>
                                                 </div>
                                             </AccordionTrigger>
                                             <AccordionContent>
                                                 <div className="rounded-xl border border-zinc-200 p-4 bg-white">
-                                                    <p className="text-sm text-zinc-700 whitespace-pre-wrap">{qna.content}</p>
+                                                    <p className="text-sm text-zinc-700 whitespace-pre-wrap">{inq.content}</p>
                             
                                                 </div>
                                             </AccordionContent>
@@ -161,7 +153,6 @@ export function QnATab() {
                                 <div className="mt-4 flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                         <Pagination page={page} size={size} perGroup={perGroup} total={total} onPage={setPage} />
-                                        <QnaAddModal/>
                                     </div>
                                 </div>
                             </CardContent>
@@ -169,71 +160,4 @@ export function QnATab() {
             </div>
         </div>
     );
-}
-
-export function QnaAddModal(){
-  const tempUserId = 24;
-
-  const { projectId: projectIdParam } = useParams<{ projectId: string }>();
-      const projectId = useMemo<number | null>(() => {
-          const num = Number(projectIdParam);
-          return Number.isFinite(num) && num > 0 ? num : null;
-      }, [projectIdParam]);
-
-  const [project, setProject] = useState<Qna | null>(null);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [qnaAdd, setQnaAdd] = useState<QnaAddRequest>({
-    projectId : tempProjectId,
-    userId : tempUserId,
-    content : "",
-    createdAt : new Date(Date.now())
-  });
-
-  const handleAddQna = async () => {
-    const url = endpoints.addQuestion(projectId, tempUserId);
-    console.log(url);
-    const response = await postData(url, qnaAdd);
-    console.log(qnaAdd);
-    if (response.status === 200) {
-      alert("문의사항이 등록되었습니다.");
-      setIsAddDialogOpen(false);
-    } else {
-      alert("문의사항 등록 실패");
-    }
-  };
-
-
-  return (
-    <div className="mt-4">
-    <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-      <DialogTrigger asChild>
-        <Button className="w-20">QnA 등록</Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>QnA 등록</DialogTitle>
-        </DialogHeader>
-        <DialogDescription>
-          프로젝트에 관한 문의 사항을 적어주세요.
-        </DialogDescription>
-        <div className="space-y-3">
-          <Textarea
-            className="w-full border p-2 rounded"
-            value={qnaAdd.content}
-            onChange={(e) =>
-              setQnaAdd({ ...qnaAdd, content: e.target.value })
-            }
-            rows={20}
-          />
-        </div>
-        <div className="mt-4 flex justify-end gap-2">
-          <DialogClose asChild>
-            <Button variant="outline">취소</Button>
-          </DialogClose>
-          <Button onClick={handleAddQna}>추가</Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-    </div>
-  );
 }

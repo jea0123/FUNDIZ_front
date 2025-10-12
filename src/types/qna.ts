@@ -1,4 +1,4 @@
-
+import type { ReplyDto } from "./reply";
 
 export interface Qna{
     qnaId : number;
@@ -40,3 +40,18 @@ export interface PageResult<T> {
     groupStart: number;
     groupEnd: number;
 };
+
+export interface QnaDto{
+    qnaId : number;
+    projectId : number;
+    userId : number;
+    creatorId : number;
+    content : string;
+    createdAt : string;
+    title : string;
+
+    nickname: string;
+    profileImg: string | null;
+    
+    replyList: ReplyDto[];
+}

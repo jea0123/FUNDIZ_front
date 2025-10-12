@@ -1,13 +1,10 @@
 import { useEffect, useState } from "react";
-import { Megaphone, MessageCircle } from "lucide-react";
 import { useParams } from 'react-router-dom';
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Card, CardContent } from "@/components/ui/card";
 import type { Notice } from '@/types/notice';
 import { endpoints, getData } from "@/api/apis";
 import { Button } from '@/components/ui/button';
+import { Pencil } from "lucide-react";
 
 export function NoticeDetailPage() {
     const { noticeId } = useParams();
@@ -32,42 +29,17 @@ export function NoticeDetailPage() {
 
     return (
         <div className="min-h-screen bg-zinc-50">
-            <div className="mx-auto max-w-6xl px-5 py-8">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-2xl md:text-3xl font-bold text-zinc-900"><a href="/cs">고객센터</a></h1>
-                </div>
-
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-                    <TabsContent value="notice">
-                        <Card>
-                            <CardHeader className="flex items-center justify-between">
-                                <CardTitle className="flex items-center gap-2"><Megaphone className="w-5 h-5" /> 공지사항</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>{noticeDetail?.title}</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        <TableRow>
-                                            <TableCell>{noticeDetail?.createdAt}</TableCell>
-                                        </TableRow>
-                                        <TableRow>
-                                            <TableCell>조회수 {noticeDetail?.viewCnt}</TableCell>
-                                        </TableRow>
-                                        <TableRow>
-                                            <TableCell>{noticeDetail?.content}</TableCell>
-                                        </TableRow>
-                                    </TableBody>
-                                </Table>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-                </Tabs>
+            <Card>
+                <CardContent>
+                    <div className="text-2xl font-bold">{noticeDetail?.title}</div>
+                    <div className="pt-3 text-sm pb-1">{noticeDetail?.createdAt}</div>
+                    <div className="text-sm pb-1">조회수 {noticeDetail?.viewCnt}</div>
+                    <div className="py-10 text-sm">{noticeDetail?.content}</div>
+                </CardContent>
+            </Card>
+            <div className="mt-2 flex justify-end">
                 <Button variant="outline" size="sm">
-                    <a href="../">목록</a>
+                    <a href="../notice">목록</a>
                 </Button>
             </div>
         </div>

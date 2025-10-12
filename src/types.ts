@@ -6,5 +6,6 @@ export type LoginUser = {
     joinedAt: Date;
     followCnt: number;
     isCreator: string;
+    creatorId: number | null;
     role: 'user' | 'creator' | 'admin';
 };

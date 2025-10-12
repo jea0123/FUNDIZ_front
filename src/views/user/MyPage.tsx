@@ -24,6 +24,7 @@ import type { AddrAddRequest, AddrUpdateRequest, AddressResponse } from '@/types
 import { SavedAddressModal } from '../backing/SavedAddressModal';
 import { MyInquiryTab } from './MyInquiryTab';
 import { MyReportsTab } from './MyReportsTab';
+import { MyQnATab } from './MyQnATab';
 
 export function MyPage() {
   const tempUserId = 1;
@@ -205,6 +206,14 @@ export function MyPage() {
     }
   };
 
+  const navigateToCreator = () => {
+    if (loginUser?.creatorId == null) {
+      navigate('/creator/register');
+      return;
+    }
+    navigate('/creator');
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -313,12 +322,16 @@ export function MyPage() {
               알림
             </Button>
 
+            <Button variant="ghost" className="w-full justify-start" onClick={() => setActiveTab('myqna')}>
+              <MessagesSquare className="mr-2 h-4 w-4" />내 Q&A 내역
+            </Button>
+
             <Button variant="ghost" className="w-full justify-start" onClick={() => setActiveTab('myinquiry')}>
-              <MessagesSquare className="mr-2 h-4 w-4" />내 문의내역
+              <MessagesSquare className="mr-2 h-4 w-4" />내 문의 내역
             </Button>
 
             <Button variant="ghost" className="w-full justify-start" onClick={() => setActiveTab('myreports')}>
-              <Siren className="mr-2 h-4 w-4" />내 신고내역
+              <Siren className="mr-2 h-4 w-4" />내 신고 내역
             </Button>
           </div>
         </div>
@@ -564,6 +577,9 @@ export function MyPage() {
             </TabsContent>
             <TabsContent value="myreports" className="mt-6">
               <MyReportsTab />
+            </TabsContent>
+            <TabsContent value="myqna" className="mt-6">
+              <MyQnATab />
             </TabsContent>
           </Tabs>
         </div>

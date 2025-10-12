@@ -153,7 +153,10 @@ export function CreatorQnATab() {
                                         <AccordionItem key={inq.qnaId} value={String(inq.qnaId)}>
                                             <AccordionTrigger>
                                                 <div className="grid grid-cols-12 gap-2 w-full items-center">
-                                                    <div className="col-span-4 font-medium truncate"><a href={`/project/${inq.projectId}`}>{inq.title}</a></div>
+                                                    <div className="col-span-4 font-medium truncate">
+                                                        <a href={`/project/${inq.projectId}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer">{inq.title}</a></div>
                                                     <div className="col-span-4 font-medium truncate">{inq.content}</div>
                                                     <div className="col-span-2 font-medium truncate">{inq.userId}</div>
                                                     <div className="col-span-2 text-xs text-zinc-500">{formatDate(inq.createdAt)}</div>
