@@ -111,7 +111,7 @@ export const endpoints = {
   getLoginUser: '/user/loginUser',
   getMypage: (userId: number) => `user/userPage/${userId}`,
   getLikedList: (userId: number) => `user/likedList/${userId}`,
-  getQnAList: (userId: number) => `/user/QnAList/${userId}`,
+  getQnAListOfUser: (userId: number, p: SearchQnaParams) => `user/qna/${userId}?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup })}`,
   getRecentView: (userId: number) => `/user/recentViewProjects/${userId}`,
   getQnAListDetail: (userId: number, projectId: number) => `/user/QnAListDetail/${userId}/project/${projectId}`,
 
@@ -140,7 +140,7 @@ export const endpoints = {
   getProjectDetail: (projectId: number) => `project/${projectId}`,
   getCommunityList: (projectId: number) => `project/${projectId}/community`,
   getReviewList: (projectId: number) => `project/${projectId}/review`,
-  getQnaListOfPJ: (projectId: number, p: SearchQnaParams) => `project/${projectId}/qna?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup })}`,
+  getQnaListOfProject: (projectId: number) => `project/${projectId}/qna`,
   addQuestion: (projectId: number, userId: number) => `project/${projectId}/qna/${userId}/add`,
   searchProject: (p: SearchProjectParams) => `project/search?${toQueryString({ page: p.page, size: p.size, keyword: p.keyword, ctgrId: p.ctgrId, subctgrId: p.subctgrId, sort: p.sort, })}`,
 

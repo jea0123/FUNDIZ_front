@@ -15,6 +15,17 @@ import { useNavigate } from 'react-router-dom';
 import type { Reward } from '@/types/reward';
 import FundingLoader from '@/components/FundingLoader';
 import type { CommunityDto, Cursor, CursorPage, ReviewDto } from '@/types/community';
+import type { Qna, QnaDto, QnaAddRequest } from "@/types/qna";
+import { Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+      DialogDescription,
+    DialogClose,
+} from "@/components/ui/dialog";
+import { postData } from "@/api/apis";
+import { Textarea } from "@/components/ui/textarea";
 
 export function ProjectDetailPage() {
 
@@ -34,12 +45,15 @@ export function ProjectDetailPage() {
     const [communityCursor, setCommunityCursor] = useState<Cursor | null>(null);
     const [review, setReview] = useState<ReviewDto[]>([]);
     const [reviewCursor, setReviewCursor] = useState<Cursor | null>(null);
-    const [tab, setTab] = useState<"description" | "news" | "community" | "review">("description");
+    const [qna, setQna] = useState<QnaDto[]>([]);
+    const [qnaCursor, setQnaCursor] = useState<Cursor | null>(null);
+    const [tab, setTab] = useState<"description" | "news" | "community" | "review" | "qna">("description");
 
     const [isLiked, setIsLiked] = useState(false);
     const [loadingProject, setLoadingProject] = useState(false);
     const [loadingCommunity, setLoadingCommunity] = useState(false);
     const [loadingReview, setLoadingReview] = useState(false);
+    const [loadingQna, setLoadingQna] = useState(false);
 
     const [cart, setCart] = useState<Record<number, number>>({});
     const [cartPing, setCartPing] = useState(false);
@@ -47,10 +61,12 @@ export function ProjectDetailPage() {
 
     const communitySentinelRef = useRef<HTMLDivElement | null>(null);
     const reviewSentinelRef = useRef<HTMLDivElement | null>(null);
+    const qnaSentinelRef = useRef<HTMLDivElement | null>(null);
 
     //중복 호출 방지용 락
     const communityLoadingLockRef = useRef(false);
     const reviewLoadingLockRef = useRef(false);
+    const qnaLoadingLockRef = useRef(false);
 
     /* ------------------------------- Derived ---------------------------------- */
 
@@ -129,6 +145,12 @@ export function ProjectDetailPage() {
         navigator.clipboard.writeText(window.location.href);
         alert('링크가 복사되었습니다.');
     }, []);
+
+    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+    const handleOpenModal = () => {
+    setIsAddDialogOpen(true);
+  };
+
 
     /* -------------------------------- Effects -------------------------------- */
 
@@ -214,10 +236,46 @@ export function ProjectDetailPage() {
         }
     }, [projectId, reviewCursor]);
 
+    const qnaData = useCallback(async () => {
+        if (!projectId) return;
+        setLoadingQna(true);
+        try {
+            const params = new URLSearchParams();
+            if (qnaCursor) {
+                if (qnaCursor.lastCreatedAt) params.set("lastCreatedAt", qnaCursor.lastCreatedAt);
+                if (qnaCursor.lastId != null) params.set("lastId", String(qnaCursor.lastId));
+            }
+            params.set("size", "10");
+
+            const url = `${endpoints.getQnaListOfProject(Number(projectId))}?${params.toString()}`;
+            const { status, data } = await getData(url);
+
+            if (status !== 200 || !data) {
+                if (!qnaCursor) setQna([]); //첫 로드 실패하면 초기화
+                setQnaCursor(null);
+                return;
+            }
+
+            if (Array.isArray((data as CursorPage<QnaDto>)?.items)) {
+                const page = data as CursorPage<QnaDto>;
+                const items = page.items ?? [];
+                setQna(prev => (qnaCursor ? [...prev, ...items] : items)); //커서 있으면 append, 없으면 replace
+                setQnaCursor(page.nextCursor ?? null);
+                return;
+            }
+
+            if (!qnaCursor) setQna([]);
+            setQnaCursor(null);
+        } finally {
+            setLoadingQna(false);
+        }
+    }, [projectId, qnaCursor]);
+
     useEffect(() => {
         projectData();
         communityData();
         reviewData();
+        qnaData();
     }, [projectId]);
 
     useEffect(() => {
@@ -267,6 +325,30 @@ export function ProjectDetailPage() {
         io.observe(el);
         return () => io.disconnect();
     }, [tab, reviewCursor, loadingReview, reviewData]);
+
+    useEffect(() => {
+        if (tab !== "qna") return; //옵저버 탭이 켜졌을 때만 붙이기
+        const el = qnaSentinelRef.current;
+        if (!el) return;
+
+        if (!qnaCursor || loadingQna) return;
+
+        const io = new IntersectionObserver(
+            (entries) => {
+                const first = entries[0];
+                if (first.isIntersecting && !qnaLoadingLockRef.current) {
+                    qnaLoadingLockRef.current = true;
+                    qnaData().finally(() => {
+                        qnaLoadingLockRef.current = false;
+                    });
+                }
+            },
+            { root: null, rootMargin: "300px", threshold: 0.01 }
+        );
+
+        io.observe(el);
+        return () => io.disconnect();
+    }, [tab, qnaCursor, loadingQna, qnaData]);
 
     /* -------------------------------- Helpers -------------------------------- */
 
@@ -330,12 +412,12 @@ export function ProjectDetailPage() {
                                 </p>
                             </div>
                             <Button variant="outline" size="sm">팔로우</Button>
-                            <Button variant="outline" size="sm">문의하기</Button>
+                            < QnaAddModal/>
                         </div>
                     </div>
 
                     <Tabs defaultValue="description" className="mb-8" onValueChange={(v) => setTab(v as any)}>
-                        <TabsList className="grid w-full grid-cols-4 gap-2">
+                        <TabsList className="grid w-full grid-cols-5 gap-2">
                             <TabsTrigger value="description" className="min-w-0 flex items-center justify-center gap-1 truncate">
                                 <span className="truncate">프로젝트 소개</span>
                             </TabsTrigger>
@@ -360,6 +442,7 @@ export function ProjectDetailPage() {
                                     {review.length}
                                 </span>
                             </TabsTrigger>
+                            <TabsTrigger value="qna">Q&A </TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="description" className="mt-6">
@@ -481,6 +564,49 @@ export function ProjectDetailPage() {
                                     {reviewCursor && <div ref={reviewSentinelRef} className="h-1 w-full" />}
                                 </>
                             )}
+                        </TabsContent>
+                        <TabsContent value="qna">
+                                  {qna.length == 0 ? (
+                                    <div className="text-sm text-muted-foreground">게시글이 존재하지 않습니다.</div>
+                                  ) : (
+                                    <>
+                                      {qna.map((q) => (
+                                        <div key={q.qnaId} className="space-y-4 mt-6">
+                                          <Card>
+                                            <CardContent className="pt-6">
+                                              <div className="flex items-start space-x-3">
+                                                <Avatar className="w-8 h-8">
+                                                    <AvatarFallback>{q.profileImg}</AvatarFallback>
+                                                </Avatar>
+                                                  <div className="flex-1">
+                                                    <div className="flex items-center space-x-2 mb-1">
+                                                      <span className="font-medium">{q.nickname}</span>
+                                                      <span className="text-sm text-gray-500">{formatDate(q.createdAt)}</span>
+                                                    </div>
+                                                    <p className="text-sm">{q.content}</p>
+                                                    <div className="flex items-center space-x-2 mt-2">
+                                                      <Button variant="ghost" size="sm">
+                                                        <MessageCircle className="h-3 w-3 mr-1" />
+                                                        댓글
+                                                      </Button>
+                                                    </div>
+                                                  </div>
+                                                </div>
+                                              </CardContent>
+                                            </Card>
+                                          </div>
+                                        ))}
+                            
+                                        {loadingQna && (
+                                          <div className="mt-4 space-y-2">
+                                            <div className="h-20 animate-pulse rounded-xl bg-gray-100" />
+                                            <div className="h-20 animate-pulse rounded-xl bg-gray-100" />
+                                          </div>
+                                        )}
+                            
+                                        {qnaCursor && <div ref={qnaSentinelRef} className="h-1 w-full" />}
+                                      </>
+                                    )}
                         </TabsContent>
                     </Tabs>
                 </div>
@@ -672,4 +798,72 @@ export function ProjectDetailPage() {
             </div>
         </div>
     );
+}
+
+export function QnaAddModal(){
+  const tempUserId = 24;
+
+  const { projectId: projectIdParam } = useParams<{ projectId: string }>();
+      const projectId = useMemo<number | null>(() => {
+          const num = Number(projectIdParam);
+          return Number.isFinite(num) && num > 0 ? num : null;
+      }, [projectIdParam]);
+
+  const [project, setProject] = useState<Qna | null>(null);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [qnaAdd, setQnaAdd] = useState<QnaAddRequest>({
+    projectId : Number(projectId),
+    userId : tempUserId,
+    content : "",
+    createdAt : new Date(Date.now())
+  });
+
+  const handleAddQna = async () => {
+    const url = endpoints.addQuestion(projectId, tempUserId);
+    console.log(url);
+    const response = await postData(url, qnaAdd);
+    console.log(qnaAdd);
+    if (response.status === 200) {
+      alert("문의사항이 등록되었습니다.");
+      setIsAddDialogOpen(false);
+      window.location.reload();
+    } else {
+      alert("문의사항 등록 실패");
+    }
+  };
+
+
+  return (
+    <div>
+    <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">문의하기</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Q&A 질문 등록</DialogTitle>
+        </DialogHeader>
+        <DialogDescription>
+          프로젝트에 관한 문의 사항을 적어주세요.
+        </DialogDescription>
+        <div className="space-y-3">
+          <Textarea
+            className="w-full border p-2 rounded"
+            value={qnaAdd.content}
+            onChange={(e) =>
+              setQnaAdd({ ...qnaAdd, content: e.target.value })
+            }
+            rows={20}
+          />
+        </div>
+        <div className="mt-4 flex justify-end gap-2">
+          <DialogClose asChild>
+            <Button variant="outline">취소</Button>
+          </DialogClose>
+          <Button onClick={handleAddQna}>추가</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </div>
+  );
 }

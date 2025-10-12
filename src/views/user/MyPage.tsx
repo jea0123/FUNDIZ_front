@@ -60,6 +60,7 @@ import type {
 import { SavedAddressModal } from '../backing/SavedAddressModal';
 import { MyInquiryTab } from './MyInquiryTab';
 import { MyReportsTab } from './MyReportsTab';
+import { MyQnATab } from './MyQnATab';
 
 export function MyPage() {
   const tempUserId = 1;
@@ -398,13 +399,21 @@ export function MyPage() {
               <Bell className="mr-2 h-4 w-4" />
               알림
             </Button>
+            
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+              onClick={() => setActiveTab('myqna')}
+            >
+              <MessagesSquare className="mr-2 h-4 w-4" />내 Q&A 내역
+            </Button>
 
             <Button
               variant="ghost"
               className="w-full justify-start"
               onClick={() => setActiveTab('myinquiry')}
             >
-              <MessagesSquare className="mr-2 h-4 w-4" />내 문의내역
+              <MessagesSquare className="mr-2 h-4 w-4" />내 문의 내역
             </Button>
 
             <Button
@@ -412,8 +421,9 @@ export function MyPage() {
               className="w-full justify-start"
               onClick={() => setActiveTab('myreports')}
             >
-              <Siren className="mr-2 h-4 w-4" />내 신고내역
+              <Siren className="mr-2 h-4 w-4" />내 신고 내역
             </Button>
+
           </div>
         </div>
 
@@ -743,6 +753,9 @@ export function MyPage() {
             </TabsContent>
             <TabsContent value="myreports" className="mt-6">
               <MyReportsTab />
+            </TabsContent>
+            <TabsContent value="myqna" className="mt-6">
+              <MyQnATab />
             </TabsContent>
           </Tabs>
         </div>
