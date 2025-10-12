@@ -90,7 +90,7 @@ export default function App() {
             </Route>
 
             <Route path="/user">
-              <Route path="Mypage" element={<MyPage />} />
+              <Route path="mypage" element={<MyPage />} />
             </Route>
 
             <Route path="/creator/register" element={<RegisterCreator />} />
