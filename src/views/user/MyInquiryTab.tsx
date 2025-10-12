@@ -64,7 +64,7 @@ function useQueryState() {
 
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
     const size = Math.max(1, parseInt(searchParams.get("size") || "10", 10));
-    const perGroup = Math.max(1, parseInt(searchParams.get("perGroup") || "10", 10));
+    const perGroup = Math.max(1, parseInt(searchParams.get("perGroup") || "5", 10));
     const keyword = searchParams.get("keyword") || "";
 
     const setParam = (patch: Record<string, string | undefined>) => {

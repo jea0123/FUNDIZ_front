@@ -48,9 +48,9 @@ export type ReportStatus = {
 function useQueryState() {
     const [searchParams, setSearchParams] = useSearchParams();
 
-    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));    
     const size = Math.max(1, parseInt(searchParams.get("size") || "10", 10));
-    const perGroup = Math.max(1, parseInt(searchParams.get("perGroup") || "10", 10));
+    const perGroup = Math.max(1, parseInt(searchParams.get("perGroup") || "5", 10));
     const keyword = searchParams.get("keyword") || "";
 
     const setParam = (patch: Record<string, string | undefined>) => {
@@ -74,6 +74,7 @@ function useMyReport(params: SearchRptParams) {
     const { page, size, perGroup, keyword } = params;
     const [items, setItems] = useState<Report[]>([]);
     const [total, setTotal] = useState(0);
+    const [reportFilter, setReportFilter] = useState<'전체' | 'RECEIVED' | 'UNDER_REVIEW' | 'COMPLETED'>('전체');
 
     const url = useMemo(() => {
         return endpoints.getMyReports(tempUserId, params);
@@ -88,9 +89,15 @@ function useMyReport(params: SearchRptParams) {
             })();
         }, [url]);
 
-    console.log(items);
+    const filteredReports = useMemo(() => {
+        return items.filter(r => reportFilter === '전체' ? true : r.reportStatus === reportFilter);
+    }, [items, reportFilter]);
 
-    return { items, total, setItems };
+    const handleFilterChange = (value: string) => {
+        setReportFilter(value as '전체' | 'RECEIVED' | 'UNDER_REVIEW' | 'COMPLETED');
+    };  
+
+    return { filteredReports, total, setItems, handleFilterChange };
 }
 
 export function Pagination({ page, size, perGroup, total, onPage }: { page: number; size: number; perGroup: number; total: number; onPage: (p: number) => void }) {
@@ -105,72 +112,60 @@ export function Pagination({ page, size, perGroup, total, onPage }: { page: numb
     );
 }
 
-export function MyReportsTab() {
+export function MyReportsTab(props: { params: SearchRptParams } ) {
     const { page, size, perGroup, keyword, setPage } = useQueryState();
-        const { items, total, setItems } = useMyReport({ page, size, perGroup, keyword });
-    
-    
-        const [reportFilter, setReportFilter] = useState<'전체' | 'RECEIVED' | 'UNDER_REVIEW' | 'COMPLETED'>('전체');
-        const filteredReports = useMemo(() => items.filter(r => reportFilter === '전체' ? true : r.reportStatus === reportFilter), [items, reportFilter]);
-        const updateReportStatus = (id: number, status: ReportStatus['reportStatus']) => setItems(prev => prev.map(r => r.reportId === id ? { ...r, reportStatus: status } : r));
+    const searchParams = { page, size, perGroup, keyword };
+    const { filteredReports, handleFilterChange, total } = useMyReport(searchParams);
+    const [reportFilter, setReportFilter] = useState<'전체' | 'RECEIVED' | 'UNDER_REVIEW' | 'COMPLETED'>('전체');
     
     return (
         <div>
             <div>
-                        <Card>
-                            <CardHeader className="flex items-center justify-between">
-                                <CardTitle>내 신고 내역</CardTitle>
-                                <div className="flex items-center gap-2">
-                                    <Select value={reportFilter} onValueChange={(v) => setReportFilter(v as any)}>
-                                        <SelectTrigger className="w-40"><SelectValue placeholder="상태 필터" /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="전체">전체</SelectItem>
-                                            <SelectItem value="RECEIVED">접수</SelectItem>
-                                            <SelectItem value="UNDER_REVIEW">검토중</SelectItem>
-                                            <SelectItem value="COMPLETED">완료</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </CardHeader>
-                            <CardContent>
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>사유</TableHead>
-                                            <TableHead className="w-36">유형</TableHead>
-                                            <TableHead className="w-28">대상</TableHead>
-                                            <TableHead className="w-40">상태</TableHead>
-                                            <TableHead className="w-32">신고일</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {items.map(r => (
-                                            <TableRow key={r.reportId}>
-                                                <TableCell className="font-medium">{r.reason}</TableCell>
-                                                <TableCell>{r.reportType}</TableCell>
-                                                <TableCell>TID {r.target}</TableCell>
-                                                <TableCell>
-                                                    <Select value={r.reportStatus} onValueChange={(v) => updateReportStatus(r.reportId, v as ReportStatus['reportStatus'])}>
-                                                        <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-                                                        <SelectContent>
-                                                            <SelectItem value="RECEIVED">접수</SelectItem>
-                                                            <SelectItem value="UNDER_REVIEW">검토중</SelectItem>
-                                                            <SelectItem value="COMPLETED">완료</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                </TableCell>
-                                                <TableCell className="text-zinc-500">{formatDate(r.reportDate)}</TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                                <div className="mt-4 flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <Pagination page={page} size={size} perGroup={perGroup} total={total} onPage={setPage} />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                <Card>
+                    <CardHeader className="flex items-center justify-between">
+                        <CardTitle>내 신고 내역</CardTitle>
+                        <div className="flex items-center gap-2">
+                            <Select value={reportFilter} onValueChange={handleFilterChange}>
+                                <SelectTrigger className="w-40"><SelectValue placeholder="상태 필터" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="전체">전체</SelectItem>
+                                    <SelectItem value="RECEIVED">접수</SelectItem>
+                                    <SelectItem value="UNDER_REVIEW">검토중</SelectItem>
+                                    <SelectItem value="COMPLETED">완료</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>사유</TableHead>
+                                    <TableHead className="w-36">유형</TableHead>
+                                    <TableHead className="w-28">대상</TableHead>
+                                    <TableHead className="w-40">상태</TableHead>
+                                    <TableHead className="w-32">신고일</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {filteredReports.map(r => (
+                                    <TableRow key={r.reportId}>
+                                        <TableCell className="font-medium">{r.reason}</TableCell>
+                                        <TableCell>{r.reportType}</TableCell>
+                                        <TableCell>TID {r.target}</TableCell>
+                                        <TableCell>{r.reportStatus}</TableCell>
+                                        <TableCell className="text-zinc-500">{formatDate(r.reportDate)}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                        <div className="mt-4 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Pagination page={page} size={size} perGroup={perGroup} total={total} onPage={setPage} />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );

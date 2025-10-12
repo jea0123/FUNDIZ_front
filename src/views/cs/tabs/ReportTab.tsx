@@ -3,6 +3,7 @@ import { Siren, Send } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { endpoints, postData } from "@/api/apis";
@@ -42,22 +43,22 @@ export function ReportTab() {
                     <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                         <div>
                             <Label className="mb-1 block">유형</Label>
-                            <select
-                                id="select-option"
-                                value={rptAdd.reportType}
-                                onChange={e => setRptAdd({ ...rptAdd, reportType: e.target.value })}
-                                >
-                                <option value="">분류</option>
-                                <option value="FRAUD">사기/허위정보</option>
-                                <option value="COPYRIGHT">지식재산권 침해</option>
-                                <option value="ILLEGAL">불법/금지된 상품</option>
-                                <option value="OBSCENE">음란/선정적/폭력적 콘텐츠</option>
-                                <option value="PRIVACY">개인정보 침해</option>
-                                <option value="DUPPLICATE">타 플랫폼 동시 판매</option>
-                                <option value="UNCONTACTABLE">연락 두절</option>
-                                <option value="POLICY">정책 위반</option>
-                                <option value="OTHER">기타</option>
-                            </select>
+                            <Select value={rptAdd.reportType} onValueChange={e => setRptAdd({ ...rptAdd, reportType: e })}>
+                                <SelectTrigger><SelectValue placeholder="분류 선택" /></SelectTrigger>
+                                <SelectContent>
+                                    {['FRAUD',
+                                    'COPYRIGHT',
+                                    'ILLEGAL',
+                                    'OBSCENE',
+                                    'PRIVACY',
+                                    'DUPPLICATE',
+                                    'UNCONTACTABLE',
+                                    'POLICY',
+                                    'OTHER'].map(o => (
+                                        <SelectItem key={o} value={o}>{o}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div>
                             <Label className="mb-1 block">신고 사유</Label>
