@@ -66,6 +66,9 @@ export interface ProjectDetail {
     tagList: Tag[];
     rewardList: Reward[];
     newsList: News[];
+
+    isBackedByMe: boolean; // 내가 이 프로젝트 후원했는지
+    canWriteReview: boolean; // 내가 후기 작성할 수 있는지
 }
 
 export interface Featured{
