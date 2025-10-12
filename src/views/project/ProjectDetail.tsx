@@ -219,6 +219,41 @@ export function ProjectDetailPage() {
         }
     }, []);
 
+    const qnaData = useCallback(async () => {
+        if (!projectId) return;
+        setLoadingQna(true);
+        try {
+            const params = new URLSearchParams();
+            if (qnaCursor) {
+                if (qnaCursor.lastCreatedAt) params.set("lastCreatedAt", qnaCursor.lastCreatedAt);
+                if (qnaCursor.lastId != null) params.set("lastId", String(qnaCursor.lastId));
+            }
+            params.set("size", "10");
+
+            const url = `${endpoints.getQnaListOfProject(Number(projectId))}?${params.toString()}`;
+            const { status, data } = await getData(url);
+
+            if (status !== 200 || !data) {
+                if (!qnaCursor) setQna([]); //첫 로드 실패하면 초기화
+                setQnaCursor(null);
+                return;
+            }
+
+            if (Array.isArray((data as CursorPage<QnaDto>)?.items)) {
+                const page = data as CursorPage<QnaDto>;
+                const items = page.items ?? [];
+                setQna(prev => (qnaCursor ? [...prev, ...items] : items)); //커서 있으면 append, 없으면 replace
+                setQnaCursor(page.nextCursor ?? null);
+                return;
+            }
+
+            if (!qnaCursor) setQna([]);
+            setQnaCursor(null);
+        } finally {
+            setLoadingQna(false);
+        }
+    }, [projectId, qnaCursor]);
+
     /* ------------------------------- UI handlers ---------------------------------- */
 
     /* START 리워드 카트 */
@@ -416,41 +451,6 @@ export function ProjectDetailPage() {
         setIsAddDialogOpen(true);
     };
 
-    const qnaData = useCallback(async () => {
-        if (!projectId) return;
-        setLoadingQna(true);
-        try {
-            const params = new URLSearchParams();
-            if (qnaCursor) {
-                if (qnaCursor.lastCreatedAt) params.set("lastCreatedAt", qnaCursor.lastCreatedAt);
-                if (qnaCursor.lastId != null) params.set("lastId", String(qnaCursor.lastId));
-            }
-            params.set("size", "10");
-
-            const url = `${endpoints.getQnaListOfProject(Number(projectId))}?${params.toString()}`;
-            const { status, data } = await getData(url);
-
-            if (status !== 200 || !data) {
-                if (!qnaCursor) setQna([]); //첫 로드 실패하면 초기화
-                setQnaCursor(null);
-                return;
-            }
-
-            if (Array.isArray((data as CursorPage<QnaDto>)?.items)) {
-                const page = data as CursorPage<QnaDto>;
-                const items = page.items ?? [];
-                setQna(prev => (qnaCursor ? [...prev, ...items] : items)); //커서 있으면 append, 없으면 replace
-                setQnaCursor(page.nextCursor ?? null);
-                return;
-            }
-
-            if (!qnaCursor) setQna([]);
-            setQnaCursor(null);
-        } finally {
-            setLoadingQna(false);
-        }
-    }, [projectId, qnaCursor]);
-
     /* -------------------------------- Effects -------------------------------- */
 
     useEffect(() => {
@@ -506,30 +506,6 @@ export function ProjectDetailPage() {
         io.observe(el);
         return () => io.disconnect();
     }, [tab, reviewCursor, loadingReview, reviewData]);
-
-    useEffect(() => {
-        if (tab !== "qna") return; //옵저버 탭이 켜졌을 때만 붙이기
-        const el = qnaSentinelRef.current;
-        if (!el) return;
-
-        if (!qnaCursor || loadingQna) return;
-
-        const io = new IntersectionObserver(
-            (entries) => {
-                const first = entries[0];
-                if (first.isIntersecting && !qnaLoadingLockRef.current) {
-                    qnaLoadingLockRef.current = true;
-                    qnaData().finally(() => {
-                        qnaLoadingLockRef.current = false;
-                    });
-                }
-            },
-            { root: null, rootMargin: "300px", threshold: 0.01 }
-        );
-
-        io.observe(el);
-        return () => io.disconnect();
-    }, [tab, qnaCursor, loadingQna, qnaData]);
 
     // 댓글 무한스크롤 (지금은 커뮤니티 댓글만)
     useEffect(() => {
