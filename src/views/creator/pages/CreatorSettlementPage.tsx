@@ -2,20 +2,8 @@ import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Download, Wallet } from 'lucide-react';
 
@@ -59,13 +47,8 @@ export default function CreatorSettlementPage() {
   const [bank, setBank] = useState('국민은행');
   const [account, setAccount] = useState('123-456-789-00');
 
-  const totalPaid = MOCK_SETTLEMENTS.filter((s) => s.status === 'PAID').reduce(
-    (acc, s) => acc + s.finalAmount,
-    0
-  );
-  const totalWaiting = MOCK_SETTLEMENTS.filter(
-    (s) => s.status === 'WAITING'
-  ).reduce((acc, s) => acc + s.finalAmount, 0);
+  const totalPaid = MOCK_SETTLEMENTS.filter((s) => s.status === 'PAID').reduce((acc, s) => acc + s.finalAmount, 0);
+  const totalWaiting = MOCK_SETTLEMENTS.filter((s) => s.status === 'WAITING').reduce((acc, s) => acc + s.finalAmount, 0);
 
   return (
     <div className="p-6 space-y-8">
@@ -75,27 +58,21 @@ export default function CreatorSettlementPage() {
           <CardHeader>
             <CardTitle>총 정산 완료 금액</CardTitle>
           </CardHeader>
-          <CardContent className="text-2xl font-bold text-green-700">
-            ₩{totalPaid.toLocaleString()}
-          </CardContent>
+          <CardContent className="text-2xl font-bold text-green-700">₩{totalPaid.toLocaleString()}</CardContent>
         </Card>
 
         <Card>
           <CardHeader>
             <CardTitle>지급 대기 금액</CardTitle>
           </CardHeader>
-          <CardContent className="text-2xl font-bold text-yellow-600">
-            ₩{totalWaiting.toLocaleString()}
-          </CardContent>
+          <CardContent className="text-2xl font-bold text-yellow-600">₩{totalWaiting.toLocaleString()}</CardContent>
         </Card>
 
         <Card>
           <CardHeader>
             <CardTitle>총 정산 횟수</CardTitle>
           </CardHeader>
-          <CardContent className="text-2xl font-bold text-purple-700">
-            {MOCK_SETTLEMENTS.length}회
-          </CardContent>
+          <CardContent className="text-2xl font-bold text-purple-700">{MOCK_SETTLEMENTS.length}회</CardContent>
         </Card>
       </div>
 
@@ -122,18 +99,10 @@ export default function CreatorSettlementPage() {
                   <TableCell>{s.date}</TableCell>
                   <TableCell>₩{s.finalAmount.toLocaleString()}</TableCell>
                   <TableCell>
-                    <Badge
-                      variant={s.status === 'PAID' ? 'default' : 'secondary'}
-                    >
-                      {s.status === 'PAID' ? '지급완료' : '지급대기'}
-                    </Badge>
+                    <Badge variant={s.status === 'PAID' ? 'default' : 'secondary'}>{s.status === 'PAID' ? '지급완료' : '지급대기'}</Badge>
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelected(s)}
-                    >
+                    <Button variant="outline" size="sm" onClick={() => setSelected(s)}>
                       상세보기
                     </Button>
                   </TableCell>
@@ -155,18 +124,8 @@ export default function CreatorSettlementPage() {
           </Button>
         </CardHeader>
         <CardContent className="flex gap-4 items-center">
-          <Input
-            value={bank}
-            onChange={(e) => setBank(e.target.value)}
-            className="w-1/3"
-            placeholder="은행명"
-          />
-          <Input
-            value={account}
-            onChange={(e) => setAccount(e.target.value)}
-            className="w-1/2"
-            placeholder="계좌번호"
-          />
+          <Input value={bank} onChange={(e) => setBank(e.target.value)} className="w-1/3" placeholder="은행명" />
+          <Input value={account} onChange={(e) => setAccount(e.target.value)} className="w-1/2" placeholder="계좌번호" />
           <Button variant="secondary">계좌 수정</Button>
         </CardContent>
       </Card>
@@ -182,17 +141,10 @@ export default function CreatorSettlementPage() {
               <p>총 금액: ₩{selected.totalAmount.toLocaleString()}</p>
               <p>수수료: ₩{selected.fee.toLocaleString()}</p>
               <p>환불/차감: ₩{selected.refund.toLocaleString()}</p>
-              <p className="font-semibold">
-                최종 지급액: ₩{selected.finalAmount.toLocaleString()}
-              </p>
+              <p className="font-semibold">최종 지급액: ₩{selected.finalAmount.toLocaleString()}</p>
               <p>정산일: {selected.date}</p>
               <p>
-                상태:{' '}
-                <Badge
-                  variant={selected.status === 'PAID' ? 'default' : 'secondary'}
-                >
-                  {selected.status === 'PAID' ? '지급완료' : '지급대기'}
-                </Badge>
+                상태: <Badge variant={selected.status === 'PAID' ? 'default' : 'secondary'}>{selected.status === 'PAID' ? '지급완료' : '지급대기'}</Badge>
               </p>
             </div>
           )}

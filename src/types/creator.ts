@@ -106,7 +106,7 @@ export interface CreatorDashboard {
   projectFailedPercentage: number;
   projectSuccessPercentage: number;
 
-  to3BackerCnt: CreatorDashboardRanking[];
-  to3LikeCnt: CreatorDashboardRanking[];
-  to3ViewCnt: CreatorDashboardRanking[];
+  top3BackerCnt: CreatorDashboardRanking[];
+  top3LikeCnt: CreatorDashboardRanking[];
+  top3ViewCnt: CreatorDashboardRanking[];
 }
