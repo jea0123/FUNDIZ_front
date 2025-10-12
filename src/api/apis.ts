@@ -116,14 +116,14 @@ export const endpoints = {
   // ==================== Creator API ====================
   getCreatorProjectList: (p: SearchCreatorProjectDto) => `creator/projects?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined, })}`,
   getCreatorProjectDetail: (projectId: number) => `creator/projects/${projectId}`,
+  getCreatorProjectSummary: (projectId: number) => `creator/projects/${projectId}/summary`,
   createProject: 'creator/project/new',
   updateProject: (projectId: number) => `creator/project/${projectId}`,
   submitProject: (projectId: number) => `creator/project/${projectId}/submit`,
   deleteProject: (projectId: number) => `creator/project/${projectId}`,
-  getCreatorProjectSummary: (projectId: number) => `creator/projects/${projectId}/summary`,
   getCreatorRewardList: (projectId: number) => `creator/projects/${projectId}/reward`,
   addReward: (projectId: number) => `creator/projects/${projectId}/reward`,
-  getCreatorInfoSummary: "/creator/info",
+  getCreatorProfileSummary: "/creator/summary",
   getQnAListOfCreator: (p: SearchQnaParams) => `creator/qna?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup })}`,
   creatorDashboard: 'creator/dashBoard',
   creatorBackingList: '/creator/backingList',
@@ -134,12 +134,13 @@ export const endpoints = {
   // ==================== Project API ====================
   getFeatured: 'project/featured',
   getRecentTop10: 'project/recent-top10',
+  searchProject: (p: SearchProjectParams) => `project/search?${toQueryString({ page: p.page, size: p.size, keyword: p.keyword, ctgrId: p.ctgrId, subctgrId: p.subctgrId, sort: p.sort, })}`,
   getProjectDetail: (projectId: number) => `project/${projectId}`,
   getCommunityList: (projectId: number) => `project/${projectId}/community`,
+  postCommunity: (projectId: number) => `project/${projectId}/community/new`,
   getReviewList: (projectId: number) => `project/${projectId}/review`,
   getQnaListOfPJ: (projectId: number, p: SearchQnaParams) => `project/${projectId}/qna?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup })}`,
   addQuestion: (projectId: number, userId: number) => `project/${projectId}/qna/${userId}/add`,
-  searchProject: (p: SearchProjectParams) => `project/search?${toQueryString({ page: p.page, size: p.size, keyword: p.keyword, ctgrId: p.ctgrId, subctgrId: p.subctgrId, sort: p.sort, })}`,
 
   // ==================== Shipping API ====================
   getAddressList: (userId: number) => `shipping/${userId}/list`,

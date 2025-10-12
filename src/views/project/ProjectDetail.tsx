@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Heart, Share2, Calendar, Users, MessageCircle, Star } from 'lucide-react';
+import { Heart, Share2, Calendar, Users, MessageCircle, Star, MessageSquarePlus, Pencil } from 'lucide-react';
 import type { ProjectDetail } from '@/types/projects';
-import { endpoints, getData } from '@/api/apis';
-import { useParams } from 'react-router-dom';
+import { endpoints, getData, postData } from '@/api/apis';
+import { useLocation, useParams } from 'react-router-dom';
 import { formatDate, getDaysBefore, getDaysLeft } from '@/utils/utils';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,17 +15,45 @@ import { useNavigate } from 'react-router-dom';
 import type { Reward } from '@/types/reward';
 import FundingLoader from '@/components/FundingLoader';
 import type { CommunityDto, Cursor, CursorPage, ReviewDto } from '@/types/community';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+
+const CM_MAX = 1000;
+const getByteLen = (s: string) => new TextEncoder().encode(s).length;
+const formatCurrency = (amount: number) => { return new Intl.NumberFormat('ko-KR').format(amount); };
 
 export function ProjectDetailPage() {
 
     /* ----------------------------- Router helpers ----------------------------- */
 
     const navigate = useNavigate();
+    const location = useLocation();
     const { projectId } = useParams();
+
+    /* --------------------------------- Auth helper ---------------------------------- */
+
+    const ensureLogin = useCallback(() => {
+        const token = localStorage.getItem("access_token");
+        // if (!token) {
+        //     navigate(`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`);
+        //     return false;
+        // }
+        return true; //TODO: 임시 우회 나중에 위 주석 풀기
+    }, [/* navigate, location.pathname, location.search */])
 
     /* --------------------------------- Refs ---------------------------------- */
 
     const cartRef = useRef<HTMLDivElement>(null);
+    const communitySentinelRef = useRef<HTMLDivElement | null>(null);
+    const reviewSentinelRef = useRef<HTMLDivElement | null>(null);
+
+    // 중복 호출 방지용 락
+    const communityLoadingLockRef = useRef(false);
+    const reviewLoadingLockRef = useRef(false);
+
+    // 글자수 초과 알림 1회 제한
+    const exceededAlertedRef = useRef(false);
 
     /* --------------------------------- State --------------------------------- */
 
@@ -35,8 +63,8 @@ export function ProjectDetailPage() {
     const [review, setReview] = useState<ReviewDto[]>([]);
     const [reviewCursor, setReviewCursor] = useState<Cursor | null>(null);
     const [tab, setTab] = useState<"description" | "news" | "community" | "review">("description");
-
     const [isLiked, setIsLiked] = useState(false);
+
     const [loadingProject, setLoadingProject] = useState(false);
     const [loadingCommunity, setLoadingCommunity] = useState(false);
     const [loadingReview, setLoadingReview] = useState(false);
@@ -45,12 +73,10 @@ export function ProjectDetailPage() {
     const [cartPing, setCartPing] = useState(false);
     const [qtyByReward, setQtyByReward] = useState<Record<number, number>>({});
 
-    const communitySentinelRef = useRef<HTMLDivElement | null>(null);
-    const reviewSentinelRef = useRef<HTMLDivElement | null>(null);
-
-    //중복 호출 방지용 락
-    const communityLoadingLockRef = useRef(false);
-    const reviewLoadingLockRef = useRef(false);
+    // 커뮤니티 글쓰기
+    const [openCm, setOpenCm] = useState(false);
+    const [cmContent, setCmContent] = useState("");
+    const [postingCm, setPostingCm] = useState(false);
 
     /* ------------------------------- Derived ---------------------------------- */
 
@@ -67,8 +93,80 @@ export function ProjectDetailPage() {
         return { totalQty, totalAmount };
     }, [project, cart]);
 
-    /* ------------------------------ Handlers ---------------------------------- */
+    /* ----------------------------- Data fetchers ----------------------------- */
 
+    const projectData = useCallback(async () => {
+        if (!projectId) return;
+        setLoadingProject(true);
+        try {
+            const response = await getData(endpoints.getProjectDetail(Number(projectId)));
+            if (response.status === 200) {
+                setProject(response.data);
+            }
+        } finally {
+            setLoadingProject(false);
+        }
+    }, [projectId]);
+
+    const communityData = useCallback(async (cursor: Cursor | null) => {
+        if (!projectId) return;
+        setLoadingCommunity(true);
+        try {
+            const params = new URLSearchParams();
+            if (cursor) {
+                if (cursor.lastCreatedAt) params.set("lastCreatedAt", cursor.lastCreatedAt);
+                if (cursor.lastId != null) params.set("lastId", String(cursor.lastId));
+            }
+            params.set("size", "10");
+
+            const url = `${endpoints.getCommunityList(Number(projectId))}?${params.toString()}`
+            const { status, data } = await getData(url);
+
+            if (status !== 200 || !data) {
+                if (!cursor) setCommunity([]); //첫 로드 실패하면 초기화
+                setCommunityCursor(null);
+                return;
+            }
+            const page = data as CursorPage<CommunityDto>;
+            const items = Array.isArray(page?.items) ? page.items : [];
+            setCommunity(prev => (cursor ? [...prev, ...items] : items)); //커서 있으면 append, 없으면 replace
+            setCommunityCursor(page?.nextCursor ?? null);
+        } finally {
+            setLoadingCommunity(false);
+        }
+    }, [projectId]);
+
+    const reviewData = useCallback(async (cursor: Cursor | null) => {
+        if (!projectId) return;
+        setLoadingReview(true);
+        try {
+            const params = new URLSearchParams();
+            if (cursor) {
+                if (cursor.lastCreatedAt) params.set("lastCreatedAt", cursor.lastCreatedAt);
+                if (cursor.lastId != null) params.set("lastId", String(cursor.lastId));
+            }
+            params.set("size", "10");
+
+            const url = `${endpoints.getReviewList(Number(projectId))}?${params.toString()}`;
+            const { status, data } = await getData(url);
+
+            if (status !== 200 || !data) {
+                if (!cursor) setReview([]); //첫 로드 실패하면 초기화
+                setReviewCursor(null);
+                return;
+            }
+            const page = data as CursorPage<ReviewDto>;
+            const items = Array.isArray(page?.items) ? page.items : [];
+            setReview(prev => (cursor ? [...prev, ...items] : items)); //커서 있으면 append, 없으면 replace
+            setReviewCursor(page.nextCursor ?? null);
+        } finally {
+            setLoadingReview(false);
+        }
+    }, [projectId]);
+
+    /* ------------------------------- UI handlers ---------------------------------- */
+
+    /* START 리워드 카트 */
     const getRemain = useCallback((r: Reward) => (r.rewardCnt > 0 ? Math.max(0, r.remain) : 99), []);
 
     const incQty = useCallback((rewardId: number, max: number) => {
@@ -114,7 +212,9 @@ export function ProjectDetailPage() {
             return rest;
         });
     }, []);
+    /* END 리워드 카트 */
 
+    // 후원하기
     const handleCheckout = useCallback(() => {
         if (!projectId) return;
         const entries = Object.entries(cart).filter(([_, q]) => q > 0);
@@ -125,120 +225,126 @@ export function ProjectDetailPage() {
         navigate(`/project/${projectId}/backing?${params.toString()}`);
     }, [cart, navigate, projectId]);
 
+    // 링크 복사
     const handleShare = useCallback(() => {
         navigator.clipboard.writeText(window.location.href);
         alert('링크가 복사되었습니다.');
     }, []);
 
-    /* -------------------------------- Effects -------------------------------- */
+    // 커뮤니티 모달
+    const openCommunityModal = useCallback(() => {
+        if (!projectId) return;
+        if (!ensureLogin()) return;
+        setOpenCm(true);
+    }, [projectId, ensureLogin]);
 
-    const projectData = async () => {
-        setLoadingProject(true);
+    // 커뮤니티 글자수
+    const handleChangeCm = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        let next = e.target.value;
+        if (getByteLen(next) <= CM_MAX) {
+            setCmContent(next);
+            return;
+        }
+
+        // 초과: 잘라내기
+        while (getByteLen(next) > CM_MAX) {
+            next = next.slice(0, -1);
+        }
+        setCmContent(next);
+
+        if (!exceededAlertedRef.current) {
+            exceededAlertedRef.current = true;
+            alert("최대 (한글 약 330자)까지 입력할 수 있습니다.");
+        }
+    }, []);
+
+    const handleTextareaFocus = useCallback(() => {
+        exceededAlertedRef.current = false; // 포커스 때 리셋
+    }, []);
+
+    // 커뮤니티 등록
+    const handleSubmitCommunity = useCallback(async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        if (!projectId) return;
+        if (!ensureLogin()) return;
+
+        const content = cmContent.trim();
+        if (content.length === 0) {
+            alert("내용을 입력하세요.");
+            return;
+        }
+        if (getByteLen(content) > CM_MAX) {
+            alert("내용은 (한글 약 330자) 이내로 입력해 주세요.");
+            return;
+        }
+
+        setPostingCm(true);
         try {
-            const response = await getData(endpoints.getProjectDetail(Number(projectId)));
+            const url = endpoints.postCommunity(Number(projectId));
+            const body = { cmContent };
+            const response = await postData(url, body);
             if (response.status === 200) {
-                setProject(response.data);
-            }
-        } finally {
-            setLoadingProject(false);
-        }
-    };
+                setOpenCm(false);
+                setCmContent(""); //초기화
 
-    const communityData = useCallback(async () => {
-        if (!projectId) return;
-        setLoadingCommunity(true);
-        try {
-            const params = new URLSearchParams();
-            if (communityCursor) {
-                if (communityCursor.lastCreatedAt) params.set("lastCreatedAt", communityCursor.lastCreatedAt);
-                if (communityCursor.lastId != null) params.set("lastId", String(communityCursor.lastId));
-            }
-            params.set("size", "10");
-
-            const url = `${endpoints.getCommunityList(Number(projectId))}?${params.toString()}`
-            const { status, data } = await getData(url);
-
-            if (status !== 200 || !data) {
-                if (!communityCursor) setCommunity([]); //첫 로드 실패하면 초기화
+                // 커서를 리셋하고 첫 페이지 다시 로드
+                setCommunity([]);
                 setCommunityCursor(null);
-                return;
+                await communityData(null);
+            } else {
+                alert("등록에 실패했습니다. 잠시 후 다시 시도해주세요.");
             }
-
-            if (Array.isArray((data as CursorPage<CommunityDto>)?.items)) {
-                const page = data as CursorPage<CommunityDto>;
-                const items = page.items ?? [];
-                setCommunity(prev => (communityCursor ? [...prev, ...items] : items)); //커서 있으면 append, 없으면 replace
-                setCommunityCursor(page?.nextCursor ?? null);
-                return;
-            }
-
-            if (!communityCursor) setCommunity([]);
-            setCommunityCursor(null);
+        } catch (err) {
+            console.error(err);
+            alert("네트워크 오류가 발생했습니다.");
         } finally {
-            setLoadingCommunity(false);
+            setPostingCm(false);
         }
-    }, [projectId, communityCursor]);
+    }, [projectId, ensureLogin, cmContent, communityData]);
 
-    const reviewData = useCallback(async () => {
-        if (!projectId) return;
-        setLoadingReview(true);
-        try {
-            const params = new URLSearchParams();
-            if (reviewCursor) {
-                if (reviewCursor.lastCreatedAt) params.set("lastCreatedAt", reviewCursor.lastCreatedAt);
-                if (reviewCursor.lastId != null) params.set("lastId", String(reviewCursor.lastId));
-            }
-            params.set("size", "10");
+    // 후기 페이지
+    const handleWriteReview = useCallback(() => {
+        if (!projectId || !project) return;
+        if (!ensureLogin()) return;
 
-            const url = `${endpoints.getReviewList(Number(projectId))}?${params.toString()}`;
-            const { status, data } = await getData(url);
+        //TODO: 후원자 전용 가드 (나중에 주석 해제)
+        // if (!project.isBackedByMe) {
+        //     alert("후원자만 작성할 수 있습니다.");
+        //     return;
+        // }
+        // if (!project.canWriteReview) {
+        //     alert("아직 후기를 작성할 수 있는 상태가 아닙니다.");
+        //     return;
+        // }
+    }, [projectId, project, ensureLogin]);
 
-            if (status !== 200 || !data) {
-                if (!reviewCursor) setReview([]); //첫 로드 실패하면 초기화
-                setReviewCursor(null);
-                return;
-            }
-
-            if (Array.isArray((data as CursorPage<ReviewDto>)?.items)) {
-                const page = data as CursorPage<ReviewDto>;
-                const items = page.items ?? [];
-                setReview(prev => (reviewCursor ? [...prev, ...items] : items)); //커서 있으면 append, 없으면 replace
-                setReviewCursor(page.nextCursor ?? null);
-                return;
-            }
-
-            if (!reviewCursor) setReview([]);
-            setReviewCursor(null);
-        } finally {
-            setLoadingReview(false);
-        }
-    }, [projectId, reviewCursor]);
+    /* -------------------------------- Effects -------------------------------- */
 
     useEffect(() => {
         projectData();
-        communityData();
-        reviewData();
-    }, [projectId]);
+        setCommunity([]);
+        setCommunityCursor(null);
+        communityData(null);
+
+        setReview([]);
+        setReviewCursor(null);
+        reviewData(null);
+    }, [projectId, projectData, communityData, reviewData]);
 
     useEffect(() => {
         if (tab !== "community") return; //옵저버 탭이 켜졌을 때만 붙이기
         const el = communitySentinelRef.current;
-        if (!el) return;
+        if (!el || !communityCursor || loadingCommunity) return;
 
-        if (!communityCursor || loadingCommunity) return;
-
-        const io = new IntersectionObserver(
-            (entries) => {
-                const first = entries[0];
-                if (first.isIntersecting && !communityLoadingLockRef.current) {
-                    communityLoadingLockRef.current = true;
-                    communityData().finally(() => {
-                        communityLoadingLockRef.current = false;
-                    });
-                }
-            },
-            { root: null, rootMargin: "300px", threshold: 0.01 }
-        );
+        const io = new IntersectionObserver((entries) => {
+            const first = entries[0];
+            if (first.isIntersecting && !communityLoadingLockRef.current) {
+                communityLoadingLockRef.current = true;
+                communityData(communityCursor).finally(() => {
+                    communityLoadingLockRef.current = false;
+                });
+            }
+        }, { root: null, rootMargin: "300px", threshold: 0.01 });
 
         io.observe(el);
         return () => io.disconnect();
@@ -247,32 +353,21 @@ export function ProjectDetailPage() {
     useEffect(() => {
         if (tab !== "review") return; //옵저버 탭이 켜졌을 때만 붙이기
         const el = reviewSentinelRef.current;
-        if (!el) return;
+        if (!el || !reviewCursor || loadingReview) return;
 
-        if (!reviewCursor || loadingReview) return;
-
-        const io = new IntersectionObserver(
-            (entries) => {
-                const first = entries[0];
-                if (first.isIntersecting && !reviewLoadingLockRef.current) {
-                    reviewLoadingLockRef.current = true;
-                    reviewData().finally(() => {
-                        reviewLoadingLockRef.current = false;
-                    });
-                }
-            },
-            { root: null, rootMargin: "300px", threshold: 0.01 }
-        );
+        const io = new IntersectionObserver((entries) => {
+            const first = entries[0];
+            if (first.isIntersecting && !reviewLoadingLockRef.current) {
+                reviewLoadingLockRef.current = true;
+                reviewData(reviewCursor).finally(() => {
+                    reviewLoadingLockRef.current = false;
+                });
+            }
+        }, { root: null, rootMargin: "300px", threshold: 0.01 });
 
         io.observe(el);
         return () => io.disconnect();
     }, [tab, reviewCursor, loadingReview, reviewData]);
-
-    /* -------------------------------- Helpers -------------------------------- */
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('ko-KR').format(amount);
-    };
 
     /* --------------------------------- Render --------------------------------- */
 
@@ -391,8 +486,52 @@ export function ProjectDetailPage() {
                         </TabsContent>
 
                         <TabsContent value="community">
+                            <div className="flex items-center justify-between mt-2">
+                                <div className="text-sm text-muted-foreground">
+                                    커뮤니티 <span className="font-medium text-foreground">{community.length}</span>개
+                                </div>
+                                <Button size="sm" onClick={openCommunityModal}>
+                                    글쓰기
+                                </Button>
+                            </div>
+
+                            <Dialog open={openCm} onOpenChange={setOpenCm}>
+                                <DialogContent className="w-[min(92vw,40rem)] sm:max-w-lg">
+                                    <DialogHeader>
+                                        <DialogTitle>커뮤니티 글쓰기</DialogTitle>
+                                    </DialogHeader>
+
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm text-muted-foreground">프로젝트에 대한 응원, 소식을 공유해보세요.</span>
+                                            <span className="text-xs text-gray-500">약 {cmContent.length}자</span>
+                                        </div>
+
+                                        <Textarea
+                                            value={cmContent}
+                                            onChange={handleChangeCm}
+                                            onFocus={handleTextareaFocus}
+                                            placeholder="내용을 입력하세요."
+                                            className="min-h-[120px] w-full max-w-full resize-y overflow-auto break-words [overflow-wrap:anywhere] [word-break:break-word]"
+                                        />
+                                    </div>
+
+                                    <DialogFooter className="gap-2">
+                                        <Button variant="outline" onClick={() => setOpenCm(false)} disabled={postingCm}>취소</Button>
+                                        <Button onClick={handleSubmitCommunity} disabled={postingCm || cmContent.trim().length === 0}>
+                                            {postingCm ? "등록중" : "등록"}
+                                        </Button>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
+
                             {!Array.isArray(community) || community.length == 0 ? (
-                                <div className="text-sm text-muted-foreground">게시글이 존재하지 않습니다.</div>
+                                <div className="mt-4 rounded-lg border p-6 text-center">
+                                    <p className="text-sm text-muted-foreground mb-3">게시글이 존재하지 않습니다.</p>
+                                    <Button size="sm" onClick={openCommunityModal}>
+                                        <MessageSquarePlus className="h-4 w-4 mr-1" /> 첫 글 남기기
+                                    </Button>
+                                </div>
                             ) : (
                                 <>
                                     {community.map((cm) => (
@@ -403,12 +542,14 @@ export function ProjectDetailPage() {
                                                         <Avatar className="w-8 h-8">
                                                             <AvatarFallback>{cm.profileImg}</AvatarFallback>
                                                         </Avatar>
-                                                        <div className="flex-1">
+                                                        <div className="flex-1 min-w-0">
                                                             <div className="flex items-center space-x-2 mb-1">
-                                                                <span className="font-medium">{cm.nickname}</span>
+                                                                <span className="font-medium truncate">{cm.nickname}</span>
                                                                 <span className="text-sm text-gray-500">{getDaysBefore(cm.createdAt)} 전</span>
                                                             </div>
-                                                            <p className="text-sm">{cm.cmContent}</p>
+                                                            <p className="text-sm w-full max-w-full whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+                                                                {cm.cmContent}
+                                                            </p>
                                                             <div className="flex items-center space-x-2 mt-2">
                                                                 <Button variant="ghost" size="sm">
                                                                     <MessageCircle className="h-3 w-3 mr-1" />
@@ -435,8 +576,41 @@ export function ProjectDetailPage() {
                         </TabsContent>
 
                         <TabsContent value="review">
+                            <TooltipProvider>
+                                <div className="flex items-center justify-between mt-2">
+                                    <div className="text-sm text-muted-foreground">
+                                        후기 <span className="font-medium text-foreground">{review.length}</span>개
+                                    </div>
+
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <span>
+                                                <Button
+                                                    size="sm"
+                                                    onClick={handleWriteReview}
+                                                    disabled={!project?.isBackedByMe || !project?.canWriteReview}
+                                                >
+                                                    후기 작성
+                                                </Button>
+                                            </span>
+                                        </TooltipTrigger>
+                                        {!project?.isBackedByMe ? (
+                                            <TooltipContent>후원자만 작성할 수 있습니다</TooltipContent>
+                                        ) : !project?.canWriteReview ? (
+                                            <TooltipContent>아직 후기를 작성할 수 있는 상태가 아닙니다</TooltipContent>
+                                        ) : null}
+                                    </Tooltip>
+                                </div>
+                            </TooltipProvider>
+
                             {review.length == 0 ? (
-                                <div className="text-sm text-muted-foreground">게시글이 존재하지 않습니다.</div>
+                                <div className="mt-4 rounded-lg border p-6 text-center">
+                                    <p className="text-sm text-muted-foreground mb-3">게시글이 존재하지 않습니다.</p>
+                                    <Button size="sm" onClick={handleWriteReview}>
+                                        <Pencil className="h-4 w-4 mr-1" />
+                                        첫 후기 남기기
+                                    </Button>
+                                </div>
                             ) : (
                                 <>
                                     {review.map((rv) => (

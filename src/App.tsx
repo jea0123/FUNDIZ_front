@@ -120,11 +120,8 @@ export default function App() {
               <Route path="projects">
                 <Route index element={<CreatorProjects />} />
                 <Route path=":projectId" element={<CreatorProjectDetail />} />
-                // 프로젝트/rewardId 두개가 따로있음 아래꺼하고 비교해서 만든사람이 바꿀 필요가있을듯
                 <Route path=":projectId/reward" element={<CreatorAddReward />}/>
               </Route>
-              // 이거랑 겹침
-              <Route path=":projectId/reward" element={<CreatorAddReward />} />
               <Route path="backings" element={<CreatorBacking />} />
               <Route path="shipping" element={<CreatorShippingList />} />
               <Route path="shipping/:projectId" element={<CreatorShippingDetail />} />
