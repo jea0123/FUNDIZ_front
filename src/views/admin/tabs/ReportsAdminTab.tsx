@@ -115,15 +115,6 @@ export function ReportsAdminTab() {
                             <CardHeader className="flex items-center justify-between">
                                 <CardTitle>신고 내역</CardTitle>
                                 <div className="flex items-center gap-2">
-                                    <Select value={reportFilter} onValueChange={(v) => setReportFilter(v as any)}>
-                                        <SelectTrigger className="w-40"><SelectValue placeholder="상태 필터" /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="전체">전체</SelectItem>
-                                            <SelectItem value="RECEIVED">접수</SelectItem>
-                                            <SelectItem value="UNDER_REVIEW">검토중</SelectItem>
-                                            <SelectItem value="COMPLETED">완료</SelectItem>
-                                        </SelectContent>
-                                    </Select>
                                 </div>
                             </CardHeader>
                             <CardContent>
