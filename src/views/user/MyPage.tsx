@@ -25,6 +25,7 @@ import { SavedAddressModal } from '../backing/SavedAddressModal';
 import { MyInquiryTab } from './MyInquiryTab';
 import { MyReportsTab } from './MyReportsTab';
 import { MyQnATab } from './MyQnATab';
+import AccountSettingTab from './tabs/AccountSettingTab';
 
 export function MyPage() {
   const tempUserId = 1;
@@ -249,65 +250,6 @@ export function MyPage() {
               찜한 프로젝트
             </Button>
 
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="ghost" className="w-full justify-start">
-                  <Settings className="mr-2 h-4 w-4" />
-                  계정 설정
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>계정 설정</DialogTitle>
-                </DialogHeader>
-                <div className="mt-4 max-h-[400px] overflow-y-auto space-y-4">
-                  <div className="p-4 border rouded-lg">
-                    <h4 className="front-medium mb-2">프로필 수정</h4>
-                    <p className="text-sm text-gray-500 mb-3">닉네임, 프로필 이미지를 수정할 수 있습니다.</p>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline">
-                        닉네임 변경
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        프로필 이미지 변경
-                      </Button>
-                    </div>
-                  </div>
-                  {/* 비밀번호 번경 */}
-                  <div className="p-4 border rounded-lg">
-                    <h4 className="font-medium mb-2">비밀번호 변경</h4>
-                    <p className="text-sm text-gray-500 mb-3">계정 보안을 위해 주기적으로 비밀번호를 변경하세요</p>
-                    <Button size="sm" variant="outline">
-                      비밀번호 변경
-                    </Button>
-                  </div>
-                  {/* 회원 탈퇴 */}
-                  <div className="p-4 border rounded-lg">
-                    <h4 className="font-medium mb-2 text-red-600">회원 탈퇴</h4>
-                    <p className="text-sm text-gray-500 mb-3">탈퇴 시 모든 회원 정보가 삭제되며, 복구할 수 없습니다.</p>
-                    <Button size="sm" variant="destructive">
-                      회원 탈퇴
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="ghost" className="w-full justify-start">
-                  <CreditCard className="mr-2 h-4 w-4" />
-                  결제 수단
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>결제 수단</DialogTitle>
-                </DialogHeader>
-                <div className="mt-4 max-h-[400px] overflow-y-auto space-y-4">{/* 결제 수단 내용 */}</div>
-              </DialogContent>
-            </Dialog>
-
             {/* 모드에 따라 배송지 출력화면 다르게 */}
             <SavedAddressModal
               mode="mypage"
@@ -316,10 +258,12 @@ export function MyPage() {
                 console.log('선택된 주소 : ', address);
               }}
             />
-
+            <Button variant="ghost" className="w-full justify-start" onClick={() => setActiveTab('settings')}>
+              <Settings className="mr-2 h-4 w-4" />계정 설정
+            </Button>
+            
             <Button variant="ghost" className="w-full justify-start" onClick={() => setActiveTab('notifications')}>
-              <Bell className="mr-2 h-4 w-4" />
-              알림
+              <Bell className="mr-2 h-4 w-4" />알림
             </Button>
 
             <Button variant="ghost" className="w-full justify-start" onClick={() => setActiveTab('myqna')}>
@@ -580,6 +524,9 @@ export function MyPage() {
             </TabsContent>
             <TabsContent value="myqna" className="mt-6">
               <MyQnATab />
+            </TabsContent>
+            <TabsContent value='settings' className="mt-6">
+              <AccountSettingTab />
             </TabsContent>
           </Tabs>
         </div>

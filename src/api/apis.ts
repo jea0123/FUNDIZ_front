@@ -108,6 +108,7 @@ export const endpoints = {
     checkNickname: 'auth/checkNickname',
     signUp: 'auth/signUp',
     signIn: 'auth/signIn',
+    withdraw: 'auth/withdraw',
 
     // ==================== User API ====================
     getLoginUser: 'user/loginUser',
@@ -116,9 +117,11 @@ export const endpoints = {
     getQnAListOfUser: (userId: number, p: SearchQnaParams) => `user/qna/${userId}?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup })}`,
     getRecentView: `user/recentViewProjects`,
     getQnAListDetail: (userId: number, projectId: number) => `user/QnAListDetail/${userId}/project/${projectId}`,
+    updateNickname: 'user/nickname',
+    updateProfileImg: 'user/profileImg',
+    changePassword: 'user/password',
 
     // ==================== Creator API ====================
-
     getCreatorProjectList: (p: SearchCreatorProjectDto) => `creator/projects?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
     registerCreator: 'creator/register',
     getCreatorProjectDetail: (projectId: number) => `creator/projects/${projectId}`,
