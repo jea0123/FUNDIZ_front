@@ -50,4 +50,8 @@ export function AdminLink() {
     <NavLink to={`${base}?tab=notice`} className={linkCls}>
         <ClipboardList className="mr-2 h-4 w-4" /> 공지사항 관리
     </NavLink>
+
+    <NavLink to={`${base}?tab=settlement`} className={linkCls}>
+        <ClipboardList className="mr-2 h-4 w-4" /> 정산 관리
+    </NavLink>
 </nav>

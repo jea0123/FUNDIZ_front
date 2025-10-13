@@ -191,6 +191,11 @@ export const formatNumber = (num: number, locale: string = 'ko-KR'): string => {
     return new Intl.NumberFormat(locale).format(num);
 }
 
+// 가격을 ₩1,200 형태로 포맷팅
+export const formatPrice = (price: number): string => {
+    return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(price);
+}
+
 /** 성공(파랑 톤) */
 export const toastSuccess = (message: string) =>
     toast.success(message, {
