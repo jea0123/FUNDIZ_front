@@ -177,6 +177,8 @@ export const endpoints = {
     getSettlements: (p: SearchSettlementParams) => `admin/settlement/list?${toQueryString({ q: p.q, status: p.status, from: p.from, to: p.to, page: p.page, size: p.size, perGroup: p.perGroup })}`,
     getSettlementSummary: 'admin/settlement/summary',
     updateStatus: 'admin/settlement',
+    getUserInfo : (userId : number) => `admin/user/info/${userId}`,
+    updateUser : (userId: number) => `admin/user/update/${userId}`,
 
     // ==================== Category API ====================
     getCategories: 'categories',
