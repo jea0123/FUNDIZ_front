@@ -53,15 +53,13 @@ export function InquiryTab() {
                             <Select value={inqAdd.ctgr} onValueChange={e => setInqAdd({ ...inqAdd, ctgr: e })}>
                                 <SelectTrigger><SelectValue placeholder="분류 선택" /></SelectTrigger>
                                 <SelectContent>
-                                    {['GENERAL',
-                                    'ACCOUNT',
-                                    'PAYMENT/REFUNDS',
-                                    'SHIPPING/DELIVERY',
-                                    'BACKING',
-                                    'PROJECT/REARDS',
-                                    'OTHER'].map(o => (
-                                        <SelectItem key={o} value={o}>{o}</SelectItem>
-                                    ))}
+                                    <SelectItem value="GENERAL">일반</SelectItem>
+                                    <SelectItem value="ACCOUNT">회원/계정</SelectItem>
+                                    <SelectItem value="PAYMENT/REFUNDS">결제/환불</SelectItem>
+                                    <SelectItem value="SHIPPING/DELIVERY">배송/수령</SelectItem>
+                                    <SelectItem value="BACKING">후원</SelectItem>
+                                    <SelectItem value="PROJECT/REWARDS">프로젝트/리워드</SelectItem>
+                                    <SelectItem value="OTHER">기타</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
