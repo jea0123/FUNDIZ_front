@@ -388,7 +388,7 @@ export function MyPage() {
                               </Button>
                             </DialogTrigger>
                             {selectedBacking && (
-                              <DialogContent className="w-screen h-screen max-w-none p-6">
+                              <DialogContent className="w-screen h-screen min-w-350 max-w-none p-6">
                                 <DialogHeader>
                                   <DialogTitle>{selectedBacking.backingReward.backingProject.title}</DialogTitle>
                                   <DialogDescription>후원 상세 내역을 확인하세요</DialogDescription>

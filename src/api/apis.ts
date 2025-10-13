@@ -26,7 +26,7 @@ export const kyInstance = ky.create({
         }
 
         if (pathname.includes('/api/v1/creator/')) {
-          const devId = localStorage.getItem('DEV_CREATOR_ID') || '4';
+          const devId = localStorage.getItem('DEV_CREATOR_ID') || '96';
           req.headers.set('X-Dev-Creator-Id', devId);
         }
       },
@@ -113,8 +113,8 @@ export const endpoints = {
   getMypage: (userId: number) => `user/userPage/${userId}`,
   getLikedList: (userId: number) => `user/likedList/${userId}`,
   getQnAListOfUser: (userId: number, p: SearchQnaParams) => `user/qna/${userId}?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup })}`,
-  getRecentView: (userId: number) => `/user/recentViewProjects/${userId}`,
-  getQnAListDetail: (userId: number, projectId: number) => `/user/QnAListDetail/${userId}/project/${projectId}`,
+  getRecentView: (userId: number) => `user/recentViewProjects/${userId}`,
+  getQnAListDetail: (userId: number, projectId: number) => `user/QnAListDetail/${userId}/project/${projectId}`,
 
   // ==================== Creator API ====================
 
@@ -128,7 +128,7 @@ export const endpoints = {
   deleteProject: (projectId: number) => `creator/project/${projectId}`,
   getCreatorRewardList: (projectId: number) => `creator/projects/${projectId}/reward`,
   addReward: (projectId: number) => `creator/projects/${projectId}/reward`,
-  getCreatorProfileSummary: "/creator/summary",
+  getCreatorProfileSummary: "creator/summary",
   getQnAListOfCreator: (p: SearchQnaParams) => `creator/qna?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup })}`,
   creatorDashboard: 'creator/dashBoard',
 

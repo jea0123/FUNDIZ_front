@@ -12,12 +12,55 @@ import { SavedAddressModal } from './SavedAddressModal';
 import { endpoints, getData } from '@/api/apis';
 import type { Reward } from '@/types/reward';
 import type { ProjectDetail } from '@/types/projects';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter} from '@/components/ui/dialog';
+import {RadioGroup, RadioGroupItem} from '@/components/ui/radio-group';
+
+  function PaymentModal({ open, onClose, totalAmount, onConfirmPayment, }: { open: boolean; onClose: () => void; totalAmount: number; onConfirmPayment: () => void; }) {
+  const [method, setMethod] = useState('card');
+
+  return (
+    <Dialog open = {open} onOpenChange={onClose}>
+      <DialogContent className = "max-w-md">
+        <DialogHeader>
+          <DialogTitle>결제하기</DialogTitle>
+        </DialogHeader>
+        <div className ="space-y-4">
+          <p className="text-center text-lg font-semibold">총 금액: {totalAmount.toLocaleString()}원</p>
+
+          <RadioGroup value={method} onValueChange={setMethod} className="space-y-3">
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="card" id="card" />
+              <Label htmlFor="card">💳 카드 결제</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="account" id="account" />
+              <Label htmlFor="account">🏦 계좌이체</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="simplepay" id="simplepay" />
+              <Label htmlFor="simplepay">⚡ 간편결제 (카카오페이 / 네이버페이)</Label>
+            </div>
+          </RadioGroup>
+        </div>
+        <DialogFooter className="flex justify-between mt-6">
+          <Button variant="outline" onClick={onClose}>
+            취소
+          </Button>
+          <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => { onClose(); onConfirmPayment(); }}>
+            결제하기
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 export function BackingPage() {
   const tempUserId = 1;
   const { projectId } = useParams<{ projectId: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+
 
   //items 파라미터 파싱 (예: "2x1,3x2,5x1")
   const itemsParam = searchParams.get('items');
@@ -33,7 +76,6 @@ export function BackingPage() {
   const [selectedRewards, setSelectedRewards] = useState<Reward[]>([]);
   const [rewardQuantities, setRewardQuantities] = useState<Record<number, number>>({});
   const [customAmount, setCustomAmount] = useState<string>('');
-
   const [shippingAddress, setShippingAddress] = useState<any>(null);
   const [manualAddress, setManualAddress] = useState({
     recipient: '',
@@ -47,7 +89,8 @@ export function BackingPage() {
   const [backerEmail, setBackerEmail] = useState<string>('');
   const [addressMode, setAddressMode] = useState<'select' | 'manual'>('select');
   const [loading, setLoading] = useState(true);
-
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  
   //유저 정보 불러오기
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -112,6 +155,7 @@ export function BackingPage() {
     const additional = customAmount ? parseInt(customAmount) : 0;
     return rewardsTotal + additional;
   };
+
 
   //후원 완료 후 confirm 처리 (하나의 confirm으로 통합)
   const handleSubmit = async () => {

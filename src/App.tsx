@@ -12,7 +12,7 @@ import MainPage from './views/MainPage';
 import { setNavigator } from './utils/navigator';
 import { NoticeDetailPage } from './views/cs/NoticeDetail';
 import ProjectsAllPage, { ProjectByCategoryPage, ProjectBySubcategoryPage, SearchProjectPage } from './views/project/ProjectAllPage';
-import { BackingPage } from './views/backing/backingPage';
+import { BackingPage } from './views/backing/BackingPage';
 import FundingLoader from './components/FundingLoader';
 import { ApprovalDetail } from './views/admin/tabs/ApprovalDetail';
 import AdminProjectEdit from './views/admin/tabs/AdminProjectEdit';
