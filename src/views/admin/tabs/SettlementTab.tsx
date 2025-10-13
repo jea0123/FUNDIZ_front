@@ -66,31 +66,12 @@ const SettlementTab: React.FC = () => {
     const onSearch = () => setPage(1);
 
     const updateSettlementStatus = async (settlementId: number, projectId: number, creatorId: number, settlementStatus: SettlementStatus) => {
+        const confirm = window.confirm(`정산 상태를 '${settlementStatus === "PAID" ? "지급완료" : "지급대기"}'로 변경하시겠습니까?`)
+        if (!confirm) return;
         const res = await postData(endpoints.updateStatus, { settlementId, projectId, creatorId, settlementStatus });
-        if (res?.status === 200) {
+        if (res && res.status === 200) {
             getSettlements();
-        }
-        console.log(`Updating settlement ${settlementId} to ${status}`);
-    };
-
-    const downloadStatement = async (settlementId: number) => {
-        try {
-            const response = await fetch(endpoints.downloadSettlementStatement(settlementId));
-            if (response.ok) {
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `정산서_${settlementId}.pdf`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                window.URL.revokeObjectURL(url);
-            } else {
-                console.error('Failed to download statement');
-            }
-        } catch (error) {
-            console.error('Error downloading statement:', error);
+            getSettlementSummary();
         }
     };
 
@@ -329,9 +310,7 @@ const SettlementTab: React.FC = () => {
                                 지급대기로 되돌리기
                             </Button>
                         )}
-                        <Button variant="outline" onClick={() => downloadStatement(selected!.settlementId)}>
-                            <Download className="h-4 w-4 mr-2" /> 정산서 다운로드
-                        </Button>
+                        <Button variant="outline"><Download className="h-4 w-4 mr-2" /> 정산서 다운로드</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
