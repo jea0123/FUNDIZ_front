@@ -130,7 +130,7 @@ export function UsersTab() {
                                         <TableCell className="font-medium">{u.isSuspended}</TableCell>
                                         <TableCell>
                                             <div className="flex gap-2">
-                                                <UserEditModal/>
+                                                <UserEditModal userId={u.userId} />
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -149,47 +149,43 @@ export function UsersTab() {
     );
 }
 
-export function UserEditModal() {
-    const useQuery = () => {
-        return new URLSearchParams(useLocation().search);
-    };
+interface UserEditModalProps {
+    userId: number;
+}
 
-    const navigate = useNavigate();
+export function UserEditModal({ userId }: UserEditModalProps) {
     
-        const query = useQuery();
-        const userId = query.get('id');
+    const [isOpen, setIsOpen] = useState(false);
+    const [userUpdt, setUserUpdt] = useState<UsersUpdateRequest>({
+        userId: Number(userId),
+        nickname: "",
+        isSuspended: "",
+        reason: "", 
+    });
     
-        const [isOpen, setIsOpen] = useState(false);
-        const [userUpdt, setUserUpdt] = useState<UsersUpdateRequest>({
-            userId: Number(userId),
-            nickname: "",
-            isSuspended: "",
-            reason: "", 
-        });
+    const fetchUser = async () => {
+        const response = await getData(endpoints.getUserInfo(Number(userId)));
+        if (response.status === 200) {
+            setUserUpdt(response.data);
+        }
+        console.log(response.data);
+    };
     
-        const fetchUser = async () => {
-            const response = await getData(endpoints.getUserInfo(Number(userId)));
-            if (response.status === 200) {
-                setUserUpdt(response.data);
-            }
-            console.log(response.data);
-        };
+    useEffect(() => {
+        fetchUser();
+    }, [userId]);
     
-        useEffect(() => {
-            fetchUser();
-        }, []);
-    
-        const handleUserUpdt = async () => {
-            const response = await postData(endpoints.updateUser(Number(userId)), userUpdt);
-            if (response.status === 200) {
-                alert("회원 정보가 수정되었습니다.");
-                setIsOpen(false);
-                window.location.reload();
-            } else {
-                alert("회원 정보 수정 실패");
-                return false;
-            }
-        };
+    const handleUserUpdt = async () => {
+        const response = await postData(endpoints.updateUser(Number(userId)), userUpdt);
+        if (response.status === 200) {
+            alert("회원 정보가 수정되었습니다.");
+            setIsOpen(false);
+            window.location.reload();
+        } else {
+            alert("회원 정보 수정 실패");
+            return false;
+    }
+    };
 
 
     return (

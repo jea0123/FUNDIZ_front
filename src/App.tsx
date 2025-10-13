@@ -38,7 +38,7 @@ import NotificationTab from './views/user/tabs/NotificationTab';
 import AccountSettingTab from './views/user/tabs/AccountSettingTab';
 import { MyQnATab } from './views/user/tabs/MyQnATab';
 import { MyInquiryTab } from './views/user/tabs/MyInquiryTab';
-import { MyReportsTab } from './views/user/MyReportsTab';
+import { MyReportsTab } from './views/user/tabs/MyReportsTab';
 import BackingTab from './views/user/tabs/BackingTab';
 import LikedProjectTab from './views/user/tabs/LikedProjectTab';
 import { BackingPage } from './views/backing/backingPage';
