@@ -1,4 +1,5 @@
-import type { AddrAddRequest } from './address';
+import type { AddrAddRequest, AddressResponse } from './address';
+import type { BackingPagePayment } from './payment';
 
 export interface MyPageBacking {
   backingId: number;
@@ -52,6 +53,8 @@ export interface BackingPrepare {
   nickname: string;
   email: string;
 
+  addressList: AddressResponse[];
+
   creatorId: number;
   creatorName: string;
   profileImg: string;
@@ -60,19 +63,11 @@ export interface BackingPrepare {
   title: string;
   thumbnail: string;
 
-  addrId: number;
-  addrName: string;
-  recipient: string;
-  postalCode: string;
-  roadAddr: string;
-  detailAddr: string;
-  recipientPhone: string;
-  isDefault: string;
+  rewardList: BackingRewardList[];
 
-  rewardId: number;
-  rewardName: string;
-  price: number;
-  deliveryDate: string;
+  paymentList: BackingPagePayment[];
+
+  
 }
 
 export interface BackingCreatorBackerList {
@@ -101,3 +96,5 @@ export interface BackingCreatorProjectList {
   //달성률
   completionRate: number;
 }
+
+

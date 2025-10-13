@@ -121,6 +121,7 @@ export const endpoints = {
     updateProfileImg: 'user/profileImg',
     changePassword: 'user/password',
 
+
     // ==================== Creator API ====================
     getCreatorProjectList: (p: SearchCreatorProjectDto) => `creator/projects?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
     registerCreator: 'creator/register',
@@ -140,6 +141,7 @@ export const endpoints = {
     creatorShippingList: 'creator/shippingList',
     creatorShippingBackerList: (projectId: number) => `creator/shippingBackerList/${projectId}`,
     postCreatorNews: (projectId: number) => `creator/projects/${projectId}/news`,
+
 
     // ==================== Project API ====================
     getFeatured: 'project/featured',
