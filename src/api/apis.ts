@@ -200,6 +200,9 @@ export const endpoints = {
     markAllAsRead: 'notifications/readAll',
     deleteNotification: (notificationId: number) => `notifications/delete/${notificationId}`,
     deleteAllNotifications: 'notifications/deleteAll',
+
+    // ==================== Settlement API ====================
+    getCreatorSettlement: 'settlement/creator',
 };
 
 /**

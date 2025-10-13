@@ -16,7 +16,7 @@ dayjs.locale("ko");
  * getElapsedTime(new Date(Date.now() - 6000000)) // "1시간 전"
  * getElapsedTime(new Date(Date.now() - 60000000)) // "10시간 전"
  */
-export const getElapsedTime = (createdAt: Date) => dayjs(createdAt).fromNow();
+export const getElapsedTime = (createdAt: Date): string => dayjs(createdAt).fromNow();
 
 /**
  * @description 숫자를 한국 원화(KRW) 단위로 변환
@@ -28,7 +28,7 @@ export const getElapsedTime = (createdAt: Date) => dayjs(createdAt).fromNow();
  * toWonPlus(120000000) // "1억 원+"
  * toWonPlus() // "-"
  */
-export const toWonPlus = (amount?: number) => {
+export const toWonPlus = (amount?: number): string => {
     if (amount === undefined) return "-";
     if (amount >= 100_000_000) return `${Math.round(amount / 100_000_000)}억 원+`;
     if (amount >= 10_000) return `${Math.round(amount / 10_000)}만 원+`;
@@ -45,7 +45,7 @@ export const toWonPlus = (amount?: number) => {
  * toWon(120000000) // "1억 원"
  * toWon() // "-"
  */
-export const toWon = (amount?: number) => {
+export const toWon = (amount?: number): string => {
     if (amount === undefined) return "-";
     if (amount >= 100_000_000) return `${Math.round(amount / 100_000_000)}억 원`;
     if (amount >= 10_000) return `${Math.round(amount / 10_000)}만 원`;
@@ -71,7 +71,7 @@ function toKstEndOfDay(date: string | Date): Date {
  * @example
  * getDaysLeft("2023-10-10") // "5" (오늘이 2023-10-05인 경우)
  */
-export function getDaysLeft(date: string | Date) {
+export function getDaysLeft(date: string | Date): string {
     const end = toKstEndOfDay(date);
     const diffMs = end.getTime() - Date.now();
 
@@ -96,7 +96,7 @@ export function getDaysLeft(date: string | Date) {
  * getDaysBefore("2023-10-15") // "2주" (오늘이 2023-10-01인 경우)
  * getDaysBefore("2023-10-05T15:00:00") // "1시간" (현재 시간이 2023-10-05T14:00:00인 경우)
  */
-export const getDaysBefore = (date: string | Date) => {
+export const getDaysBefore = (date: string | Date): string => {
     const end = new Date(date);
     const diffMs = end.getTime() - Date.now();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
@@ -139,7 +139,7 @@ export const getDaysBefore = (date: string | Date) => {
  * @param {string | Date} date 날짜 문자열 또는 Date 객체
  * @returns {string} "YYYY-MM-DD" 형식의 날짜 문자열
  */
-export const formatDate = (date: string | Date) => {
+export const formatDate = (date: string | Date): string => {
     const d = new Date(date);
 
     if (isNaN(d.getTime())) {
@@ -151,6 +151,44 @@ export const formatDate = (date: string | Date) => {
     const day = String(d.getDate()).padStart(2, "0");
 
     return `${year}-${month}-${day}`;
+}
+
+/**
+ * @description 숫자를 한국 원화(KRW) 통화 형식으로 변환 (예: 1200 → "₩1.2K", 1000000 → "₩1M")
+ * @param {number} amount 변환할 금액
+ * @returns {string} 한국 원화 통화 형식 문자열
+ */
+export const currency = (amount: number): string =>
+    new Intl.NumberFormat("ko-KR", { style: "currency", currency: "KRW", notation: "compact", maximumFractionDigits: 1 }).format(amount ?? 0);
+
+/**
+ * @description 숫자를 1,200 → 1.2K, 1,000,000 → 1M 등으로 축약
+ * @param {number} n 축약할 숫자
+ * @returns {string} 축약된 문자열
+ */
+export const numberCompact = (n: number): string =>
+    new Intl.NumberFormat("ko-KR", { notation: "compact", maximumFractionDigits: 1 }).format(n ?? 0);
+
+/**
+ * @description 문자열을 최대 길이로 자르고, 초과 시 "…" 추가
+ * @param {string} s 자를 문자열
+ * @param {number} max 최대 길이 (기본값: 16)
+ * @returns {string} 자른 문자열
+ */
+export const shortenLabel = (s: string, max: number = 16): string => (s && s.length > max ? s.slice(0, max - 1) + "…" : s);
+
+/**
+ * @description 숫자를 로케일에 맞게 포맷팅
+ * @param {number} num 포맷팅할 숫자
+ * @param {string} locale 로케일 (기본값: 'ko-KR')
+ * @returns {string} 포맷팅된 숫자 문자열
+ * @example
+ * formatNumber(1200) // "1,200"
+ * formatNumber(1200000) // "1,200,000"
+ * formatNumber(1200, 'en-US') // "1,200"
+ */
+export const formatNumber = (num: number, locale: string = 'ko-KR'): string => {
+    return new Intl.NumberFormat(locale).format(num);
 }
 
 /** 성공(파랑 톤) */
