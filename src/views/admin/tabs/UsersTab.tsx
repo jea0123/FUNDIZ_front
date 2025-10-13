@@ -6,20 +6,17 @@ import {
     CardTitle,
     CardContent
 } from "@/components/ui/card";
-import {
-    Table,
-    TableHeader,
-    TableRow,
-    TableHead,
-    TableBody,
-    TableCell
-} from "@/components/ui/table";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogClose } from '@/components/ui/dialog';
 import { Input } from "../../../components/ui/input";
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
-import { endpoints, getData, deleteData } from "@/api/apis";
-import type { Users, SearchUserParams } from '@/types/admin';
+import { endpoints, getData, postData } from "@/api/apis";
+import type { Users, UsersUpdateRequest, SearchUserParams } from '@/types/users';
 import { formatDate } from '@/utils/utils';
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
+
 
 
 
@@ -133,7 +130,7 @@ export function UsersTab() {
                                         <TableCell className="font-medium">{u.isSuspended}</TableCell>
                                         <TableCell>
                                             <div className="flex gap-2">
-                                                <Button size="sm" variant="outline" >수정</Button>
+                                                <UserEditModal/>
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -148,6 +145,95 @@ export function UsersTab() {
                     </CardContent>
                 </Card>
             </div>
+        </div>
+    );
+}
+
+export function UserEditModal() {
+    const useQuery = () => {
+        return new URLSearchParams(useLocation().search);
+    };
+
+    const navigate = useNavigate();
+    
+        const query = useQuery();
+        const userId = query.get('id');
+    
+        const [isOpen, setIsOpen] = useState(false);
+        const [userUpdt, setUserUpdt] = useState<UsersUpdateRequest>({
+            userId: Number(userId),
+            nickname: "",
+            isSuspended: "",
+            reason: "", 
+        });
+    
+        const fetchUser = async () => {
+            const response = await getData(endpoints.getUserInfo(Number(userId)));
+            if (response.status === 200) {
+                setUserUpdt(response.data);
+            }
+            console.log(response.data);
+        };
+    
+        useEffect(() => {
+            fetchUser();
+        }, []);
+    
+        const handleUserUpdt = async () => {
+            const response = await postData(endpoints.updateUser(Number(userId)), userUpdt);
+            if (response.status === 200) {
+                alert("회원 정보가 수정되었습니다.");
+                setIsOpen(false);
+                window.location.reload();
+            } else {
+                alert("회원 정보 수정 실패");
+                return false;
+            }
+        };
+
+
+    return (
+        <div>
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+                <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">수정</Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>회원 정보 수정</DialogTitle>
+                    </DialogHeader>
+                    <DialogDescription>
+                        관리자용 회원 정보 수정 페이지입니다.
+                    </DialogDescription>
+                    <div className="space-y-3">
+                        <Label className="mb-1 block">닉네임</Label>
+                        <div>{userUpdt.nickname}</div>
+                        <Label className="mb-1 block">정지 여부</Label>
+                        <Select value={userUpdt.isSuspended} onValueChange={e => setUserUpdt({ ...userUpdt, isSuspended: e })}>
+                                <SelectTrigger><SelectValue placeholder="분류 선택" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="N">활성화</SelectItem>
+                                    <SelectItem value="Y">정지</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        <Label className="mb-1 block">정지 사유</Label>
+                        <Textarea
+                            className="w-full border p-2 rounded"
+                            value={userUpdt.reason}
+                            onChange={(e) =>
+                                setUserUpdt({ ...userUpdt, reason: e.target.value })
+                            }
+                            rows={20}
+                        />
+                    </div>
+                    <div className="mt-4 flex justify-end gap-2">
+                        <DialogClose asChild>
+                            <Button variant="outline">취소</Button>
+                        </DialogClose>
+                        <Button onClick={handleUserUpdt}>수정</Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

@@ -37,8 +37,6 @@ export interface UsersUpdateRequest{
     nickname : string;
     isSuspended : string
     reason : string;
-    suspendedAt : Date;
-    releasedAt : Date;
 }
 
 export interface SearchUserParams {
