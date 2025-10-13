@@ -133,10 +133,10 @@ export const endpoints = {
     deleteProject: (projectId: number) => `creator/project/${projectId}`,
     getCreatorRewardList: (projectId: number) => `creator/projects/${projectId}/reward`,
     addReward: (projectId: number) => `creator/projects/${projectId}/reward`,
-    getCreatorProfileSummary: "creator/summary",
+    getCreatorProfileSummary: 'creator/summary',
+    uploadThumbnail: 'creator/project/thumbnail',
     getQnAListOfCreator: (p: SearchQnaParams) => `creator/qna?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup })}`,
     creatorDashboard: 'creator/dashBoard',
-
     creatorBackingList: 'creator/backingList',
     creatorShippingList: 'creator/shippingList',
     creatorShippingBackerList: (projectId: number) => `creator/shippingBackerList/${projectId}`,
