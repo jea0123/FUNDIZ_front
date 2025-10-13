@@ -1,39 +1,11 @@
-import React, { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import {
-    Tabs,
-    TabsList,
-    TabsTrigger,
-    TabsContent
-} from "@/components/ui/tabs";
-import {
-    Card,
-    CardHeader,
-    CardTitle,
-    CardContent
-} from "@/components/ui/card";
-import {
-    Table,
-    TableHeader,
-    TableRow,
-    TableHead,
-    TableBody,
-    TableCell
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import {
-    Select,
-    SelectTrigger,
-    SelectContent,
-    SelectItem,
-    SelectValue
-} from "@/components/ui/select";
-import { endpoints, getData, postData } from "@/api/apis";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
+import { endpoints, getData } from "@/api/apis";
 import type { Report, SearchRptParams } from "@/types/report";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { formatDate } from '@/utils/utils';
 
 // ========= 공용 타입 (DB 스키마 기반) =========
@@ -48,7 +20,7 @@ export type ReportStatus = {
 function useQueryState() {
     const [searchParams, setSearchParams] = useSearchParams();
 
-    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));    
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
     const size = Math.max(1, parseInt(searchParams.get("size") || "10", 10));
     const perGroup = Math.max(1, parseInt(searchParams.get("perGroup") || "5", 10));
     const keyword = searchParams.get("keyword") || "";
@@ -80,14 +52,15 @@ function useMyReport(params: SearchRptParams) {
         return endpoints.getMyReports(tempUserId, params);
     }, [page, size, perGroup, keyword]);
 
-    useEffect(() => {( async () => {
-                const {status, data} = await getData(url);
-                if (status === 200) {
-                    setItems(data.items);
-                    setTotal(data.totalElements);
-                }
-            })();
-        }, [url]);
+    useEffect(() => {
+        (async () => {
+            const { status, data } = await getData(url);
+            if (status === 200) {
+                setItems(data.items);
+                setTotal(data.totalElements);
+            }
+        })();
+    }, [url]);
 
     const filteredReports = useMemo(() => {
         return items.filter(r => reportFilter === '전체' ? true : r.reportStatus === reportFilter);
@@ -95,7 +68,7 @@ function useMyReport(params: SearchRptParams) {
 
     const handleFilterChange = (value: string) => {
         setReportFilter(value as '전체' | 'RECEIVED' | 'UNDER_REVIEW' | 'COMPLETED');
-    };  
+    };
 
     return { filteredReports, total, setItems, handleFilterChange };
 }
@@ -105,19 +78,19 @@ export function Pagination({ page, size, perGroup, total, onPage }: { page: numb
 
     return (
         <div className="flex items-center justify-center gap-2 mt-6">
-        <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onPage(page - 1)}>이전</Button>
-        <span className="text-sm text-gray-600">{page} / {lastPage}</span>
-        <Button variant="outline" size="sm" disabled={page >= lastPage} onClick={() => onPage(page + 1)}>다음</Button>
+            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onPage(page - 1)}>이전</Button>
+            <span className="text-sm text-gray-600">{page} / {lastPage}</span>
+            <Button variant="outline" size="sm" disabled={page >= lastPage} onClick={() => onPage(page + 1)}>다음</Button>
         </div>
     );
 }
 
-export function MyReportsTab(props: { params: SearchRptParams } ) {
+export function MyReportsTab(props: { params: SearchRptParams }) {
     const { page, size, perGroup, keyword, setPage } = useQueryState();
     const searchParams = { page, size, perGroup, keyword };
     const { filteredReports, handleFilterChange, total } = useMyReport(searchParams);
     const [reportFilter, setReportFilter] = useState<'전체' | 'RECEIVED' | 'UNDER_REVIEW' | 'COMPLETED'>('전체');
-    
+
     return (
         <div>
             <div>
