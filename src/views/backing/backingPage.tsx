@@ -9,60 +9,104 @@ import { Progress } from '../../components/ui/progress';
 import { ArrowLeft, Minus, Plus } from 'lucide-react';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { SavedAddressModal } from './SavedAddressModal';
-import { endpoints, getData } from '@/api/apis';
-import type { Reward } from '@/types/reward';
-import type { ProjectDetail } from '@/types/projects';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter} from '@/components/ui/dialog';
-import {RadioGroup, RadioGroupItem} from '@/components/ui/radio-group';
+import { endpoints, getData, postData } from '@/api/apis';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import type { BackingPrepare, BackingPagePayment, BackingRequest } from '@/types/backing';
 
-  function PaymentModal({ open, onClose, totalAmount, onConfirmPayment, }: { open: boolean; onClose: () => void; totalAmount: number; onConfirmPayment: () => void; }) {
-  const [method, setMethod] = useState('card');
+/* ----------------------------- 결제 모달 ----------------------------- */
+function PaymentModal({ open, onClose, totalAmount, paymentList, onConfirmPayment }: { open: boolean; onClose: () => void; totalAmount: number; paymentList: BackingPagePayment[]; onConfirmPayment: (method: string) => void }) {
+  const [selectedPayment, setSelectedPayment] = useState<string>(''); // 저장된 결제 선택
+  const [method, setMethod] = useState(''); // 새 결제수단 선택
+
+  const handleSelectSaved = (value: string) => {
+    setSelectedPayment(value);
+    setMethod(''); // 새 결제 해제
+  };
+
+  const handleSelectNew = (value: string) => {
+    setMethod(value);
+    setSelectedPayment(''); // 저장된 결제 해제
+  };
 
   return (
-    <Dialog open = {open} onOpenChange={onClose}>
-      <DialogContent className = "max-w-md">
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>결제하기</DialogTitle>
         </DialogHeader>
-        <div className ="space-y-4">
+
+        <div className="space-y-6">
           <p className="text-center text-lg font-semibold">총 금액: {totalAmount.toLocaleString()}원</p>
 
-          <RadioGroup value={method} onValueChange={setMethod} className="space-y-3">
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="card" id="card" />
-              <Label htmlFor="card">💳 카드 결제</Label>
+          {/* 저장된 결제정보 */}
+          {paymentList && paymentList.length > 0 && (
+            <div className="border rounded-md p-3 bg-gray-50">
+              <p className="font-medium text-sm mb-2">💾 저장된 결제 정보</p>
+              <RadioGroup value={selectedPayment} onValueChange={handleSelectSaved} className="space-y-2">
+                {paymentList.map((p, idx) => (
+                  <div key={p.cardCompany ?? idx} className={`flex items-center justify-between p-2 rounded-md border hover:bg-gray-100 transition ${selectedPayment === p.cardCompany ? 'bg-blue-50 border-blue-300' : ''}`}>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value={p.cardCompany ?? `pay-${idx}`} id={`pay-${idx}`} />
+                      <Label htmlFor={`pay-${idx}`} className="cursor-pointer text-sm font-medium">
+                        💳 {p.cardCompany ?? '등록된 결제수단'}
+                        {p.method ? ` (${p.method})` : ''}
+                      </Label>
+                    </div>
+                  </div>
+                ))}
+              </RadioGroup>
             </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="account" id="account" />
-              <Label htmlFor="account">🏦 계좌이체</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="simplepay" id="simplepay" />
-              <Label htmlFor="simplepay">⚡ 간편결제 (카카오페이 / 네이버페이)</Label>
-            </div>
-          </RadioGroup>
+          )}
+
+          {/*새 결제 선택 */}
+          <div className="space-y-3">
+            <p className="font-medium text-sm">새 결제수단 선택</p>
+            <RadioGroup value={method} onValueChange={handleSelectNew} className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="card" id="card" />
+                <Label htmlFor="card">💳 카드 결제</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="account" id="account" />
+                <Label htmlFor="account">🏦 계좌이체</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="simplepay" id="simplepay" />
+                <Label htmlFor="simplepay">⚡ 간편결제 (카카오페이 / 네이버페이)</Label>
+              </div>
+            </RadioGroup>
+          </div>
         </div>
+
         <DialogFooter className="flex justify-between mt-6">
           <Button variant="outline" onClick={onClose}>
             취소
           </Button>
-          <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => { onClose(); onConfirmPayment(); }}>
+          <Button
+            className="bg-blue-600 hover:bg-blue-700"
+            onClick={() => {
+              const chosen = selectedPayment || method || '선택된 결제수단 없음';
+              onConfirmPayment(chosen);
+              onClose();
+            }}
+            disabled={!selectedPayment && !method}
+          >
             결제하기
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
 
+/* ----------------------------- BackingPage 본문 ----------------------------- */
 export function BackingPage() {
   const tempUserId = 1;
   const { projectId } = useParams<{ projectId: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-
-  //items 파라미터 파싱 (예: "2x1,3x2,5x1")
   const itemsParam = searchParams.get('items');
   const rewardEntries = useMemo(() => {
     if (!itemsParam) return [];
@@ -72,10 +116,9 @@ export function BackingPage() {
     });
   }, [itemsParam]);
 
-  const [project, setProject] = useState<ProjectDetail | null>(null);
-  const [selectedRewards, setSelectedRewards] = useState<Reward[]>([]);
+  const [prepareData, setPrepareData] = useState<BackingPrepare | null>(null);
   const [rewardQuantities, setRewardQuantities] = useState<Record<number, number>>({});
-  const [customAmount, setCustomAmount] = useState<string>('');
+  const [customAmount, setCustomAmount] = useState('');
   const [shippingAddress, setShippingAddress] = useState<any>(null);
   const [manualAddress, setManualAddress] = useState({
     recipient: '',
@@ -84,111 +127,129 @@ export function BackingPage() {
     detailAddr: '',
     postalCode: '',
   });
-
-  const [backerName, setBackerName] = useState<string>('');
-  const [backerEmail, setBackerEmail] = useState<string>('');
   const [addressMode, setAddressMode] = useState<'select' | 'manual'>('select');
   const [loading, setLoading] = useState(true);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
-  
-  //유저 정보 불러오기
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const res = await getData<any>(endpoints.getUserInfo(tempUserId));
-        if (res.status === 200 && res.data) {
-          setBackerName(res.data.nickname);
-          setBackerEmail(res.data.email);
-        } else {
-          setBackerName('홍길동');
-          setBackerEmail('user@example.com');
-        }
-      } catch {
-        setBackerName('홍길동');
-        setBackerEmail('user@example.com');
-      }
-    };
-    fetchUserInfo();
-  }, []);
 
-  // 프로젝트 및 리워드 데이터 로드
   useEffect(() => {
-    const fetchProject = async () => {
+    const fetchPrepareData = async () => {
       if (!projectId) return;
+
       try {
-        const response = await getData<ProjectDetail>(endpoints.getProjectDetail(Number(projectId)));
+        const response = await getData(endpoints.backingPrepare(tempUserId, Number(projectId)));
+
         if (response.status === 200 && response.data) {
-          setProject(response.data);
+          const raw = response.data;
 
-          // rewardEntries에 해당하는 리워드 필터링
-          const rewards = response.data.rewardList?.filter((r) => rewardEntries.some((entry) => entry.rewardId === r.rewardId));
+          const data = {
+            ...raw,
+            rewardList: raw.rewardsList ?? [],
+            paymentList: raw.backingPagePaymentList ?? [],
+          };
 
-          const defaultReward = response.data.rewardList?.[0] ? [response.data.rewardList[0]] : [];
-          const finalRewards = rewards?.length ? rewards : defaultReward;
-          setSelectedRewards(finalRewards);
+          const rewardEntries = itemsParam
+            ? itemsParam.split(',').map((item) => {
+                const [idStr, qtyStr] = item.split('x');
+                return { rewardId: Number(idStr), qty: Number(qtyStr) };
+              })
+            : [];
 
-          //수량 세팅 — rewardEntries의 qty를 그대로 반영
+          let rewards = data.rewardList;
+          if (!rewards || rewards.length === 0) {
+            const projectRes = await getData(endpoints.getProjectDetail(Number(projectId)));
+            if (projectRes.status === 200 && projectRes.data?.rewardList) {
+              rewards = projectRes.data.rewardList;
+            }
+          }
+
+          const selectedRewards = rewards.filter((r) => rewardEntries.some((entry) => entry.rewardId === r.rewardId));
+
           const initialQuantities: Record<number, number> = {};
-          finalRewards.forEach((r) => {
+          selectedRewards.forEach((r) => {
             const entry = rewardEntries.find((e) => e.rewardId === r.rewardId);
             initialQuantities[r.rewardId] = entry?.qty ?? 1;
           });
+
+          setPrepareData({ ...data, rewardList: selectedRewards });
           setRewardQuantities(initialQuantities);
+        } else {
+          console.error('BackingPrepare 응답 데이터 없음:', response);
         }
       } catch (err) {
-        console.error('프로젝트 API 실패:', err);
+        console.error('BackingPrepare API 실패:', err);
       } finally {
         setLoading(false);
       }
     };
-    fetchProject();
+
+    fetchPrepareData();
   }, [projectId]);
 
-  if (loading) return <p className="text-center py-10 text-gray-500">프로젝트 정보를 불러오는 중...</p>;
-  if (!project || selectedRewards.length === 0) return <p className="text-center py-10 text-gray-500">프로젝트 정보를 불러올 수 없습니다.</p>;
+  if (loading) return <p className="text-center py-10 text-gray-500">데이터를 불러오는 중...</p>;
+  if (!prepareData) return <p className="text-center py-10 text-gray-500">후원 정보를 불러올 수 없습니다.</p>;
 
-  const achievementRate = Math.round((project.currAmount / project.goalAmount) * 100);
+  const { title, thumbnail, creatorName, goalAmount, currAmount, rewardList, nickname, email, paymentList } = prepareData as any;
 
-  //총 금액 계산
+  const achievementRate = Math.round((currAmount / goalAmount) * 100);
+
   const getTotalAmount = () => {
-    const rewardsTotal = selectedRewards.reduce((sum, r) => sum + (rewardQuantities[r.rewardId] ?? 1) * r.price, 0);
+    const rewardsTotal = rewardList.reduce((sum, r) => sum + (rewardQuantities[r.rewardId] ?? 1) * r.price, 0);
     const additional = customAmount ? parseInt(customAmount) : 0;
     return rewardsTotal + additional;
   };
 
+  const handleOpenPayment = () => {
+    if (rewardList.length === 0) {
+      alert('리워드를 선택해주세요.');
+      return;
+    }
+    setIsPaymentOpen(true);
+  };
 
-  //후원 완료 후 confirm 처리 (하나의 confirm으로 통합)
-  const handleSubmit = async () => {
+  //  결제 완료 후 처리 (데이터 저장)
+  const handleConfirmPayment = async (method: string) => {
     const totalAmount = getTotalAmount();
 
-    if (addressMode === 'manual' && !manualAddress.recipient) {
-      alert('직접 입력한 배송지 정보를 모두 입력해주세요.');
-      return;
-    }
-    if (addressMode === 'select' && !shippingAddress) {
-      alert('배송지를 선택해주세요.');
-      return;
-    }
+    const toLocalDate = (date: Date) => date.toISOString().split('T')[0];
 
-    //1단계: 후원 확정 확인
-    const confirmBacking = window.confirm(`총 ${totalAmount.toLocaleString()}원 (${selectedRewards.length}개의 리워드)를 후원하시겠습니까?`);
+    const backingData: BackingRequest = {
+      projectId: Number(projectId),
+      thumbnail,
+      title,
+      goalAmount,
+      currAmount,
+      endDate: toLocalDate(new Date()), //  문자열로 변경
+      projectStatus: 'ONGOING',
+      rewardId: rewardList[0]?.rewardId ?? 0,
+      rewardName: rewardList[0]?.rewardName ?? '',
+      deliveryDate: toLocalDate(new Date()), //  문자열로 변경
+      price: rewardList[0]?.price ?? 0,
+      quantity: rewardQuantities[rewardList[0]?.rewardId] ?? 1,
+      backingId: 0,
+      userId: tempUserId,
+      amount: totalAmount,
+      createdAt: toLocalDate(new Date()), // ✅ 숫자 → 문자열 변경
+      backingStatus: 'COMPLETED',
+    };
+    console.log('backingData', JSON.stringify(backingData, null, 2));
+    try {
+      const res = await postData(endpoints.addBacking(tempUserId), backingData);
 
-    if (!confirmBacking) return; //아니오 → 아무 일도 안 함
-
-    //2단계: 후원 완료 및 이동 여부 확인
-    const goToMyPage = window.confirm(`후원이 완료되었습니다!\n총 금액: ${totalAmount.toLocaleString()}원\n(${selectedRewards.length}개의 리워드)\n\n👉 마이페이지로 이동하시겠습니까?`);
-
-    if (goToMyPage) {
-      navigate('/user/mypage');
-    } else {
-      navigate(`/project/${projectId}`);
+      if (res.status === 200) {
+        alert(`결제가 완료되었습니다!\n결제수단: ${method}\n총 금액: ${totalAmount.toLocaleString()}원`);
+        navigate('/user/mypage');
+      } else {
+        alert('후원 저장 실패: ' + (res.message || '서버 오류'));
+      }
+    } catch (error) {
+      console.error('후원 생성 오류:', error);
+      alert('후원 정보를 저장하는 중 오류가 발생했습니다.');
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-5xl mx-auto px-4 py-8">
-        {/* 헤더 */}
         <div className="flex items-center gap-4 mb-8">
           <Button variant="outline" size="sm" onClick={() => navigate(-1)} className="flex items-center gap-2">
             <ArrowLeft className="w-4 h-4" />
@@ -197,17 +258,19 @@ export function BackingPage() {
           <h1 className="text-3xl font-bold">프로젝트 후원하기</h1>
         </div>
 
+        <PaymentModal open={isPaymentOpen} onClose={() => setIsPaymentOpen(false)} totalAmount={getTotalAmount()} paymentList={paymentList} onConfirmPayment={handleConfirmPayment} />
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             {/* 프로젝트 요약 */}
             <Card>
               <CardContent className="p-6 flex gap-6">
                 <div className="w-40 h-28 rounded bg-gray-200 overflow-hidden">
-                  <ImageWithFallback src={project.thumbnail} alt={project.title} className="w-full h-full object-cover" />
+                  <ImageWithFallback src={thumbnail} alt={title} className="w-full h-full object-cover" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold">{project.title}</h3>
-                  <p className="text-sm text-muted-foreground">by {project.creatorName}</p>
+                  <h3 className="text-xl font-semibold">{title}</h3>
+                  <p className="text-sm text-muted-foreground">by {creatorName}</p>
                   <Progress value={achievementRate} className="h-2 mt-2" />
                   <p className="text-sm mt-1">{achievementRate}% 달성</p>
                 </div>
@@ -222,29 +285,25 @@ export function BackingPage() {
               <CardContent className="space-y-3">
                 <div>
                   <Label>닉네임</Label>
-                  <Input value={backerName} readOnly className="bg-gray-100 cursor-not-allowed" />
+                  <Input value={nickname} readOnly className="bg-gray-100 cursor-not-allowed" />
                 </div>
                 <div>
                   <Label>이메일</Label>
-                  <Input value={backerEmail} readOnly className="bg-gray-100 cursor-not-allowed" />
+                  <Input value={email} readOnly className="bg-gray-100 cursor-not-allowed" />
                 </div>
               </CardContent>
             </Card>
 
-            {/* 선택한 리워드 */}
+            {/* 리워드 */}
             <Card>
               <CardHeader>
                 <CardTitle>선택한 리워드</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {selectedRewards.map((r) => (
+                {rewardList.map((r) => (
                   <div key={r.rewardId} className="p-3 border rounded-lg">
                     <p className="font-medium">{r.rewardName}</p>
-                    <p className="text-gray-600 text-sm">{r.rewardContent}</p>
-                    <p className="mt-1 text-sm text-gray-500">
-                      가격: {r.price.toLocaleString()}원 | 예상 발송: {new Date(r.deliveryDate).toLocaleDateString()}
-                    </p>
-
+                    <p className="text-gray-600 text-sm">가격: {r.price.toLocaleString()}원</p>
                     <div className="mt-2 flex items-center gap-3">
                       <Button
                         type="button"
@@ -291,7 +350,7 @@ export function BackingPage() {
               </CardContent>
             </Card>
 
-            {/* 배송지 선택 / 직접 입력 */}
+            {/* 배송지 선택 */}
             <Card>
               <CardHeader>
                 <CardTitle>배송지 선택 / 직접 입력</CardTitle>
@@ -344,7 +403,7 @@ export function BackingPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="p-3 bg-gray-50 rounded-lg space-y-2">
-                  {selectedRewards.map((r) => (
+                  {rewardList.map((r) => (
                     <div key={r.rewardId} className="text-sm flex justify-between">
                       <span>{r.rewardName}</span>
                       <span>
@@ -364,7 +423,7 @@ export function BackingPage() {
                   <span>총 금액</span>
                   <span className="text-blue-600">{getTotalAmount().toLocaleString()}원</span>
                 </div>
-                <Button onClick={handleSubmit} className="w-full bg-blue-600 hover:bg-blue-700" disabled={selectedRewards.length === 0}>
+                <Button onClick={handleOpenPayment} className="w-full bg-blue-600 hover:bg-blue-700" disabled={rewardList.length === 0}>
                   후원하기
                 </Button>
               </CardContent>

@@ -1,4 +1,4 @@
-import type { AddrAddRequest, AddressResponse } from './address';
+import type { AddressResponse } from './address';
 import type { BackingPagePayment } from './payment';
 
 export interface MyPageBacking {
@@ -33,13 +33,6 @@ export interface BackingMyPageProject {
   projectStatus: string;
 }
 
-export interface BackingRequest {
-  userId: number;
-  backingRewardList: BackingRewardList[];
-  addrId: number;
-  newAddress?: AddrAddRequest;
-}
-
 export interface BackingRewardList {
   rewardId: number;
   rewardName: string;
@@ -66,8 +59,6 @@ export interface BackingPrepare {
   rewardList: BackingRewardList[];
 
   paymentList: BackingPagePayment[];
-
-  
 }
 
 export interface BackingCreatorBackerList {
@@ -97,4 +88,25 @@ export interface BackingCreatorProjectList {
   completionRate: number;
 }
 
+export interface BackingRequest {
+  projectId: number;
+  thumbnail: string;
+  title: string;
+  goalAmount: number;
+  currAmount: number;
+  endDate: Date;
+  projectStatus: string;
 
+  rewardId: number;
+  rewardName: string;
+  deliveryDate: Date;
+
+  price: number;
+  quantity: number;
+
+  backingId: number;
+  userId: number;
+  amount: number;
+  createdAt: number;
+  backingStatus: string;
+}
