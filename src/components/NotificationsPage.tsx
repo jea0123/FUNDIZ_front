@@ -6,7 +6,7 @@ import { useCookies } from "react-cookie";
 import type { Notification } from "@/types/notification";
 import { getElapsedTime, toastError, toastSuccess } from "@/utils/utils";
 
-const typeIcon: Record<string, JSX.Element> = {
+export const typeIcon: Record<string, JSX.Element> = {
     BACKING_SUCCESS: <CreditCard className="h-4 w-4 text-blue-500" />,
     BACKING_FAIL: <CreditCard className="h-4 w-4 text-red-500" />,
     SHIPPING_SENT: <Truck className="h-4 w-4 text-purple-500" />,
@@ -111,7 +111,7 @@ export default function NotificationsPage() {
     }, [cookie.accessToken]);
 
     return (
-        <div className="max-w-2xl mx-auto p-6">
+        <div className="max-w-4xl mx-auto p-6">
             {/* 헤더 */}
             <div className="flex items-center justify-between mb-4">
                 <h1 className="text-xl font-semibold">알림</h1>
