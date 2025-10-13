@@ -12,8 +12,9 @@ import type { Subcategory } from "@/types/projects";
 import type { RewardDraft, RewardForm } from "@/types/reward";
 import type { FieldErrors } from "@/types/reward-validator";
 import { formatDate } from "@/utils/utils";
-import { Plus, Trash, Truck, Upload, X } from "lucide-react";
+import { Plus, Trash, Truck, X } from "lucide-react";
 import { useRef, useState } from "react";
+import { ThumbnailUploader } from "./ThumbnailUploader";
 
 const numberKR = (n?: number | null) => new Intl.NumberFormat("ko-KR").format(n || 0);
 
@@ -96,16 +97,11 @@ export function CreateProjectSteps(props: {
                     <p className="text-sm text-gray-500 mt-1">{project.title.length}/50자</p>
                 </div>
 
-                {/* TODO: 첨부파일 업로드 기능 추가 */}
-                <div>
-                    <Label>대표 이미지 *</Label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                        <Upload className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                        <p className="text-gray-500 mb-2">이미지를 드래그하거나 클릭하여 업로드</p>
-                        <Button variant="outline" size="sm">파일 선택</Button>
-                        <p className="text-xs text-gray-400 mt-2">권장 크기: 1200x800px, 최대 4MB (JPG, PNG)</p>
-                    </div>
-                </div>
+                <ThumbnailUploader
+                    initialUrl={project.thumbnail}
+                    onUploaded={(url) => setProject(p => ({ ...p, thumbnail: url }))}
+                    onCleared={() => setProject(p => ({ ...p, thumbnail: "" }))}
+                />
 
                 {/* TODO: 프로젝트 내용 단락 추가 */}
 
