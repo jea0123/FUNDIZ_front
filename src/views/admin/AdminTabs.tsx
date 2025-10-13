@@ -10,6 +10,7 @@ import { NoticeAdminTab } from "./tabs/NoticeAdminTab";
 import { NoticeAddTab } from "./tabs/NoticeAddTab";
 import { NoticeUpdtTab } from "./tabs/NoticeUpdtTab";
 import { ProjectsTab } from "./tabs/ProjectsTab";
+import SettlementTab from "./tabs/SettlementTab";
 
 export function AdminTabs() {
     const [sp, setSp] = useSearchParams();
@@ -34,6 +35,7 @@ export function AdminTabs() {
             <TabsContent value="notice"><NoticeAdminTab /></TabsContent>
             <TabsContent value="noticeadd"><NoticeAddTab /></TabsContent>
             <TabsContent value="noticeupdate"><NoticeUpdtTab /></TabsContent>
+            <TabsContent value="settlement"> <SettlementTab /></TabsContent>
         </Tabs>
     );
 }

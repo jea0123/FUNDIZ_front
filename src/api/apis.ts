@@ -6,6 +6,7 @@ import type { SearchIqrParams } from '@/types/inquiry';
 import type { SearchUserParams } from '@/types/admin';
 import type { SearchQnaParams } from '@/types/qna';
 import ky from 'ky';
+import type { SearchSettlementParams } from '@/types/settlement';
 
 export const kyInstance = ky.create({
     prefixUrl: 'http://localhost:9099/api/v1',
@@ -173,6 +174,9 @@ export const endpoints = {
     adminUpdateProject: (projectId: number) => `admin/project/${projectId}`,
     cancelProject: (projectId: number) => `admin/project/${projectId}/cancel`,
     getUsers: (p: SearchUserParams) => `admin/user/list?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
+    getSettlements: (p: SearchSettlementParams) => `admin/settlement/list?${toQueryString({ q: p.q, status: p.status, from: p.from, to: p.to, page: p.page, size: p.size, perGroup: p.perGroup })}`,
+    getSettlementSummary: 'admin/settlement/summary',
+    updateStatus: 'admin/settlement',
 
     // ==================== Category API ====================
     getCategories: 'categories',
