@@ -1,7 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { Route, Routes, useNavigate } from 'react-router-dom';
 import { LoginPage } from './views/auth/LoginPage';
-import { MyPage } from './views/user/MyPage';
 import { RegisterPage } from './views/auth/RegisterPage';
 import { useLoginUserStore } from './store/LoginUserStore.store';
 import { useCookies } from 'react-cookie';
@@ -12,7 +11,6 @@ import MainPage from './views/MainPage';
 import { setNavigator } from './utils/navigator';
 import { NoticeDetailPage } from './views/cs/NoticeDetail';
 import ProjectsAllPage, { ProjectByCategoryPage, ProjectBySubcategoryPage, SearchProjectPage } from './views/project/ProjectAllPage';
-import { BackingPage } from './views/backing/BackingPage';
 import FundingLoader from './components/FundingLoader';
 import { ApprovalDetail } from './views/admin/tabs/ApprovalDetail';
 import AdminProjectEdit from './views/admin/tabs/AdminProjectEdit';
@@ -35,6 +33,15 @@ import CreatorBacking from './views/creator/pages/CreatorBacking';
 import CreatorAddReward from './views/creator/pages/CreatorAddReward';
 import CreatorSettlementPage from './views/creator/pages/CreatorSettlementPage';
 import RegisterCreator from './views/creator/RegistCreator';
+import MyPageLayout from './views/user/MyPageLayout';
+import NotificationTab from './views/user/tabs/NotificationTab';
+import AccountSettingTab from './views/user/tabs/AccountSettingTab';
+import { MyQnATab } from './views/user/tabs/MyQnATab';
+import { MyInquiryTab } from './views/user/tabs/MyInquiryTab';
+import { MyReportsTab } from './views/user/tabs/MyReportsTab';
+import BackingTab from './views/user/tabs/BackingTab';
+import LikedProjectTab from './views/user/tabs/LikedProjectTab';
+import { BackingPage } from './views/backing/backingPage';
 
 const AdminTabs = lazy(() => import('./views/admin/AdminTabs').then((module) => ({ default: module.AdminTabs })));
 
@@ -89,8 +96,15 @@ export default function App() {
               <Route path=":projectId/backing" element={<BackingPage />} />
             </Route>
 
-            <Route path="/user">
-              <Route path="mypage" element={<MyPage />} />
+            <Route path="/user" element={<MyPageLayout />}>
+              <Route index element={<BackingTab />} />
+              {/* <Route path="support" element={<BackingTab />} /> */}
+              <Route path="wishlist" element={<LikedProjectTab />} />
+              <Route path="settings" element={<AccountSettingTab />} />
+              <Route path="notifications" element={<NotificationTab />} />
+              <Route path="myqna" element={<MyQnATab />} />
+              <Route path="myinquiry" element={<MyInquiryTab />} />
+              <Route path="myreports" element={<MyReportsTab />} />
             </Route>
 
             <Route path="/creator/register" element={<RegisterCreator />} />
