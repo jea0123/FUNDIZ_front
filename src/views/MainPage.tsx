@@ -167,6 +167,10 @@ export function RecentView({ title, perRow = 5, }: { title?: string; perRow?: nu
 
     const pages = useMemo(() => chunk(recentView ?? [], perRow), [recentView, perRow]);
     const [page, setPage] = useState(0);
+    const [cookie] = useCookies();
+
+    // 로그인 상태가 아니면 최근 본 프로젝트를 불러오지 않음
+    if (!cookie.accessToken) return <></>;
 
     /**
      * @description 최근 본 프로젝트 불러오기
@@ -174,8 +178,7 @@ export function RecentView({ title, perRow = 5, }: { title?: string; perRow?: nu
      * getRecentViewProjects();
      */
     const getRecentViewProjects = async () => {
-        const userId = 20; // 임시 userId
-        const response = await getData(endpoints.getRecentView(userId));
+        const response = await getData(endpoints.getRecentView, cookie.accessToken);
         if (response.status === 200) {
             setRecentView(response.data);
         }
