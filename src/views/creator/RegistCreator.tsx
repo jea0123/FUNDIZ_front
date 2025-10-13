@@ -128,7 +128,7 @@ export default function RegisterCreator() {
                 <CardContent>
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                                 {/* 프로필 이미지 */}
                                 <FormField
                                     control={form.control}
@@ -161,7 +161,7 @@ export default function RegisterCreator() {
                                     control={form.control}
                                     name="creatorName"
                                     render={({ field }) => (
-                                        <FormItem className="md:col-span-2">
+                                        <FormItem className="md:col-span-2 ml-30">
                                             <FormLabel>판매자 닉네임</FormLabel>
                                             <FormControl>
                                                 <Input placeholder="최대 10자" {...field} />
@@ -218,7 +218,7 @@ export default function RegisterCreator() {
                                     control={form.control}
                                     name="businessNum"
                                     render={({ field }) => (
-                                        <FormItem className="md:col-span-2">
+                                        <FormItem className="md:col-span-2 ml-30">
                                             <FormLabel>사업자번호</FormLabel>
                                             <FormControl>
                                                 <Input
@@ -241,7 +241,7 @@ export default function RegisterCreator() {
                             </div>
 
                             {/* 연락/정산 정보 */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <FormField
                                     control={form.control}
                                     name="email"
@@ -264,7 +264,7 @@ export default function RegisterCreator() {
                                     control={form.control}
                                     name="phone"
                                     render={({ field }) => (
-                                        <FormItem>
+                                        <FormItem className="md:col-span-2 ml-30">
                                             <FormLabel>전화번호</FormLabel>
                                             <FormControl>
                                                 <Input placeholder="010-1234-5678" {...field} />
@@ -323,7 +323,7 @@ export default function RegisterCreator() {
                                     control={form.control}
                                     name="account"
                                     render={({ field }) => (
-                                        <FormItem className="md:col-span-2">
+                                        <FormItem className="md:col-span-2 ml-30">
                                             <FormLabel>계좌번호</FormLabel>
                                             <FormControl>
                                                 <Input placeholder="하이픈 없이 입력" {...field} />

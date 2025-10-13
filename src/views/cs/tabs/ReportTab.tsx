@@ -46,17 +46,15 @@ export function ReportTab() {
                             <Select value={rptAdd.reportType} onValueChange={e => setRptAdd({ ...rptAdd, reportType: e })}>
                                 <SelectTrigger><SelectValue placeholder="분류 선택" /></SelectTrigger>
                                 <SelectContent>
-                                    {['FRAUD',
-                                    'COPYRIGHT',
-                                    'ILLEGAL',
-                                    'OBSCENE',
-                                    'PRIVACY',
-                                    'DUPPLICATE',
-                                    'UNCONTACTABLE',
-                                    'POLICY',
-                                    'OTHER'].map(o => (
-                                        <SelectItem key={o} value={o}>{o}</SelectItem>
-                                    ))}
+                                    <SelectItem value="FRAUD">사기/허위정보</SelectItem>
+                                    <SelectItem value="COPYRIGHT">지식재산권 침해</SelectItem>
+                                    <SelectItem value="ILLEGAL">불법/금지된 상품</SelectItem>
+                                    <SelectItem value="OBSCENE">음란/선정적/폭력적 콘텐츠</SelectItem>
+                                    <SelectItem value="PRIVACY">개인정보 침해</SelectItem>
+                                    <SelectItem value="DUPLICATE">타 플랫폼 동시 판매</SelectItem>
+                                    <SelectItem value="UNCONTACTABLE">연락 두절</SelectItem>
+                                    <SelectItem value="POLICY">정책 위반</SelectItem>
+                                    <SelectItem value="OTHER">기타</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

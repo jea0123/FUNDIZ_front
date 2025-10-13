@@ -45,6 +45,9 @@ export function AdminConsole() {
                     <NavLink to="/admin?tab=notice" className={({ isActive }) => linkCls(isActive)}>
                         <Megaphone className="mr-2 h-4 w-4" /> 공지사항 관리
                     </NavLink>
+                    <NavLink to="/admin?tab=settlement" className={({ isActive }) => linkCls(isActive)}>
+                        <Users className="mr-2 h-4 w-4" /> 정산 관리
+                    </NavLink>
                 </nav>
 
                 <div className="flex-1 min-w-0 mt-6">

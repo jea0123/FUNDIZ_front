@@ -2,7 +2,7 @@ export type LoginUser = {
     userId: number;
     email: string;
     nickname: string;
-    profileImg: string;
+    profileImg: string | null;
     joinedAt: Date;
     followCnt: number;
     isCreator: string;
