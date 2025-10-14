@@ -27,7 +27,7 @@ export const kyInstance = ky.create({
         }
 
         if (pathname.includes('/api/v1/creator/')) {
-          const devId = localStorage.getItem('DEV_CREATOR_ID') || '179';
+          const devId = localStorage.getItem('DEV_CREATOR_ID') || '20';
           req.headers.set('X-Dev-Creator-Id', devId);
         }
       },
@@ -111,6 +111,8 @@ export const endpoints = {
   signUp: 'auth/signUp',
   signIn: 'auth/signIn',
   withdraw: 'auth/withdraw',
+  registerAdmin: 'auth/registerAdmin',
+  loginAdmin: 'auth/loginAdmin',
 
   // ==================== User API ====================
   getLoginUser: 'user/loginUser',
@@ -190,8 +192,6 @@ export const endpoints = {
   updateStatus: 'admin/settlement',
   getUserInfo: (userId: number) => `admin/user/info/${userId}`,
   updateUser: (userId: number) => `admin/user/update/${userId}`,
-  registerAdmin: 'admin/register',
-  loginAdmin: 'admin/login',
 
   // ==================== Category API ====================
   getCategories: 'categories',

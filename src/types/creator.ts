@@ -1,3 +1,5 @@
+import type { M } from 'node_modules/framer-motion/dist/types.d-Cjd591yU';
+import type { DailyCount, MonthCount } from './backing';
 import type { Reward, RewardCreateRequestDto } from './reward';
 import type { Tag } from './tag';
 
@@ -112,4 +114,7 @@ export interface CreatorDashboard {
   top3BackerCnt: CreatorDashboardRanking[];
   top3LikeCnt: CreatorDashboardRanking[];
   top3ViewCnt: CreatorDashboardRanking[];
+
+  dailyStatus: DailyCount[];
+  monthStatuss: MonthCount[];
 }

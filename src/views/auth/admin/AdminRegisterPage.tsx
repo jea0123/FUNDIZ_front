@@ -24,35 +24,19 @@ export function AdminRegisterPage() {
             return;
         }
         setIsLoading(true);
-        const requestBody = { adminId: formData.adminId, password: formData.adminPwd };
-        try {
-            const response = await postData(endpoints.registerAdmin, requestBody);
-            signUpResponse(response);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const signUpResponse = (response: any) => {
-        if (!response) {
-            alert('알 수 없는 오류가 발생했습니다.');
-            return;
-        }
-        const { status } = response;
-        if (status === 200 || status === 201) {
+        const requestBody = { adminId: formData.adminId, adminPwd: formData.adminPwd };
+        const response = await postData(endpoints.registerAdmin, requestBody);
+        if (response && response.status === 200) {
             alert('회원가입이 완료되었습니다.');
-            navigate('/auth/login', { replace: true });
-            return;
-        } else if (status === 409) {
-            alert('이미 가입된 이메일입니다.');
-            return;
-        } else if (status === 0) {
+            navigate('/admin/login', { replace: true });
+        } else if (response && response.status === 409) {
+            alert('이미 가입된 아이디입니다.');
+        } else if (response && response.status === 0) {
             alert('서버 응답이 없습니다. 잠시 후 다시 시도해주세요.');
-            return;
         } else {
             alert('회원가입에 실패했습니다. 다시 시도해주세요.');
-            return;
         }
+        setIsLoading(false);
     };
 
     const isFormValid = () => {
@@ -98,7 +82,7 @@ export function AdminRegisterPage() {
                                         type={showPassword ? 'text' : 'password'}
                                         placeholder="8자 이상 입력하세요"
                                         value={formData.adminPwd}
-                                        onChange={(e) => handleInputChange('password', e.target.value)}
+                                        onChange={(e) => handleInputChange('adminPwd', e.target.value)}
                                         className="pl-10 pr-10"
                                         required
                                     />

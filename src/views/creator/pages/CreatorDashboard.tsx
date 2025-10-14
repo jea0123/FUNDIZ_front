@@ -30,6 +30,8 @@ const defaultCreatorDashboard: CreatorDashboard = {
   top3BackerCnt: [],
   top3LikeCnt: [],
   top3ViewCnt: [],
+  dailyStatus: [],
+  monthStatuss: [],
 };
 
 // 최근 7일 데이터 (더미)
