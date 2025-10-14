@@ -31,7 +31,7 @@ export function ReportTab() {
               return false;
             }
 
-            navigate('/user/mypage', {state : { tab : 'myreports'}});
+            navigate('/user/myreports');
           };
 
     return (
