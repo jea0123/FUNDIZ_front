@@ -324,7 +324,7 @@ export default function RegisterCreator() {
                                     name="account"
                                     render={({ field }) => (
                                         <FormItem className="md:col-span-2 ml-30">
-                                            <FormLabel>계좌번호</FormLabel>
+                                            <FormLabel>계좌번호 (정산용)</FormLabel>
                                             <FormControl>
                                                 <Input placeholder="하이픈 없이 입력" {...field} />
                                             </FormControl>

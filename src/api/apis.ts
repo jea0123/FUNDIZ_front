@@ -81,8 +81,10 @@ const responseHandler = async <T = any>(res: Response): Promise<ApiResult<T>> =>
   return { status: res.status, data: body?.data ?? null, message: body.message ?? null } as ApiResult<T>;
 };
 
-const authorization = (accessToken: string | undefined) => {
-  return { headers: { Authorization: `Bearer ${accessToken}` } };
+const authorization = (accessToken?: string) => {
+  return accessToken
+    ? { headers: { Authorization: `Bearer ${accessToken}` } }
+    : {};
 };
 
 const withBody = (data: any) => (typeof FormData !== 'undefined' && data instanceof FormData ? { body: data } : { json: data ?? {} });
