@@ -203,6 +203,8 @@ export const endpoints = {
   getMyReports: (userId: number, p: SearchIqrParams) => `cs/report/mylist/${userId}?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
   getReportDetail: (reportId: number) => `cs/report/${reportId}`,
   addReport: (userId: number) => `cs/report/${userId}/add`,
+  getInquiryReplyList: (inqId: number) => `cs/inquiry/reply/${inqId}`,
+  addInquiryReply: (inqId: number) => `cs/inquiry/reply/${inqId}`,
 
   // ==================== Notification API ====================
   getNotificationSSE: (userId: number) => `notifications/stream?userId=${userId}`,
