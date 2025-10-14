@@ -209,29 +209,42 @@ export function BackingPage() {
   //  결제 완료 후 처리 (데이터 저장)
   const handleConfirmPayment = async (method: string) => {
     const totalAmount = getTotalAmount();
-
     const toLocalDate = (date: Date) => date.toISOString().split('T')[0];
 
+    if (!shippingAddress?.addrId) {
+      alert('배송지를 선택해주세요.');
+      return;
+    }
+
     const backingData: BackingRequest = {
-      projectId: Number(projectId),
-      thumbnail,
-      title,
-      goalAmount,
-      currAmount,
-      endDate: toLocalDate(new Date()), //  문자열로 변경
-      projectStatus: 'ONGOING',
-      rewardId: rewardList[0]?.rewardId ?? 0,
-      rewardName: rewardList[0]?.rewardName ?? '',
-      deliveryDate: toLocalDate(new Date()), //  문자열로 변경
-      price: rewardList[0]?.price ?? 0,
-      quantity: rewardQuantities[rewardList[0]?.rewardId] ?? 1,
-      backingId: 0,
-      userId: tempUserId,
-      amount: totalAmount,
-      createdAt: toLocalDate(new Date()), // ✅ 숫자 → 문자열 변경
-      backingStatus: 'COMPLETED',
+      backing: {
+        userId: tempUserId,
+        amount: totalAmount,
+        createdAt: toLocalDate(new Date()),
+        backingStatus: 'COMPLETED',
+      },
+      backingDetail: {
+        rewardId: rewardList[0]?.rewardId ?? 0,
+        price: rewardList[0]?.price ?? 0,
+        quantity: rewardQuantities[rewardList[0]?.rewardId] ?? 1,
+      },
+      shipping: {
+        addrId: shippingAddress.addrId,
+        shippingStatus: 'PENDING',
+        trackingNum: null,
+        shippedAt: null,
+        deliveredAt: null,
+      },
+      payment: {
+        method: method || 'CARD',
+        amount: totalAmount,
+        status: 'COMPLETED',
+        paidAt: toLocalDate(new Date()),
+      },
     };
-    console.log('backingData', JSON.stringify(backingData, null, 2));
+
+    console.log('📤 backingData', JSON.stringify(backingData, null, 2));
+
     try {
       const res = await postData(endpoints.addBacking(tempUserId), backingData);
 
