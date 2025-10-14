@@ -3,10 +3,10 @@ import type { SearchCreatorProjectDto } from '@/types/creator';
 import type { SearchProjectParams } from '@/types/projects';
 import type { SearchNoticeParams } from '@/types/notice';
 import type { SearchIqrParams } from '@/types/inquiry';
-import type { SearchUserParams } from '@/types/admin';
 import type { SearchQnaParams } from '@/types/qna';
 import ky from 'ky';
 import type { SearchSettlementParams } from '@/types/settlement';
+import type { SearchUserParams } from '@/types/users';
 
 export const kyInstance = ky.create({
   prefixUrl: 'http://localhost:9099/api/v1',
@@ -50,7 +50,7 @@ export const kyInstance = ky.create({
   },
 });
 
-type ApiResult<T = any> = { status: number; data: T | null };
+type ApiResult<T = any> = { status: number; data: T | null; message?: string | null };
 
 /**
  * @description
