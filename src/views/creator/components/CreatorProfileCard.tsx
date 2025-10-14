@@ -14,7 +14,7 @@ export default function CreatorProfileCard() {
                 <div className="flex justify-center mb-4 space-x-2">
                     <Button
                         variant={roleView === "user" ? "default" : "outline"}
-                        onClick={() => navigate("/user/mypage")}
+                        onClick={() => navigate("/user")}
                     >
                         후원자
                     </Button>
