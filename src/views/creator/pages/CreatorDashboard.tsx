@@ -3,6 +3,7 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, XAxis, YAxis, Cartes
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useEffect, useState } from 'react';
 import type { CreatorDashboard } from '@/types/creator';
+import type { DailyCount, MonthCount } from '@/types/backing';
 import { useCreatorId } from '../useCreatorId';
 import { endpoints, getData } from '@/api/apis';
 
@@ -11,6 +12,7 @@ const rankColors: Record<number, string> = {
   2: '#9ca3af', // 🥈 회색
   3: '#b45309', // 🥉 갈색
 };
+
 const titleMap = {
   views: '누적 조회수',
   backers: '누적 후원자 수',
@@ -31,27 +33,8 @@ const defaultCreatorDashboard: CreatorDashboard = {
   top3LikeCnt: [],
   top3ViewCnt: [],
   dailyStatus: [],
-  monthStatuss: [],
+  monthStatus: [],
 };
-
-// 최근 7일 데이터 (더미)
-const now = new Date();
-const daysOfWeek = ['일', '월', '화', '수', '목', '금', '토'];
-const dailyViewData = Array.from({ length: 7 }).map((_, i) => {
-  const d = new Date();
-  d.setDate(now.getDate() - 6 + i);
-  return {
-    day: `${daysOfWeek[d.getDay()]}(${d.getDate()}일)`,
-    views: Math.floor(1000 + Math.random() * 1500),
-  };
-});
-
-// 최근 12개월 데이터 (더미)
-const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
-const monthlyData = Array.from({ length: 12 }).map((_, i) => {
-  const monthIndex = (now.getMonth() - 11 + i + 12) % 12;
-  return { month: monthNames[monthIndex], count: Math.floor(300 + Math.random() * 200) };
-});
 
 export default function CreatorDashboard() {
   const { creatorId, loading: idLoading } = useCreatorId(4);
@@ -61,22 +44,63 @@ export default function CreatorDashboard() {
   const [failRate, setFailRate] = useState(0);
   const [rankType, setRankType] = useState<'views' | 'backers' | 'likes'>('views');
 
+  const [dailyData, setDailyData] = useState<DailyCount[]>([]);
+  const [monthlyData, setMonthlyData] = useState<MonthCount[]>([]);
+
   useEffect(() => {
     if (idLoading || !creatorId) return;
     (async () => {
       try {
-        const res = await getData(endpoints.creatorDashboard);
-        if (res.status === 200 && res.data) {
-          const dash = res.data as CreatorDashboard;
+        // 메인 대시보드 + 일간/월간 데이터 병렬 요청
+        const [dashRes, dailyRes, monthRes] = await Promise.all([getData(endpoints.creatorDashboard), getData(`${endpoints.creatorDashboard}/daily/${creatorId}`), getData(`${endpoints.creatorDashboard}/month/${creatorId}`)]);
+
+        if (dashRes.status === 200 && dashRes.data) {
+          const dash = dashRes.data as CreatorDashboard;
           setData(dash ?? defaultCreatorDashboard);
           setSuccessRate(dash.projectSuccessPercentage ?? 0);
           setFailRate(dash.projectFailedPercentage ?? 0);
+
+          // 🔹 대시보드 응답 내부의 daily/month 데이터 직접 세팅
+          if (dash.dailyStatus && dash.dailyStatus.length > 0) {
+            setDailyData(dash.dailyStatus);
+          }
+          if (dash.monthStatus && dash.monthStatus.length > 0) {
+            setMonthlyData(dash.monthStatus);
+          }
         }
+
+        // 🔹 백엔드가 별도 엔드포인트로 준다면 우선순위 낮게 덮어쓰기
+        if (dailyRes.status === 200 && dailyRes.data && dailyRes.data.length > 0) setDailyData(dailyRes.data);
+        if (monthRes.status === 200 && monthRes.data && monthRes.data.length > 0) setMonthlyData(monthRes.data);
       } catch (err) {
         console.error('대시보드 로드 실패:', err);
       }
     })();
   }, [idLoading, creatorId]);
+
+  // 일간/월간 데이터 포맷팅
+  const formattedDaily = dailyData.map((d) => ({
+    day: new Date(d.createdAt).toLocaleDateString('ko-KR', {
+      month: 'numeric',
+      day: 'numeric',
+      weekday: 'short',
+    }),
+    count: d.count,
+  }));
+
+  const formattedMonthly = monthlyData.map((m) => {
+    const date = new Date(m.createdAt);
+    return {
+      month: `${date.getMonth() + 1}월`, // 항상 1~12월 고정
+      count: m.count ?? 0,
+    };
+  });
+
+  // 그래프 스케일 자동 계산
+  const dailyMin = formattedDaily.length ? Math.min(...formattedDaily.map((d) => d.count)) : 0;
+  const dailyMax = formattedDaily.length ? Math.max(...formattedDaily.map((d) => d.count)) : 100;
+  const monthMin = formattedMonthly.length ? Math.min(...formattedMonthly.map((m) => m.count)) : 0;
+  const monthMax = formattedMonthly.length ? Math.max(...formattedMonthly.map((m) => m.count)) : 100;
 
   // TOP3 데이터 변환
   const rankData = {
@@ -100,7 +124,7 @@ export default function CreatorDashboard() {
       })) ?? [],
   };
 
-  //순서 정렬 (3 → 1 → 2) 데이터 개수가 적은것도 고려
+  // 3→1→2 순서 정렬
   const orderedData = (() => {
     const arr = rankData[rankType] ?? [];
     if (arr.length === 1) return arr;
@@ -127,7 +151,7 @@ export default function CreatorDashboard() {
         </CardHeader>
 
         <CardContent>
-          {/*상단 요약 */}
+          {/* 상단 요약 */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {[
               ['총 프로젝트', data.projectTotal],
@@ -142,7 +166,7 @@ export default function CreatorDashboard() {
             ))}
           </div>
 
-          {/*(1) TOP3 + 성공률 */}
+          {/* (1) TOP3 + 성공률 */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* TOP3 */}
             <Card className="p-3 shadow-md">
@@ -242,28 +266,32 @@ export default function CreatorDashboard() {
             </Card>
           </div>
 
-          {/*  (2) 일간 후원수 */}
+          {/* (2) 일간 후원수 */}
           <Card className="p-3 shadow-md mb-8">
             <CardHeader>
               <CardTitle className="text-lg font-semibold mb-2">일간 프로젝트 후원수 (최근 7일)</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={250}>
-                <AreaChart data={dailyViewData}>
-                  <defs>
-                    <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0.05} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="day" tick={{ fontSize: 12 }} />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Area type="monotone" dataKey="views" stroke="#10b981" strokeWidth={2} fill="url(#colorViews)" dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                </AreaChart>
-              </ResponsiveContainer>
+              {formattedDaily.length > 0 ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <AreaChart data={formattedDaily}>
+                    <defs>
+                      <linearGradient id="colorDaily" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0.05} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="day" tick={{ fontSize: 12 }} />
+                    <YAxis domain={[dailyMin * 0.8, dailyMax * 1.1]} />
+                    <Tooltip formatter={(v) => [`${v}건`, '후원수']} />
+                    <Legend />
+                    <Area type="monotone" dataKey="count" stroke="#10b981" strokeWidth={2} fill="url(#colorDaily)" dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="text-center text-gray-500 py-10">최근 7일간 후원 내역이 없습니다.</div>
+              )}
             </CardContent>
           </Card>
 
@@ -273,16 +301,31 @@ export default function CreatorDashboard() {
               <CardTitle className="text-lg font-semibold mb-2">월별 프로젝트 후원수 (최근 12개월)</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={230}>
-                <BarChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="count" fill="#3b82f6" barSize={30} />
-                </BarChart>
-              </ResponsiveContainer>
+              {formattedMonthly.length > 0 ? (
+                <ResponsiveContainer width="100%" height={230}>
+                  <BarChart data={formattedMonthly}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis domain={[monthMin * 0.8, monthMax * 1.1]} />
+                    <Tooltip formatter={(v) => [`${v}건`, '후원수']} />
+                    <Legend />
+                    <Bar dataKey="count" fill="#2563eb" barSize={35} radius={[6, 6, 0, 0]}>
+                      <LabelList
+                        dataKey="count"
+                        position="top"
+                        formatter={(v: number) => `${v}건`}
+                        style={{
+                          fill: '#1e3a8a',
+                          fontSize: 13,
+                          fontWeight: 500,
+                        }}
+                      />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="text-center text-gray-500 py-10">최근 12개월간 후원 내역이 없습니다.</div>
+              )}
             </CardContent>
           </Card>
         </CardContent>
