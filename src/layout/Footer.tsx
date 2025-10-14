@@ -26,7 +26,7 @@ const nav = {
         { label: "크리에이터", href: "/creators" },
     ],
     management: [
-        { label: "마이 페이지 (유저)", href: "/user/mypage" },
+        { label: "마이 페이지 (유저)", href: "/user" },
         { label: "창작자 페이지", href: "/creator" },
         { label: "관리자 콘솔", href: "/admin" },
     ],
