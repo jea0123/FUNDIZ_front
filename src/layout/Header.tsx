@@ -268,7 +268,7 @@ export function Header() {
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onClick={() => navigate('/user/mypage')}>
+                                        <DropdownMenuItem onClick={() => navigate('/user')}>
                                             마이페이지
                                         </DropdownMenuItem>
                                         <DropdownMenuItem onClick={logoutHandler}>
