@@ -87,26 +87,34 @@ export interface BackingCreatorProjectList {
   //달성률
   completionRate: number;
 }
+export type ShippingStatus = 'PENDING' | 'COMPLETED' | 'CANCELED' | 'FAILED' | 'REFUNDED';
 
 export interface BackingRequest {
-  projectId: number;
-  thumbnail: string;
-  title: string;
-  goalAmount: number;
-  currAmount: number;
-  endDate: Date;
-  projectStatus: string;
+  backing: {
+    userId?: number;
+    amount: number;
+    createdAt?: string;
+    backingStatus: string;
+  };
 
-  rewardId: number;
-  rewardName: string;
-  deliveryDate: Date;
+  backingDetail: {
+    rewardId: number;
+    price: number;
+    quantity: number;
+  };
 
-  price: number;
-  quantity: number;
+  shipping: {
+    shippingStatus: ShippingStatus;
+    trackingNum: string | null;
+    shippedAt?: string | null;
+    deliveredAt?: string | null;
+    addrId?: number | null;
+  };
 
-  backingId: number;
-  userId: number;
-  amount: number;
-  createdAt: number;
-  backingStatus: string;
+  payment: {
+    method: string;
+    amount: number;
+    status: string;
+    paidAt: string;
+  };
 }

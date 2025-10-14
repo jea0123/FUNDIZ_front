@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -43,7 +43,10 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { endpoints, getData, postData } from "@/api/apis";
 import { formatDate } from '@/utils/utils';
 import type { Inquiry, SearchIqrParams } from "@/types/inquiry";
+import type { InquiryReplyDto } from '@/types/reply';
+import type { Cursor, CursorPage } from '@/types/community';
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { MessageCircle, X } from "lucide-react";
 
 // ========= 공용 타입 (DB 스키마 기반) =========
 
@@ -58,6 +61,8 @@ export type Reply = {
     isDeleted: 'Y' | 'N';
     deletedAt?: string | null;
 };
+
+const getByteLen = (s: string) => new TextEncoder().encode(s).length;
 
 
 function useQueryState() {
@@ -128,6 +133,98 @@ export function InquiryAdminTab() {
 
     const [openInquiry, setOpenInquiry] = useState<string | undefined>(undefined);
 
+    // 댓글 무한스크롤
+    const replySentinelRef = useRef<Record<number, HTMLDivElement | null>>({});
+    const replyLoadingLockRef = useRef<Record<number, boolean>>({}); // 중복 호출 방지용 락
+
+    // 댓글
+    const [reply, setReply] = useState<Record<number, InquiryReplyDto[]>>({});
+    const [replyCursor, setReplyCursor] = useState<Record<number, Cursor | null>>({});
+    const [loadingReply, setLoadingReply] = useState<Record<number, boolean>>({});
+    const [openReply, setOpenReply] = useState<Record<number, boolean>>({});
+    const [postingReply, setPostingReply] = useState<Record<number, boolean>>({});
+    const [replyInput, setReplyInput] = useState<Record<number, string>>({});
+
+    //data getcher
+    const replyData = useCallback(async (inqId: number, cursor: Cursor | null) => {
+            setLoadingReply(prev => ({ ...prev, [inqId]: true }));
+            try {
+                const params = new URLSearchParams();
+                if (cursor) {
+                    if (cursor.lastCreatedAt) params.set("lastCreatedAt", cursor.lastCreatedAt);
+                    if (cursor.lastId != null) params.set("lastId", String(cursor.lastId));
+                }
+                params.set("size", "10");
+    
+                const url = `${endpoints.getInquiryReplyList(inqId)}?${params.toString()}`;
+                const { status, data } = await getData(url);
+    
+                if (status !== 200 || !data) {
+                    if (!cursor) setReply(prev => ({ ...prev, [inqId]: [] }));
+                    setReplyCursor(prev => ({ ...prev, [inqId]: null }));
+                    return;
+                }
+                const page = data as CursorPage<InquiryReplyDto>;
+                const items = Array.isArray(page?.items) ? page.items.filter(Boolean) : [];
+                setReply(prev => ({ ...prev, [inqId]: cursor ? ([...(prev[inqId] ?? []), ...items]) : items }));
+                setReplyCursor(prev => ({ ...prev, [inqId]: page?.nextCursor ?? null }));
+            } finally {
+                setLoadingReply(prev => ({ ...prev, [inqId]: false }));
+            }
+        }, []);
+
+        // 렌더 시 문자열 강제
+        const replyText = useCallback((id: number) => {
+            const v = replyInput?.[id];
+            return typeof v === "string" ? v : "";
+        }, [replyInput]);
+
+        // 댓글 패널 토글 (처음 열 때만 로드, 기본값 문자열로 강제)
+        const toggleReplies = useCallback((cmId: number) => {
+            setOpenReply(prev => ({ ...prev, [cmId]: !prev?.[cmId] }));
+
+            setReply((prev) => ({ ...prev, [cmId]: Array.isArray(prev?.[cmId]) ? prev[cmId] : [] }));
+            setReplyInput((prev) => ({ ...prev, [cmId]: typeof prev?.[cmId] === "string" ? prev[cmId] : "" }));
+            setLoadingReply((prev) => ({ ...prev, [cmId]: !!prev?.[cmId] }));
+
+            if (!reply?.[cmId]) replyData(cmId, null);
+        }, [reply, replyData]);
+
+        //댓글 등록
+        const submitReply = useCallback(async (inqId: number) => {
+                const content = (replyInput[inqId] ?? "").trim();
+                if (content.length === 0) return;
+                if (getByteLen(content) > 1000) {
+                    alert("최대 (한글 약 330자)까지 입력할 수 있습니다.");
+                    return;
+                }
+        
+                setPostingReply(prev => ({ ...prev, [inqId]: true }));
+                try {
+                    const body = { content };
+                    const response = await postData(endpoints.addInquiryReply(inqId), body);
+                    if (response.status === 200) {
+                        const posted = response.data as InquiryReplyDto;
+        
+                        if (posted) {
+                            setReply(prev => ({ ...prev, [inqId]: [posted, ...(prev[inqId] ?? [])] }));
+                        } else {
+                            setReplyCursor(prev => ({ ...prev, [inqId]: null }));
+                            await replyData(inqId, null);
+                        }
+        
+                        setReplyInput(prev => ({ ...prev, [inqId]: "" }));
+                    } else {
+                        alert("등록에 실패했습니다. 잠시 후 다시 시도해주세요.");
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert("네트워크 오류가 발생했습니다.");
+                } finally {
+                    setPostingReply(prev => ({ ...prev, [inqId]: false }));
+                }
+            }, [replyInput]);
+
     return (
         <div>
             <div>
@@ -154,7 +251,107 @@ export function InquiryAdminTab() {
                                             <AccordionContent>
                                                 <div className="rounded-xl border border-zinc-200 p-4 bg-white">
                                                     <p className="text-sm text-zinc-700 whitespace-pre-wrap">{inq.content}</p>
-                            
+                                                    <div className="flex items-center gap-2 mt-3">
+                                                        <Button variant="ghost" size="sm" onClick={() => toggleReplies(inq.inqId)}>
+                                                            <MessageCircle className="h-3 w-3 mr-1" />
+                                                                    댓글
+                                                                </Button>
+                                                            </div>
+
+                                                            {/* 댓글 패널 */}
+                                                            {openReply[inq.inqId] && (
+                                                                <div className="mt-3 relative rounded-lg border bg-gray-50/70 p-3">
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="absolute right-2 top-2 h-7 w-7 text-gray-500 hover:text-gray-700"
+                                                                        onClick={() => {
+                                                                            setOpenReply((prev) => ({ ...prev, [inq.inqId]: false }))
+                                                                            setReplyInput((prev) => ({ ...prev, [inq.inqId]: "" }))
+                                                                        }}
+                                                                    >
+                                                                        <X className="h-4 w-4" />
+                                                                    </Button>
+                                                                    {/* 목록 */}
+                                                                    {(!loadingReply?.[inq.inqId] && (!Array.isArray(reply?.[inq.inqId]) || reply[inq.inqId].length === 0)) ? (
+                                                                        <div className="text-xs text-muted-foreground pr-8">아직 답변이 달리지 않았습니다.</div>
+                                                                    ) : (
+                                                                        <div className="space-y-3">
+                                                                            {(reply?.[inq.inqId] ?? []).filter(Boolean).map((rp) => (
+                                                                                <div key={rp.replyId} className="flex items-start gap-2">
+                                                                                    <div className="flex-1 min-w-0">
+                                                                                        <div className="flex items-center gap-2">
+                                                                                            <span className="text-sm font-medium truncate">관리자</span>
+                                                                                            <span className="text-[11px] text-gray-500">{formatDate(rp.createdAt)}</span>
+                                                                                        </div>
+                                                                                        <p className="text-sm whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+                                                                                            {rp.content}
+                                                                                        </p>
+                                                                                    </div>
+                                                                                </div>
+                                                                            ))}
+
+                                                                            {loadingReply?.[inq.inqId] && (
+                                                                                <div className="space-y-2">
+                                                                                    <div className="h-12 animate-pulse rounded-md bg-gray-100" />
+                                                                                    <div className="h-12 animate-pulse rounded-md bg-gray-100" />
+                                                                                </div>
+                                                                            )}
+
+                                                                            {/* 무한스크롤 sentinel */}
+                                                                            {replyCursor?.[inq.inqId] && (
+                                                                                <div
+                                                                                    ref={(el) => {
+                                                                                        if (!replySentinelRef.current) replySentinelRef.current = {};
+                                                                                        replySentinelRef.current[inq.inqId] = el;
+                                                                                    }}
+                                                                                    className="h-1 w-full"
+                                                                                />
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+
+                                                                    {/* 입력창 */}
+                                                                    <div className="mt-3">
+                                                                        <div className="rounded-md border bg-white">
+                                                                            <Textarea
+                                                                                value={replyText(inq.inqId)}
+                                                                                onChange={(e) => setReplyInput((prev) => ({ ...prev, [inq.inqId]: e.target.value }))}
+                                                                                placeholder="댓글을 입력하세요"
+                                                                                className="min-h-[64px] resize-y"
+                                                                            />
+                                                                        </div>
+
+                                                                        <div className="mt-2 flex items-center justify-between">
+                                                                            <div className="flex items-center gap-3">
+                                                                                <span className="text-[11px] text-gray-500">
+                                                                                    약 {replyText(inq.inqId).length}자
+                                                                                </span>
+                                                                            </div>
+
+                                                                            <div className="flex items-center gap-3">
+                                                                                {replyText(inq.inqId).trim().length > 0 && (
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() => setReplyInput((prev) => ({ ...prev, [inq.inqId]: "" }))}
+                                                                                        className="text-xs text-gray-500 hover:underline"
+                                                                                        disabled={!!postingReply?.[inq.inqId]}
+                                                                                    >
+                                                                                        지우기
+                                                                                    </button>
+                                                                                )}
+                                                                                <Button
+                                                                                    size="sm"
+                                                                                    onClick={() => submitReply(inq.inqId)}
+                                                                                    disabled={!!postingReply?.[inq.inqId] || replyText(inq.inqId).trim().length === 0}
+                                                                                >
+                                                                                    {postingReply?.[inq.inqId] ? "등록중" : "등록"}
+                                                                                </Button>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            )}
                                                 </div>
                                             </AccordionContent>
                                         </AccordionItem>
