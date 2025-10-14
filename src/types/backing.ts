@@ -117,4 +117,15 @@ export interface BackingRequest {
     status: string;
     paidAt: string;
   };
+  
+}
+
+export interface DailyCount {
+  createdAt: Date;
+  count: number;
+}
+
+export interface MonthCount {
+  createdAt: Date;
+  count: number
 }

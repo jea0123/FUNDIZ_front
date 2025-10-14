@@ -27,7 +27,7 @@ export const kyInstance = ky.create({
         }
 
         if (pathname.includes('/api/v1/creator/')) {
-          const devId = localStorage.getItem('DEV_CREATOR_ID') || '1';
+          const devId = localStorage.getItem('DEV_CREATOR_ID') || '20';
           req.headers.set('X-Dev-Creator-Id', devId);
         }
       },
