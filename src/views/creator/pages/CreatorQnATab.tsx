@@ -65,6 +65,8 @@ export type Reply = {
     deletedAt?: string | null;
 };
 
+
+
 const getByteLen = (s: string) => new TextEncoder().encode(s).length;
 
 function useQueryState() {
@@ -91,7 +93,9 @@ function useQueryState() {
 }
 
 function useQna(params: SearchQnaParams) {
+
     const {creatorId, loading: idLoading} = useCreatorId(179);
+    
     const { page, size, perGroup } = params;
     const [items, setItems] = useState<Qna[]>([]);
     const [total, setTotal] = useState(0);
@@ -135,6 +139,8 @@ export function Pagination({ page, size, perGroup, total, onPage }: { page: numb
 
 
 export function CreatorQnATab() {
+
+    const creatorId = useCreatorId(179);
 
     const { page, size, perGroup, setPage } = useQueryState();
     const { items, total } = useQna({ page, size, perGroup });
