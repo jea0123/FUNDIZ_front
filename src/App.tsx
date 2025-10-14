@@ -19,7 +19,7 @@ import CreateProject from './views/creator/pages/CreateProject';
 import CreatorDashboard from './views/creator/pages/CreatorDashboard';
 import CreatorProjects from './views/creator/pages/CreatorProjects';
 import CreatorLayout from './views/creator/CreatorLayout';
-import { AdminConsole } from './views/admin/AdminConsole';
+import AdminLayout from './views/admin/AdminLayout';
 import Layout from './layout/Layout';
 import { NoticeTab } from './views/cs/tabs/NoticeTab';
 import { InquiryTab } from './views/cs/tabs/InquiryTab';
@@ -44,6 +44,17 @@ import LikedProjectTab from './views/user/tabs/LikedProjectTab';
 import { BackingPage } from './views/backing/backingPage';
 import { AdminRegisterPage } from './views/auth/admin/AdminRegisterPage';
 import { AdminLoginPage } from './views/auth/admin/AdminLoginPage';
+import { OverviewTab } from './views/admin/tabs/OverviewTab';
+import { ApprovalsTab } from './views/admin/tabs/ApprovalsTab';
+import { ProjectsTab } from './views/admin/tabs/ProjectsTab';
+import { ReportsAdminTab } from './views/admin/tabs/ReportsAdminTab';
+import { UsersTab } from './views/admin/tabs/UsersTab';
+import { AnalyticsTab } from './views/admin/tabs/AnalyticsTab';
+import { InquiryAdminTab } from './views/admin/tabs/InquiryAdminTab';
+import { NoticeAdminTab } from './views/admin/tabs/NoticeAdminTab';
+import { NoticeAddTab } from './views/admin/tabs/NoticeAddTab';
+import { NoticeUpdtTab } from './views/admin/tabs/NoticeUpdtTab';
+import SettlementTab from './views/admin/tabs/SettlementTab';
 
 const AdminTabs = lazy(() => import('./views/admin/AdminTabs').then((module) => ({ default: module.AdminTabs })));
 
@@ -128,10 +139,21 @@ export default function App() {
               <Route path="settlement" element={<CreatorSettlementPage />} />
             </Route>
 
-            <Route path="/admin" element={<AdminConsole />}>
-              <Route index element={<AdminTabs />} />
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<OverviewTab/>} />
+              <Route path="overview" element={<OverviewTab />} />
+              <Route path="approvals" element={<ApprovalsTab />} />
               <Route path="verify/:projectId" element={<ApprovalDetail />} />
+              <Route path="projects" element={<ProjectsTab />} />
               <Route path="project/:projectId" element={<AdminProjectEdit />} />
+              <Route path="reports" element={<ReportsAdminTab />} />
+              <Route path="users" element={<UsersTab />} />
+              <Route path="analytics" element={<AnalyticsTab />} />
+              <Route path="inquiry" element={<InquiryAdminTab />} />
+              <Route path="notice" element={<NoticeAdminTab />} />
+              <Route path="noticeadd" element={<NoticeAddTab />} />
+              <Route path="noticeupdate" element={<NoticeUpdtTab />} />
+              <Route path="settlement" element={<SettlementTab />} />
             </Route>
 
             <Route path="/admin">
