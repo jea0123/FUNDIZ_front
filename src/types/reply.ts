@@ -29,3 +29,11 @@ export interface InquiryReplyDto {
     content: string;
     createdAt: Date;
 }
+
+export interface QnaReplyDto {
+    replyId: number;
+    qnaId: number;
+    content: string;
+    createdAt: Date;
+    creatorId: number;
+}

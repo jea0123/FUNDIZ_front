@@ -81,8 +81,10 @@ const responseHandler = async <T = any>(res: Response): Promise<ApiResult<T>> =>
   return { status: res.status, data: body?.data ?? null, message: body.message ?? null } as ApiResult<T>;
 };
 
-const authorization = (accessToken: string | undefined) => {
-  return { headers: { Authorization: `Bearer ${accessToken}` } };
+const authorization = (accessToken?: string) => {
+  return accessToken
+    ? { headers: { Authorization: `Bearer ${accessToken}` } }
+    : {};
 };
 
 const withBody = (data: any) => (typeof FormData !== 'undefined' && data instanceof FormData ? { body: data } : { json: data ?? {} });
@@ -109,6 +111,8 @@ export const endpoints = {
   signUp: 'auth/signUp',
   signIn: 'auth/signIn',
   withdraw: 'auth/withdraw',
+  registerAdmin: 'auth/registerAdmin',
+  loginAdmin: 'auth/loginAdmin',
 
   // ==================== User API ====================
   getLoginUser: 'user/loginUser',
@@ -153,6 +157,10 @@ export const endpoints = {
   postReply: (cmId: number) => `project/community/${cmId}/reply`,
   getQnaListOfProject: (projectId: number) => `project/${projectId}/qna`,
   addQuestion: (projectId: number, userId: number) => `project/${projectId}/qna/${userId}/add`,
+
+  // ==================== QnaReply API ====================
+  getQnaReplyList: (qnaId: number) => `qna/reply/${qnaId}`,
+  addQnaReply: (qnaId: number) => `qna/reply/${qnaId}`,
 
   // ==================== Shipping API ====================
   getAddressList: (userId: number) => `shipping/${userId}/list`,

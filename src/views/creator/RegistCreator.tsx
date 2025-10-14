@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { endpoints, kyInstance, postData } from "@/api/apis";
+import { endpoints, postData } from "@/api/apis";
 import { toastError, toastSuccess } from "@/utils/utils";
 import { useCookies } from "react-cookie";
 import { useNavigate } from "react-router-dom";
@@ -24,9 +24,11 @@ const schema = z.object({
     email: z.string().email("유효한 이메일 형식이 아닙니다"),
     phone: z.string()
         .min(9, "전화번호를 입력하세요")
-        .regex(/^[0-9\-]+$/, "숫자와 '-'만 입력"),
+        .regex(/^[0-9\-]+$/, "숫자와 '-'만 입력")
+        .regex(/^(01[016789]|02|0[3-9][0-9]?)-?[0-9]{3,4}-?[0-9]{4}$/, "유효한 전화번호 형식이 아닙니다"),
     bank: z.string().min(2, "은행을 선택하세요"),
-    account: z.string().min(5, "계좌번호를 입력하세요"),
+    account: z.string().min(5, "계좌번호를 입력하세요")
+        .regex(/^[0-9]+$/, "계좌번호는 숫자만 입력"),
     businessNum: z.string()
         .optional()
         .transform((v) => (v ?? "").trim()),
@@ -324,7 +326,7 @@ export default function RegisterCreator() {
                                     name="account"
                                     render={({ field }) => (
                                         <FormItem className="md:col-span-2 ml-30">
-                                            <FormLabel>계좌번호</FormLabel>
+                                            <FormLabel>계좌번호 (정산용)</FormLabel>
                                             <FormControl>
                                                 <Input placeholder="하이픈 없이 입력" {...field} />
                                             </FormControl>

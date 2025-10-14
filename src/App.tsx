@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { Route, Routes, useNavigate } from 'react-router-dom';
-import { LoginPage } from './views/auth/LoginPage';
-import { RegisterPage } from './views/auth/RegisterPage';
+import { LoginPage } from './views/auth/user/LoginPage';
+import { RegisterPage } from './views/auth/user/RegisterPage';
 import { useLoginUserStore } from './store/LoginUserStore.store';
 import { useCookies } from 'react-cookie';
 import { endpoints, getData } from './api/apis';
@@ -42,6 +42,8 @@ import { MyReportsTab } from './views/user/tabs/MyReportsTab';
 import BackingTab from './views/user/tabs/BackingTab';
 import LikedProjectTab from './views/user/tabs/LikedProjectTab';
 import { BackingPage } from './views/backing/backingPage';
+import { AdminRegisterPage } from './views/auth/admin/AdminRegisterPage';
+import { AdminLoginPage } from './views/auth/admin/AdminLoginPage';
 
 const AdminTabs = lazy(() => import('./views/admin/AdminTabs').then((module) => ({ default: module.AdminTabs })));
 
@@ -130,6 +132,11 @@ export default function App() {
               <Route index element={<AdminTabs />} />
               <Route path="verify/:projectId" element={<ApprovalDetail />} />
               <Route path="project/:projectId" element={<AdminProjectEdit />} />
+            </Route>
+
+            <Route path="/admin">
+              <Route path='register' element={<AdminRegisterPage />} />
+              <Route path='login' element={<AdminLoginPage />} />
             </Route>
 
             <Route path="/cs" element={<CSLayout />}>
