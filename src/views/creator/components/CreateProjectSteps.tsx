@@ -12,9 +12,10 @@ import type { Subcategory } from "@/types/projects";
 import type { RewardDraft, RewardForm } from "@/types/reward";
 import type { FieldErrors } from "@/types/reward-validator";
 import { formatDate } from "@/utils/utils";
-import { Plus, Trash, Truck, X } from "lucide-react";
+import { Plus, Trash, Truck, Upload, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { ThumbnailUploader } from "./ThumbnailUploader";
+import clsx from "clsx";
 
 const numberKR = (n?: number | null) => new Intl.NumberFormat("ko-KR").format(n || 0);
 
@@ -42,8 +43,6 @@ export function CreateProjectSteps(props: {
         setNewReward, addReward, removeReward, agree = false, setAgree, agreeError,
         rewardErrors = {}, addDays
     } = props;
-
-    const businessDocRef = useRef<HTMLInputElement>(null);
 
     if (step === 1) {
         return (
@@ -98,12 +97,8 @@ export function CreateProjectSteps(props: {
                 </div>
 
                 <ThumbnailUploader
-                    initialUrl={project.thumbnail}
-                    onUploaded={(url) => setProject(p => ({ ...p, thumbnail: url }))}
-                    onCleared={() => setProject(p => ({ ...p, thumbnail: "" }))}
+                    onCleared={() => setProject(p => ({ ...p, thumbnail: null, thumbnailUrl: "" }))}
                 />
-
-                {/* TODO: 프로젝트 내용 단락 추가 */}
 
                 <TagEditor
                     tags={project.tagList}
@@ -132,6 +127,79 @@ export function CreateProjectSteps(props: {
     }
 
     if (step === 2) {
+        const MAX_MB = 4 * 1024 * 1024 * 1024;;
+        const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+
+        const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+            const next = e.target.value;
+            setProject(prev => ({ ...prev, content: next }));
+        };
+
+        const handleAddFiles = (incoming: FileList | File[]) => {
+            const arr = Array.from(incoming);
+
+            const filtered = arr.filter(f =>
+                ACCEPTED_TYPES.includes(f.type) && f.size <= MAX_MB
+            );
+
+            setProject(prev => {
+                const before = prev.files ?? [];
+                const deduped = [...before];
+
+                filtered.forEach(f => {
+                    if (!deduped.some(df =>
+                        df.name === f.name &&
+                        df.size === f.size &&
+                        df.lastModified === f.lastModified
+                    )) {
+                        deduped.push(f);
+                    }
+                });
+
+                return { ...prev, files: deduped };
+            });
+        };
+
+        const handleRemoveFile = (idx: number) => {
+            setProject(prev => {
+                const next = (prev.files ?? []).filter((_, i) => i !== idx);
+                return { ...prev, files: next };
+            });
+        };
+
+        return (
+            <div className="space-y-6">
+                <div>
+                    <Label htmlFor="projectContent">프로젝트 소개 *</Label>
+                    <Textarea
+                        id="projectContent"
+                        placeholder={`프로젝트의 스토리, 제작 배경, 리워드 상세 설명, 일정 등을 충분히 써주세요.\n(예: 왜 이 프로젝트를 시작했는지, 목표 금액의 사용 계획, 제작/배송 일정, 유의사항 등)`}
+                        rows={12}
+                        value={project.content ?? ""}
+                        onChange={handleContentChange}
+                        className="mt-1 min-h-[100px]"
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">
+                        • 가독성을 위해 단락을 나누고, 핵심 정보를 굵게 처리하거나 리스트로 정리해 주세요.
+                    </p>
+                </div>
+
+                <div>
+                    <FileAttach
+                        files={project.files ?? []}
+                        onAddFiles={handleAddFiles}
+                        onRemoveFile={handleRemoveFile}
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">
+                        • 본문 이미지는 여기 첨부해 주세요.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+
+    if (step === 3) {
         const MIN_DAYS = 7;
         const MAX_DAYS = 60;
         const END_MIN_OFFSET = MIN_DAYS - 1;
@@ -205,7 +273,7 @@ export function CreateProjectSteps(props: {
         );
     }
 
-    if (step === 3) {
+    if (step === 4) {
         return (
             <div className="space-y-6">
                 <div>
@@ -339,7 +407,7 @@ export function CreateProjectSteps(props: {
         );
     }
 
-    if (step === 4) {
+    if (step === 5) {
         return (
             <div className="space-y-6">
                 <Card>
@@ -366,54 +434,14 @@ export function CreateProjectSteps(props: {
                                 inputMode="numeric"
                             />
                         </div>
-                        {/* TODO: 사업자 서류첨부 업로드 기능 추가 */}
-                        {/* <div>
-                            <Label htmlFor="businessDoc">사업자 관련 서류 (PDF/JPG/PNG) *</Label>
-                            <Input
-                                ref={businessDocRef}
-                                id="businessDoc"
-                                type="file"
-                                accept="application/pdf,image/*"
-                                className="hidden"
-                                onChange={(e) => {
-                                    const file = e.target.files?.[0] ?? null;
-                                    setProject((prev) => ({ ...prev, businessDoc: file }));
-                                }}
+                        <div>
+                            <BusinessDocAttach
+                                label="사업자등록증 첨부파일 *"
+                                file={project.businessDoc ?? null}
+                                onSelect={(file) => setProject(prev => ({ ...prev, businessDoc: file }))}
+                                onClear={() => setProject(prev => ({ ...prev, businessDoc: null }))}
                             />
-                            <div className="mt-2 flex items-center gap-2 w-full min-w-0">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 px-3 hover:bg-gray-100"
-                                    onClick={() => businessDocRef.current?.click()}
-                                >
-                                    <Upload className="h-4 w-4 mr-1" /> 파일 선택
-                                </Button>
-                                <div className="flex-1 min-w-0">
-                                    <span className="block text-sm text-gray-700 truncate">
-                                        {project.businessDoc ? project.businessDoc.name : "선택된 파일 없음"}
-                                    </span>
-                                </div>
-                                {project.businessDoc && (
-                                    <Button
-                                        type="button"
-                                        variant="destructive"
-                                        size="sm"
-                                        className="h-8 px-3"
-                                        onClick={() => {
-                                            if (businessDocRef.current) businessDocRef.current.value = "";
-                                            setProject((prev) => ({ ...prev, businessDoc: null }));
-                                        }}
-                                    >
-                                        <Trash className="h-4 w-4 mr-1" /> 삭제
-                                    </Button>
-                                )}
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1">
-                                • 최대 4GB (권장 50MB 이하)
-                            </p>
-                        </div> */}
+                        </div>
                         <div>
                             <Label htmlFor="email">문의 이메일 *</Label>
                             <Input
@@ -439,7 +467,7 @@ export function CreateProjectSteps(props: {
         );
     }
 
-    if (step === 5) {
+    if (step === 6) {
         return (
             <div className="space-y-6">
                 <Card>
@@ -563,5 +591,310 @@ function FeesCard({ goalAmount }: { goalAmount: number }) {
                 </div>
             </CardContent>
         </Card>
+    );
+}
+
+function FileAttach({
+    label = "파일 첨부",
+    files,
+    onAddFiles,
+    onRemoveFile,
+    disabled = false,
+}: {
+    label?: string;
+    files: File[];
+    onAddFiles: (files: FileList | File[]) => void;
+    onRemoveFile: (index: number) => void;
+    disabled?: boolean;
+}) {
+    const inputRef = useRef<HTMLInputElement>(null);
+    const [dragOver, setDragOver] = useState(false);
+
+    const openPicker = () => !disabled && inputRef.current?.click();
+
+    const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) onAddFiles(e.target.files);
+        if (inputRef.current) inputRef.current.value = "";
+    };
+
+    const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        if (disabled) return;
+        e.preventDefault();
+        e.stopPropagation();
+        setDragOver(true);
+    };
+
+    const onDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        if (disabled) return;
+        e.preventDefault();
+        e.stopPropagation();
+        setDragOver(false);
+    };
+
+    const onDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        if (disabled) return;
+        e.preventDefault();
+        e.stopPropagation();
+        setDragOver(false);
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            onAddFiles(e.dataTransfer.files);
+            e.dataTransfer.clearData();
+        }
+    };
+
+    return (
+        <div>
+            <Label className="mb-2 block">{label}</Label>
+
+            <div
+                className={clsx(
+                    "relative rounded-lg border-2 border-dashed p-6 text-center transition-colors cursor-pointer",
+                    dragOver ? "border-blue-400 bg-blue-50/40" : "border-gray-300",
+                    disabled && "opacity-60 cursor-not-allowed"
+                )}
+                role="button"
+                onClick={openPicker}
+                onDrop={onDrop}
+                onDragOver={onDragOver}
+                onDragLeave={onDragLeave}
+            >
+                <div className="py-6">
+                    <Upload className="mx-auto mb-3 h-10 w-10 text-gray-400" />
+                    <p className="mb-2 text-sm text-gray-600">
+                        클릭하거나 드래그하여 파일을 업로드
+                    </p>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            openPicker();
+                        }}
+                        disabled={disabled}
+                    >
+                        파일 선택
+                    </Button>
+                    <p className="mt-2 text-xs text-gray-400">
+                        이미지(JPG/PNG/WEBP/GIF)
+                    </p>
+                </div>
+
+                <input
+                    ref={inputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    multiple
+                    className="hidden"
+                    onChange={handleInput}
+                />
+            </div>
+
+            {files.length > 0 && (
+                <div className="mt-4 space-y-3">
+                    <div className="text-sm font-medium">
+                        첨부된 파일 ({files.length})
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        {files.map((f, idx) => {
+                            const isImage = f.type.startsWith("image/");
+                            return (
+                                <Card key={`${f.name}-${f.lastModified}`} className="overflow-hidden">
+                                    <CardContent className="p-0">
+                                        <div className="relative">
+                                            {isImage ? (
+                                                <img
+                                                    src={URL.createObjectURL(f)}
+                                                    alt={f.name}
+                                                    className="w-full h-32 object-cover"
+                                                    onLoad={(e) =>
+                                                        URL.revokeObjectURL(
+                                                            (e.target as HTMLImageElement).src
+                                                        )
+                                                    }
+                                                />
+                                            ) : (
+                                                <div className="w-full h-32 flex items-center justify-center text-xs text-muted-foreground">
+                                                    PDF 문서
+                                                </div>
+                                            )}
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="absolute top-1 right-1 h-7 w-7 rounded-full bg-white/80 hover:bg-white"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onRemoveFile(idx);
+                                                }}
+                                                aria-label={`${f.name} 제거`}
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                        <div className="p-2 text-xs truncate">{f.name}</div>
+                                    </CardContent>
+                                </Card>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function BusinessDocAttach({
+    label = "사업자등록증 첨부파일",
+    file,
+    onSelect,
+    onClear,
+    disabled = false,
+}: {
+    label?: string;
+    file: File | null;
+    onSelect: (file: File | null) => void;
+    onClear: () => void;
+    disabled?: boolean;
+}) {
+    const inputRef = useRef<HTMLInputElement>(null);
+    const [dragOver, setDragOver] = useState(false);
+
+    const openPicker = () => !disabled && inputRef.current?.click();
+
+    const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const f = e.target.files?.[0] ?? null;
+        onSelect(f);
+        if (inputRef.current) inputRef.current.value = "";
+    };
+
+    const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        if (disabled) return;
+        e.preventDefault();
+        e.stopPropagation();
+        setDragOver(true);
+    };
+
+    const onDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        if (disabled) return;
+        e.preventDefault();
+        e.stopPropagation();
+        setDragOver(false);
+    };
+
+    const onDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        if (disabled) return;
+        e.preventDefault();
+        e.stopPropagation();
+        setDragOver(false);
+        const f = e.dataTransfer.files?.[0] ?? null;
+        if (f) onSelect(f);
+        e.dataTransfer.clearData();
+    };
+
+    const isImage = file ? file.type.startsWith("image/") : false;
+
+    return (
+        <div>
+            <Label className="mb-2 block">{label}</Label>
+
+            <div
+                className={clsx(
+                    "relative rounded-lg border-2 border-dashed p-6 text-center transition-colors cursor-pointer",
+                    dragOver ? "border-blue-400 bg-blue-50/40" : "border-gray-300",
+                    disabled && "opacity-60 cursor-not-allowed"
+                )}
+                role="button"
+                onClick={openPicker}
+                onDrop={onDrop}
+                onDragOver={onDragOver}
+                onDragLeave={onDragLeave}
+            >
+                {file ? (
+                    <div className="relative">
+                        <div className="mx-auto max-w-md">
+                            {isImage ? (
+                                <img
+                                    src={URL.createObjectURL(file)}
+                                    alt={file.name}
+                                    className="mx-auto max-h-80 w-auto rounded-md object-contain"
+                                    onLoad={(e) =>
+                                        URL.revokeObjectURL((e.target as HTMLImageElement).src)
+                                    }
+                                />
+                            ) : (
+                                <div className="h-40 flex flex-col items-center justify-center rounded-md bg-muted/40">
+                                    <div className="text-sm text-muted-foreground">PDF 문서</div>
+                                    <div className="mt-1 text-xs text-muted-foreground truncate max-w-[80%]">
+                                        {file.name}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="mt-3 flex items-center justify-center gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    openPicker();
+                                }}
+                                disabled={disabled}
+                            >
+                                파일 교체
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onClear();
+                                }}
+                                disabled={disabled}
+                            >
+                                삭제
+                            </Button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="py-6">
+                        <Upload className="mx-auto mb-3 h-10 w-10 text-gray-400" />
+                        <p className="mb-2 text-sm text-gray-600">
+                            클릭하거나 드래그하여 파일을 업로드
+                        </p>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                openPicker();
+                            }}
+                            disabled={disabled}
+                        >
+                            파일 선택
+                        </Button>
+                        <p className="mt-2 text-xs text-gray-400">
+                            PDF 또는 이미지(JPG/PNG) 지원
+                        </p>
+                    </div>
+                )}
+
+                <input
+                    ref={inputRef}
+                    type="file"
+                    accept="application/pdf,image/*"
+                    className="hidden"
+                    onChange={handleInput}
+                />
+            </div>
+
+            {file && isImage && (
+                <div className="mt-2 text-xs text-gray-500 truncate">{file.name}</div>
+            )}
+        </div>
     );
 }
