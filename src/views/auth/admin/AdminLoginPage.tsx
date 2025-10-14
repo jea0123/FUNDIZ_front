@@ -1,17 +1,15 @@
 import { useState } from 'react';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
-import { Separator } from '../../components/ui/separator';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Lock, Eye, EyeOff, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import type SignInRequestDto from '@/api/request/auth/SignInRequestDto.dto';
 import { endpoints, postData } from '@/api/apis';
 import { useCookies } from 'react-cookie';
+import { Card, CardContent } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
-export function LoginPage() {
-    const [email, setEmail] = useState('');
+export function AdminLoginPage() {
+    const [adminId, setAdminId] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -19,18 +17,17 @@ export function LoginPage() {
     const navigate = useNavigate();
 
     const handleSubmit = async () => {
-        if (!email || !password) {
-            alert('이메일과 비밀번호를 모두 입력해주세요.');
+        if (!adminId || !password) {
+            alert('아이디와 비밀번호를 모두 입력해주세요.');
             return;
         }
-        const requestBody: SignInRequestDto = { email, password };
+        const requestBody = { adminId, password };
         try {
-            const response = await postData(endpoints.signIn, requestBody);
+            const response = await postData(endpoints.loginAdmin, requestBody);
             signInResponse(response);
         } finally {
             setIsLoading(false);
         }
-
     };
 
     const signInResponse = (response: any) => {
@@ -63,33 +60,20 @@ export function LoginPage() {
         <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-md w-full space-y-8" style={{ marginBottom: '200px' }}>
                 <div className="text-center">
-                    <h2 className="text-3xl mb-2">로그인</h2>
-                    <p className="text-gray-600">계정에 로그인하여 프로젝트를 후원해보세요</p>
+                    <h2 className="text-3xl mb-2">관리자 로그인</h2>
                 </div>
-
                 <Card>
-                    <CardHeader>
-                        <CardTitle>이메일로 로그인</CardTitle>
-                        <CardDescription>
-                            아직 계정이 없으신가요?{' '}
-                            <button onClick={() => navigate('/register')} className="text-blue-600 hover:underline">
-                                회원가입하기
-                            </button>
-                        </CardDescription>
-                    </CardHeader>
-
                     <CardContent>
                         <div onSubmit={handleSubmit} className="space-y-4">
                             <div>
-                                <Label htmlFor="email">이메일</Label>
+                                <Label htmlFor="adminId">아이디</Label>
                                 <div className="relative" style={{ marginTop: '10px' }}>
-                                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                                     <Input
-                                        id="email"
-                                        type="email"
-                                        placeholder="example@email.com"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
+                                        id="adminId"
+                                        placeholder="아이디를 입력하세요"
+                                        value={adminId}
+                                        onChange={(e) => setAdminId(e.target.value)}
                                         className="pl-10"
                                         required
                                     />
@@ -119,39 +103,9 @@ export function LoginPage() {
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center">
-                                    <input
-                                        id="remember-me"
-                                        name="remember-me"
-                                        type="checkbox"
-                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                    />
-                                    <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                                        로그인 상태 유지
-                                    </label>
-                                </div>
-
-                                <div className="text-sm">
-                                    <button
-                                        type="button"
-                                        className="text-blue-600 hover:underline"
-                                    >
-                                        아이디/비밀번호 찾기
-                                    </button>
-                                </div>
-                            </div>
-
                             <Button type="submit" className="w-full" disabled={isLoading} onClick={handleSubmit}>
                                 {isLoading ? '로그인 중...' : '로그인'}
                             </Button>
-                        </div>
-
-                        <div className="mt-6">
-                            <Separator className="my-4" />
-                            <div className="text-center text-sm text-gray-600 mb-4">
-                                또는 다른 방법으로 로그인
-                            </div>
                         </div>
                     </CardContent>
                 </Card>

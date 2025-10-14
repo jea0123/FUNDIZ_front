@@ -137,13 +137,18 @@ export function Header() {
     return (
         <nav className="bg-white shadow-sm border-b">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-16">
+                <div className="flex items-center h-16">
+                    {/* 햄버거 버튼 */}
+                    <Button variant="ghost" size="lg" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+                        <Menu className="" />
+                    </Button>
+
                     <div className="flex-shrink-0">
-                        <button onClick={() => navigate('/')} className="text-2xl font-bold text-blue-600">CrowdFund</button>
+                        <button onClick={() => navigate('/')} className="text-2xl font-bold text-blue-600 ml-5">CrowdFund</button>
                     </div>
 
                     <div className="hidden md:flex flex-1 max-w-md mx-8">
-                        <div className="relative w-full">
+                        <div className="relative w-full bg-gray-100">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                             <Input
                                 type="text"
@@ -158,11 +163,12 @@ export function Header() {
                     <div className="hidden md:flex items-center space-x-4">
                         {loginUser ? (
                             <>
-                                <Button variant="ghost" size="sm" onClick={() => navigate('/')}>프로젝트 둘러보기</Button>
+                                <Button variant="ghost" size="sm" className='ml-75' onClick={() => navigate('/')}>오픈 예정</Button>
+                                {/* <Button variant="ghost" size="sm" onClick={() => navigate('/project')}>프로젝트 둘러보기</Button> */}
 
-                                {(loginUser.role === 'creator' || loginUser.role === 'admin') && (
+                                {/* {(loginUser.role !== 'creator' && loginUser.role !== 'admin') && (
                                     <Button variant="ghost" size="sm" onClick={() => navigate('/create')}>프로젝트 만들기</Button>
-                                )}
+                                )} */}
 
                                 {loginUser.role === 'admin' && (
                                     <Button variant="ghost" size="sm" onClick={() => navigate('/admin')} >관리자</Button>

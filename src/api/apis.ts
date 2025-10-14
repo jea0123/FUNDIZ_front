@@ -7,6 +7,7 @@ import type { SearchQnaParams } from '@/types/qna';
 import ky from 'ky';
 import type { SearchSettlementParams } from '@/types/settlement';
 import type { SearchUserParams } from '@/types/users';
+import { register } from 'module';
 
 export const kyInstance = ky.create({
   prefixUrl: 'http://localhost:9099/api/v1',
@@ -81,8 +82,10 @@ const responseHandler = async <T = any>(res: Response): Promise<ApiResult<T>> =>
   return { status: res.status, data: body?.data ?? null, message: body.message ?? null } as ApiResult<T>;
 };
 
-const authorization = (accessToken: string | undefined) => {
-  return { headers: { Authorization: `Bearer ${accessToken}` } };
+const authorization = (accessToken?: string) => {
+  return accessToken
+    ? { headers: { Authorization: `Bearer ${accessToken}` } }
+    : {};
 };
 
 const withBody = (data: any) => (typeof FormData !== 'undefined' && data instanceof FormData ? { body: data } : { json: data ?? {} });
@@ -184,6 +187,8 @@ export const endpoints = {
   updateStatus: 'admin/settlement',
   getUserInfo: (userId: number) => `admin/user/info/${userId}`,
   updateUser: (userId: number) => `admin/user/update/${userId}`,
+  registerAdmin: 'admin/register',
+  loginAdmin: 'admin/login',
 
   // ==================== Category API ====================
   getCategories: 'categories',
