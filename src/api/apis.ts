@@ -154,6 +154,10 @@ export const endpoints = {
   getQnaListOfProject: (projectId: number) => `project/${projectId}/qna`,
   addQuestion: (projectId: number, userId: number) => `project/${projectId}/qna/${userId}/add`,
 
+  // ==================== QnaReply API ====================
+  getQnaReplyList: (qnaId: number) => `qna/reply/${qnaId}`,
+  addQnaReply: (qnaId: number) => `qna/reply/${qnaId}`,
+
   // ==================== Shipping API ====================
   getAddressList: (userId: number) => `shipping/${userId}/list`,
   updateAddress: (userId: number, addrId: number) => `shipping/${userId}/update/${addrId}`,
