@@ -21,39 +21,24 @@ export function AdminLoginPage() {
             alert('아이디와 비밀번호를 모두 입력해주세요.');
             return;
         }
-        const requestBody = { adminId, password };
-        try {
-            const response = await postData(endpoints.loginAdmin, requestBody);
-            signInResponse(response);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const signInResponse = (response: any) => {
-        if (!response) {
-            alert('알 수 없는 오류가 발생했습니다.');
-            return;
-        }
-        const { status, data: token } = response;
-        if (status === 200 || status === 201) {
+        const requestBody = { adminId, adminPwd: password };
+        const response = await postData(endpoints.loginAdmin, requestBody);
+        if (response && response.status === 200) {
+            const { data: token } = response;
             const [, payloadBase64] = token.split('.');
             const { exp } = JSON.parse(atob(payloadBase64)) as { exp: number };
             const expires = new Date(exp * 1000);
             setCookie('accessToken', token, { path: '/', expires, sameSite: 'lax', secure: false });
             alert('로그인에 성공했습니다.');
             navigate('/', { replace: true });
-            return;
-        } else if (status === 400) {
-            alert('이메일 또는 비밀번호가 잘못되었습니다.');
-            return;
-        } else if (status === 0) {
+        } else if (response && response.status === 400) {
+            alert('아이디 또는 비밀번호가 잘못되었습니다.');
+        } else if (response && response.status === 0) {
             alert('서버 응답이 없습니다. 잠시 후 다시 시도해주세요.');
-            return;
         } else {
             alert('로그인에 실패했습니다. 다시 시도해주세요.');
-            return;
         }
+        setIsLoading(false);
     };
 
     return (
