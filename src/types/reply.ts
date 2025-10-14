@@ -22,3 +22,10 @@ export interface ReplyDto {
     nickname: string;
     profileImg: string | null;
 }
+
+export interface InquiryReplyDto {
+    replyId: number;
+    inqId: number;
+    content: string;
+    createdAt: Date;
+}
