@@ -38,7 +38,7 @@ export function InquiryTab() {
               return false;
             }
 
-            navigate('/user/mypage', {state : { tab : 'myinquiry'}});
+            navigate('/user/myinquiry');
           };
 
     return (
