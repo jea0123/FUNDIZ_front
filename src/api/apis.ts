@@ -27,7 +27,7 @@ export const kyInstance = ky.create({
         }
 
         if (pathname.includes('/api/v1/creator/')) {
-          const devId = localStorage.getItem('DEV_CREATOR_ID') || '20';
+          const devId = localStorage.getItem('DEV_CREATOR_ID') || '4';
           req.headers.set('X-Dev-Creator-Id', devId);
         }
       },
@@ -82,9 +82,7 @@ const responseHandler = async <T = any>(res: Response): Promise<ApiResult<T>> =>
 };
 
 const authorization = (accessToken?: string) => {
-  return accessToken
-    ? { headers: { Authorization: `Bearer ${accessToken}` } }
-    : {};
+  return accessToken ? { headers: { Authorization: `Bearer ${accessToken}` } } : {};
 };
 
 const withBody = (data: any) => (typeof FormData !== 'undefined' && data instanceof FormData ? { body: data } : { json: data ?? {} });

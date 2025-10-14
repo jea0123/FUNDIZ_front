@@ -78,7 +78,7 @@ export interface ProjectCreateRequestDto {
   businessNum: string;
   email: string;
   phone: string;
-  
+
   files: File[];
   businessDoc: File | null;
 }
@@ -116,5 +116,5 @@ export interface CreatorDashboard {
   top3ViewCnt: CreatorDashboardRanking[];
 
   dailyStatus: DailyCount[];
-  monthStatuss: MonthCount[];
+  monthStatus: MonthCount[];
 }
