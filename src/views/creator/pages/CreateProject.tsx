@@ -150,6 +150,11 @@ const buildFormData = (
     fd.append("businessNum", project.businessNum ?? "");
     fd.append("email", project.email ?? "");
     fd.append("phone", project.phone ?? "");
+    fd.append("thumbnail", project.thumbnail instanceof File ? project.thumbnail : "");
+
+    fd.append("contentBlocks", JSON.stringify(project.contentBlocks ?? { blocks: [] })); // 상세 설명(JSON)
+
+    console.log("buildFormData.project", project);
 
     if (project.thumbnail instanceof File) {
         fd.append("thumbnail", project.thumbnail);
@@ -191,6 +196,7 @@ const STEPS = [
     { id: 4, title: "리워드 설계", description: "후원자 리워드 구성" },
     { id: 5, title: "창작자 정보", description: "창작자 기본 정보" },
     { id: 6, title: "검토 및 제출", description: "프로젝트 요약 및 심사 안내" },
+    { id: 7, title: "상세 설명", description: "이미지+텍스트 상세 구성" },
 ];
 
 /* --------------------------- Page --------------------------- */
@@ -232,6 +238,8 @@ export default function CreateProject() {
         email: "",
         phone: "",
         files: [],
+        businessDoc: null,
+        contentBlocks: { blocks: [] } // EditorJS JSON,
     });
 
     //카테고리
@@ -576,7 +584,9 @@ export default function CreateProject() {
                             다음 단계
                         </Button>
                     ) : (
-                        <Button onClick={handleSubmit} disabled={!agree || isLoading || !canSubmit}>
+                            <Button onClick={handleSubmit}
+                                // disabled={!agree || isLoading || !canSubmit}
+                            >
                             <Send className="h-4 w-4 mr-2" /> 심사요청
                         </Button>
                     )}

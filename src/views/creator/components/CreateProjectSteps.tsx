@@ -16,6 +16,7 @@ import { Plus, Trash, Truck, Upload, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { ThumbnailUploader } from "./ThumbnailUploader";
 import clsx from "clsx";
+import ProjectDetailEditor from "./ProjectDetailEditor";
 
 const numberKR = (n?: number | null) => new Intl.NumberFormat("ko-KR").format(n || 0);
 
@@ -23,8 +24,8 @@ const normalizeName = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase()
 
 export function CreateProjectSteps(props: {
     step: number;
-    project: ProjectCreateRequestDto;
-    setProject: React.Dispatch<React.SetStateAction<ProjectCreateRequestDto>>;
+    project: ProjectCreateRequestDto & { files?: File[]; contentBlocks?: any };
+    setProject: React.Dispatch<React.SetStateAction<ProjectCreateRequestDto & { files?: File[]; contentBlocks?: any }>>;
     categories: Category[];
     subcategories: Subcategory[];
     rewardList: RewardForm[];
@@ -97,7 +98,10 @@ export function CreateProjectSteps(props: {
                 </div>
 
                 <ThumbnailUploader
-                    onCleared={() => setProject(p => ({ ...p, thumbnail: null, thumbnailUrl: "" }))}
+                    file={project.thumbnail instanceof File ? project.thumbnail : null}
+                    // previewUrl={typeof project.thumbnail === "string" ? project.thumbnail : project.thumbnailUrl}
+                    onSelect={(f) => setProject((p) => ({ ...p, thumbnail: f }))}
+                    onCleared={() => setProject((p) => ({ ...p, thumbnail: null, thumbnailUrl: "" }))}
                 />
 
                 <TagEditor
@@ -535,6 +539,22 @@ export function CreateProjectSteps(props: {
                     <label htmlFor="agree" className="text-sm">프로젝트 등록 약관 및 정책에 동의합니다. *</label>
                 </div>
                 {agreeError && (<p className="text-xs text-red-500 mt-1">{agreeError}</p>)}
+            </div>
+        );
+    }
+
+    if (step === 7) {
+        return (
+            <div className="space-y-4">
+                <Label>상세 설명 (이미지 + 텍스트)</Label>
+                <p className="text-xs text-muted-foreground">
+                    쇼핑몰 상세 페이지처럼 이미지를 추가하고 위/아래에 설명을 작성하세요.
+                </p>
+                <ProjectDetailEditor
+                    initialData={project.contentBlocks}
+                    uploadUrl={"http://localhost:9099/api/v1/attach/image"}
+                    onChange={(data) => setProject((prev: any) => ({ ...prev, contentBlocks: data }))}
+                />
             </div>
         );
     }

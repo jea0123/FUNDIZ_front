@@ -81,6 +81,8 @@ export interface ProjectCreateRequestDto {
   
   files: File[];
   businessDoc: File | null;
+
+  contentBlocks: M; // EditorJS JSON
 }
 
 export interface ProjectSummaryDto {
