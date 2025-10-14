@@ -144,14 +144,14 @@ export function MyInquiryTab() {
             }, [replyInput]);
     
             // 댓글 패널 토글 (처음 열 때만 로드, 기본값 문자열로 강제)
-            const toggleReplies = useCallback((cmId: number) => {
-                setOpenReply(prev => ({ ...prev, [cmId]: !prev?.[cmId] }));
+            const toggleReplies = useCallback((inqId: number) => {
+                setOpenReply(prev => ({ ...prev, [inqId]: !prev?.[inqId] }));
     
-                setReply((prev) => ({ ...prev, [cmId]: Array.isArray(prev?.[cmId]) ? prev[cmId] : [] }));
-                setReplyInput((prev) => ({ ...prev, [cmId]: typeof prev?.[cmId] === "string" ? prev[cmId] : "" }));
-                setLoadingReply((prev) => ({ ...prev, [cmId]: !!prev?.[cmId] }));
+                setReply((prev) => ({ ...prev, [inqId]: Array.isArray(prev?.[inqId]) ? prev[inqId] : [] }));
+                setReplyInput((prev) => ({ ...prev, [inqId]: typeof prev?.[inqId] === "string" ? prev[inqId] : "" }));
+                setLoadingReply((prev) => ({ ...prev, [inqId]: !!prev?.[inqId] }));
     
-                if (!reply?.[cmId]) replyData(cmId, null);
+                if (!reply?.[inqId]) replyData(inqId, null);
             }, [reply, replyData]);
 
     return (

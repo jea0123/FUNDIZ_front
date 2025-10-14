@@ -7,7 +7,6 @@ import type { SearchQnaParams } from '@/types/qna';
 import ky from 'ky';
 import type { SearchSettlementParams } from '@/types/settlement';
 import type { SearchUserParams } from '@/types/users';
-import { register } from 'module';
 
 export const kyInstance = ky.create({
   prefixUrl: 'http://localhost:9099/api/v1',
@@ -28,7 +27,7 @@ export const kyInstance = ky.create({
         }
 
         if (pathname.includes('/api/v1/creator/')) {
-          const devId = localStorage.getItem('DEV_CREATOR_ID') || '1';
+          const devId = localStorage.getItem('DEV_CREATOR_ID') || '179';
           req.headers.set('X-Dev-Creator-Id', devId);
         }
       },
