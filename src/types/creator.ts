@@ -63,7 +63,7 @@ export interface ProjectCreateRequestDto {
 
   title: string;
   content: string;
-  thumbnail: string;
+  thumbnail: File | null;
   goalAmount: number;
   startDate: Date;
   endDate: Date;
@@ -76,6 +76,9 @@ export interface ProjectCreateRequestDto {
   businessNum: string;
   email: string;
   phone: string;
+  
+  files: File[];
+  businessDoc: File | null;
 }
 
 export interface ProjectSummaryDto {

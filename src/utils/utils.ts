@@ -196,6 +196,23 @@ export const formatPrice = (price: number): string => {
     return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(price);
 }
 
+/**
+ * @description 파일 경로를 공개 URL로 변환
+ * @param p {string | null | undefined} p 파일 경로
+ * @returns {string | null} 공개 URL 또는 null
+ */
+export const toPublicUrl = (p?: string | null): string => {
+    if (!p) return "";
+    if (/^https?:\/\//i.test(p)) return p;
+
+    if (/^[A-Za-z]:[\\/]/.test(p)) {
+        const name = p.replace(/^.*[\\/]/, "");
+        return `http://localhost:9099/uploads/${name}`;
+    }
+    if (p.startsWith("/")) return `http://localhost:9099${p}`;
+    return `http://localhost:9099/${p}`;
+};
+
 /** 성공(파랑 톤) */
 export const toastSuccess = (message: string) =>
     toast.success(message, {

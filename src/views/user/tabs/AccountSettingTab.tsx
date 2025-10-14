@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,10 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { toastError, toastSuccess } from "@/utils/utils";
+import { toastError, toastSuccess, toPublicUrl } from "@/utils/utils";
 import type { LoginUser } from "@/types";
 import { useCookies } from "react-cookie";
-import { deleteData, endpoints, getData, postData } from "@/api/apis";
+import { deleteData, endpoints, postData } from "@/api/apis";
 import { useLoginUserStore } from "@/store/LoginUserStore.store";
 
 const profileSchema = z.object({
@@ -30,10 +30,7 @@ const passwordSchema = z
         currentPassword: z.string().min(1, "현재 비밀번호를 입력하세요"),
         newPassword: z
             .string()
-            .min(8, "최소 8자")
-            .regex(/[A-Z]/, "대문자 1자 이상")
-            .regex(/[a-z]/, "소문자 1자 이상")
-            .regex(/[0-9]/, "숫자 1자 이상"),
+            .min(8, "최소 8자"),
         confirmPassword: z.string().min(1, "비밀번호 확인을 입력하세요"),
     })
     .refine((v) => v.newPassword === v.confirmPassword, {
@@ -70,7 +67,7 @@ const AccountSettingTab: React.FC = () => {
 
     const [openDelete, setOpenDelete] = useState(false);
 
-    const { register, handleSubmit, reset, formState: { isDirty, isSubmitting, errors }, watch, } = useForm<ProfileForm>({
+    const { register, setValue, handleSubmit, reset, formState: { isDirty, isSubmitting, errors }, watch, } = useForm<ProfileForm>({
         resolver: zodResolver(profileSchema),
         defaultValues: {
             email: loginUser?.email ?? "",
@@ -86,6 +83,14 @@ const AccountSettingTab: React.FC = () => {
             confirmPassword: "",
         },
     });
+
+    const { setError, clearErrors } = pwdForm;
+
+    useEffect(() => {
+        if (loginUser?.profileImg) {
+            setAvatarPreview(toPublicUrl(loginUser.profileImg) ?? null);
+        }
+    }, [loginUser?.profileImg]);
 
     const onPickAvatar: React.ChangeEventHandler<HTMLInputElement> = async (e) => {
         const f = e.target.files?.[0];
@@ -104,53 +109,62 @@ const AccountSettingTab: React.FC = () => {
 
     const onResetAvatar = () => {
         setAvatarFile(null);
-        setAvatarPreview(loginUser?.profileImg ?? null);
+        setAvatarPreview(null);
     };
 
     const onSubmitProfile = async (values: ProfileForm) => {
         try {
             const res = await postData(endpoints.updateNickname, { nickname: values.nickname }, cookie.accessToken);
             if (res.status === 200) {
+                console.log(res.data);
                 setLoginUser({ ...(loginUser as LoginUser), nickname: res.data });
-                toastSuccess("프로필이 저장되었어요.");
-                register("nickname").onChange({ target: { value: res.data } } as any);
+                setValue("nickname", res.data, { shouldDirty: false, shouldValidate: true });
+                toastSuccess("닉네임이 수정되었어요.");
             } else {
-                toastError("프로필 저장에 실패했어요.");
+                toastError("닉네임 수정에 실패했어요.");
             }
 
             if (avatarFile) {
                 const fd = new FormData();
-                fd.append("file", avatarFile);
+                fd.append("profileImg", avatarFile);
                 const up = await postData(endpoints.updateProfileImg, fd, cookie.accessToken);
                 if (up.status === 200) {
                     setLoginUser({ ...(loginUser as LoginUser), profileImg: up.data });
-                    toastSuccess("프로필이 저장되었어요.");
+                    setAvatarPreview(toPublicUrl(up.data));
+                    toastSuccess("프로필 사진이 수정되었어요.");
                 } else {
-                    toastError("프로필 이미지 업로드에 실패했어요.");
+                    toastError("프로필 이미지 수정에 실패했어요.");
                 }
             }
-            reset({
-                email: loginUser?.email,
-                nickname: loginUser?.nickname,
-            });
             setAvatarFile(null);
-            setAvatarPreview(loginUser?.profileImg ?? null);
         } catch (e: any) {
-            toastError(e?.message ?? "프로필 저장에 실패했어요.");
+            toastError(e?.message ?? "프로필 수정에 실패했어요.");
         }
     };
 
     const onChangePassword = pwdForm.handleSubmit(async (v) => {
         try {
-            const res = await postData(endpoints.changePassword, { currentPassword: v.currentPassword, newPassword: v.newPassword, }, cookie.accessToken);
+            clearErrors();
+            const res = await postData(endpoints.changePassword, { password: v.currentPassword, newPassword: v.newPassword, }, cookie.accessToken);
             if (res.status === 200) {
                 toastSuccess("비밀번호가 변경되었어요.");
+                pwdForm.reset();
             } else {
-                toastError("비밀번호 변경에 실패했어요.");
+                const msg = res.message ?? "비밀번호 변경에 실패했어요.";
+
+                if (/현재|current/i.test(msg)) {
+                    setError("currentPassword", { type: "server", message: msg });
+                }
+                else if (/동일|new/i.test(msg)) {
+                    setError("newPassword", { type: "server", message: msg });
+                }
+                else {
+                    setError("root", { type: "server", message: msg });
+                }
             }
-            pwdForm.reset();
         } catch (e: any) {
             toastError(e?.message ?? "비밀번호 변경에 실패했어요.");
+            setError("root", { type: "server", message: e?.message ?? "비밀번호 변경에 실패했어요." });
         }
     });
 
@@ -183,16 +197,14 @@ const AccountSettingTab: React.FC = () => {
     return (
         <div className="w-full max-w-3xl px-4 py-6">
             <h2 className="text-xl font-semibold mb-3">내 정보 수정</h2>
-            <p className="text-sm text-muted-foreground mb-6">
-                이메일은 로그인 ID로 사용되며 수정할 수 없습니다. 닉네임과 프로필 이미지를 변경할 수 있어요.
-            </p>
+            <p className="text-sm text-muted-foreground mb-6">이메일은 로그인 ID로 사용되며 수정할 수 없습니다. 닉네임과 프로필 이미지를 변경할 수 있어요.</p>
 
             {/* 프로필 섹션 */}
             <form onSubmit={handleSubmit(onSubmitProfile)} className="space-y-6">
                 <div className="flex items-start gap-6">
                     <div className="flex flex-col items-center gap-3">
                         <Avatar className="h-24 w-24 ring-1 ring-border">
-                            <AvatarImage src={avatarPreview ?? undefined} alt="avatar" />
+                            <AvatarImage src={(avatarPreview ?? toPublicUrl(loginUser.profileImg)) ?? undefined} alt="avatar" />
                             <AvatarFallback>{avatarFallback}</AvatarFallback>
                         </Avatar>
                         <div className="flex gap-2">
@@ -234,12 +246,6 @@ const AccountSettingTab: React.FC = () => {
                                 )}
                             </div>
                         </div>
-                        {/* 필요시 메모/소개 */}
-                        {/* <div>
-              <Label htmlFor="memo">소개</Label>
-              <Textarea id="memo" rows={3} placeholder="간단한 자기소개" {...register("memo")} />
-              {errors.memo && <p className="text-xs text-destructive mt-1">{errors.memo.message}</p>}
-            </div> */}
                     </div>
                 </div>
 
@@ -308,6 +314,9 @@ const AccountSettingTab: React.FC = () => {
                             </p>
                         )}
                     </div>
+                    {"root" in pwdForm.formState.errors && pwdForm.formState.errors.root?.message && (
+                        <p className="text-sm text-destructive">{pwdForm.formState.errors.root?.message}</p>
+                    )}
                     <div className="pt-2">
                         <Button type="submit" disabled={pwdForm.formState.isSubmitting}>
                             {pwdForm.formState.isSubmitting ? "변경 중..." : "비밀번호 변경"}

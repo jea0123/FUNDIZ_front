@@ -3,10 +3,10 @@ import type { SearchCreatorProjectDto } from '@/types/creator';
 import type { SearchProjectParams } from '@/types/projects';
 import type { SearchNoticeParams } from '@/types/notice';
 import type { SearchIqrParams } from '@/types/inquiry';
-import type { SearchUserParams } from '@/types/admin';
 import type { SearchQnaParams } from '@/types/qna';
 import ky from 'ky';
 import type { SearchSettlementParams } from '@/types/settlement';
+import type { SearchUserParams } from '@/types/users';
 
 export const kyInstance = ky.create({
   prefixUrl: 'http://localhost:9099/api/v1',
@@ -50,7 +50,7 @@ export const kyInstance = ky.create({
   },
 });
 
-type ApiResult<T = any> = { status: number; data: T | null };
+type ApiResult<T = any> = { status: number; data: T | null; message?: string | null };
 
 /**
  * @description
@@ -203,6 +203,8 @@ export const endpoints = {
   getMyReports: (userId: number, p: SearchIqrParams) => `cs/report/mylist/${userId}?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
   getReportDetail: (reportId: number) => `cs/report/${reportId}`,
   addReport: (userId: number) => `cs/report/${userId}/add`,
+  getInquiryReplyList: (inqId: number) => `cs/inquiry/reply/${inqId}`,
+  addInquiryReply: (inqId: number) => `cs/inquiry/reply/${inqId}`,
 
   // ==================== Notification API ====================
   getNotificationSSE: (userId: number) => `notifications/stream?userId=${userId}`,
