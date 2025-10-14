@@ -1084,6 +1084,8 @@ export function ProjectDetailPage() {
 }
 
 export function QnaAddModal() {
+    const navigate = useNavigate();
+
     const tempUserId = 24;
 
     const { projectId: projectIdParam } = useParams<{ projectId: string }>();
@@ -1109,7 +1111,7 @@ export function QnaAddModal() {
         if (response.status === 200) {
             alert("문의사항이 등록되었습니다.");
             setIsAddDialogOpen(false);
-            window.location.reload();
+            navigate('/user/myqna');
         } else {
             alert("문의사항 등록 실패");
         }

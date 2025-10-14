@@ -128,6 +128,50 @@ const buildPayload = (project: ProjectCreateRequestDto, rewards: RewardForm[], c
     })
 });
 
+const yyyyMmDd = (d?: Date) =>
+    d ? new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10) : "";
+
+const buildFormData = (
+    project: ProjectCreateRequestDto,
+    rewards: RewardForm[],
+    creatorId: number
+) => {
+    const fd = new FormData();
+
+    fd.append("creatorId", String(creatorId));
+    fd.append("ctgrId", String((project as any).ctgrId ?? 0));
+    fd.append("subctgrId", String(project.subctgrId ?? 0));
+    fd.append("title", project.title ?? "");
+    fd.append("content", project.content ?? "");
+    fd.append("goalAmount", String(project.goalAmount ?? 0));
+    fd.append("startDate", yyyyMmDd(project.startDate as any));
+    fd.append("endDate", yyyyMmDd(project.endDate as any));
+    fd.append("creatorName", project.creatorName ?? "");
+    fd.append("businessNum", project.businessNum ?? "");
+    fd.append("email", project.email ?? "");
+    fd.append("phone", project.phone ?? "");
+
+    if (project.thumbnail instanceof File) {
+        fd.append("thumbnail", project.thumbnail);
+    }
+
+    (project.files ?? []).forEach(f => fd.append("files", f));
+
+    cleanTags(project.tagList).forEach(t => fd.append("tagList", t));
+
+    rewards.forEach((r, i) => {
+        const v = assertValidReward(r, { fundingEndDate: project.endDate });
+        fd.append(`rewardList[${i}].rewardName`, v.rewardName);
+        fd.append(`rewardList[${i}].price`, String(v.price));
+        fd.append(`rewardList[${i}].rewardContent`, v.rewardContent);
+        fd.append(`rewardList[${i}].deliveryDate`, yyyyMmDd(v.deliveryDate as any));
+        fd.append(`rewardList[${i}].rewardCnt`, v.rewardCnt == null ? "" : String(v.rewardCnt));
+        fd.append(`rewardList[${i}].isPosting`, v.isPosting);
+    });
+
+    return fd;
+};
+
 const validateAgree = (
     agree: boolean,
     setAgreeError: (message: string | null) => void
@@ -142,10 +186,11 @@ const validateAgree = (
 
 const STEPS = [
     { id: 1, title: "프로젝트 정보", description: "기본 정보 입력" },
-    { id: 2, title: "프로젝트 설정", description: '목표 금액 및 기간 설정' },
-    { id: 3, title: "리워드 설계", description: "후원자 리워드 구성" },
-    { id: 4, title: "창작자 정보", description: "창작자 기본 정보" },
-    { id: 5, title: "검토 및 제출", description: "프로젝트 요약 및 심사 안내" },
+    { id: 2, title: "프로젝트 소개", description: "프로젝트 본문 입력" },
+    { id: 3, title: "프로젝트 설정", description: '목표 금액 및 기간 설정' },
+    { id: 4, title: "리워드 설계", description: "후원자 리워드 구성" },
+    { id: 5, title: "창작자 정보", description: "창작자 기본 정보" },
+    { id: 6, title: "검토 및 제출", description: "프로젝트 요약 및 심사 안내" },
 ];
 
 /* --------------------------- Page --------------------------- */
@@ -176,7 +221,7 @@ export default function CreateProject() {
         creatorId: 0,
         title: "",
         content: "",
-        thumbnail: "",
+        thumbnail: null,
         goalAmount: 0,
         startDate: addDays(new Date(), PROJECT_RULES.MIN_START_LEAD_DAYS),
         endDate: addDays(addDays(new Date(), PROJECT_RULES.MIN_START_LEAD_DAYS), PROJECT_RULES.MIN_DAYS),
@@ -185,7 +230,8 @@ export default function CreateProject() {
         creatorName: "",
         businessNum: "",
         email: "",
-        phone: ""
+        phone: "",
+        files: [],
     });
 
     //카테고리
@@ -375,23 +421,21 @@ export default function CreateProject() {
     //Draft 생성/저장
     const handleSaveDraft = async () => {
         if (isLoading) return; // 중복 제출 방지
-
         if (!creator || creator.creatorId == null) {
             alert("창작자 ID가 필요합니다.");
             return;
         }
-
-        const payload = buildPayload(project, rewardList, creator.creatorId);
+        const formData = buildFormData(project, rewardList, creator.creatorId);
         setIsLoading(true);
         try {
             if (isEdit && projectId) {
                 // 기존 Draft 업데이트
-                await postData(endpoints.updateProject(projectId), payload);
+                await postData(endpoints.updateProject(projectId), formData);
                 alert("저장이 완료되었습니다.");
                 goList();
             } else {
                 // 신규 Draft 생성
-                const response = await postData(endpoints.createProject, payload);
+                const response = await postData(endpoints.createProject, formData);
                 if (response.status === 200) {
                     alert("저장이 완료되었습니다.");
                     goList();
@@ -399,6 +443,8 @@ export default function CreateProject() {
                     alert("저장에 실패했습니다.");
                 }
             }
+        } catch (err: any) {
+            alert(err?.message ?? "저장 중 오류가 발생했습니다.");
         } finally {
             setIsLoading(false);
         }
@@ -426,16 +472,15 @@ export default function CreateProject() {
         // 창작자 기본정보 사전 가드
         if (!creator?.creatorId) return alert("창작자 ID가 필요합니다.");
         if (creator.isSuspended) return alert("정지된 창작자는 프로젝트 등록/수정이 불가합니다.");
-        if (!creator.isComplete)
-            return alert("창작자 기본정보 필수 항목이 미완성입니다. (창작자명/사업자번호/이메일/전화번호)");
+        if (!creator.isComplete) return alert("창작자 기본정보 필수 항목이 미완성입니다. (창작자명/사업자번호/이메일/전화번호)");
 
         setIsLoading(true);
         try {
-            const payload = buildPayload(project, rewardList, creator!.creatorId);
+            const formData = buildFormData(project, rewardList, creator!.creatorId);
 
             if (isEdit && projectId) {
                 // 기존 Draft 업데이트
-                await postData(endpoints.updateProject(projectId), payload);
+                await postData(endpoints.updateProject(projectId), formData);
 
                 // 편집 중인 Draft 심사요청
                 await postData(endpoints.submitProject(projectId), {});
@@ -444,7 +489,7 @@ export default function CreateProject() {
             }
 
             // 신규 작성 후 즉시 심사요청
-            await postData(endpoints.createProject, payload);
+            await postData(endpoints.createProject, formData);
             alert("심사요청이 완료되었습니다.");
             goList();
         } catch (e: any) {

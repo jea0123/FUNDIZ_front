@@ -1,33 +1,25 @@
-import { endpoints, postData } from "@/api/apis";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import clsx from "clsx";
-import { Loader2, RefreshCw, Trash2, Upload } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { RefreshCw, Trash2, Upload } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
 
-const MAX_SIZE = 4 * 1024 * 1024; // 4MB
-const ACCEPTED_TYPES = ["image/jpeg", "image/png"]; // JPG, PNG
+const MAX_SIZE = 4 * 1024 * 1024 * 1024; //4GB
+const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 interface Props {
     label?: string;
-    initialUrl?: string;
-    onUploaded?: (url: string) => void; // 업로드 성공 시 콜백
     onCleared?: () => void; // 삭제/초기화 시 콜백
     disabled?: boolean;
 }
 
-export function ThumbnailUploader({ label = "대표 이미지 *", initialUrl, onUploaded, onCleared, disabled, }: Props) {
+export function ThumbnailUploader({ label = "대표 이미지 *", onCleared, disabled, }: Props) {
 
     const inputRef = useRef<HTMLInputElement | null>(null);
 
     const [dragOver, setDragOver] = useState(false);
-    const [preview, setPreview] = useState<string | undefined>(initialUrl);
-    const [uploading, setUploading] = useState(false);
+    const [preview, setPreview] = useState<string | undefined>(undefined);
     const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        setPreview(initialUrl || undefined);
-    }, [initialUrl]);
 
     const openPicker = useCallback(() => {
         if (!disabled) inputRef.current?.click();
@@ -48,36 +40,20 @@ export function ThumbnailUploader({ label = "대표 이미지 *", initialUrl, on
         }
     };
 
-    const upload = async (file: File) => {
-        setUploading(true);
-        setError(null);
-        try {
-            const formData = new FormData();
-            formData.append("file", file);
-
-            const res = await postData<{ url: string }>(endpoints.uploadThumbnail, formData);
-            const data = (res as any).data ?? res;
-            if (!data?.url) throw new Error("업로드 응답이 올바르지 않습니다.");
-
-            setPreview(data.url);
-            onUploaded?.(data.url);
-        } catch (e: any) {
-            setError(e?.response?.data?.message || e?.message || "업로드 중 오류가 발생했습니다.");
-            setPreview(undefined);
-        } finally {
-            setUploading(false);
-        }
-    };
+    const fileToDataUrl = (f: File) =>
+        new Promise<string>((resolve, reject) => {
+            const fr = new FileReader();
+            fr.onload = () => resolve(String(fr.result));
+            fr.onerror = reject;
+            fr.readAsDataURL(f);
+        });
 
     const handleFiles = async (files: FileList | null) => {
         if (!files?.length) return;
         const file = files[0];
         try {
             validate(file);
-            const temp = URL.createObjectURL(file);
-            setPreview(temp); // 낙관적 미리보기
-            await upload(file);
-            URL.revokeObjectURL(temp); // 메모리 정리
+            setPreview(await fileToDataUrl(file)); // 낙관적 미리보기
         } catch (err: any) {
             setError(err.message);
             setPreview(undefined);
@@ -131,10 +107,10 @@ export function ThumbnailUploader({ label = "대표 이미지 *", initialUrl, on
                         />
 
                         <div className="mt-3 flex items-center justify-center gap-2">
-                            <Button type="button" variant="outline" size="sm" onClick={openPicker} disabled={uploading || disabled}>
+                            <Button type="button" variant="outline" size="sm" onClick={openPicker}>
                                 <RefreshCw className="mr-1 h-4 w-4" /> 교체
                             </Button>
-                            <Button type="button" variant="destructive" size="sm" onClick={reset} disabled={uploading || disabled}>
+                            <Button type="button" variant="destructive" size="sm" onClick={reset}>
                                 <Trash2 className="mr-1 h-4 w-4" /> 삭제
                             </Button>
                         </div>
@@ -142,18 +118,11 @@ export function ThumbnailUploader({ label = "대표 이미지 *", initialUrl, on
                 ) : (
                     <div className="py-6">
                         <Upload className="mx-auto mb-3 h-10 w-10 text-gray-400" />
-                        <p className="mb-2 text-sm text-gray-600">이미지를 드래그하거나 클릭하여 업로드</p>
-                        <Button type="button" variant="outline" size="sm" onClick={openPicker} disabled={uploading || disabled}>
+                        <p className="mb-2 text-sm text-gray-600">클릭하거나 드래그하여 파일을 업로드</p>
+                        <Button type="button" variant="outline" size="sm" onClick={openPicker}>
                             파일 선택
                         </Button>
-                        <p className="mt-2 text-xs text-gray-400">최대 4MB, JPG/PNG</p>
-                    </div>
-                )}
-
-                {uploading && (
-                    <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center rounded-lg bg-white/70">
-                        <Loader2 className="mb-3 h-6 w-6 animate-spin" />
-                        <p className="text-sm">업로드 중...</p>
+                        <p className="mt-2 text-xs text-gray-400">이미지(JPG/PNG)</p>
                     </div>
                 )}
 
