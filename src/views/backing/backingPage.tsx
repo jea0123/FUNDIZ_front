@@ -207,58 +207,64 @@ export function BackingPage() {
   };
 
   //  결제 완료 후 처리 (데이터 저장)
-  const handleConfirmPayment = async (method: string) => {
-    const totalAmount = getTotalAmount();
-    const toLocalDate = (date: Date) => date.toISOString().split('T')[0];
+const handleConfirmPayment = async (method: string) => {
+  const rewardsTotal = rewardList.reduce(
+    (sum, r) => sum + (rewardQuantities[r.rewardId] ?? 1) * r.price,
+    0
+  );
+  const additional = customAmount ? parseInt(customAmount) : 0;
+  const totalAmount = rewardsTotal + additional; // ✅ 추가 후원금 포함
 
-    if (!shippingAddress?.addrId) {
-      alert('배송지를 선택해주세요.');
-      return;
-    }
+  const toLocalDate = (date: Date) => date.toISOString().split('T')[0];
 
-    const backingData: BackingRequest = {
-      backing: {
-        userId: tempUserId,
-        amount: totalAmount,
-        createdAt: toLocalDate(new Date()),
-        backingStatus: 'COMPLETED',
-      },
-      backingDetail: {
-        rewardId: rewardList[0]?.rewardId ?? 0,
-        price: rewardList[0]?.price ?? 0,
-        quantity: rewardQuantities[rewardList[0]?.rewardId] ?? 1,
-      },
-      shipping: {
-        addrId: shippingAddress.addrId,
-        shippingStatus: 'PENDING',
-        trackingNum: null,
-        shippedAt: null,
-        deliveredAt: null,
-      },
-      payment: {
-        method: method || 'CARD',
-        amount: totalAmount,
-        status: 'COMPLETED',
-        paidAt: toLocalDate(new Date()),
-      },
-    };
+  if (!shippingAddress?.addrId) {
+    alert('배송지를 선택해주세요.');
+    return;
+  }
 
-    console.log('📤 backingData', JSON.stringify(backingData, null, 2));
-
-    try {
-      const res = await postData(endpoints.addBacking(tempUserId), backingData);
-
-      if (res.status === 200) {
-        alert(`결제가 완료되었습니다!\n결제수단: ${method}\n총 금액: ${totalAmount.toLocaleString()}원`);
-        navigate('/user/mypage');
-      } else {
-        alert('후원 저장 실패: ' + (res.message || '서버 오류'));
-      }
-    } catch (error) {
-      console.error('후원 생성 오류:', error);
-      alert('후원 정보를 저장하는 중 오류가 발생했습니다.');
-    }
+  const backingData: BackingRequest = {
+    backing: {
+      userId: tempUserId,
+      amount: totalAmount, // ✅ 추가 후원금 포함된 총 금액 저장
+      createdAt: toLocalDate(new Date()),
+      backingStatus: 'COMPLETED',
+    },
+    backingDetail: {
+      rewardId: rewardList[0]?.rewardId ?? 0,
+      price: rewardList[0]?.price ?? 0,
+      quantity: rewardQuantities[rewardList[0]?.rewardId] ?? 1,
+    },
+    shipping: {
+      addrId: shippingAddress.addrId,
+      shippingStatus: 'PENDING',
+      trackingNum: null,
+      shippedAt: null,
+      deliveredAt: null,
+    },
+    payment: {
+      method: method || 'CARD',
+      amount: totalAmount, // ✅ 결제 금액도 동일하게 포함
+      status: 'COMPLETED',
+      paidAt: toLocalDate(new Date()),
+    },
   };
+
+  console.log('📤 backingData', JSON.stringify(backingData, null, 2));
+
+  try {
+    const res = await postData(endpoints.addBacking(tempUserId), backingData);
+
+    if (res.status === 200) {
+      alert(`결제가 완료되었습니다!\n결제수단: ${method}\n총 금액: ${totalAmount.toLocaleString()}원`);
+      navigate('/user/mypage');
+    } else {
+      alert('후원 저장 실패: ' + (res.message || '서버 오류'));
+    }
+  } catch (error) {
+    console.error('후원 생성 오류:', error);
+    alert('후원 정보를 저장하는 중 오류가 발생했습니다.');
+  }
+};
 
   return (
     <div className="min-h-screen bg-gray-50">
