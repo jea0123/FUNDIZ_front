@@ -7,6 +7,7 @@ import type { SearchQnaParams } from '@/types/qna';
 import ky from 'ky';
 import type { SearchSettlementParams } from '@/types/settlement';
 import type { SearchUserParams } from '@/types/users';
+import { register } from 'module';
 
 export const kyInstance = ky.create({
   prefixUrl: 'http://localhost:9099/api/v1',
@@ -186,6 +187,8 @@ export const endpoints = {
   updateStatus: 'admin/settlement',
   getUserInfo: (userId: number) => `admin/user/info/${userId}`,
   updateUser: (userId: number) => `admin/user/update/${userId}`,
+  registerAdmin: 'admin/register',
+  loginAdmin: 'admin/login',
 
   // ==================== Category API ====================
   getCategories: 'categories',

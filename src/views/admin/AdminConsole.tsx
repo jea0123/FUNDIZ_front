@@ -14,8 +14,7 @@ export function AdminConsole() {
     return (
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="mb-2">
-                <h1 className="text-3xl mb-2">관리자 콘솔</h1>
-                <p className="text-gray-600">플랫폼 운영 현황을 확인하고 관리하세요</p>
+                <h1 className="text-3xl mb-2">관리자 페이지</h1>
             </div>
 
             <div className="flex items-start gap-6">
