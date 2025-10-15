@@ -48,7 +48,7 @@ export function NoticeUpdtTab() {
             return false;
         }
 
-        navigate('?tab=notice');
+        navigate('../notice');
     };
 
     return (

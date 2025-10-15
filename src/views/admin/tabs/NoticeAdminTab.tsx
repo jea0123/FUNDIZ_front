@@ -86,7 +86,7 @@ export function NoticeAdminTab() {
     const { items, total } = useNotice({ page, size, perGroup, keyword });
 
     const noticeDelete = async (noticeId: number) => {
-        const response = await deleteData(endpoints.deleteNotice(noticeId), {});
+        const response = await deleteData(endpoints.deleteNotice(noticeId));
         if (response.status === 200) {
           alert("공지사항이 삭제되었습니다.");
           setNotices((prev) => prev.filter((ntc) => ntc.noticeId !== noticeId));
@@ -99,7 +99,7 @@ export function NoticeAdminTab() {
 
       const navigate = useNavigate();
       const noticeAddNavigate = () => {
-        navigate('?tab=noticeadd');
+        navigate('../noticeadd');
       };
       
     return (
@@ -132,7 +132,7 @@ export function NoticeAdminTab() {
                                                 <TableCell className="text-zinc-500">{formatDate(n.createdAt)}</TableCell>
                                                 <TableCell>
                                                     <div className="flex gap-2">
-                                                        <Button size="sm" variant="outline" onClick={() => navigate(`?tab=noticeupdate&id=${n.noticeId}`)}>수정</Button>
+                                                        <Button size="sm" variant="outline" onClick={() => navigate(`../noticeupdate?id=${n.noticeId}`)}>수정</Button>
                                                         <Button size="sm" variant="destructive" onClick={() => noticeDelete(n.noticeId)}>삭제</Button>
                                                     </div>
                                                 </TableCell>
