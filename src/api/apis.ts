@@ -122,6 +122,9 @@ export const endpoints = {
   updateNickname: 'user/nickname',
   updateProfileImg: 'user/profileImg',
   changePassword: 'user/password',
+  likeProject: (projectId: number) => `user/like/${projectId}`,
+  dislikeProject: (projectId: number) => `user/dislike/${projectId}`,
+  checkLiked: (projectId: number) => `user/checkLike/${projectId}`,
 
   // ==================== Creator API ====================
   getCreatorProjectList: (p: SearchCreatorProjectDto) => `creator/projects?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
@@ -155,6 +158,7 @@ export const endpoints = {
   postReply: (cmId: number) => `project/community/${cmId}/reply`,
   getQnaListOfProject: (projectId: number) => `project/${projectId}/qna`,
   addQuestion: (projectId: number, userId: number) => `project/${projectId}/qna/${userId}/add`,
+  getLikeCnt: (projectId: number) => `project/${projectId}/likeCnt`,
 
   // ==================== QnaReply API ====================
   getQnaReplyList: (qnaId: number) => `qna/reply/${qnaId}`,

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Heart, Share2, Calendar, Users, MessageCircle, Star, MessageSquarePlus, X } from 'lucide-react';
 import type { ProjectDetail } from '@/types/projects';
-import { endpoints, getData, postData } from '@/api/apis';
+import { deleteData, endpoints, getData, postData } from '@/api/apis';
 import { useParams } from 'react-router-dom';
-import { formatDate, getDaysBefore, getDaysLeft } from '@/utils/utils';
+import { formatDate, getDaysBefore, getDaysLeft, toastError, toastSuccess } from '@/utils/utils';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Textarea } from '@/components/ui/textarea';
 import type { ReplyDto } from '@/types/reply';
 import type { Qna, QnaDto, QnaAddRequest } from "@/types/qna";
+import { is } from 'date-fns/locale';
 
 const CM_MAX = 1000;
 const getByteLen = (s: string) => new TextEncoder().encode(s).length;
@@ -27,7 +28,6 @@ const formatCurrency = (amount: number) => { return new Intl.NumberFormat('ko-KR
 export function ProjectDetailPage() {
 
     /* ----------------------------- Router helpers ----------------------------- */
-
     const navigate = useNavigate();
     const { projectId } = useParams();
 
@@ -62,6 +62,7 @@ export function ProjectDetailPage() {
     /* --------------------------------- State --------------------------------- */
 
     const [project, setProject] = useState<ProjectDetail>();
+    const [likeCnt, setLikeCnt] = useState(0);
     const [loadingProject, setLoadingProject] = useState(false);
 
     const [community, setCommunity] = useState<CommunityDto[]>([]);
@@ -115,7 +116,6 @@ export function ProjectDetailPage() {
     const getLocalReplyCnt = (cmId: number) => (reply[cmId]?.length ?? 0);
 
     /* ----------------------------- Data fetchers ----------------------------- */
-
     const projectData = useCallback(async () => {
         if (!projectId) return;
         setLoadingProject(true);
@@ -212,6 +212,42 @@ export function ProjectDetailPage() {
         }
     }, []);
 
+    const likeProject = useCallback(async () => {
+        if (!projectId) return;
+        if (!ensureLogin()) return;
+        const response = await postData(endpoints.likeProject(Number(projectId)));
+        if (response.status === 200) {
+            setIsLiked(true);
+            toastSuccess('프로젝트를 좋아합니다.');
+        }
+    }, [projectId, ensureLogin]);
+
+    const dislikeProject = useCallback(async () => {
+        if (!projectId) return;
+        if (!ensureLogin()) return;
+        const response = await deleteData(endpoints.dislikeProject(Number(projectId)));
+        if (response.status === 200) {
+            setIsLiked(false);
+            toastError('프로젝트 좋아요를 취소합니다.');
+        }
+    }, [projectId, ensureLogin]);
+
+    const checkLiked = async () => {
+        if (!projectId) return;
+        if (!ensureLogin()) return;
+        const response = await getData(endpoints.checkLiked(Number(projectId)));
+        if (response.status === 200) {
+            setIsLiked(response.data);
+        }
+    }
+
+    const getLikeCnt = async () => {
+        if (!projectId) return;
+        const response = await getData(endpoints.getLikeCnt(Number(projectId)));
+        if (response.status === 200) {
+            setLikeCnt(response.data);
+        }
+    };
 
     /* ------------------------------- UI handlers ---------------------------------- */
 
@@ -406,10 +442,6 @@ export function ProjectDetailPage() {
         }
     }, [ensureLogin, replyInput, replySecret]);
 
-    const handleOpenModal = () => {
-        setIsAddDialogOpen(true);
-    };
-
     /* -------------------------------- Effects -------------------------------- */
 
     useEffect(() => {
@@ -494,6 +526,12 @@ export function ProjectDetailPage() {
         return () => observers.forEach(o => o.disconnect());
     }, [tab, replyCursor, loadingReply, replyData]);
 
+    // 좋아요 여부
+    useEffect(() => {
+        checkLiked();
+        getLikeCnt();
+    }, [projectId, isLiked, likeProject, dislikeProject]);
+
     /* --------------------------------- Render --------------------------------- */
 
     if (!projectId || !project || loadingProject) {
@@ -514,11 +552,11 @@ export function ProjectDetailPage() {
                             <Button
                                 variant="secondary"
                                 size="sm"
-                                onClick={() => setIsLiked(!isLiked)}
+                                onClick={isLiked ? dislikeProject : likeProject}
                                 className={isLiked ? 'text-red-500' : ''}
                             >
                                 <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
-                                <span className="ml-1">{project.likeCnt}</span>
+                                <span className="ml-1">{likeCnt}</span>
                             </Button>
                             <Button variant="secondary" size="sm" onClick={handleShare}>
                                 <Share2 className="h-4 w-4" />
@@ -1104,7 +1142,7 @@ export function QnaAddModal() {
     });
 
     const handleAddQna = async () => {
-        const url = endpoints.addQuestion(projectId, tempUserId);
+        const url = endpoints.addQuestion(Number(projectId), tempUserId);
         console.log(url);
         const response = await postData(url, qnaAdd);
         console.log(qnaAdd);
@@ -1116,7 +1154,6 @@ export function QnaAddModal() {
             alert("문의사항 등록 실패");
         }
     };
-
 
     return (
         <div>
