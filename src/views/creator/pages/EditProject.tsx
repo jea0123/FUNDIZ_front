@@ -4,11 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Subcategory } from '@/types/projects';
 import { endpoints, getData, postData } from '@/api/apis';
-import type { RewardCreateRequestDto, RewardDraft, RewardForm } from '@/types/reward';
+import type { RewardDraft, RewardForm } from '@/types/reward';
 import type { Category } from '@/types/admin';
 import FundingLoader from '@/components/FundingLoader';
 import { CreateProjectStepper } from '../components/CreateProjectStepper';
-import { CreateProjectSteps } from '../components/CreateProjectSteps';
+import { CreateProjectSteps, type CreateProjectViewModel } from '../components/CreateProjectSteps';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { ProjectCreateRequestDto } from '@/types/creator';
 import { assertValidReward, validateReward, validateRewardList, type FieldErrors } from '@/types/reward-validator';
@@ -18,7 +18,6 @@ const PROJECT_RULES = {
     MAX_TITLE_LEN: 255,
     MIN_CONTENT_LEN: 30,
     MAX_CONTENT_LEN: 3000,
-    //TODO: 대표이미지 나중에 추가
     MIN_GOAL_AMOUNT: 10_000,
     MIN_DAYS: 7,
     MAX_DAYS: 60,
@@ -30,12 +29,6 @@ const PROJECT_RULES = {
 
 const DAY = 1000 * 60 * 60 * 24;
 const stripTime = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-
-type RewardCreatePayload = Omit<RewardCreateRequestDto, "projectId">;
-
-type ProjectCreatePayload = Omit<ProjectCreateRequestDto, "rewardList"> & {
-    rewardList: RewardCreatePayload[];
-};
 
 const normalizeName = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
 
@@ -76,8 +69,6 @@ const validateProject = (p: ProjectCreateRequestDto) => {
     if (content.length < R.MIN_CONTENT_LEN || content.length > R.MAX_CONTENT_LEN)
         return { ok: false, message: `본문 길이는 ${R.MIN_CONTENT_LEN}~${R.MAX_CONTENT_LEN}자여야 합니다.` };
 
-    //TODO: 대표이미지 검증 추가
-
     if (!p.goalAmount || p.goalAmount < R.MIN_GOAL_AMOUNT)
         return { ok: false, message: `목표 금액은 최소 ${R.MIN_GOAL_AMOUNT.toLocaleString()}원 이상이어야 합니다.` };
 
@@ -109,37 +100,15 @@ const validateProject = (p: ProjectCreateRequestDto) => {
     return { ok: true, message: "" };
 };
 
-const buildPayload = (project: ProjectCreateRequestDto, rewards: RewardForm[], creatorId: number): ProjectCreatePayload => ({
-    ...project,
-    creatorId,
-    startDate: project.startDate,
-    endDate: project.endDate,
-    tagList: cleanTags(project.tagList),
-    rewardList: rewards.map((r): RewardCreatePayload => {
-        const valid = assertValidReward(r, { fundingEndDate: project.endDate });
-        return {
-            rewardName: valid.rewardName,
-            price: valid.price,
-            rewardContent: valid.rewardContent,
-            deliveryDate: valid.deliveryDate,
-            rewardCnt: valid.rewardCnt,
-            isPosting: valid.isPosting
-        };
-    })
-});
-
 const yyyyMmDd = (d?: Date) =>
     d ? new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10) : "";
 
 const buildFormData = (
     project: ProjectCreateRequestDto,
     rewards: RewardForm[],
-    creatorId: number
 ) => {
     const fd = new FormData();
 
-    fd.append("creatorId", String(creatorId));
-    fd.append("ctgrId", String((project as any).ctgrId ?? 0));
     fd.append("subctgrId", String(project.subctgrId ?? 0));
     fd.append("title", project.title ?? "");
     fd.append("content", project.content ?? "");
@@ -150,17 +119,16 @@ const buildFormData = (
     fd.append("businessNum", project.businessNum ?? "");
     fd.append("email", project.email ?? "");
     fd.append("phone", project.phone ?? "");
-    fd.append("thumbnail", project.thumbnail instanceof File ? project.thumbnail : "");
-
     fd.append("contentBlocks", JSON.stringify(project.contentBlocks ?? { blocks: [] })); // 상세 설명(JSON)
-
-    console.log("buildFormData.project", project);
-
+    
     if (project.thumbnail instanceof File) {
         fd.append("thumbnail", project.thumbnail);
     }
+    if (project.businessDoc instanceof File) {
+        fd.append("businessDoc", project.businessDoc);
+    }
 
-    (project.files ?? []).forEach(f => fd.append("files", f));
+    console.log("buildFormData.project", project);
 
     cleanTags(project.tagList).forEach(t => fd.append("tagList", t));
 
@@ -196,12 +164,11 @@ const STEPS = [
     { id: 4, title: "리워드 설계", description: "후원자 리워드 구성" },
     { id: 5, title: "창작자 정보", description: "창작자 기본 정보" },
     { id: 6, title: "검토 및 제출", description: "프로젝트 요약 및 심사 안내" },
-    { id: 7, title: "상세 설명", description: "이미지+텍스트 상세 구성" },
 ];
 
 /* --------------------------- Page --------------------------- */
 
-export default function CreateProject() {
+export default function EditProject() {
     const addDays = (date: Date, days: number) => {
         const d = new Date(date);
         d.setDate(d.getDate() + days);
@@ -220,7 +187,7 @@ export default function CreateProject() {
     const [rewardErrors, setRewardErrors] = useState<FieldErrors>({});
 
     //프로젝트
-    const [project, setProject] = useState<ProjectCreateRequestDto>({
+    const [project, setProject] = useState<CreateProjectViewModel>({
         projectId: 0,
         ctgrId: 0,
         subctgrId: 0,
@@ -230,7 +197,7 @@ export default function CreateProject() {
         thumbnail: null,
         goalAmount: 0,
         startDate: addDays(new Date(), PROJECT_RULES.MIN_START_LEAD_DAYS),
-        endDate: addDays(addDays(new Date(), PROJECT_RULES.MIN_START_LEAD_DAYS), PROJECT_RULES.MIN_DAYS),
+        endDate: addDays(addDays(new Date(), PROJECT_RULES.MIN_START_LEAD_DAYS), PROJECT_RULES.MIN_DAYS - 1),
         tagList: [],
         rewardList: [],
         creatorName: "",
@@ -239,7 +206,9 @@ export default function CreateProject() {
         phone: "",
         files: [],
         businessDoc: null,
-        contentBlocks: { blocks: [] } // EditorJS JSON,
+        contentBlocks: { blocks: [] }, // EditorJS JSON,
+        thumbnailPreviewUrl: undefined, // 편집 모드
+        businessDocPreviewUrl: undefined, // 편집 모드
     });
 
     //카테고리
@@ -339,10 +308,12 @@ export default function CreateProject() {
                         creatorId: draft.creatorId,
                         title: draft.title,
                         content: draft.content,
-                        thumbnail: draft.thumbnail,
+                        thumbnail: null,
+                        thumbnailPreviewUrl: undefined,
+                        businessDocPreviewUrl: undefined,
                         goalAmount: draft.goalAmount,
-                        startDate: draft.startDate,
-                        endDate: draft.endDate,
+                        startDate: new Date(draft.startDate),
+                        endDate: new Date(draft.endDate),
                         tagList: cleanTags(draft.tagList),
                         rewardList: [],
                         creatorName: draft.creatorName,
@@ -357,7 +328,7 @@ export default function CreateProject() {
                             rewardName: r.rewardName,
                             price: r.price,
                             rewardContent: r.rewardContent,
-                            deliveryDate: r.deliveryDate,
+                            deliveryDate: new Date(r.deliveryDate),
                             rewardCnt: r.rewardCnt == null ? null : r.rewardCnt,
                             isPosting: r.isPosting,
                             tempId: Math.random().toString(36).slice(2, 10)
@@ -433,7 +404,7 @@ export default function CreateProject() {
             alert("창작자 ID가 필요합니다.");
             return;
         }
-        const formData = buildFormData(project, rewardList, creator.creatorId);
+        const formData = buildFormData(project, rewardList);
         setIsLoading(true);
         try {
             if (isEdit && projectId) {
@@ -484,7 +455,7 @@ export default function CreateProject() {
 
         setIsLoading(true);
         try {
-            const formData = buildFormData(project, rewardList, creator!.creatorId);
+            const formData = buildFormData(project, rewardList);
 
             if (isEdit && projectId) {
                 // 기존 Draft 업데이트
@@ -584,9 +555,7 @@ export default function CreateProject() {
                             다음 단계
                         </Button>
                     ) : (
-                            <Button onClick={handleSubmit}
-                                // disabled={!agree || isLoading || !canSubmit}
-                            >
+                        <Button onClick={handleSubmit} disabled={!agree || isLoading || !canSubmit}>
                             <Send className="h-4 w-4 mr-2" /> 심사요청
                         </Button>
                     )}

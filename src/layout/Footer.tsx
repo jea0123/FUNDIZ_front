@@ -111,7 +111,7 @@ function FooterColumn({ title, items, }: { title: string; items: { label: string
             <h6 className="mb-3 text-sm font-semibold tracking-tight text-neutral-800">{title}</h6>
             <ul className="space-y-2">
                 {items.map((it) => (
-                    <li key={it.href}>
+                    <li key={it.label}>
                         <a
                             href={it.href}
                             className="text-sm text-neutral-600 hover:text-blue-600 transition"
