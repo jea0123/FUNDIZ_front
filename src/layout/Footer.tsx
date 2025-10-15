@@ -6,29 +6,29 @@ import { Facebook, Instagram, Youtube, Github, Mail, ArrowRight, Heart } from "l
 
 const nav = {
     about: [
-        { label: "회사소개", href: "/about" },
-        { label: "이용약관", href: "/terms" },
-        { label: "개인정보처리방침", href: "/privacy" },
-        { label: "채용", href: "/careers" },
-        { label: "제휴문의", href: "/partnership" },
+        { label: "회사소개", href: "" },
+        { label: "이용약관", href: "" },
+        { label: "개인정보처리방침", href: "" },
+        { label: "채용", href: "" },
+        { label: "제휴문의", href: "" },
     ],
     support: [
         { label: "공지사항", href: "/cs/notice" },
         { label: "1:1 문의", href: "/cs/inquiry" },
         { label: "신고하기", href: "/cs/report" },
-        { label: "환불/정책", href: "/policy/refund" },
-        { label: "결제 안내", href: "/policy/payment" },
+        { label: "환불/정책", href: "" },
+        { label: "결제 안내", href: "" },
     ],
     explore: [
-        { label: "인기 프로젝트", href: "/project/popular" },
-        { label: "새 프로젝트", href: "/project/new" },
-        { label: "카테고리", href: "/category" },
-        { label: "크리에이터", href: "/creators" },
+        { label: "인기 프로젝트", href: "" },
+        { label: "새 프로젝트", href: "" },
+        { label: "카테고리", href: "" },
+        { label: "크리에이터", href: "" },
     ],
     management: [
-        { label: "마이 페이지 (유저)", href: "/user" },
+        { label: "후원자 페이지", href: "/user" },
         { label: "창작자 페이지", href: "/creator" },
-        { label: "관리자 콘솔", href: "/admin" },
+        { label: "관리자 페이지", href: "/admin" },
     ],
 };
 
@@ -45,41 +45,25 @@ export default function SiteFooter() {
     return (
         <footer className="bg-neutral-50 text-neutral-600 border-t border-neutral-200">
             <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
-                <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.35 }}
-                    className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between"
-                >
-                    <div className="flex items-center gap-3">
-                        <div className="size-10 rounded-2xl bg-gradient-to-br from-blue-400 to-sky-400 shadow" />
-                        <div>
-                            <p className="text-lg font-semibold text-neutral-900 tracking-tight">FUNDING</p>
-                            <p className="text-xs text-neutral-500">Crowdfunding Platform</p>
-                        </div>
-                    </div>
-
-                    <form onSubmit={(e) => e.preventDefault()} className="w-full md:w-auto" aria-label="뉴스레터 구독">
-                        <div className="flex w-full max-w-md items-center gap-2 rounded-xl bg-white p-2 border border-neutral-200 shadow-sm">
-                            <Mail className="ml-1 size-5 shrink-0 text-neutral-400" aria-hidden />
-                            <Input
-                                type="email"
-                                placeholder="이메일을 입력하세요"
-                                className="border-0 bg-transparent text-sm text-neutral-700 placeholder:text-neutral-400 focus-visible:ring-0"
-                            />
-                            <Button type="submit" size="sm" className="rounded-lg bg-blue-500 hover:bg-blue-600">
-                                구독 <ArrowRight className="ml-1 size-4" />
-                            </Button>
-                        </div>
-                    </form>
-                </motion.div>
-
-                <Separator className="my-8 bg-neutral-200" />
 
                 {/* Link grid */}
                 <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-6">
                     <div className="col-span-2 space-y-3 lg:col-span-2">
-                        <p className="max-w-prose text-sm leading-6 text-neutral-500">
+                        <motion.div
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.35 }}
+                            className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between"
+                        >
+                            <div className="flex items-center gap-3 pb-3">
+                                <div className="size-10 rounded-2xl bg-gradient-to-br from-blue-400 to-sky-400 shadow" />
+                                <div>
+                                    <p className="text-lg font-semibold text-neutral-900 tracking-tight">FUNDING</p>
+                                    <p className="text-xs text-neutral-500">Crowdfunding Platform</p>
+                                </div>
+                            </div>
+                        </motion.div>
+                        <p className="max-w-prose text-sm leading-6 text-neutral-500 pb-3">
                             아이디어가 현실이 되도록 돕습니다. FUNDING은 창작자와 후원자가 투명하게 연결되는 공간을 지향합니다.
                         </p>
                         <div className="flex items-center gap-3">

@@ -1,4 +1,4 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Outlet } from "react-router-dom";
 import UserProfileCard from "./components/UserProfileCard";
 import { UserSidebar } from "./components/UserSidebar";
