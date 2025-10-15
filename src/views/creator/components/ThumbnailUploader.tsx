@@ -2,61 +2,69 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import clsx from "clsx";
 import { RefreshCw, Trash2, Upload } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-const MAX_SIZE = 4 * 1024 * 1024 * 1024; //4GB
+const MAX_SIZE = 4 * 1024 * 1024; // 4MB
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 interface Props {
+    file: File | null;             // 부모가 관리
+    previewUrl?: string;           // 기존 URL(수정 모드)
     label?: string;
-    onCleared?: () => void; // 삭제/초기화 시 콜백
+    onSelect: (file: File | null) => void; // 선택/교체 시 부모에 전달
+    onCleared?: () => void;        // 제거 시 콜백(선택)
     disabled?: boolean;
 }
 
-export function ThumbnailUploader({ label = "대표 이미지 *", onCleared, disabled, }: Props) {
-
+export function ThumbnailUploader({
+    file,
+    previewUrl,
+    label = "대표 이미지 *",
+    onSelect,
+    onCleared,
+    disabled,
+}: Props) {
     const inputRef = useRef<HTMLInputElement | null>(null);
-
     const [dragOver, setDragOver] = useState(false);
-    const [preview, setPreview] = useState<string | undefined>(undefined);
     const [error, setError] = useState<string | null>(null);
+
+    // file이 있으면 objectURL, 없으면 previewUrl 사용
+    const objectUrl = useMemo(() => (file ? URL.createObjectURL(file) : undefined), [file]);
+    useEffect(() => () => { if (objectUrl) URL.revokeObjectURL(objectUrl); }, [objectUrl]);
+
+    const preview = objectUrl ?? previewUrl ?? undefined;
 
     const openPicker = useCallback(() => {
         if (!disabled) inputRef.current?.click();
     }, [disabled]);
 
     const reset = useCallback(() => {
-        setPreview(undefined);
         setError(null);
+        onSelect(null);              // 부모 상태 비움
+        if (inputRef.current) inputRef.current.value = "";
         onCleared?.();
-    }, [onCleared]);
+    }, [onCleared, onSelect]);
 
-    const validate = async (file: File) => {
-        if (!ACCEPTED_TYPES.includes(file.type)) {
-            throw new Error("JPG 또는 PNG 파일만 업로드할 수 있습니다.");
+    const validate = async (f: File) => {
+        if (!ACCEPTED_TYPES.includes(f.type)) {
+            throw new Error("JPG/PNG/WebP/GIF 파일만 업로드할 수 있습니다.");
         }
-        if (file.size > MAX_SIZE) {
+        if (f.size > MAX_SIZE) {
             throw new Error("파일 용량은 최대 4MB까지 허용됩니다.");
         }
     };
 
-    const fileToDataUrl = (f: File) =>
-        new Promise<string>((resolve, reject) => {
-            const fr = new FileReader();
-            fr.onload = () => resolve(String(fr.result));
-            fr.onerror = reject;
-            fr.readAsDataURL(f);
-        });
-
     const handleFiles = async (files: FileList | null) => {
         if (!files?.length) return;
-        const file = files[0];
+        const f = files[0];
         try {
-            validate(file);
-            setPreview(await fileToDataUrl(file)); // 낙관적 미리보기
+            await validate(f);         // await 빠져있던 부분
+            setError(null);
+            onSelect(f);               // 💡 핵심: 부모에 파일 전달
         } catch (err: any) {
-            setError(err.message);
-            setPreview(undefined);
+            setError(err?.message ?? "업로드에 실패했습니다.");
+            onSelect(null);
+            if (inputRef.current) inputRef.current.value = "";
         }
     };
 
@@ -97,13 +105,12 @@ export function ThumbnailUploader({ label = "대표 이미지 *", onCleared, dis
             >
                 {preview ? (
                     <div className="relative">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                             src={preview}
                             alt="대표 이미지 미리보기"
                             className="mx-auto max-h-80 w-auto rounded-md object-contain"
-                            onError={() => {
-                                setError("이미지를 불러올 수 없습니다. 경로를 확인해 주세요.");
-                            }}
+                            onError={() => setError("이미지를 불러올 수 없습니다. 경로를 확인해 주세요.")}
                         />
 
                         <div className="mt-3 flex items-center justify-center gap-2">
@@ -122,20 +129,19 @@ export function ThumbnailUploader({ label = "대표 이미지 *", onCleared, dis
                         <Button type="button" variant="outline" size="sm" onClick={openPicker}>
                             파일 선택
                         </Button>
-                        <p className="mt-2 text-xs text-gray-400">이미지(JPG/PNG)</p>
+                        <p className="mt-2 text-xs text-gray-400">이미지(JPG/PNG/WebP/GIF)</p>
                     </div>
                 )}
 
                 <input
                     ref={inputRef}
                     type="file"
-                    accept="image/png,image/jpeg"
+                    accept={ACCEPTED_TYPES.join(",")}
                     className="hidden"
                     onChange={(e) => handleFiles(e.target.files)}
                 />
             </div>
 
-            {/* 에러 메시지 */}
             {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
         </div>
     );
