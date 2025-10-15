@@ -10,7 +10,7 @@ export default function CreatorLayout() {
                 <Card className="sticky">
                     <CardContent>
                         <div className="pb-5 border-b border-gray-200">
-                            <p className="text-center text-2xl font-bold">관리자 페이지</p>
+                            <p className="text-center text-2xl font-black">관리자 페이지</p>
                         </div>
                         <div className="pt-5">
                             <AdminSidebar />
