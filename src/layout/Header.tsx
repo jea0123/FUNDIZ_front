@@ -143,8 +143,8 @@ export function Header() {
                         <Menu className="" />
                     </Button>
 
-                    <div className="flex-shrink-0">
-                        <button onClick={() => navigate('/')} className="text-2xl font-bold text-blue-600 ml-5">CrowdFund</button>
+                    <div className="flex-shrink-0" onClick={() => navigate('/')}>
+                        <button className="text-2xl font-bold text-blue-600 ml-5 cursor-pointer">CrowdFund</button>
                     </div>
 
                     <div className="hidden md:flex flex-1 max-w-md mx-8">
