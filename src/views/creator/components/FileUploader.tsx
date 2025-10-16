@@ -145,7 +145,7 @@ export function ThumbnailUploader({
 
 export function BusinessDocUploader({
     file,
-    label = "사업자등록증 (사업자라면 필수 첨부 *)",
+    label = "사업자등록증 (사업자라면 필수 첨부)",
     previewUrl,
     onSelect,
     onCleared,

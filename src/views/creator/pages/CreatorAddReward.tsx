@@ -14,7 +14,7 @@ import type { Reward, RewardCreateRequestDto } from "@/types/reward";
 import FundingLoader from "@/components/FundingLoader";
 import { formatDate } from "@/utils/utils";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useCreatorId } from "../useCreatorId";
+import { useCreatorId } from "../../../types/useCreatorId";
 import { Checkbox } from "@/components/ui/checkbox";
 import { validateReward } from "@/types/reward-validator";
 

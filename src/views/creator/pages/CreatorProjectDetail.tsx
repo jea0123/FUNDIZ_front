@@ -11,7 +11,7 @@ import type { RewardCreateRequestDto } from "@/types/reward";
 import type { Category } from "@/types/admin";
 import type { Subcategory } from "@/types/projects";
 import { formatDate } from "@/utils/utils";
-import { useCreatorId } from "../useCreatorId";
+import { useCreatorId } from "../../../types/useCreatorId";
 
 /* ------------------------------- Types ------------------------------- */
 

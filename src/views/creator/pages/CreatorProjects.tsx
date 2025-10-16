@@ -5,7 +5,7 @@ import { deleteData, endpoints, getData, setDevCreatorIdHeader } from "@/api/api
 import FundingLoader from "@/components/FundingLoader";
 import { StatusBadge, type Status } from "@/views/admin/tabs/ProjectsTab";
 import type { CreatorProjectListDto } from "@/types/creator";
-import { useCreatorId } from "../useCreatorId";
+import { useCreatorId } from "../../../types/useCreatorId";
 import { useNavigate } from "react-router-dom";
 import { useQueryState } from "@/views/admin/tabs/ApprovalsTab";
 import { Pagination } from "@/views/project/ProjectAllPage";

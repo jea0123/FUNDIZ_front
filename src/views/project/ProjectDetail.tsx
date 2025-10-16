@@ -3,7 +3,7 @@ import { Heart, Share2, Calendar, Users, MessageCircle, Star, MessageSquarePlus,
 import type { ProjectDetail } from '@/types/projects';
 import { deleteData, endpoints, getData, postData } from '@/api/apis';
 import { useParams } from 'react-router-dom';
-import { formatDate, getDaysBefore, getDaysLeft, toastSuccess } from '@/utils/utils';
+import { formatDate, formatPrice, getByteLen, getDaysBefore, getDaysLeft, toastSuccess } from '@/utils/utils';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,8 +21,6 @@ import type { ReplyDto } from '@/types/reply';
 import type { QnaAddRequest } from "@/types/qna";
 
 const CM_MAX = 1000;
-const getByteLen = (s: string) => new TextEncoder().encode(s).length;
-const formatCurrency = (amount: number) => { return new Intl.NumberFormat('ko-KR').format(amount); };
 
 export function ProjectDetailPage() {
 
@@ -32,6 +30,7 @@ export function ProjectDetailPage() {
 
     /* --------------------------------- Auth helper ---------------------------------- */
 
+    //TODO: login 체크
     const ensureLogin = useCallback(() => {
         return true;
     }, [/* navigate, location.pathname, location.search */])
@@ -396,7 +395,7 @@ export function ProjectDetailPage() {
 
         if (!exceededAlertedRef.current) {
             exceededAlertedRef.current = true;
-            alert("최대 (한글 약 330자)까지 입력할 수 있습니다.");
+            alert("최대 " + CM_MAX + "바이트(333자)까지 입력할 수 있습니다.");
         }
     }, []);
 
@@ -416,7 +415,7 @@ export function ProjectDetailPage() {
             return;
         }
         if (getByteLen(content) > CM_MAX) {
-            alert("최대 (한글 약 330자)까지 입력할 수 있습니다.");
+            alert("최대 " + CM_MAX + "바이트(333자)까지 입력할 수 있습니다.");
             return;
         }
 
@@ -450,6 +449,15 @@ export function ProjectDetailPage() {
         return typeof v === "string" ? v : "";
     }, [replyInput]);
 
+    // 커뮤니티 내용 초기화
+    const handleCommunityOpenChange = useCallback((open: boolean) => {
+        setOpenCm(open);
+        if (!open) {
+            setCmContent("");
+            exceededAlertedRef.current = false;
+        }
+    }, []);
+
     // 댓글 패널 토글 (처음 열 때만 로드, 기본값 문자열로 강제)
     const toggleReplies = useCallback((cmId: number) => {
         setOpenReply(prev => ({ ...prev, [cmId]: !prev?.[cmId] }));
@@ -468,7 +476,7 @@ export function ProjectDetailPage() {
         const content = (replyInput[cmId] ?? "").trim();
         if (content.length === 0) return;
         if (getByteLen(content) > 1000) {
-            alert("최대 (한글 약 330자)까지 입력할 수 있습니다.");
+            alert("최대 " + CM_MAX + "바이트(333자)까지 입력할 수 있습니다.");
             return;
         }
 
@@ -675,7 +683,7 @@ export function ProjectDetailPage() {
                             <div className="flex-1">
                                 <h4 className="font-semibold">{project.creatorName}</h4>
                                 <p className="text-sm text-gray-600">
-                                    팔로워 {formatCurrency(followerCnt)}명 · 프로젝트 {project.projectCnt}개
+                                    팔로워 {formatPrice(followerCnt)}명 · 프로젝트 {project.projectCnt}개
                                 </p>
                             </div>
                             {isFollowed ? (
@@ -770,7 +778,7 @@ export function ProjectDetailPage() {
                                 <Button size="sm" onClick={openCommunityModal}>글쓰기</Button>
                             </div>
 
-                            <Dialog open={openCm} onOpenChange={setOpenCm}>
+                            <Dialog open={openCm} onOpenChange={handleCommunityOpenChange}>
                                 <DialogContent className="w-[min(92vw,40rem)] sm:max-w-lg">
                                     <DialogHeader>
                                         <DialogTitle>커뮤니티 글쓰기</DialogTitle>
@@ -779,7 +787,7 @@ export function ProjectDetailPage() {
                                     <div className="space-y-3">
                                         <div className="flex items-center justify-between">
                                             <span className="text-sm text-muted-foreground">프로젝트에 대한 응원, 소식을 공유해보세요.</span>
-                                            <span className="text-xs text-gray-500">약 {cmContent.length}자</span>
+                                            <span className="text-xs text-gray-500">{getByteLen(cmContent)}/1000 바이트 · {cmContent.length} 자</span>
                                         </div>
 
                                         <Textarea
@@ -792,7 +800,9 @@ export function ProjectDetailPage() {
                                     </div>
 
                                     <DialogFooter className="gap-2">
-                                        <Button variant="outline" onClick={() => setOpenCm(false)} disabled={postingCm}>취소</Button>
+                                        <DialogClose asChild>
+                                            <Button variant="outline" disabled={postingCm}>취소</Button>
+                                        </DialogClose>
                                         <Button onClick={handleSubmitCommunity} disabled={postingCm || cmContent.trim().length === 0}>
                                             {postingCm ? "등록중" : "등록"}
                                         </Button>
@@ -1050,8 +1060,8 @@ export function ProjectDetailPage() {
                                             <span className="text-sm text-gray-500">달성</span>
                                         </div>
                                         <Progress value={project.percentNow} className="h-3 mb-3" />
-                                        <div className="text-xl font-bold">{formatCurrency(project.currAmount)}원</div>
-                                        <div className="text-sm text-gray-500">목표 {formatCurrency(project.goalAmount)}원</div>
+                                        <div className="text-xl font-bold">{formatPrice(project.currAmount)}원</div>
+                                        <div className="text-sm text-gray-500">목표 {formatPrice(project.goalAmount)}원</div>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4 py-4 border-y">
@@ -1107,7 +1117,7 @@ export function ProjectDetailPage() {
                                                         <div className="min-w-0">
                                                             <div className="font-semibold truncate">{r.rewardName}</div>
                                                             <div className="text-sm text-gray-500">
-                                                                {formatCurrency(r.price)}원 · {r.rewardCnt > 0 ? `잔여 ${max}개` : "무제한"}
+                                                                {formatPrice(r.price)}원 · {r.rewardCnt > 0 ? `잔여 ${max}개` : "무제한"}
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center gap-2">
@@ -1139,7 +1149,7 @@ export function ProjectDetailPage() {
 
                                         <div className="flex items-center justify-between pt-2 border-t">
                                             <span className="font-semibold">합계</span>
-                                            <span className="text-lg font-bold">{formatCurrency(cartSummary.totalAmount)}원</span>
+                                            <span className="text-lg font-bold">{formatPrice(cartSummary.totalAmount)}원</span>
                                         </div>
 
                                         <Button
@@ -1148,7 +1158,7 @@ export function ProjectDetailPage() {
                                             onClick={handleCheckout}
                                             disabled={cartSummary.totalQty === 0}
                                         >
-                                            {formatCurrency(cartSummary.totalAmount)}원 결제하기
+                                            {formatPrice(cartSummary.totalAmount)}원 결제하기
                                         </Button>
                                     </>
                                 )}
@@ -1167,7 +1177,7 @@ export function ProjectDetailPage() {
                                 >
                                     <CardContent className="p-4">
                                         <div className="flex justify-between items-start mb-2">
-                                            <span className="text-lg font-semibold">{formatCurrency(reward.price)}원</span>
+                                            <span className="text-lg font-semibold">{formatPrice(reward.price)}원</span>
                                             {reward.rewardCnt > 0 && (
                                                 <Badge variant="secondary" className="text-xs">
                                                     {soldOut ? "품절" : `잔여 ${reward.remain}개`}
@@ -1218,7 +1228,7 @@ export function ProjectDetailPage() {
                                 onClick={handleCheckout}
                                 disabled={cartSummary.totalQty === 0}
                             >
-                                {cartSummary.totalQty > 0 ? `${formatCurrency(cartSummary.totalAmount)}원 후원하기` : '리워드를 선택하세요'}
+                                {cartSummary.totalQty > 0 ? `${formatPrice(cartSummary.totalAmount)}원 후원하기` : '리워드를 선택하세요'}
                             </Button>
                         </div>
                     </div>
