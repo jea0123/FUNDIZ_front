@@ -29,11 +29,17 @@ const toTagNames = (list: any): string[] =>
             .filter((s: any): s is string => typeof s === "string" && s.trim().length > 0)
         : [];
 
+function useObjectUrl(file: File | null | undefined) {
+    const url = useMemo(() => (file ? URL.createObjectURL(file) : ""), [file]);
+    useEffect(() => () => { if (url) URL.revokeObjectURL(url); }, [url]);
+    return url;
+}
+
 /* ------------------------------- Page ------------------------------- */
 
 export default function CreatorProjectDetail() {
     //TODO: 임시용 id (나중에 삭제하기)
-    const { creatorId, loading: idLoading } = useCreatorId(7);
+    const { creatorId, loading: idLoading } = useCreatorId(26);
 
     const { projectId: projectIdParam } = useParams();
     const projectId = projectIdParam ? Number(projectIdParam) : null;
@@ -72,22 +78,24 @@ export default function CreatorProjectDetail() {
                 const res = await kyInstance.get(endpoints.getCreatorProjectDetail(projectId), {
                     headers: { "X-DEV-CREATOR-ID": String(creatorId) },
                 });
-                
+
                 if (!mounted) return;
                 const body = await res.json<any>();
                 const draft = body?.data ?? body ?? {};
 
                 const project: ProjectCreateRequestDto = {
                     projectId: Number(draft.projectId) || 0,
+                    creatorId: Number(draft.creatorId) || 0,
                     ctgrId: Number(draft.ctgrId) || 0,
                     subctgrId: Number(draft.subctgrId) || 0,
-                    creatorId: Number(draft.creatorId) || 0,
                     title: draft.title ?? "",
-                    content: draft.content ?? "",
-                    thumbnail: draft.thumbnail ?? "",
                     goalAmount: Number(draft.goalAmount) || 0,
                     startDate: draft.startDate ? new Date(draft.startDate) : new Date(),
                     endDate: draft.endDate ? new Date(draft.endDate) : new Date(),
+                    content: draft.content ?? "",
+                    contentBlocks: draft.contentBlocks ?? { blocks: [] },
+                    thumbnail: draft.thumbnail ?? null,
+                    businessDoc: draft.businessDoc ?? null,
                     tagList: toTagNames(draft.tagList),
                     rewardList: [],
                     creatorName: draft.creatorName ?? "",
@@ -150,9 +158,9 @@ export default function CreatorProjectDetail() {
             </div>
 
             {/* TODO: 대표이미지 수정 */}
-            {project.thumbnail && (
+            {useObjectUrl(project.thumbnail) && (
                 <div className="mb-6 overflow-hidden rounded-xl border bg-background">
-                    <img src={project.thumbnail} alt={project.title} className="w-full max-h-[420px] object-cover" />
+                    <img src={useObjectUrl(project.thumbnail)} alt={project.title} className="w-full max-h-[420px] object-cover" />
                 </div>
             )}
 

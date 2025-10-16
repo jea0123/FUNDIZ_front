@@ -1,82 +1,79 @@
-import { kyInstance, getData } from "@/api/apis";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { getData } from "@/api/apis";
 
-export function useCreatorId(fallbackId?: number) {
-    const [creatorId, setCreatorId] = useState<number | null>(null);
-    const [loading, setLoading] = useState(true);
+type Source = "query" | "dev" | "jwt" | "me" | "default";
 
-    useEffect(() => {
-        let alive = true;
+export function useCreatorId(defaultId?: number) {
+  const [creatorId, setCreatorId] = useState<number | null>(null);
+  const [source, setSource] = useState<Source | null>(null);
+  const [loading, setLoading] = useState(true);
 
-        (async () => {
-            try {
-                // DEV 우선순위 : ?devCreatorId= -> localStorage -> .env -> fallbackId
-                const qs = new URLSearchParams(window.location.search);
-                const fromQuery = qs.get("devCreatorId") ?? undefined;
-                const fromStorage = localStorage.getItem("devCreatorId") ?? undefined;
-                const fromEnv = (import.meta.env.VITE_DEV_CREATOR_ID as string | undefined) ?? undefined;
+  const fromQuery = useMemo(() => {
+    const sp = new URLSearchParams(window.location.search);
+    const v = sp.get("creatorId");
+    return v ? Number(v) : null;
+  }, []);
 
-                let id: number | null = null;
+  const fromLocal = useMemo(() => {
+    const keys = ["devCreatorId", "X-Dev-Creator-Id", "creatorId"];
+    for (const k of keys) {
+      const raw = localStorage.getItem(k);
+      if (raw && !Number.isNaN(Number(raw))) return Number(raw);
+    }
+    return null;
+  }, []);
 
-                const devCandidate = fromQuery ?? fromStorage ?? (fallbackId != null ? String(fallbackId) : undefined) ?? fromEnv;
-                if (devCandidate != null) {
-                    const parsed = Number(devCandidate);
-                    if (Number.isFinite(parsed) && parsed > 0) {
-                        id = parsed;
-                    }
-                } else {
-                    // 폴백 없으면 서버에 현재 사용자 물어봄
-                    const me = await getData("/creator/me");
-                    const serverId = me?.data?.creatorId;
-                    const parsed = Number(serverId);
-                    if (Number.isFinite(parsed) && parsed > 0) {
-                        id = parsed;
-                    }
-                }
+  const fromJwt = useMemo(() => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) return null;
+      const payload = JSON.parse(atob(token.split(".")[1] || ""));
+      const v = payload?.creatorId;
+      return typeof v === "number" ? v : null;
+    } catch {
+      return null;
+    }
+  }, []);
 
-                if (!alive) return;
+  useEffect(() => {
+    let mounted = true;
 
-                setCreatorId(id);
+    (async () => {
+      // 1) 쿼리
+      if (fromQuery) { if (mounted) { setCreatorId(fromQuery); setSource("query"); setLoading(false);} return; }
 
-                // DEV에서만 헤더로 주입
-                if (import.meta.env.DEV) {
-                    if (id != null) {
-                        kyInstance.extend({
-                            headers: { "X-Dev-Creator-Id": String(id) },
-                        });
-                        if (fromQuery) {
-                            localStorage.setItem("devCreatorId", String(id));
-                        }
-                    } else {
-                        kyInstance.extend({ headers: {} });
-                        localStorage.removeItem("devCreatorId");
-                    }
-                }
-                console.debug("[useCreatorId] devCandidate=", devCandidate, "resolved id=", id, "DEV=", import.meta.env.DEV);
-            } catch (e) {
-                if (!alive) return;
+      // 2) dev override(localStorage)
+      if (fromLocal) { if (mounted) { setCreatorId(fromLocal); setSource("dev"); setLoading(false);} return; }
 
-                //실패 시 폴백 id 사용
-                const id = fallbackId ?? null;
-                setCreatorId(id);
+      // 3) JWT
+      if (fromJwt) { if (mounted) { setCreatorId(fromJwt); setSource("jwt"); setLoading(false);} return; }
 
-                if (import.meta.env.DEV) {
-                    if (id != null) {
-                        kyInstance.extend({
-                            headers: { "X-Dev-Creator-Id": String(id) },
-                        });
-                    } else {
-                        kyInstance.extend({ headers: {} });
-                    }
-                }
-                console.warn("[useCreatorId] fallback due to error:", e);
-            } finally {
-                if (alive) setLoading(false);
-            }
-        })();
+      // 4) /me
+      try {
+        const res = await getData("/api/v1/me");
+        const v = res?.data?.creatorId;
+        if (mounted && typeof v === "number") {
+          setCreatorId(v); setSource("me"); setLoading(false); return;
+        }
+      } catch { /* ignore */ }
 
-        return () => { alive = false; };
-    }, [fallbackId]);
+      // 5) fallback
+      if (mounted) {
+        setCreatorId(defaultId ?? null);
+        setSource("default");
+        setLoading(false);
+      }
+    })();
 
-    return { creatorId, loading };
+    return () => { mounted = false; };
+  }, [fromQuery, fromLocal, fromJwt, defaultId]);
+
+  // 디버깅 시 편리
+  useEffect(() => {
+    if (!loading) {
+      console.log(`creatorId=${creatorId} (source=${source})`);
+    }
+  }, [creatorId, source, loading]);
+
+  return { creatorId, source, loading };
 }

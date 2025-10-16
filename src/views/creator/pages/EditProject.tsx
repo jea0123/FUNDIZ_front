@@ -7,11 +7,13 @@ import { endpoints, getData, postData } from '@/api/apis';
 import type { RewardDraft, RewardForm } from '@/types/reward';
 import type { Category } from '@/types/admin';
 import FundingLoader from '@/components/FundingLoader';
-import { CreateProjectStepper } from '../components/CreateProjectStepper';
-import { CreateProjectSteps, type CreateProjectViewModel } from '../components/CreateProjectSteps';
 import { useNavigate, useParams } from 'react-router-dom';
-import type { ProjectCreateRequestDto } from '@/types/creator';
+import type { ContentBlocks, ProjectCreateRequestDto } from '@/types/creator';
 import { assertValidReward, validateReward, validateRewardList, type FieldErrors } from '@/types/reward-validator';
+import { EditProjectSteps, type CreateProjectViewModel } from '../components/EditProjectSteps';
+import { EditProjectStepper } from '../components/EditProjectStepper';
+import { useCreatorId } from '../useCreatorId';
+import { toPublicUrl } from '@/utils/utils';
 
 const PROJECT_RULES = {
     MIN_TITLE_LEN: 2,
@@ -53,6 +55,31 @@ const cleanTags = (list: any): string[] => {
         }
     }
     return out;
+};
+
+// contentBlocks 문자열/객체 대응
+const parseBlocks = (input?: string | ContentBlocks | null | undefined): ContentBlocks => {
+    if (input == null) return { blocks: [] };
+
+    // 객체로 온 경우
+    if (typeof input === "object") {
+        const obj = input as any;
+        if (Array.isArray(obj.blocks)) return obj as ContentBlocks;
+        return { blocks: [] };
+    }
+
+    // 문자열로 온 경우
+    const s = String(input).trim();
+    if (!s) return { blocks: [] };
+
+    try {
+        const obj = JSON.parse(s);
+        return (obj && typeof obj === "object" && Array.isArray((obj as any).blocks))
+            ? (obj as ContentBlocks)
+            : { blocks: [] };
+    } catch {
+        return { blocks: [] };
+    }
 };
 
 const validateProject = (p: ProjectCreateRequestDto) => {
@@ -111,24 +138,18 @@ const buildFormData = (
 
     fd.append("subctgrId", String(project.subctgrId ?? 0));
     fd.append("title", project.title ?? "");
-    fd.append("content", project.content ?? "");
     fd.append("goalAmount", String(project.goalAmount ?? 0));
     fd.append("startDate", yyyyMmDd(project.startDate as any));
     fd.append("endDate", yyyyMmDd(project.endDate as any));
-    fd.append("creatorName", project.creatorName ?? "");
-    fd.append("businessNum", project.businessNum ?? "");
-    fd.append("email", project.email ?? "");
-    fd.append("phone", project.phone ?? "");
+    fd.append("content", project.content ?? "");
     fd.append("contentBlocks", JSON.stringify(project.contentBlocks ?? { blocks: [] })); // 상세 설명(JSON)
-    
+
     if (project.thumbnail instanceof File) {
         fd.append("thumbnail", project.thumbnail);
     }
     if (project.businessDoc instanceof File) {
         fd.append("businessDoc", project.businessDoc);
     }
-
-    console.log("buildFormData.project", project);
 
     cleanTags(project.tagList).forEach(t => fd.append("tagList", t));
 
@@ -175,6 +196,9 @@ export default function EditProject() {
         return d;
     };
 
+    //TODO: dev id
+    const { creatorId, loading } = useCreatorId(26);
+
     const { projectId: projectIdParam } = useParams();
     const projectId = projectIdParam ? Number(projectIdParam) : null;
     const isEdit = !!projectId; // 편집 모드 여부
@@ -204,7 +228,6 @@ export default function EditProject() {
         businessNum: "",
         email: "",
         phone: "",
-        files: [],
         businessDoc: null,
         contentBlocks: { blocks: [] }, // EditorJS JSON,
         thumbnailPreviewUrl: undefined, // 편집 모드
@@ -226,13 +249,6 @@ export default function EditProject() {
         isPosting: "Y"
     });
 
-    //창작자 기본정보
-    const [creator, setCreator] = useState<{
-        creatorId: number | null;
-        isComplete: boolean;
-        isSuspended: boolean;
-    } | null>(null);
-
     //약관 및 정책 동의 여부 검사
     const [agree, setAgree] = useState(false);
     const [agreeError, setAgreeError] = useState<string | null>(null);
@@ -241,12 +257,7 @@ export default function EditProject() {
     const projectValidation = useMemo(() => validateProject(project), [project]);
 
     //제출 버튼 가드
-    const canSubmit =
-        projectValidation.ok &&
-        rewardList.length > 0 &&
-        (creator?.creatorId ?? null) !== null &&
-        creator?.isComplete === true &&
-        creator?.isSuspended === false;
+    const canSubmit = projectValidation.ok && rewardList.length > 0;
 
     const ko = useMemo(
         () => new Intl.Collator("ko", { sensitivity: "base", numeric: true }), []
@@ -270,6 +281,14 @@ export default function EditProject() {
             });
     }, [subcategories, project.ctgrId, ko]);
 
+    //TODO: dev id
+    useEffect(() => {
+        if (!import.meta.env.DEV) return;
+        if (!loading && creatorId) {
+            localStorage.setItem("DEV_CREATOR_ID", String(creatorId));
+        }
+    }, [loading, creatorId])
+
     useEffect(() => {
         let alive = true;
         (async () => {
@@ -287,11 +306,13 @@ export default function EditProject() {
 
                 const info = infoRes?.data ?? null;
                 if (info) {
-                    setCreator({
-                        creatorId: info.creatorId ?? null,
-                        isComplete: !!info.isComplete,
-                        isSuspended: !!info.isSuspended,
-                    });
+                    setProject(prev => ({
+                        ...prev,
+                        creatorName: info.creatorName ?? prev.creatorName,
+                        businessNum: info.businessNum ?? prev.businessNum,
+                        email: info.email ?? prev.email,
+                        phone: info.phone ?? prev.phone,
+                    }));
                 }
 
                 if (isEdit && projectId) {
@@ -299,28 +320,63 @@ export default function EditProject() {
                     if (!alive) return;
 
                     const draft = response?.data ?? {};
+                    console.log("[EditProject] raw draft.contentBlocks =", draft.contentBlocks);
+                    console.log("[EditProject] typeof draft.contentBlocks =", typeof draft.contentBlocks);
 
-                    setProject((prev) => ({
-                        ...prev,
-                        projectId: draft.projectId,
-                        ctgrId: draft.ctgrId,
-                        subctgrId: draft.subctgrId,
-                        creatorId: draft.creatorId,
-                        title: draft.title,
-                        content: draft.content,
-                        thumbnail: null,
-                        thumbnailPreviewUrl: undefined,
-                        businessDocPreviewUrl: undefined,
-                        goalAmount: draft.goalAmount,
-                        startDate: new Date(draft.startDate),
-                        endDate: new Date(draft.endDate),
-                        tagList: cleanTags(draft.tagList),
-                        rewardList: [],
-                        creatorName: draft.creatorName,
-                        businessNum: draft.businessNum,
-                        email: draft.email,
-                        phone: draft.phone
-                    }));
+                    // setProject((prev) => ({
+                    //     ...prev,
+                    //     projectId: draft.projectId,
+                    //     creatorId: draft.creatorId,
+                    //     ctgrId: draft.ctgrId,
+                    //     subctgrId: draft.subctgrId,
+                    //     title: draft.title,
+                    //     goalAmount: draft.goalAmount,
+                    //     startDate: new Date(draft.startDate),
+                    //     endDate: new Date(draft.endDate),
+                    //     content: draft.content,
+                    //     contentBlocks: parseBlocks(draft.contentBlocks),
+                    //     thumbnail: null,
+                    //     businessDoc: null,
+                    //     tagList: cleanTags(draft.tagList),
+                    //     rewardList: [],
+
+                    //     creatorName: draft.creatorName ?? prev.creatorName,
+                    //     businessNum: draft.businessNum ?? prev.businessNum,
+                    //     email: draft.email ?? prev.email,
+                    //     phone: draft.phone ?? prev.phone,
+                    //     thumbnailPreviewUrl: toPublicUrl(draft.thumbnail),
+                    //     businessDocPreviewUrl: toPublicUrl(draft.businessDoc),
+                    // }));
+
+                    setProject((prev) => {
+                        const parsed = parseBlocks(draft.contentBlocks);
+                        console.log("[EditProject] parsed.blocks.length =", parsed.blocks?.length ?? 0);
+
+                        return {
+                            ...prev,
+                            projectId: draft.projectId,
+                            creatorId: draft.creatorId,
+                            ctgrId: draft.ctgrId,
+                            subctgrId: draft.subctgrId,
+                            title: draft.title,
+                            goalAmount: draft.goalAmount,
+                            startDate: new Date(draft.startDate),
+                            endDate: new Date(draft.endDate),
+                            content: draft.content,
+                            contentBlocks: parsed,
+                            thumbnail: null,
+                            businessDoc: null,
+                            tagList: cleanTags(draft.tagList),
+                            rewardList: [],
+
+                            creatorName: draft.creatorName ?? prev.creatorName,
+                            businessNum: draft.businessNum ?? prev.businessNum,
+                            email: draft.email ?? prev.email,
+                            phone: draft.phone ?? prev.phone,
+                            thumbnailPreviewUrl: toPublicUrl(draft.thumbnail),
+                            businessDocPreviewUrl: toPublicUrl(draft.businessDoc),
+                        };
+                    });
 
                     setRewardList(
                         (draft.rewardList ?? []).map((r: any) => ({
@@ -334,24 +390,6 @@ export default function EditProject() {
                             tempId: Math.random().toString(36).slice(2, 10)
                         }))
                     );
-
-                    // draft > info > prev 우선순위로 병합
-                    setCreator(prev => {
-                        const creatorId =
-                            draft.creatorId ?? prev?.creatorId ?? info?.creatorId ?? null;
-
-                        const hasDraftComplete = draft.isComplete !== undefined && draft.isComplete !== null;
-                        const isComplete = hasDraftComplete
-                            ? !!draft.isComplete
-                            : (prev?.isComplete ?? !!info?.isComplete);
-
-                        const hasDraftSuspended = draft.isSuspended !== undefined && draft.isSuspended !== null;
-                        const isSuspended = hasDraftSuspended
-                            ? !!draft.isSuspended
-                            : (prev?.isSuspended ?? !!info?.isSuspended);
-
-                        return { creatorId, isComplete, isSuspended };
-                    });
                 }
             } catch (e: any) {
                 const msg =
@@ -397,13 +435,15 @@ export default function EditProject() {
     //리워드 삭제
     const removeReward = (tempId: string) => setRewardList((prev) => prev.filter((r) => r.tempId !== tempId));
 
-    //Draft 생성/저장
+    //Draft 생성
     const handleSaveDraft = async () => {
         if (isLoading) return; // 중복 제출 방지
-        if (!creator || creator.creatorId == null) {
-            alert("창작자 ID가 필요합니다.");
-            return;
-        }
+        if (!validateAgree(agree, setAgreeError)) return;
+
+        // 프로젝트 검증
+        const { ok, message } = validateProject(project);
+        if (!ok) return alert(message);
+
         const formData = buildFormData(project, rewardList);
         setIsLoading(true);
         try {
@@ -448,11 +488,6 @@ export default function EditProject() {
             }
         }
 
-        // 창작자 기본정보 사전 가드
-        if (!creator?.creatorId) return alert("창작자 ID가 필요합니다.");
-        if (creator.isSuspended) return alert("정지된 창작자는 프로젝트 등록/수정이 불가합니다.");
-        if (!creator.isComplete) return alert("창작자 기본정보 필수 항목이 미완성입니다. (창작자명/사업자번호/이메일/전화번호)");
-
         setIsLoading(true);
         try {
             const formData = buildFormData(project, rewardList);
@@ -493,11 +528,11 @@ export default function EditProject() {
 
     return (
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <CreateProjectStepper steps={STEPS} currentStep={currentStep} progress={progress} title={isEdit ? "프로젝트 수정" : "프로젝트 만들기"} />
+            <EditProjectStepper steps={STEPS} currentStep={currentStep} progress={progress} title={isEdit ? "프로젝트 수정" : "프로젝트 만들기"} />
 
             <Card className="mt-6">
                 <CardContent className="p-6">
-                    <CreateProjectSteps
+                    <EditProjectSteps
                         key={isEdit ? `edit-${projectId}` : "new"}
                         step={currentStep}
                         project={project}
@@ -517,21 +552,6 @@ export default function EditProject() {
                     />
                 </CardContent>
             </Card>
-
-            {currentStep === STEPS.length && !canSubmit && (
-                <div className="mt-4 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm">
-                    제출하기 전에 아래 항목을 확인하세요:
-                    <ul className="list-disc ml-5 mt-2 space-y-1">
-                        {!projectValidation.ok && <li>프로젝트 정보가 정책에 맞지 않습니다.</li>}
-                        {rewardList.length === 0 && <li>최소 1개 이상의 리워드를 추가하세요.</li>}
-                        {(creator?.creatorId ?? null) === null && <li>창작자 ID가 필요합니다.</li>}
-                        {creator?.isComplete === false && (
-                            <li>창작자 기본정보 필수 항목이 미완성입니다. (창작자명/사업자번호/이메일/전화번호)</li>
-                        )}
-                        {creator?.isSuspended === true && <li>정지된 창작자는 프로젝트 등록/수정이 불가합니다.</li>}
-                    </ul>
-                </div>
-            )}
 
             <div className="flex justify-between mt-8">
                 <div className="flex items-center">

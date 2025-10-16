@@ -27,14 +27,15 @@ const parseLocalDate = (s: string) => {
 };
 
 export type CreateProjectViewModel = ProjectCreateRequestDto & {
-    files?: File[];
-    businessDoc: File | null;
-    contentBlocks: any;
+    creatorName: string;
+    businessNum: string;
+    email: string;
+    phone: string;
     thumbnailPreviewUrl?: string;
     businessDocPreviewUrl?: string;
 };
 
-export function CreateProjectSteps(props: {
+type StepsProps = {
     step: number;
     project: CreateProjectViewModel;
     setProject: React.Dispatch<React.SetStateAction<CreateProjectViewModel>>;
@@ -50,7 +51,9 @@ export function CreateProjectSteps(props: {
     agreeError?: string | null;
     rewardErrors?: FieldErrors;
     addDays: (date: Date, days: number) => Date;
-}) {
+}
+
+export function EditProjectSteps(props: StepsProps) {
     const {
         step, project, setProject, categories, subcategories, rewardList, newReward,
         setNewReward, addReward, removeReward, agree = false, setAgree, agreeError,
@@ -115,9 +118,9 @@ export function CreateProjectSteps(props: {
                     file={project.thumbnail}
                     previewUrl={project.thumbnailPreviewUrl}
                     onSelect={(f) =>
-                        setProject((p) => ({ ...p, thumbnail: f, thumbnailPreviewUrl: f ? undefined : p.thumbnailPreviewUrl }))}
+                        setProject((prev) => ({ ...prev, thumbnail: f, thumbnailPreviewUrl: f ? undefined : prev.thumbnailPreviewUrl }))}
                     onCleared={() =>
-                        setProject((p) => ({ ...p, thumbnail: null, thumbnailPreviewUrl: undefined }))}
+                        setProject((prev) => ({ ...prev, thumbnail: null, thumbnailPreviewUrl: undefined }))}
                 />
 
                 <TagEditor
@@ -155,7 +158,7 @@ export function CreateProjectSteps(props: {
         return (
             <div className="space-y-6">
                 <div>
-                    <Label htmlFor="projectContent">프로젝트 소개 *</Label>
+                    <Label htmlFor="projectContent">프로젝트 내용 *</Label>
                     <Textarea
                         id="projectContent"
                         placeholder={`프로젝트의 스토리, 제작 배경, 리워드 상세 설명, 일정 등을 충분히 써주세요.\n(예: 왜 이 프로젝트를 시작했는지, 목표 금액의 사용 계획, 제작/배송 일정, 유의사항 등)`}
@@ -167,12 +170,13 @@ export function CreateProjectSteps(props: {
                 </div>
 
                 <div className="space-y-4">
-                    <Label>상세 설명 (이미지 + 텍스트) *</Label>
+                    <Label>프로젝트 소개 (이미지 + 텍스트) *</Label>
                     <p className="text-xs text-muted-foreground">
-                        쇼핑몰 상세 페이지처럼 이미지를 추가하고 위/아래에 설명을 작성하세요.
+                        쇼핑몰 상세 페이지처럼 이미지를 추가하고 소개글을 작성하세요.
                     </p>
                     <ProjectDetailEditor
-                        initialData={project.contentBlocks}
+                        key={`${project.projectId}:${project.contentBlocks?.blocks?.length ?? 0}`}
+                        initialData={project.contentBlocks ?? { blocks: [] }}
                         uploadUrl={"http://localhost:9099/api/v1/attach/image"}
                         onChange={(data) => setProject((prev: any) => ({ ...prev, contentBlocks: data }))}
                     />
@@ -397,23 +401,12 @@ export function CreateProjectSteps(props: {
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div>
-                            <Label htmlFor="creatorName">창작자명 *</Label>
-                            <Input
-                                id="creatorName"
-                                placeholder="개인명 또는 단체명"
-                                value={project.creatorName}
-                                onChange={(e) => setProject(prev => ({ ...prev, creatorName: e.target.value }))}
-                            />
+                            <Label>창작자명</Label>
+                            <Input value={project.creatorName ?? ''} readOnly disabled />
                         </div>
                         <div>
-                            <Label htmlFor="businessNum">사업자등록번호 *</Label>
-                            <Input
-                                id="businessNum"
-                                placeholder="000-00-00000"
-                                value={project.businessNum}
-                                onChange={(e) => setProject(prev => ({ ...prev, businessNum: e.target.value }))}
-                                inputMode="numeric"
-                            />
+                            <Label>사업자등록번호</Label>
+                            <Input value={project.businessNum ?? ''} readOnly disabled />
                         </div>
                         <div>
                             <BusinessDocUploader
@@ -427,23 +420,16 @@ export function CreateProjectSteps(props: {
                             />
                         </div>
                         <div>
-                            <Label htmlFor="email">문의 이메일 *</Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                placeholder="contact@example.com"
-                                value={project.email}
-                                onChange={(e) => setProject(prev => ({ ...prev, email: e.target.value }))}
-                            />
+                            <Label>이메일</Label>
+                            <Input value={project.email ?? ''} readOnly disabled />
                         </div>
                         <div>
-                            <Label htmlFor="phone">문의 전화번호 *</Label>
-                            <Input
-                                id="phone"
-                                placeholder="010-1234-5678"
-                                value={project.phone}
-                                onChange={(e) => setProject(prev => ({ ...prev, phone: e.target.value }))}
-                            />
+                            <Label>전화번호</Label>
+                            <Input value={project.phone ?? ''} readOnly disabled />
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <Badge variant="outline">프로필 수정은 &quot;창작자 프로필&quot; 화면에서 진행해주세요.</Badge>
                         </div>
                     </CardContent>
                 </Card>
@@ -528,7 +514,7 @@ function TagEditor({
     tags, onAdd, onRemove
 }: { tags: string[]; onAdd: (tag: string) => void; onRemove: (tag: string) => void }) {
     const [value, setValue] = useState("");
-    const add = () => { onAdd(value); setValue(""); };
+    const add = () => { const v = value.trim(); if (v) { onAdd(v); setValue(""); } };
 
     return (
         <div>
@@ -544,9 +530,17 @@ function TagEditor({
             </div>
             <div className="flex flex-wrap gap-2">
                 {tags.map(tag => (
-                    <Badge key={tag} variant="secondary" className="cursor-pointer">
+                    <Badge key={tag} variant="secondary" className="inline-flex items-center gap-1 pr-1">
                         {tag}
-                        <X className="h-3 w-3 ml-1" onClick={() => onRemove(tag)} />
+                        <button
+                            type="button"
+                            aria-label={`${tag} 삭제`}
+                            onClick={() => onRemove(tag)}
+                            onMouseDown={(e) => e.preventDefault()}
+                            className="ml-0.5 rounded-full p-0.5 hover:bg-foreground/10 pointer-events-auto"
+                        >
+                            <X className="h-3 w-3 ml-1" onClick={() => onRemove(tag)} />
+                        </button>
                     </Badge>
                 ))}
             </div>
