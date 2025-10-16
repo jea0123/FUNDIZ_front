@@ -1,14 +1,13 @@
 import { useState } from 'react';
-import { Button } from '../../../components/ui/button';
-import { Input } from '../../../components/ui/input';
-import { Label } from '../../../components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
-import { Separator } from '../../../components/ui/separator';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type SignInRequestDto from '@/api/request/auth/SignInRequestDto.dto';
 import { endpoints, postData } from '@/api/apis';
 import { useCookies } from 'react-cookie';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 export function LoginPage() {
     const [email, setEmail] = useState('');
@@ -145,13 +144,6 @@ export function LoginPage() {
                             <Button type="submit" className="w-full" disabled={isLoading} onClick={handleSubmit}>
                                 {isLoading ? '로그인 중...' : '로그인'}
                             </Button>
-                        </div>
-
-                        <div className="mt-6">
-                            <Separator className="my-4" />
-                            <div className="text-center text-sm text-gray-600 mb-4">
-                                또는 다른 방법으로 로그인
-                            </div>
                         </div>
                     </CardContent>
                 </Card>
