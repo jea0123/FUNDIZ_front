@@ -117,6 +117,7 @@ export const endpoints = {
   getMypage: (userId: number) => `user/userPage/${userId}`,
   getLikedList: (userId: number) => `user/likedList/${userId}`,
   getQnAListOfUser: (userId: number, p: SearchQnaParams) => `user/qna/${userId}?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup })}`,
+  addRecentView: (projectId: number) => `user/recentView/${projectId}`,
   getRecentView: `user/recentViewProjects`,
   getQnAListDetail: (userId: number, projectId: number) => `user/QnAListDetail/${userId}/project/${projectId}`,
   updateNickname: 'user/nickname',

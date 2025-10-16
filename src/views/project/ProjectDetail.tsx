@@ -3,7 +3,7 @@ import { Heart, Share2, Calendar, Users, MessageCircle, Star, MessageSquarePlus,
 import type { ProjectDetail } from '@/types/projects';
 import { deleteData, endpoints, getData, postData } from '@/api/apis';
 import { useParams } from 'react-router-dom';
-import { formatDate, getDaysBefore, getDaysLeft, toastError, toastSuccess } from '@/utils/utils';
+import { formatDate, getDaysBefore, getDaysLeft, toastSuccess } from '@/utils/utils';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
@@ -18,7 +18,7 @@ import type { CommunityDto, Cursor, CursorPage, ReviewDto } from '@/types/commun
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogClose } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import type { ReplyDto } from '@/types/reply';
-import type { Qna, QnaAddRequest } from "@/types/qna";
+import type { QnaAddRequest } from "@/types/qna";
 
 const CM_MAX = 1000;
 const getByteLen = (s: string) => new TextEncoder().encode(s).length;
@@ -33,12 +33,7 @@ export function ProjectDetailPage() {
     /* --------------------------------- Auth helper ---------------------------------- */
 
     const ensureLogin = useCallback(() => {
-        const token = localStorage.getItem("access_token");
-        // if (!token) {
-        //     navigate(`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`);
-        //     return false;
-        // }
-        return true; //TODO: 임시 우회 나중에 위 주석 풀기
+        return true;
     }, [/* navigate, location.pathname, location.search */])
 
     /* --------------------------------- Refs ---------------------------------- */
@@ -617,6 +612,14 @@ export function ProjectDetailPage() {
         return () => { canceled = true };
     }, [project?.creatorId]);
 
+    useEffect(() => {
+        if (!projectId) return;
+        const recentView = async () => {
+            await postData(endpoints.addRecentView(Number(projectId)));
+        }
+        recentView();
+    }, [projectId]);
+
     /* --------------------------------- Render --------------------------------- */
 
     if (!projectId || !project || loadingProject) {
@@ -726,7 +729,7 @@ export function ProjectDetailPage() {
 
                         <TabsContent value="description" className="mt-6">
                             <div
-                                className="prose max-w-none whitespace-pre-wrap break-words break-all [overflow-wrap:anywhere]"
+                                className="prose max-w-none whitespace-pre-wrap break-all [overflow-wrap:anywhere]"
                                 dangerouslySetInnerHTML={{ __html: project.content }}
                             />
                         </TabsContent>
@@ -741,7 +744,7 @@ export function ProjectDetailPage() {
                                         <div key={news.newsId} className="space-y-4 mt-6">
                                             <Card>
                                                 <CardContent>
-                                                    <div className="whitespace-pre-wrap break-words break-all [overflow-wrap:anywhere]">
+                                                    <div className="whitespace-pre-wrap break-all [overflow-wrap:anywhere]">
                                                         {news.content}
                                                     </div>
                                                     <p className="text-sm text-gray-500 mt-2">{formatDate(news.createdAt)}</p>
@@ -784,7 +787,7 @@ export function ProjectDetailPage() {
                                             onChange={handleChangeCm}
                                             onFocus={handleTextareaFocus}
                                             placeholder="내용을 입력하세요."
-                                            className="min-h-[120px] w-full max-w-full resize-y overflow-auto break-words [overflow-wrap:anywhere] [word-break:break-word]"
+                                            className="min-h-[120px] w-full max-w-full resize-y overflow-auto [overflow-wrap:anywhere] [word-break:break-word]"
                                         />
                                     </div>
 
@@ -819,7 +822,7 @@ export function ProjectDetailPage() {
                                                                 <span className="font-medium truncate">{cm.nickname}</span>
                                                                 <span className="text-sm text-gray-500">{getDaysBefore(cm.createdAt)} 전</span>
                                                             </div>
-                                                            <p className="text-sm w-full max-w-full whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+                                                            <p className="text-sm w-full max-w-full whitespace-pre-wrap [overflow-wrap:anywhere]">
                                                                 {cm.cmContent}
                                                             </p>
 
@@ -873,7 +876,7 @@ export function ProjectDetailPage() {
                                                                                             )}
                                                                                             <span className="text-[11px] text-gray-500">{getDaysBefore(rp.createdAt)} 전</span>
                                                                                         </div>
-                                                                                        <p className="text-sm whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+                                                                                        <p className="text-sm whitespace-pre-wrap [overflow-wrap:anywhere]">
                                                                                             {rp.content}
                                                                                         </p>
                                                                                     </div>
@@ -1236,7 +1239,6 @@ export function QnaAddModal() {
         return Number.isFinite(num) && num > 0 ? num : null;
     }, [projectIdParam]);
 
-    const [project, setProject] = useState<Qna | null>(null);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [qnaAdd, setQnaAdd] = useState<QnaAddRequest>({
         projectId: Number(projectId),

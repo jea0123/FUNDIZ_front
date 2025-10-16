@@ -63,7 +63,7 @@ export default function Main() {
 
             <Separator />
 
-            {!cookie.accessToken && (
+            {cookie.accessToken && (
                 <RecentView title="최근 본 프로젝트" />
             )}
         </div>
@@ -169,9 +169,6 @@ export function RecentView({ title, perRow = 5, }: { title?: string; perRow?: nu
     const [page, setPage] = useState(0);
     const [cookie] = useCookies();
 
-    // 로그인 상태가 아니면 최근 본 프로젝트를 불러오지 않음
-    if (!cookie.accessToken) return <></>;
-
     /**
      * @description 최근 본 프로젝트 불러오기
      * @example
@@ -186,7 +183,7 @@ export function RecentView({ title, perRow = 5, }: { title?: string; perRow?: nu
 
     useEffect(() => {
         getRecentViewProjects();
-    }, []);
+    }, [cookie.accessToken]);
 
     const canPrev = page > 0;
     const canNext = page < Math.max(pages.length - 1, 0);
@@ -206,6 +203,8 @@ export function RecentView({ title, perRow = 5, }: { title?: string; perRow?: nu
         el.addEventListener("keydown", onKey);
         return () => el.removeEventListener("keydown", onKey);
     }, [goPrev, goNext]);
+
+    if(!recentView || recentView.length === 0) return <></>;
 
     return (
         <section className="space-y-4" ref={wrapRef} tabIndex={0}>
