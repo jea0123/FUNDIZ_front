@@ -15,7 +15,6 @@ import FundingLoader from './components/FundingLoader';
 import { ApprovalDetail } from './views/admin/tabs/ApprovalDetail';
 import AdminProjectEdit from './views/admin/tabs/AdminProjectEdit';
 import NotificationsPage from './components/NotificationsPage';
-import CreatorDashboard from './views/creator/pages/CreatorDashboard';
 import CreatorProjects from './views/creator/pages/CreatorProjects';
 import CreatorLayout from './views/creator/CreatorLayout';
 import AdminLayout from './views/admin/AdminLayout';
