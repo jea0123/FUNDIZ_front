@@ -139,6 +139,7 @@ export const endpoints = {
   getMypage: (userId: number) => `user/userPage/${userId}`,
   getLikedList: (userId: number) => `user/likedList/${userId}`,
   getQnAListOfUser: (userId: number, p: SearchQnaParams) => `user/qna/${userId}?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup })}`,
+  addRecentView: (projectId: number) => `user/recentView/${projectId}`,
   getRecentView: `user/recentViewProjects`,
   getQnAListDetail: (userId: number, projectId: number) => `user/QnAListDetail/${userId}/project/${projectId}`,
   updateNickname: 'user/nickname',
@@ -199,7 +200,7 @@ export const endpoints = {
 
   // ==================== Backing API ====================
   getBackingList: (userId: number) => `backing/page/${userId}`,
-  getBackingDetail: (userId: number, projectId: number, rewardId: number) => `backing/page/${userId}/project/${projectId}/reward/${rewardId}`,
+  getBackingDetail: (userId: number, projectId: number, rewardId: number, backingId: number) => `backing/page/${userId}/project/${projectId}/reward/${rewardId}/backing/${backingId}`,
   backingPrepare: (userId: number, projectId: number) => `backing/${userId}/create/${projectId}`,
   addBacking: (userId: number) => `backing/create/${userId}`,
 

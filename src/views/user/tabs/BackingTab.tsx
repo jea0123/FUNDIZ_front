@@ -13,7 +13,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import type { BackingMyPageDetail } from "@/types/backing";
-import { currency } from "@/utils/utils";
+import { formatNumber } from "@/utils/utils";
 import React, { useEffect, useState } from "react";
 
 const tempUserId = 1;
@@ -53,10 +53,14 @@ export default function BackingTab() {
   const fetchBackingdetail = async (
     userId: number,
     projectId: number,
-    rewardId: number
+    rewardId: number,
+    backingId: number
   ) => {
+    const cleanId = parseInt(backingId as any);
+  const url = endpoints.getBackingDetail(userId, projectId, rewardId, cleanId);
+  console.log("📡 요청 URL:", url);
     const response = await getData(
-      endpoints.getBackingDetail(userId, projectId, rewardId)
+      endpoints.getBackingDetail(userId, projectId, rewardId, backingId)
     );
     if (response.status === 200) {
       setSelectedBacking(response.data as BackingMyPageDetail);
@@ -91,8 +95,9 @@ export default function BackingTab() {
     // 기존 함수 호출
     fetchBackingdetail(
       tempUserId,
-      target.backingReward.backingProject.projectId,
-      target.backingReward.rewardId
+      Number(target.backingReward.backingProject.projectId),
+      Number(target.backingReward.rewardId),
+      Number(target.backing.backingId)
     );
   };
 
@@ -146,7 +151,7 @@ export default function BackingTab() {
                   </p>
                   <div className="flex items-center space-x-4 text-sm">
                     <span>
-                      후원금액: {currency(backingList.backing.amount)}원
+                      후원금액: {formatNumber(backingList.backing.amount)}원
                     </span>
                     <Badge
                       variant={
@@ -174,7 +179,7 @@ export default function BackingTab() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => openBackingById(backingList.backing.backingId)}
+                  onClick={() => openBackingById(Number(backingList.backing.backingId))}
                 >
                   상세보기
                 </Button>
@@ -248,11 +253,11 @@ export default function BackingTab() {
                 </h2>
                 <p className="text-sm text-gray-500">
                   달성금액{" "}
-                  {currency(
+                  {formatNumber(
                     selectedBacking.backingReward.backingProject.currAmount ?? 0
                   )}
                   원 / 목표{" "}
-                  {currency(
+                  {formatNumber(
                     selectedBacking.backingReward.backingProject.goalAmount ?? 0
                   )}
                   원
@@ -287,7 +292,7 @@ export default function BackingTab() {
                   }
                 </p>
                 <p>
-                  총 후원 금액 : {currency(selectedBacking.backing.amount)}원
+                  총 후원 금액 : {formatNumber(selectedBacking.backing.amount)}원
                 </p>
               </div>
             </section>
@@ -297,7 +302,7 @@ export default function BackingTab() {
               <div className="text-sm space-y-1">
                 <p>리워드명 : {selectedBacking.backingReward.rewardName}</p>
                 <p>수량 : {selectedBacking.quantity}개</p>
-                <p>리워드 금액 : {currency(selectedBacking.price)}원</p>
+                <p>리워드 금액 : {formatNumber(selectedBacking.price)}원</p>
                 <p>
                   배송 예정일 :
                   {selectedBacking.backingReward.deliveryDate

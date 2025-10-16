@@ -43,7 +43,6 @@ import LikedProjectTab from './views/user/tabs/LikedProjectTab';
 import { BackingPage } from './views/backing/backingPage';
 import { AdminRegisterPage } from './views/auth/admin/AdminRegisterPage';
 import { AdminLoginPage } from './views/auth/admin/AdminLoginPage';
-import { OverviewTab } from './views/admin/tabs/OverviewTab';
 import { ApprovalsTab } from './views/admin/tabs/ApprovalsTab';
 import { ProjectsTab } from './views/admin/tabs/ProjectsTab';
 import { ReportsAdminTab } from './views/admin/tabs/ReportsAdminTab';
@@ -56,7 +55,8 @@ import { NoticeUpdtTab } from './views/admin/tabs/NoticeUpdtTab';
 import SettlementTab from './views/admin/tabs/SettlementTab';
 import EditProject from './views/creator/pages/EditProject';
 
-const AdminTabs = lazy(() => import('./views/admin/AdminTabs').then((module) => ({ default: module.AdminTabs })));
+const OverviewTab = lazy(() => import('./views/admin/tabs/OverviewTab').then(module => ({ default: module.OverviewTab })));
+const CreatorDashboard = lazy(() => import('./views/creator/pages/CreatorDashboard').then(module => ({ default: module.default })));
 
 export default function App() {
   const { setLoginUser, resetLoginUser } = useLoginUserStore();

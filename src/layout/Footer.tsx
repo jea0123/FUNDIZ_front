@@ -1,29 +1,28 @@
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Facebook, Instagram, Youtube, Github, Mail, ArrowRight, Heart } from "lucide-react";
+import { Facebook, Instagram, Youtube, Github, Heart } from "lucide-react";
+import { NavLink } from "react-router-dom";
 
 const nav = {
     about: [
-        { label: "회사소개", href: "" },
-        { label: "이용약관", href: "" },
-        { label: "개인정보처리방침", href: "" },
-        { label: "채용", href: "" },
-        { label: "제휴문의", href: "" },
+        { label: "회사소개", href: null },
+        { label: "이용약관", href: null },
+        { label: "개인정보처리방침", href: null },
+        { label: "채용", href: null },
+        { label: "제휴문의", href: null },
     ],
     support: [
         { label: "공지사항", href: "/cs/notice" },
         { label: "1:1 문의", href: "/cs/inquiry" },
         { label: "신고하기", href: "/cs/report" },
-        { label: "환불/정책", href: "" },
-        { label: "결제 안내", href: "" },
+        { label: "환불/정책", href: null },
+        { label: "결제 안내", href: null },
     ],
     explore: [
-        { label: "인기 프로젝트", href: "" },
-        { label: "새 프로젝트", href: "" },
-        { label: "카테고리", href: "" },
-        { label: "크리에이터", href: "" },
+        { label: "인기 프로젝트", href: null },
+        { label: "새 프로젝트", href: null },
+        { label: "카테고리", href: null },
+        { label: "크리에이터", href: null },
     ],
     management: [
         { label: "후원자 페이지", href: "/user" },
@@ -33,10 +32,10 @@ const nav = {
 };
 
 const socials = [
-    { label: "Facebook", href: "#", icon: Facebook },
-    { label: "Instagram", href: "#", icon: Instagram },
-    { label: "YouTube", href: "#", icon: Youtube },
-    { label: "GitHub", href: "#", icon: Github },
+    { label: "Facebook", href: null, icon: Facebook },
+    { label: "Instagram", href: null, icon: Instagram },
+    { label: "YouTube", href: null, icon: Youtube },
+    { label: "GitHub", href: null, icon: Github },
 ];
 
 export default function SiteFooter() {
@@ -44,7 +43,7 @@ export default function SiteFooter() {
 
     return (
         <footer className="bg-neutral-50 text-neutral-600 border-t border-neutral-200">
-            <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
+            <div className="mx-auto max-w-7xl py-12 w-[1232px]">
 
                 {/* Link grid */}
                 <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-6">
@@ -68,14 +67,14 @@ export default function SiteFooter() {
                         </p>
                         <div className="flex items-center gap-3">
                             {socials.map(({ label, href, icon: Icon }) => (
-                                <a
+                                <NavLink
                                     key={label}
-                                    href={href}
+                                    to={href ?? "#"}
                                     aria-label={label}
                                     className="inline-flex size-9 items-center justify-center rounded-xl border border-neutral-200 bg-white hover:border-blue-300 hover:text-blue-600 transition shadow-sm"
                                 >
                                     <Icon className="size-4" />
-                                </a>
+                                </NavLink>
                             ))}
                         </div>
                     </div>
@@ -105,19 +104,19 @@ export default function SiteFooter() {
     );
 }
 
-function FooterColumn({ title, items, }: { title: string; items: { label: string; href: string }[]; }) {
+function FooterColumn({ title, items, }: { title: string; items: { label: string; href: string | null }[]; }) {
     return (
         <div>
             <h6 className="mb-3 text-sm font-semibold tracking-tight text-neutral-800">{title}</h6>
             <ul className="space-y-2">
                 {items.map((it) => (
                     <li key={it.label}>
-                        <a
-                            href={it.href}
+                        <NavLink
+                            to={it.href ?? "#"}
                             className="text-sm text-neutral-600 hover:text-blue-600 transition"
                         >
                             {it.label}
-                        </a>
+                        </NavLink>
                     </li>
                 ))}
             </ul>
