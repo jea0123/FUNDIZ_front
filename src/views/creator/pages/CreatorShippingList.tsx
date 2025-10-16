@@ -53,7 +53,7 @@ export default function CreatorShippingList() {
   const getStatus = (p: CreaotrShippingProjectList) => {
     if (p.completedShippingCnt === 0) return 'READY'; // 0이면 배송 준비중
     if (p.completedShippingCnt < p.backerCnt) return 'SHIPPING'; // 0 < 완료수 < 총배송수 -> 배송중
-    if (p.completedShippingCnt === p.backerCnt) return 'DONE'; // 완료수 = 총배송수 -> 배송완료
+    if (p.completedShippingCnt === p.backerCnt) return 'DELIVERED'; // 완료수 = 총배송수 -> 배송완료
     return 'READY';
   };
 
@@ -89,7 +89,7 @@ export default function CreatorShippingList() {
         return <Badge className="bg-yellow-100 text-yellow-700">배송 준비중</Badge>;
       case 'SHIPPING':
         return <Badge className="bg-blue-100 text-blue-700">배송중</Badge>;
-      case 'DONE':
+      case 'DELIVERED':
         return <Badge className="bg-green-100 text-green-700">배송 완료</Badge>;
       default:
         return <Badge className="bg-gray-100 text-gray-700">기타</Badge>;
