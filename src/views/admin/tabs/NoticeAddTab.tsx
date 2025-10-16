@@ -29,7 +29,7 @@ export function NoticeAddTab() {
               return false;
             }
 
-            navigate('?tab=notice');
+            navigate('../notice');
           };
 
     return (

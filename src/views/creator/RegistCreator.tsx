@@ -30,6 +30,7 @@ const schema = z.object({
     account: z.string().min(5, "계좌번호를 입력하세요")
         .regex(/^[0-9]+$/, "계좌번호는 숫자만 입력"),
     businessNum: z.string()
+        .regex(/^[0-9\-]*$/, "사업자번호는 숫자와 '-'만 입력")
         .optional()
         .transform((v) => (v ?? "").trim()),
     profileImg: z.any().optional(),

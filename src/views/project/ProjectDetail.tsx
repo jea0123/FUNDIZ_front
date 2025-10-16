@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Heart, Share2, Calendar, Users, MessageCircle, Star, MessageSquarePlus, X } from 'lucide-react';
+import { Heart, Share2, Calendar, Users, MessageCircle, Star, MessageSquarePlus, X, UserMinus, Loader2 } from 'lucide-react';
 import type { ProjectDetail } from '@/types/projects';
-import { endpoints, getData, postData } from '@/api/apis';
+import { deleteData, endpoints, getData, postData } from '@/api/apis';
 import { useParams } from 'react-router-dom';
-import { formatDate, getDaysBefore, getDaysLeft } from '@/utils/utils';
+import { formatDate, getDaysBefore, getDaysLeft, toastSuccess } from '@/utils/utils';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
@@ -18,7 +18,7 @@ import type { CommunityDto, Cursor, CursorPage, ReviewDto } from '@/types/commun
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogClose } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import type { ReplyDto } from '@/types/reply';
-import type { Qna, QnaDto, QnaAddRequest } from "@/types/qna";
+import type { QnaAddRequest } from "@/types/qna";
 
 const CM_MAX = 1000;
 const getByteLen = (s: string) => new TextEncoder().encode(s).length;
@@ -27,19 +27,13 @@ const formatCurrency = (amount: number) => { return new Intl.NumberFormat('ko-KR
 export function ProjectDetailPage() {
 
     /* ----------------------------- Router helpers ----------------------------- */
-
     const navigate = useNavigate();
     const { projectId } = useParams();
 
     /* --------------------------------- Auth helper ---------------------------------- */
 
     const ensureLogin = useCallback(() => {
-        const token = localStorage.getItem("access_token");
-        // if (!token) {
-        //     navigate(`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`);
-        //     return false;
-        // }
-        return true; //TODO: 임시 우회 나중에 위 주석 풀기
+        return true;
     }, [/* navigate, location.pathname, location.search */])
 
     /* --------------------------------- Refs ---------------------------------- */
@@ -62,6 +56,8 @@ export function ProjectDetailPage() {
     /* --------------------------------- State --------------------------------- */
 
     const [project, setProject] = useState<ProjectDetail>();
+    const [likeCnt, setLikeCnt] = useState(0);
+    const [followerCnt, setFollowerCnt] = useState(0);
     const [loadingProject, setLoadingProject] = useState(false);
 
     const [community, setCommunity] = useState<CommunityDto[]>([]);
@@ -75,6 +71,7 @@ export function ProjectDetailPage() {
 
     const [tab, setTab] = useState<"description" | "news" | "community" | "review">("description");
     const [isLiked, setIsLiked] = useState(false);
+    const [isFollowed, setIsFollowed] = useState(false);
 
     const [cart, setCart] = useState<Record<number, number>>({});
     const [cartPing, setCartPing] = useState(false);
@@ -94,7 +91,11 @@ export function ProjectDetailPage() {
     const [replyInput, setReplyInput] = useState<Record<number, string>>({});
     const [replySecret, setReplySecret] = useState<Record<number, boolean>>({});
 
-    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+    const [loadingLike, setLoadingLike] = useState(false);      // 좋아요 상태/카운트 조회중
+    const [mutatingLike, setMutatingLike] = useState(false);    // 좋아요/취소 토글중
+
+    const [loadingFollow, setLoadingFollow] = useState(false);  // 팔로우 상태/카운트 조회중
+    const [mutatingFollow, setMutatingFollow] = useState(false);// 팔로우/언팔 토글중
 
     /* ------------------------------- Derived ---------------------------------- */
 
@@ -115,7 +116,6 @@ export function ProjectDetailPage() {
     const getLocalReplyCnt = (cmId: number) => (reply[cmId]?.length ?? 0);
 
     /* ----------------------------- Data fetchers ----------------------------- */
-
     const projectData = useCallback(async () => {
         if (!projectId) return;
         setLoadingProject(true);
@@ -212,6 +212,99 @@ export function ProjectDetailPage() {
         }
     }, []);
 
+    const likeProject = useCallback(async (projectId: number) => {
+        if (!projectId || !ensureLogin()) return;
+        setMutatingLike(true);
+        try {
+            const res = await postData(endpoints.likeProject(projectId));
+            if (res.status === 200) {
+                setIsLiked(true);
+                await getLikeCnt(projectId);
+                toastSuccess('프로젝트를 좋아합니다.');
+            }
+        } finally {
+            setMutatingLike(false);
+        }
+    }, [ensureLogin]);
+
+    const dislikeProject = useCallback(async (projectId: number) => {
+        if (!projectId || !ensureLogin()) return;
+        setMutatingLike(true);
+        try {
+            const res = await deleteData(endpoints.dislikeProject(projectId));
+            if (res.status === 200) {
+                setIsLiked(false);
+                await getLikeCnt(projectId);
+                toastSuccess('프로젝트 좋아요를 취소합니다.');
+            }
+        } finally {
+            setMutatingLike(false);
+        }
+    }, [ensureLogin]);
+
+    const checkLiked = async (projectId: number) => {
+        if (!projectId) return;
+        if (!ensureLogin()) return;
+        const response = await getData(endpoints.checkLiked(projectId));
+        if (response.status === 200) {
+            setIsLiked(response.data);
+        }
+    }
+
+    const getLikeCnt = async (projectId: number) => {
+        if (!projectId) return;
+        const response = await getData(endpoints.getLikeCnt(projectId));
+        if (response.status === 200) {
+            setLikeCnt(response.data);
+        }
+    };
+
+    const followCreator = useCallback(async (creatorId: number) => {
+        if (!creatorId || !ensureLogin()) return;
+        setMutatingFollow(true);
+        try {
+            const res = await postData(endpoints.followCreator(creatorId));
+            if (res.status === 200) {
+                setIsFollowed(true);
+                await getFollowerCnt(creatorId);
+                toastSuccess('크리에이터를 팔로우합니다.');
+            }
+        } finally {
+            setMutatingFollow(false);
+        }
+    }, [ensureLogin]);
+
+    const unfollowCreator = useCallback(async (creatorId: number) => {
+        if (!creatorId || !ensureLogin()) return;
+        setMutatingFollow(true);
+        try {
+            const res = await deleteData(endpoints.unfollowCreator(creatorId));
+            if (res.status === 200) {
+                setIsFollowed(false);
+                await getFollowerCnt(creatorId);
+                toastSuccess('크리에이터 팔로우를 취소합니다.');
+            }
+        } finally {
+            setMutatingFollow(false);
+        }
+    }, [ensureLogin]);
+
+    const checkFollowed = async (creatorId: number) => {
+        if (!creatorId) return;
+        if (!ensureLogin()) return;
+        const response = await getData(endpoints.checkFollowed(creatorId));
+        if (response.status === 200) {
+            setIsFollowed(response.data);
+        }
+    }
+
+    const getFollowerCnt = async (creatorId: number) => {
+        if (!creatorId) return;
+        const response = await getData(endpoints.getFollowerCnt(creatorId));
+        if (response.status === 200) {
+            setFollowerCnt(response.data);
+        }
+    };
 
     /* ------------------------------- UI handlers ---------------------------------- */
 
@@ -406,10 +499,6 @@ export function ProjectDetailPage() {
         }
     }, [ensureLogin, replyInput, replySecret]);
 
-    const handleOpenModal = () => {
-        setIsAddDialogOpen(true);
-    };
-
     /* -------------------------------- Effects -------------------------------- */
 
     useEffect(() => {
@@ -494,6 +583,43 @@ export function ProjectDetailPage() {
         return () => observers.forEach(o => o.disconnect());
     }, [tab, replyCursor, loadingReply, replyData]);
 
+    useEffect(() => {
+        if (!projectId) return;
+        let canceled = false;
+        (async () => {
+            setLoadingLike(true);
+            try {
+                await Promise.all([checkLiked(Number(projectId)), getLikeCnt(Number(projectId)),]);
+            } finally {
+                if (!canceled) setLoadingLike(false);
+            }
+        })();
+        return () => { canceled = true };
+    }, [projectId]);
+
+    useEffect(() => {
+        const cid = project?.creatorId;
+        if (!cid) return;
+        let canceled = false;
+        (async () => {
+            setLoadingFollow(true);
+            try {
+                await Promise.all([checkFollowed(cid), getFollowerCnt(cid),]);
+            } finally {
+                if (!canceled) setLoadingFollow(false);
+            }
+        })();
+        return () => { canceled = true };
+    }, [project?.creatorId]);
+
+    useEffect(() => {
+        if (!projectId) return;
+        const recentView = async () => {
+            await postData(endpoints.addRecentView(Number(projectId)));
+        }
+        recentView();
+    }, [projectId]);
+
     /* --------------------------------- Render --------------------------------- */
 
     if (!projectId || !project || loadingProject) {
@@ -514,11 +640,14 @@ export function ProjectDetailPage() {
                             <Button
                                 variant="secondary"
                                 size="sm"
-                                onClick={() => setIsLiked(!isLiked)}
+                                disabled={loadingLike || mutatingLike}
+                                onClick={() => (isLiked ? dislikeProject(Number(projectId)) : likeProject(Number(projectId)))}
                                 className={isLiked ? 'text-red-500' : ''}
                             >
-                                <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
-                                <span className="ml-1">{project.likeCnt}</span>
+                                {(loadingLike || mutatingLike)
+                                    ? <Loader2 className="h-4 w-4 animate-spin" />
+                                    : <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />}
+                                <span className="ml-1">{likeCnt}</span>
                             </Button>
                             <Button variant="secondary" size="sm" onClick={handleShare}>
                                 <Share2 className="h-4 w-4" />
@@ -546,11 +675,27 @@ export function ProjectDetailPage() {
                             <div className="flex-1">
                                 <h4 className="font-semibold">{project.creatorName}</h4>
                                 <p className="text-sm text-gray-600">
-                                    팔로워 {formatCurrency(project.followerCnt)}명 · 프로젝트 {project.projectCnt}개
+                                    팔로워 {formatCurrency(followerCnt)}명 · 프로젝트 {project.projectCnt}개
                                 </p>
                             </div>
-                            <Button variant="outline" size="sm">팔로우</Button>
-                            < QnaAddModal />
+                            {isFollowed ? (
+                                <Button variant="outline" size="sm" disabled={loadingFollow || mutatingFollow}
+                                    onClick={() => unfollowCreator(project.creatorId)}
+                                    className="border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
+                                >
+                                    {(loadingFollow || mutatingFollow) ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserMinus className="h-4 w-4" />}
+                                    <span className="ml-1">언팔로우</span>
+                                </Button>
+                            ) : (
+                                <Button variant="outline" size="sm" disabled={loadingFollow || mutatingFollow}
+                                    onClick={() => followCreator(project.creatorId)}
+                                    className="border-blue-500 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950"
+                                >
+                                    {(loadingFollow || mutatingFollow) ? <Loader2 className="h-4 w-4 animate-spin" /> : <Users className="h-4 w-4" />}
+                                    <span className="ml-1">팔로우</span>
+                                </Button>
+                            )}
+                            <QnaAddModal />
                         </div>
                     </div>
 
@@ -584,7 +729,7 @@ export function ProjectDetailPage() {
 
                         <TabsContent value="description" className="mt-6">
                             <div
-                                className="prose max-w-none whitespace-pre-wrap break-words break-all [overflow-wrap:anywhere]"
+                                className="prose max-w-none whitespace-pre-wrap break-all [overflow-wrap:anywhere]"
                                 dangerouslySetInnerHTML={{ __html: project.content }}
                             />
                         </TabsContent>
@@ -599,7 +744,7 @@ export function ProjectDetailPage() {
                                         <div key={news.newsId} className="space-y-4 mt-6">
                                             <Card>
                                                 <CardContent>
-                                                    <div className="whitespace-pre-wrap break-words break-all [overflow-wrap:anywhere]">
+                                                    <div className="whitespace-pre-wrap break-all [overflow-wrap:anywhere]">
                                                         {news.content}
                                                     </div>
                                                     <p className="text-sm text-gray-500 mt-2">{formatDate(news.createdAt)}</p>
@@ -642,7 +787,7 @@ export function ProjectDetailPage() {
                                             onChange={handleChangeCm}
                                             onFocus={handleTextareaFocus}
                                             placeholder="내용을 입력하세요."
-                                            className="min-h-[120px] w-full max-w-full resize-y overflow-auto break-words [overflow-wrap:anywhere] [word-break:break-word]"
+                                            className="min-h-[120px] w-full max-w-full resize-y overflow-auto [overflow-wrap:anywhere] [word-break:break-word]"
                                         />
                                     </div>
 
@@ -677,7 +822,7 @@ export function ProjectDetailPage() {
                                                                 <span className="font-medium truncate">{cm.nickname}</span>
                                                                 <span className="text-sm text-gray-500">{getDaysBefore(cm.createdAt)} 전</span>
                                                             </div>
-                                                            <p className="text-sm w-full max-w-full whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+                                                            <p className="text-sm w-full max-w-full whitespace-pre-wrap [overflow-wrap:anywhere]">
                                                                 {cm.cmContent}
                                                             </p>
 
@@ -731,7 +876,7 @@ export function ProjectDetailPage() {
                                                                                             )}
                                                                                             <span className="text-[11px] text-gray-500">{getDaysBefore(rp.createdAt)} 전</span>
                                                                                         </div>
-                                                                                        <p className="text-sm whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+                                                                                        <p className="text-sm whitespace-pre-wrap [overflow-wrap:anywhere]">
                                                                                             {rp.content}
                                                                                         </p>
                                                                                     </div>
@@ -1094,7 +1239,6 @@ export function QnaAddModal() {
         return Number.isFinite(num) && num > 0 ? num : null;
     }, [projectIdParam]);
 
-    const [project, setProject] = useState<Qna | null>(null);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [qnaAdd, setQnaAdd] = useState<QnaAddRequest>({
         projectId: Number(projectId),
@@ -1104,7 +1248,7 @@ export function QnaAddModal() {
     });
 
     const handleAddQna = async () => {
-        const url = endpoints.addQuestion(projectId, tempUserId);
+        const url = endpoints.addQuestion(Number(projectId), tempUserId);
         console.log(url);
         const response = await postData(url, qnaAdd);
         console.log(qnaAdd);
@@ -1116,7 +1260,6 @@ export function QnaAddModal() {
             alert("문의사항 등록 실패");
         }
     };
-
 
     return (
         <div>

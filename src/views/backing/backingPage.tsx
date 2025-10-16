@@ -12,10 +12,22 @@ import { SavedAddressModal } from './SavedAddressModal';
 import { endpoints, getData, postData } from '@/api/apis';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import type { BackingPrepare, BackingPagePayment, BackingRequest } from '@/types/backing';
+import type { BackingPrepare, BackingPagePayment } from '@/types/backing';
 
-/* ----------------------------- 결제 모달 ----------------------------- */
-function PaymentModal({ open, onClose, totalAmount, paymentList, onConfirmPayment }: { open: boolean; onClose: () => void; totalAmount: number; paymentList: BackingPagePayment[]; onConfirmPayment: (method: string) => void }) {
+//결제 모달
+function PaymentModal({
+  open,
+  onClose,
+  totalAmount,
+  paymentList,
+  onConfirmPayment,
+}: {
+  open: boolean;
+  onClose: () => void;
+  totalAmount: number;
+  paymentList: BackingPagePayment[];
+  onConfirmPayment: (method: string) => void;
+}) {
   const [selectedPayment, setSelectedPayment] = useState<string>(''); // 저장된 결제 선택
   const [method, setMethod] = useState(''); // 새 결제수단 선택
 
@@ -45,7 +57,12 @@ function PaymentModal({ open, onClose, totalAmount, paymentList, onConfirmPaymen
               <p className="font-medium text-sm mb-2">💾 저장된 결제 정보</p>
               <RadioGroup value={selectedPayment} onValueChange={handleSelectSaved} className="space-y-2">
                 {paymentList.map((p, idx) => (
-                  <div key={p.cardCompany ?? idx} className={`flex items-center justify-between p-2 rounded-md border hover:bg-gray-100 transition ${selectedPayment === p.cardCompany ? 'bg-blue-50 border-blue-300' : ''}`}>
+                  <div
+                    key={p.cardCompany ?? idx}
+                    className={`flex items-center justify-between p-2 rounded-md border hover:bg-gray-100 transition ${
+                      selectedPayment === p.cardCompany ? 'bg-blue-50 border-blue-300' : ''
+                    }`}
+                  >
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value={p.cardCompany ?? `pay-${idx}`} id={`pay-${idx}`} />
                       <Label htmlFor={`pay-${idx}`} className="cursor-pointer text-sm font-medium">
@@ -100,7 +117,7 @@ function PaymentModal({ open, onClose, totalAmount, paymentList, onConfirmPaymen
   );
 }
 
-/* ----------------------------- BackingPage 본문 ----------------------------- */
+//BackingPage 본문 
 export function BackingPage() {
   const tempUserId = 1;
   const { projectId } = useParams<{ projectId: string }>();
@@ -140,7 +157,6 @@ export function BackingPage() {
 
         if (response.status === 200 && response.data) {
           const raw = response.data;
-
           const data = {
             ...raw,
             rewardList: raw.rewardsList ?? [],
@@ -162,7 +178,9 @@ export function BackingPage() {
             }
           }
 
-          const selectedRewards = rewards.filter((r) => rewardEntries.some((entry) => entry.rewardId === r.rewardId));
+          const selectedRewards = rewards.filter((r) =>
+            rewardEntries.some((entry) => entry.rewardId === r.rewardId)
+          );
 
           const initialQuantities: Record<number, number> = {};
           selectedRewards.forEach((r) => {
@@ -188,12 +206,16 @@ export function BackingPage() {
   if (loading) return <p className="text-center py-10 text-gray-500">데이터를 불러오는 중...</p>;
   if (!prepareData) return <p className="text-center py-10 text-gray-500">후원 정보를 불러올 수 없습니다.</p>;
 
-  const { title, thumbnail, creatorName, goalAmount, currAmount, rewardList, nickname, email, paymentList } = prepareData as any;
+  const { title, thumbnail, creatorName, goalAmount, currAmount, rewardList, nickname, email, paymentList } =
+    prepareData as any;
 
   const achievementRate = Math.round((currAmount / goalAmount) * 100);
 
   const getTotalAmount = () => {
-    const rewardsTotal = rewardList.reduce((sum, r) => sum + (rewardQuantities[r.rewardId] ?? 1) * r.price, 0);
+    const rewardsTotal = rewardList.reduce(
+      (sum, r) => sum + (rewardQuantities[r.rewardId] ?? 1) * r.price,
+      0
+    );
     const additional = customAmount ? parseInt(customAmount) : 0;
     return rewardsTotal + additional;
   };
@@ -206,12 +228,13 @@ export function BackingPage() {
     setIsPaymentOpen(true);
   };
 
-  //  결제 완료 후 처리 (데이터 저장)
   const handleConfirmPayment = async (method: string) => {
-    const rewardsTotal = rewardList.reduce((sum, r) => sum + (rewardQuantities[r.rewardId] ?? 1) * r.price, 0);
+    const rewardsTotal = rewardList.reduce(
+      (sum, r) => sum + (rewardQuantities[r.rewardId] ?? 1) * r.price,
+      0
+    );
     const additional = customAmount ? parseInt(customAmount) : 0;
-    const totalAmount = rewardsTotal + additional; // 추가 후원금 포함
-
+    const totalAmount = rewardsTotal + additional;
     const toLocalDate = (date: Date) => date.toISOString().split('T')[0];
 
     if (!shippingAddress?.addrId) {
@@ -219,40 +242,60 @@ export function BackingPage() {
       return;
     }
 
-    const backingData: BackingRequest = {
+    const backingData = {
+      backingId: 0,
       backing: {
+        backingId: 0,
         userId: tempUserId,
-        amount: totalAmount, // 추가 후원금 포함된 총 금액 저장
+        amount: totalAmount,
         createdAt: toLocalDate(new Date()),
         backingStatus: 'COMPLETED',
       },
       backingDetail: {
+        backingId: 0,
         rewardId: rewardList[0]?.rewardId ?? 0,
         price: rewardList[0]?.price ?? 0,
         quantity: rewardQuantities[rewardList[0]?.rewardId] ?? 1,
       },
-      shipping: {
-        addrId: shippingAddress.addrId,
-        shippingStatus: 'PENDING',
-        trackingNum: null,
-        shippedAt: null,
-        deliveredAt: null,
-      },
       payment: {
+        paymentId: 0,
+        backingId: 0,
+        orderId: '',
         method: method || 'CARD',
-        amount: totalAmount, //  결제 금액도 동일하게 포함
         status: 'COMPLETED',
-        paidAt: toLocalDate(new Date()),
+        amount: totalAmount,
+        cardCompany: '',
+        createdAt: new Date(),
       },
+      address: {
+        addrId: shippingAddress.addrId,
+        userId: tempUserId,
+        addrName: shippingAddress.addrName || '',
+        recipient: shippingAddress.recipient || '',
+        postalCode: shippingAddress.postalCode || '',
+        roadAddr: shippingAddress.roadAddr || '',
+        detailAddr: shippingAddress.detailAddr || '',
+        recipientPhone: shippingAddress.recipientPhone || '',
+        isDefault: shippingAddress.isDefault || 'N',
+      },
+      rewards: rewardList.map((r) => ({
+        rewardId: r.rewardId,
+        rewardName: r.rewardName,
+        price: r.price,
+        rewardContent: r.rewardContent,
+        quantity: rewardQuantities[r.rewardId] ?? 1,
+      })),
     };
 
-    console.log('📤 backingData', JSON.stringify(backingData, null, 2));
+    console.log('📤 서버로 보낼 backingData', JSON.stringify(backingData, null, 2));
 
     try {
       const res = await postData(endpoints.addBacking(tempUserId), backingData);
 
       if (res.status === 200) {
-        alert(`결제가 완료되었습니다!\n결제수단: ${method}\n총 금액: ${totalAmount.toLocaleString()}원`);
+        alert(
+          `결제가 완료되었습니다!\n결제수단: ${method}\n총 금액: ${totalAmount.toLocaleString()}원`
+        );
         navigate('/user/mypage');
       } else {
         alert('후원 저장 실패: ' + (res.message || '서버 오류'));
@@ -274,8 +317,13 @@ export function BackingPage() {
           <h1 className="text-3xl font-bold">프로젝트 후원하기</h1>
         </div>
 
-        <PaymentModal open={isPaymentOpen} onClose={() => setIsPaymentOpen(false)} totalAmount={getTotalAmount()} paymentList={paymentList} onConfirmPayment={handleConfirmPayment} />
-
+        <PaymentModal
+          open={isPaymentOpen}
+          onClose={() => setIsPaymentOpen(false)}
+          totalAmount={getTotalAmount()}
+          paymentList={paymentList}
+          onConfirmPayment={handleConfirmPayment}
+        />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             {/* 프로젝트 요약 */}

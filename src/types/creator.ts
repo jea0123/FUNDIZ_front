@@ -71,7 +71,6 @@ export interface ProjectCreateRequestDto {
   endDate: Date;
 
   tagList: string[];
-
   rewardList: RewardCreateRequestDto[];
 
   creatorName: string;
@@ -79,8 +78,9 @@ export interface ProjectCreateRequestDto {
   email: string;
   phone: string;
 
-  files: File[];
   businessDoc: File | null;
+
+  contentBlocks: M; // EditorJS JSON
 }
 
 export interface ProjectSummaryDto {

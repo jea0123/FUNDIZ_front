@@ -1,42 +1,41 @@
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Facebook, Instagram, Youtube, Github, Mail, ArrowRight, Heart } from "lucide-react";
+import { Facebook, Instagram, Youtube, Github, Heart } from "lucide-react";
+import { NavLink } from "react-router-dom";
 
 const nav = {
     about: [
-        { label: "회사소개", href: "/about" },
-        { label: "이용약관", href: "/terms" },
-        { label: "개인정보처리방침", href: "/privacy" },
-        { label: "채용", href: "/careers" },
-        { label: "제휴문의", href: "/partnership" },
+        { label: "회사소개", href: null },
+        { label: "이용약관", href: null },
+        { label: "개인정보처리방침", href: null },
+        { label: "채용", href: null },
+        { label: "제휴문의", href: null },
     ],
     support: [
         { label: "공지사항", href: "/cs/notice" },
         { label: "1:1 문의", href: "/cs/inquiry" },
         { label: "신고하기", href: "/cs/report" },
-        { label: "환불/정책", href: "/policy/refund" },
-        { label: "결제 안내", href: "/policy/payment" },
+        { label: "환불/정책", href: null },
+        { label: "결제 안내", href: null },
     ],
     explore: [
-        { label: "인기 프로젝트", href: "/project/popular" },
-        { label: "새 프로젝트", href: "/project/new" },
-        { label: "카테고리", href: "/category" },
-        { label: "크리에이터", href: "/creators" },
+        { label: "인기 프로젝트", href: null },
+        { label: "새 프로젝트", href: null },
+        { label: "카테고리", href: null },
+        { label: "크리에이터", href: null },
     ],
     management: [
-        { label: "마이 페이지 (유저)", href: "/user" },
+        { label: "후원자 페이지", href: "/user" },
         { label: "창작자 페이지", href: "/creator" },
-        { label: "관리자 콘솔", href: "/admin" },
+        { label: "관리자 페이지", href: "/admin" },
     ],
 };
 
 const socials = [
-    { label: "Facebook", href: "#", icon: Facebook },
-    { label: "Instagram", href: "#", icon: Instagram },
-    { label: "YouTube", href: "#", icon: Youtube },
-    { label: "GitHub", href: "#", icon: Github },
+    { label: "Facebook", href: null, icon: Facebook },
+    { label: "Instagram", href: null, icon: Instagram },
+    { label: "YouTube", href: null, icon: Youtube },
+    { label: "GitHub", href: null, icon: Github },
 ];
 
 export default function SiteFooter() {
@@ -44,54 +43,38 @@ export default function SiteFooter() {
 
     return (
         <footer className="bg-neutral-50 text-neutral-600 border-t border-neutral-200">
-            <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
-                <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.35 }}
-                    className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between"
-                >
-                    <div className="flex items-center gap-3">
-                        <div className="size-10 rounded-2xl bg-gradient-to-br from-blue-400 to-sky-400 shadow" />
-                        <div>
-                            <p className="text-lg font-semibold text-neutral-900 tracking-tight">FUNDING</p>
-                            <p className="text-xs text-neutral-500">Crowdfunding Platform</p>
-                        </div>
-                    </div>
-
-                    <form onSubmit={(e) => e.preventDefault()} className="w-full md:w-auto" aria-label="뉴스레터 구독">
-                        <div className="flex w-full max-w-md items-center gap-2 rounded-xl bg-white p-2 border border-neutral-200 shadow-sm">
-                            <Mail className="ml-1 size-5 shrink-0 text-neutral-400" aria-hidden />
-                            <Input
-                                type="email"
-                                placeholder="이메일을 입력하세요"
-                                className="border-0 bg-transparent text-sm text-neutral-700 placeholder:text-neutral-400 focus-visible:ring-0"
-                            />
-                            <Button type="submit" size="sm" className="rounded-lg bg-blue-500 hover:bg-blue-600">
-                                구독 <ArrowRight className="ml-1 size-4" />
-                            </Button>
-                        </div>
-                    </form>
-                </motion.div>
-
-                <Separator className="my-8 bg-neutral-200" />
+            <div className="mx-auto max-w-7xl py-12 w-[1232px]">
 
                 {/* Link grid */}
                 <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-6">
                     <div className="col-span-2 space-y-3 lg:col-span-2">
-                        <p className="max-w-prose text-sm leading-6 text-neutral-500">
+                        <motion.div
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.35 }}
+                            className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between"
+                        >
+                            <div className="flex items-center gap-3 pb-3">
+                                <div className="size-10 rounded-2xl bg-gradient-to-br from-blue-400 to-sky-400 shadow" />
+                                <div>
+                                    <p className="text-lg font-semibold text-neutral-900 tracking-tight">FUNDING</p>
+                                    <p className="text-xs text-neutral-500">Crowdfunding Platform</p>
+                                </div>
+                            </div>
+                        </motion.div>
+                        <p className="max-w-prose text-sm leading-6 text-neutral-500 pb-3">
                             아이디어가 현실이 되도록 돕습니다. FUNDING은 창작자와 후원자가 투명하게 연결되는 공간을 지향합니다.
                         </p>
                         <div className="flex items-center gap-3">
                             {socials.map(({ label, href, icon: Icon }) => (
-                                <a
+                                <NavLink
                                     key={label}
-                                    href={href}
+                                    to={href ?? "#"}
                                     aria-label={label}
                                     className="inline-flex size-9 items-center justify-center rounded-xl border border-neutral-200 bg-white hover:border-blue-300 hover:text-blue-600 transition shadow-sm"
                                 >
                                     <Icon className="size-4" />
-                                </a>
+                                </NavLink>
                             ))}
                         </div>
                     </div>
@@ -121,19 +104,19 @@ export default function SiteFooter() {
     );
 }
 
-function FooterColumn({ title, items, }: { title: string; items: { label: string; href: string }[]; }) {
+function FooterColumn({ title, items, }: { title: string; items: { label: string; href: string | null }[]; }) {
     return (
         <div>
             <h6 className="mb-3 text-sm font-semibold tracking-tight text-neutral-800">{title}</h6>
             <ul className="space-y-2">
                 {items.map((it) => (
-                    <li key={it.href}>
-                        <a
-                            href={it.href}
+                    <li key={it.label}>
+                        <NavLink
+                            to={it.href ?? "#"}
                             className="text-sm text-neutral-600 hover:text-blue-600 transition"
                         >
                             {it.label}
-                        </a>
+                        </NavLink>
                     </li>
                 ))}
             </ul>
