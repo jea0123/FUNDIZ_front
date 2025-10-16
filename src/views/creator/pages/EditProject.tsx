@@ -94,7 +94,7 @@ const validateProject = (p: ProjectCreateRequestDto) => {
 
     const content = (p.content ?? "").trim();
     if (content.length < R.MIN_CONTENT_LEN || content.length > R.MAX_CONTENT_LEN)
-        return { ok: false, message: `본문 길이는 ${R.MIN_CONTENT_LEN}~${R.MAX_CONTENT_LEN}자여야 합니다.` };
+        return { ok: false, message: `내용 길이는 ${R.MIN_CONTENT_LEN}~${R.MAX_CONTENT_LEN}자여야 합니다.` };
 
     if (!p.goalAmount || p.goalAmount < R.MIN_GOAL_AMOUNT)
         return { ok: false, message: `목표 금액은 최소 ${R.MIN_GOAL_AMOUNT.toLocaleString()}원 이상이어야 합니다.` };
@@ -248,7 +248,7 @@ export default function EditProject() {
         rewardCnt: null,
         isPosting: "Y"
     });
-
+    
     //약관 및 정책 동의 여부 검사
     const [agree, setAgree] = useState(false);
     const [agreeError, setAgreeError] = useState<string | null>(null);
@@ -322,31 +322,6 @@ export default function EditProject() {
                     const draft = response?.data ?? {};
                     console.log("[EditProject] raw draft.contentBlocks =", draft.contentBlocks);
                     console.log("[EditProject] typeof draft.contentBlocks =", typeof draft.contentBlocks);
-
-                    // setProject((prev) => ({
-                    //     ...prev,
-                    //     projectId: draft.projectId,
-                    //     creatorId: draft.creatorId,
-                    //     ctgrId: draft.ctgrId,
-                    //     subctgrId: draft.subctgrId,
-                    //     title: draft.title,
-                    //     goalAmount: draft.goalAmount,
-                    //     startDate: new Date(draft.startDate),
-                    //     endDate: new Date(draft.endDate),
-                    //     content: draft.content,
-                    //     contentBlocks: parseBlocks(draft.contentBlocks),
-                    //     thumbnail: null,
-                    //     businessDoc: null,
-                    //     tagList: cleanTags(draft.tagList),
-                    //     rewardList: [],
-
-                    //     creatorName: draft.creatorName ?? prev.creatorName,
-                    //     businessNum: draft.businessNum ?? prev.businessNum,
-                    //     email: draft.email ?? prev.email,
-                    //     phone: draft.phone ?? prev.phone,
-                    //     thumbnailPreviewUrl: toPublicUrl(draft.thumbnail),
-                    //     businessDocPreviewUrl: toPublicUrl(draft.businessDoc),
-                    // }));
 
                     setProject((prev) => {
                         const parsed = parseBlocks(draft.contentBlocks);

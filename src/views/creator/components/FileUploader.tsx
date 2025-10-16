@@ -58,8 +58,8 @@ export function ThumbnailUploader({
             await validate(f);
             setError(null);
             onSelect(f);
-            if (inputRef.current) inputRef.current.value = ""; // 같은 파일 재선택 허용
             setDragOver(false);
+            if (inputRef.current) inputRef.current.value = ""; // 같은 파일 재선택 허용
         } catch (err: any) {
             setError(err?.message ?? "업로드에 실패했습니다.");
             onSelect(null);
@@ -145,7 +145,7 @@ export function ThumbnailUploader({
 
 export function BusinessDocUploader({
     file,
-    label = "사업자등록증 첨부파일",
+    label = "사업자등록증 (사업자라면 필수 첨부 *)",
     previewUrl,
     onSelect,
     onCleared,
@@ -154,15 +154,16 @@ export function BusinessDocUploader({
     const inputRef = useRef<HTMLInputElement | null>(null);
     const [dragOver, setDragOver] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [imgFailed, setImgFailed] = useState(false); // 이미지 로딩 실패 여부
 
     const isImage = !!file && file.type.startsWith("image/");
-
     const objectUrl = useObjectUrl(file) || undefined;
     const preview = objectUrl ?? previewUrl ?? undefined;
 
     const openPicker = useCallback(() => { if (!disabled) inputRef.current?.click(); }, [disabled]);
     const reset = useCallback(() => {
         setError(null);
+        setImgFailed(false);
         onSelect(null);
         if (inputRef.current) inputRef.current.value = "";
         onCleared?.();
@@ -170,7 +171,7 @@ export function BusinessDocUploader({
 
     const validate = async (f: File) => {
         const ok = f.type === "application/pdf" || f.type.startsWith("image/");
-        if (!ok) throw new Error("이미지 파일만 업로드할 수 있습니다.");
+        if (!ok) throw new Error("PDF 또는 이미지 파일만 업로드할 수 있습니다.");
         if (f.size > MAX_SIZE) throw new Error("파일 용량은 최대 4GB까지 허용됩니다.");
     };
 
@@ -180,8 +181,10 @@ export function BusinessDocUploader({
         try {
             await validate(f);
             setError(null);
+            setImgFailed(false);
             onSelect(f);
             setDragOver(false);
+            if (inputRef.current) inputRef.current.value = ""; // 같은 파일 재선택 허용
         } catch (err: any) {
             setError(err?.message ?? "업로드에 실패했습니다.");
             onSelect(null);
@@ -210,6 +213,8 @@ export function BusinessDocUploader({
         setDragOver(false);
     }, []);
 
+    const showImg = !!preview && (isImage || !imgFailed);
+
     return (
         <div>
             <Label className="mb-2 block">{label}</Label>
@@ -226,8 +231,13 @@ export function BusinessDocUploader({
             >
                 {preview ? (
                     <div className="relative">
-                        {isImage || preview?.match(/\.(png|jpe?g|webp|gif)(\?|#|$)/i) ? (
-                            <img src={preview} alt="사업자등록증 미리보기" className="mx-auto max-h-80 w-auto rounded-md object-contain" />
+                        {showImg ? (
+                            <img
+                                src={preview}
+                                alt="사업자등록증 미리보기"
+                                className="mx-auto max-h-80 w-auto rounded-md object-contain"
+                                onError={() => setImgFailed(true)} // 이미지 실패 시 PDF 뷰로 폴백
+                            />
                         ) : (
                             <div className="h-40 flex flex-col items-center justify-center rounded-md bg-muted/40">
                                 <FileText className="h-8 w-8 mb-2 text-gray-500" />

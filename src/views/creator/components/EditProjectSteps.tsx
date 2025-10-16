@@ -176,7 +176,7 @@ export function EditProjectSteps(props: StepsProps) {
                     </p>
                     <ProjectDetailEditor
                         key={`${project.projectId}:${project.contentBlocks?.blocks?.length ?? 0}`}
-                        initialData={project.contentBlocks ?? { blocks: [] }}
+                        initialData={project.contentBlocks}
                         uploadUrl={"http://localhost:9099/api/v1/attach/image"}
                         onChange={(data) => setProject((prev: any) => ({ ...prev, contentBlocks: data }))}
                     />
@@ -410,7 +410,6 @@ export function EditProjectSteps(props: StepsProps) {
                         </div>
                         <div>
                             <BusinessDocUploader
-                                label="사업자등록증 첨부파일 *"
                                 file={project.businessDoc ?? null}
                                 previewUrl={project.businessDocPreviewUrl}
                                 onSelect={(f) =>
