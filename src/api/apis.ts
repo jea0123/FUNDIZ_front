@@ -27,7 +27,7 @@ export const kyInstance = ky.create({
         }
 
         if (pathname.includes('/api/v1/creator/')) {
-          const devId = localStorage.getItem('DEV_CREATOR_ID') || '4';
+          const devId = localStorage.getItem('DEV_CREATOR_ID') || '1';
           req.headers.set('X-Dev-Creator-Id', devId);
         }
       },
@@ -178,7 +178,7 @@ export const endpoints = {
 
   // ==================== Backing API ====================
   getBackingList: (userId: number) => `backing/page/${userId}`,
-  getBackingDetail: (userId: number, projectId: number, rewardId: number) => `backing/page/${userId}/project/${projectId}/reward/${rewardId}`,
+  getBackingDetail: (userId: number, projectId: number, rewardId: number, backingId: number) => `backing/page/${userId}/project/${projectId}/reward/${rewardId}/backing/${backingId}`,
   backingPrepare: (userId: number, projectId: number) => `backing/${userId}/create/${projectId}`,
   addBacking: (userId: number) => `backing/create/${userId}`,
 

@@ -25,3 +25,15 @@ export interface resetDefaultAddr {
   userId: number;
   isDefault: string;
 }
+
+export interface Address{
+  addrId: number;
+  userId: number;
+  addrName: string;
+  recipient: string;
+  postalCode: string;
+  roadAddr: string;
+  detailAddr: string;
+  recipientPhone: string;
+  isDefault: string;
+}

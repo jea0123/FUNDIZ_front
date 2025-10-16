@@ -1,5 +1,5 @@
-import type { AddressResponse } from './address';
-import type { BackingPagePayment } from './payment';
+import type { Address, AddressResponse } from './address';
+import type { BackingPagePayment, Payment } from './payment';
 
 export interface MyPageBacking {
   backingId: number;
@@ -129,3 +129,37 @@ export interface MonthCount {
   createdAt: Date;
   count: number
 }
+// 후원하기페이지용 
+export interface BackingCreate {
+  backingId: number;
+  backing:Backing;
+  backingDetail: BackingDetail;
+  payment: Payment;
+  address: Address;
+
+  rewards: RewardBackingRequest[];
+
+}
+
+export interface RewardBackingRequest{
+  rewardId: number;
+  rewardName: string;
+  price: number;
+  rewardContent: string;
+  quantity: number;
+}
+
+export interface Backing{
+  backingId: number;
+  userId: number;
+  amount: number;
+  createdAt: Date;
+  backingStatus: string;
+}
+export interface BackingDetail{
+  backingId: number;
+  rewardId: number;
+  price: number; // => = reward.price * quantity
+  quantity: number;
+}
+
