@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const MAX_SIZE = 4 * 1024 * 1024 * 1024; // 4GB
 const IMAGE_ACCEPT = ["image/*"];
-const DOC_ACCEPT = ["application/pdf", "image/jpeg", "image/png", "image/webp", "image/gif"];
+const DOC_ACCEPT = ["application/pdf", "image/*"];
 
 interface Props {
     file: File | null; // 부모에서 상태 관리
@@ -17,7 +17,7 @@ interface Props {
     disabled?: boolean;
 }
 
-export function useObjectUrl(file: File | null | undefined) {
+function useObjectUrl(file: File | null | undefined) {
     const url = useMemo(() => (file ? URL.createObjectURL(file) : ""), [file]);
     useEffect(() => () => { if (url) URL.revokeObjectURL(url); }, [url]);
     return url;
@@ -47,7 +47,7 @@ export function ThumbnailUploader({
     }, [onCleared, onSelect]);
 
     const validate = async (f: File) => {
-        if (!IMAGE_ACCEPT.includes(f.type)) throw new Error("JPG/PNG/WebP/GIF 파일만 업로드할 수 있습니다.");
+        if (!f.type.startsWith("image/")) throw new Error("이미지 파일만 업로드할 수 있습니다.");
         if (f.size > MAX_SIZE) throw new Error("파일 용량은 최대 4GB까지 허용됩니다.");
     };
 
@@ -59,6 +59,7 @@ export function ThumbnailUploader({
             setError(null);
             onSelect(f);
             setDragOver(false);
+            if (inputRef.current) inputRef.current.value = ""; // 같은 파일 재선택 허용
         } catch (err: any) {
             setError(err?.message ?? "업로드에 실패했습니다.");
             onSelect(null);
@@ -97,13 +98,9 @@ export function ThumbnailUploader({
                     dragOver ? "border-blue-400 bg-blue-50/40" : "border-gray-300",
                     disabled && "opacity-60"
                 )}
-                role="button"
-                onClick={openPicker}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") openPicker(); }}
                 onDrop={onDrop}
                 onDragOver={onDragOver}
                 onDragLeave={onDragLeave}
-                tabIndex={0}
             >
                 {preview ? (
                     <div className="relative">
@@ -115,10 +112,10 @@ export function ThumbnailUploader({
                         />
 
                         <div className="mt-3 flex items-center justify-center gap-2">
-                            <Button type="button" variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); openPicker(); }}>
+                            <Button type="button" variant="outline" size="sm" onClick={() => openPicker()} disabled={disabled}>
                                 <RefreshCw className="mr-1 h-4 w-4" /> 교체
                             </Button>
-                            <Button type="button" variant="destructive" size="sm" onClick={(e) => { e.stopPropagation(); reset(); }}>
+                            <Button type="button" variant="destructive" size="sm" onClick={() => reset()} disabled={disabled}>
                                 <Trash2 className="mr-1 h-4 w-4" /> 삭제
                             </Button>
                         </div>
@@ -127,8 +124,9 @@ export function ThumbnailUploader({
                     <div className="py-6">
                         <Upload className="mx-auto mb-3 h-10 w-10 text-gray-400" />
                         <p className="mb-2 text-sm text-gray-600">클릭하거나 드래그하여 파일을 업로드</p>
-                        <Button type="button" variant="outline" size="sm" onClick={openPicker}>파일 선택</Button>
-                        <p className="mt-2 text-xs text-gray-400">이미지(JPG/PNG/WebP/GIF)</p>
+                        <Button type="button" variant="outline" size="sm" onClick={() => openPicker()} disabled={disabled}>
+                            파일 선택
+                        </Button>
                     </div>
                 )}
 
@@ -147,7 +145,7 @@ export function ThumbnailUploader({
 
 export function BusinessDocUploader({
     file,
-    label = "사업자등록증 첨부파일",
+    label = "사업자등록증 (사업자라면 필수 첨부)",
     previewUrl,
     onSelect,
     onCleared,
@@ -156,22 +154,24 @@ export function BusinessDocUploader({
     const inputRef = useRef<HTMLInputElement | null>(null);
     const [dragOver, setDragOver] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [imgFailed, setImgFailed] = useState(false); // 이미지 로딩 실패 여부
 
     const isImage = !!file && file.type.startsWith("image/");
-
     const objectUrl = useObjectUrl(file) || undefined;
     const preview = objectUrl ?? previewUrl ?? undefined;
 
     const openPicker = useCallback(() => { if (!disabled) inputRef.current?.click(); }, [disabled]);
     const reset = useCallback(() => {
         setError(null);
+        setImgFailed(false);
         onSelect(null);
         if (inputRef.current) inputRef.current.value = "";
         onCleared?.();
     }, [onCleared, onSelect]);
 
     const validate = async (f: File) => {
-        if (!DOC_ACCEPT.includes(f.type)) throw new Error("PDF 또는 이미지(JPG/PNG/WebP/GIF)만 업로드할 수 있습니다.");
+        const ok = f.type === "application/pdf" || f.type.startsWith("image/");
+        if (!ok) throw new Error("PDF 또는 이미지 파일만 업로드할 수 있습니다.");
         if (f.size > MAX_SIZE) throw new Error("파일 용량은 최대 4GB까지 허용됩니다.");
     };
 
@@ -181,8 +181,10 @@ export function BusinessDocUploader({
         try {
             await validate(f);
             setError(null);
+            setImgFailed(false);
             onSelect(f);
             setDragOver(false);
+            if (inputRef.current) inputRef.current.value = ""; // 같은 파일 재선택 허용
         } catch (err: any) {
             setError(err?.message ?? "업로드에 실패했습니다.");
             onSelect(null);
@@ -211,6 +213,8 @@ export function BusinessDocUploader({
         setDragOver(false);
     }, []);
 
+    const showImg = !!preview && (isImage || !imgFailed);
+
     return (
         <div>
             <Label className="mb-2 block">{label}</Label>
@@ -221,18 +225,19 @@ export function BusinessDocUploader({
                     dragOver ? "border-blue-400 bg-blue-50/40" : "border-gray-300",
                     disabled && "opacity-60"
                 )}
-                role="button"
-                onClick={openPicker}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") openPicker(); }}
                 onDrop={onDrop}
                 onDragOver={onDragOver}
                 onDragLeave={onDragLeave}
-                tabIndex={0}
             >
                 {preview ? (
                     <div className="relative">
-                        {isImage || preview?.match(/\.(png|jpe?g|webp|gif)(\?|#|$)/i) ? (
-                            <img src={preview} alt="사업자등록증 미리보기" className="mx-auto max-h-80 w-auto rounded-md object-contain" />
+                        {showImg ? (
+                            <img
+                                src={preview}
+                                alt="사업자등록증 미리보기"
+                                className="mx-auto max-h-80 w-auto rounded-md object-contain"
+                                onError={() => setImgFailed(true)} // 이미지 실패 시 PDF 뷰로 폴백
+                            />
                         ) : (
                             <div className="h-40 flex flex-col items-center justify-center rounded-md bg-muted/40">
                                 <FileText className="h-8 w-8 mb-2 text-gray-500" />
@@ -240,10 +245,10 @@ export function BusinessDocUploader({
                             </div>
                         )}
                         <div className="mt-3 flex items-center justify-center gap-2">
-                            <Button type="button" variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); openPicker(); }} disabled={disabled}>
+                            <Button type="button" variant="outline" size="sm" onClick={() => openPicker()} disabled={disabled}>
                                 <RefreshCw className="mr-1 h-4 w-4" /> 교체
                             </Button>
-                            <Button type="button" variant="destructive" size="sm" onClick={(e) => { e.stopPropagation(); reset(); }} disabled={disabled}>
+                            <Button type="button" variant="destructive" size="sm" onClick={() => reset()} disabled={disabled}>
                                 <Trash2 className="mr-1 h-4 w-4" /> 삭제
                             </Button>
                         </div>
@@ -252,10 +257,10 @@ export function BusinessDocUploader({
                     <div className="py-6">
                         <Upload className="mx-auto mb-3 h-10 w-10 text-gray-400" />
                         <p className="mb-2 text-sm text-gray-600">클릭하거나 드래그하여 파일을 업로드</p>
-                        <Button type="button" variant="outline" size="sm" onClick={openPicker} disabled={disabled}>
+                        <Button type="button" variant="outline" size="sm" onClick={() => openPicker()} disabled={disabled}>
                             파일 선택
                         </Button>
-                        <p className="mt-2 text-xs text-gray-400">PDF 또는 이미지(JPG/PNG/WebP/GIF)</p>
+                        <p className="mt-2 text-xs text-gray-400">PDF 또는 이미지</p>
                     </div>
                 )}
 

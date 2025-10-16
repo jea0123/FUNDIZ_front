@@ -4,117 +4,130 @@ import type { Reward, RewardCreateRequestDto } from './reward';
 import type { Tag } from './tag';
 
 export interface CreatorProjectListDto {
-  projectId: number;
-  title: string;
-  projectStatus: string;
-  startDate: Date;
-  endDate: Date;
-  goalAmount: number;
-  currAmount: number;
-  backerCnt: number;
-  ctgrName: string;
-  subctgrName: string;
-  percentNow: number;
-  requestedAt?: string;
+    projectId: number;
+    title: string;
+    projectStatus: string;
+    startDate: Date;
+    endDate: Date;
+    goalAmount: number;
+    currAmount: number;
+    backerCnt: number;
+    ctgrName: string;
+    subctgrName: string;
+    percentNow: number;
+    requestedAt?: string;
 
-  newsCount?: number;
-  lastNewsAt?: string | null;
-  reviewNewCount?: number; // 새 후기 수
-  reviewPendingCount?: number; // 미답글 수
-  lastReviewAt?: string | null;
+    newsCount?: number;
+    lastNewsAt?: string | null;
+    reviewNewCount?: number; // 새 후기 수
+    reviewPendingCount?: number; // 미답글 수
+    lastReviewAt?: string | null;
 }
 
 export interface SearchCreatorProjectDto {
-  page: number;
-  size: number;
+    page: number;
+    size: number;
 
-  projectStatus?: string;
-  rangeType?: string;
+    projectStatus?: string;
+    rangeType?: string;
 }
 
+export type ContentBlocks = {
+    time?: number;
+    version?: string;
+    blocks: Array<
+        | { id?: string; type: "paragraph"; data: { text: string } }
+        | {
+            id?: string; type: "image"; data: {
+                caption?: string;
+                withBorder?: boolean;
+                withBackground?: boolean;
+                stretched?: boolean;
+                file: { url: string };
+            }
+        }
+        | { id?: string; type: string; data: any } // 다른 플러그인 대비
+    >;
+};
+
 export interface CreatorProjectDetailDto {
-  projectId: number;
-  creatorId: number;
-  title: string;
-  content: string;
-  thumbnail: string;
-  goalAmount: number;
-  currAmount: number;
-  startDate: Date;
-  endDate: Date;
+    projectId: number;
+    creatorId: number;
+    title: string;
+    goalAmount: number;
+    currAmount: number;
+    startDate: Date;
+    endDate: Date;
+    content: string;
+    contentBlocks: ContentBlocks; // EditorJS JSON
+    thumbnail: string;
+    businessDoc: string;
 
-  ctgrId: number;
-  ctgrName: string;
-  subctgrId: number;
-  subctgrName: string;
+    ctgrId: number;
+    ctgrName: string;
+    subctgrId: number;
+    subctgrName: string;
 
-  creatorName: string;
-  businessNum: string;
-  email: string;
-  phone: string;
+    creatorName: string;
+    businessNum: string;
+    email: string;
+    phone: string;
 
-  tagList: Tag[];
-  rewardList: Reward[];
+    tagList: Tag[];
+    rewardList: Reward[];
 }
 
 export interface ProjectCreateRequestDto {
-  projectId: number;
-  ctgrId: number; //프론트에서만 사용
-  subctgrId: number;
-  creatorId: number;
+    projectId: number;
+    creatorId: number;
+    ctgrId: number; //프론트에서만 사용
+    subctgrId: number;
 
-  title: string;
-  content: string;
-  thumbnail: File | null;
-  goalAmount: number;
-  startDate: Date;
-  endDate: Date;
+    title: string;
+    goalAmount: number;
+    startDate: Date;
+    endDate: Date;
+    content: string;
+    contentBlocks: ContentBlocks; // EditorJS JSON
+    thumbnail: File | null;
+    businessDoc: File | null;
 
-  tagList: string[];
-  rewardList: RewardCreateRequestDto[];
-
-  creatorName: string;
-  businessNum: string;
-  email: string;
-  phone: string;
-
-  businessDoc: File | null;
-
-  contentBlocks: M; // EditorJS JSON
+    tagList: string[];
+    rewardList: RewardCreateRequestDto[];
 }
 
 export interface ProjectSummaryDto {
-  projectId: number;
-  title: string;
-  endDate: Date;
-  projectStatus: string;
+    projectId: number;
+    title: string;
+    endDate: Date;
+    projectStatus: string;
 }
 
 export interface CreatorDashboardRanking {
-  projectId: number;
-  title: string;
-  backerCnt: number;
-  likeCnt: number;
-  viewCnt: number;
+    projectId: number;
+    title: string;
+    backerCnt: number;
+    likeCnt: number;
+    viewCnt: number;
 }
 
 export interface CreatorDashboard {
-  creatorId: number;
+    creatorId: number;
 
-  projectTotal: number;
-  totalAmount: number;
-  totalBackingCnt: number;
-  totalVerifyingCnt: number;
+    projectTotal: number;
+    totalAmount: number;
+    totalBackingCnt: number;
+    totalVerifyingCnt: number;
 
-  totalProjectCnt: number;
-  projectFailedCnt: number;
-  projectFailedPercentage: number;
-  projectSuccessPercentage: number;
+    totalProjectCnt: number;
+    projectFailedCnt: number;
+    projectFailedPercentage: number;
+    projectSuccessPercentage: number;
 
-  top3BackerCnt: CreatorDashboardRanking[];
-  top3LikeCnt: CreatorDashboardRanking[];
-  top3ViewCnt: CreatorDashboardRanking[];
+    top3BackerCnt: CreatorDashboardRanking[];
+    top3LikeCnt: CreatorDashboardRanking[];
+    top3ViewCnt: CreatorDashboardRanking[];
 
-  dailyStatus: DailyCount[];
-  monthStatus: MonthCount[];
+    dailyStatus: DailyCount[];
+    monthStatus: MonthCount[];
 }

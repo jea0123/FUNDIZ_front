@@ -139,8 +139,10 @@ export const getDaysBefore = (date: string | Date): string => {
  * @param {string | Date} date 날짜 문자열 또는 Date 객체
  * @returns {string} "YYYY-MM-DD" 형식의 날짜 문자열
  */
-export const formatDate = (date: string | Date): string => {
+export const formatDate = (date: string | Date | null): string => {
+    if (!date) return "";
     const d = new Date(date);
+    if (isNaN(d.getTime())) return "";
 
     if (isNaN(d.getTime())) {
         console.log("잘못된 날짜 포맷");
@@ -195,6 +197,9 @@ export const formatNumber = (num: number, locale: string = 'ko-KR'): string => {
 export const formatPrice = (price: number): string => {
     return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(price);
 }
+
+// 문자길이 byte로
+export const getByteLen = (s: string) => new TextEncoder().encode(s).length;
 
 /**
  * @description 파일 경로를 공개 URL로 변환

@@ -10,31 +10,27 @@ import type { Category } from "@/types/admin";
 import type { ProjectCreateRequestDto } from "@/types/creator";
 import type { Subcategory } from "@/types/projects";
 import type { RewardDraft, RewardForm } from "@/types/reward";
-import type { FieldErrors } from "@/types/reward-validator";
-import { formatDate } from "@/utils/utils";
+import { formatDate, formatPrice } from "@/utils/utils";
 import { Plus, Truck, X } from "lucide-react";
 import { useState } from "react";
 import { BusinessDocUploader, ThumbnailUploader } from "./FileUploader";
 import ProjectDetailEditor from "./ProjectDetailEditor";
+import type { ProjectFieldErrors } from "../pages/EditProject";
+import type { RewardFieldErrors } from "@/types/reward-validator";
 
-const numberKR = (n?: number | null) => new Intl.NumberFormat("ko-KR").format(n || 0);
-
-const normalizeName = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
-
-const parseLocalDate = (s: string) => {
-    const [y, m, d] = s.split("-").map(Number);
-    return new Date(y, (m ?? 1) - 1, d ?? 1);
-};
+/* -------------------------------- Type -------------------------------- */
 
 export type CreateProjectViewModel = ProjectCreateRequestDto & {
-    files?: File[];
-    businessDoc: File | null;
-    contentBlocks: any;
+    creatorName: string;
+    businessNum: string;
+    email: string;
+    phone: string;
     thumbnailPreviewUrl?: string;
+    businessDoc?: File | null;
     businessDocPreviewUrl?: string;
 };
 
-export function CreateProjectSteps(props: {
+type StepsProps = {
     step: number;
     project: CreateProjectViewModel;
     setProject: React.Dispatch<React.SetStateAction<CreateProjectViewModel>>;
@@ -48,13 +44,31 @@ export function CreateProjectSteps(props: {
     agree?: boolean;
     setAgree?: React.Dispatch<React.SetStateAction<boolean>>;
     agreeError?: string | null;
-    rewardErrors?: FieldErrors;
+    rewardErrors?: RewardFieldErrors;
+    projectErrors?: ProjectFieldErrors;
+    rewardListError?: string | null;
+    clearProjectError?: (k: keyof ProjectFieldErrors) => void;
+    clearRewardError?: (k: keyof RewardFieldErrors) => void;
     addDays: (date: Date, days: number) => Date;
-}) {
+}
+
+/* -------------------------------- Utils -------------------------------- */
+
+const normalizeName = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
+
+const parseLocalDate = (s: string) => {
+    const [y, m, d] = s.split("-").map(Number);
+    return new Date(y, (m ?? 1) - 1, d ?? 1);
+};
+
+/* -------------------------------- Page -------------------------------- */
+
+export function EditProjectSteps(props: StepsProps) {
     const {
         step, project, setProject, categories, subcategories, rewardList, newReward,
         setNewReward, addReward, removeReward, agree = false, setAgree, agreeError,
-        rewardErrors = {}, addDays
+        rewardErrors = {}, projectErrors = {}, rewardListError = null,
+        clearProjectError, clearRewardError, addDays
     } = props;
 
     if (step === 1) {
@@ -82,20 +96,30 @@ export function CreateProjectSteps(props: {
                         <Label htmlFor="subcategory">세부카테고리 *</Label>
                         <Select
                             value={project.subctgrId ? String(project.subctgrId) : undefined}
-                            onValueChange={(value) => setProject(prev => ({ ...prev, subctgrId: Number(value) }))}
+                            onValueChange={(value) => {
+                                setProject(prev => ({ ...prev, subctgrId: Number(value) }));
+                                clearProjectError?.("subctgrId");
+                            }}
                             disabled={!project.ctgrId}
                         >
                             <SelectTrigger id="subcategory" className="w-full">
                                 <SelectValue placeholder="세부카테고리 선택" />
                             </SelectTrigger>
                             <SelectContent>
-                                {subcategories.map(sc => (
-                                    <SelectItem key={sc.subctgrId} value={String(sc.subctgrId)}>
-                                        {sc.subctgrName}
-                                    </SelectItem>
-                                ))}
+                                {subcategories.length > 0 ? (
+                                    subcategories.map(sc => (
+                                        <SelectItem key={sc.subctgrId} value={String(sc.subctgrId)}>
+                                            {sc.subctgrName}
+                                        </SelectItem>
+                                    ))
+                                ) : (
+                                    <div className="px-2 py-3 text-sm text-muted-foreground">
+                                        선택한 카테고리에 해당하는 세부카테고리가 없습니다.
+                                    </div>
+                                )}
                             </SelectContent>
                         </Select>
+                        {projectErrors?.subctgrId && <p className="mt-1 text-sm text-red-600">{projectErrors.subctgrId}</p>}
                     </div>
                 </div>
 
@@ -105,20 +129,27 @@ export function CreateProjectSteps(props: {
                         id="title"
                         placeholder="프로젝트 제목을 입력하세요"
                         value={project.title}
-                        onChange={(e) => setProject(prev => ({ ...prev, title: e.target.value }))}
+                        onChange={(e) => {
+                            setProject(prev => ({ ...prev, title: e.target.value }));
+                            clearProjectError?.("title");
+                        }}
                         maxLength={50}
                     />
-                    <p className="text-sm text-gray-500 mt-1">{project.title.length}/50자</p>
+                    {projectErrors.title && <p className="mt-1 text-sm text-red-600">{projectErrors.title}</p>}
                 </div>
 
-                <ThumbnailUploader
-                    file={project.thumbnail}
-                    previewUrl={project.thumbnailPreviewUrl}
-                    onSelect={(f) =>
-                        setProject((p) => ({ ...p, thumbnail: f, thumbnailPreviewUrl: f ? undefined : p.thumbnailPreviewUrl }))}
-                    onCleared={() =>
-                        setProject((p) => ({ ...p, thumbnail: null, thumbnailPreviewUrl: undefined }))}
-                />
+                <div>
+                    <ThumbnailUploader
+                        file={project.thumbnail}
+                        previewUrl={project.thumbnailPreviewUrl}
+                        onSelect={(f) => {
+                            setProject((prev) => ({ ...prev, thumbnail: f, thumbnailPreviewUrl: f ? undefined : prev.thumbnailPreviewUrl }));
+                            clearProjectError?.("thumbnail");
+                        }}
+                        onCleared={() => setProject((prev) => ({ ...prev, thumbnail: null, thumbnailPreviewUrl: undefined }))}
+                    />
+                    {projectErrors.thumbnail && <p className="mt-1 text-sm text-red-600">{projectErrors.thumbnail}</p>}
+                </div>
 
                 <TagEditor
                     tags={project.tagList}
@@ -150,12 +181,13 @@ export function CreateProjectSteps(props: {
         const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
             const next = e.target.value;
             setProject(prev => ({ ...prev, content: next }));
+            clearProjectError?.("content");
         };
 
         return (
             <div className="space-y-6">
                 <div>
-                    <Label htmlFor="projectContent">프로젝트 소개 *</Label>
+                    <Label htmlFor="projectContent">프로젝트 내용 *</Label>
                     <Textarea
                         id="projectContent"
                         placeholder={`프로젝트의 스토리, 제작 배경, 리워드 상세 설명, 일정 등을 충분히 써주세요.\n(예: 왜 이 프로젝트를 시작했는지, 목표 금액의 사용 계획, 제작/배송 일정, 유의사항 등)`}
@@ -164,47 +196,75 @@ export function CreateProjectSteps(props: {
                         onChange={handleContentChange}
                         className="mt-1 min-h-[100px]"
                     />
+                    {projectErrors.content && <p className="mt-1 text-sm text-red-600">{projectErrors.content}</p>}
                 </div>
 
                 <div className="space-y-4">
-                    <Label>상세 설명 (이미지 + 텍스트) *</Label>
+                    <Label>프로젝트 소개 (이미지 + 텍스트) *</Label>
                     <p className="text-xs text-muted-foreground">
-                        쇼핑몰 상세 페이지처럼 이미지를 추가하고 위/아래에 설명을 작성하세요.
+                        쇼핑몰 상세 페이지처럼 이미지를 추가하고 소개글을 작성하세요.
                     </p>
                     <ProjectDetailEditor
+                        key={`${project.projectId}:${project.contentBlocks?.blocks?.length ?? 0}`}
                         initialData={project.contentBlocks}
                         uploadUrl={"http://localhost:9099/api/v1/attach/image"}
-                        onChange={(data) => setProject((prev: any) => ({ ...prev, contentBlocks: data }))}
+                        onChange={(data) => {
+                            setProject((prev: any) => ({ ...prev, contentBlocks: data }));
+                            clearProjectError?.("contentBlocks");
+                        }}
                     />
+                    {projectErrors.contentBlocks && <p className="mt-1 text-sm text-red-600">{projectErrors.contentBlocks}</p>}
                 </div>
             </div>
         );
     }
-
 
     if (step === 3) {
         const MIN_DAYS = 7;
         const MAX_DAYS = 60;
         const END_MIN_OFFSET = MIN_DAYS - 1;
         const END_MAX_OFFSET = MAX_DAYS - 1;
+        const MIN_START_LEAD_DAYS = 7;
 
-        const clampDate = (d: Date, min: Date, max: Date) => d < min ? min : d > max ? max : d;
+        const strip = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        const today = strip(new Date());
+        const todayStr = formatDate(today);
+
+        const isEditMode = !!project.projectId && Number(project.projectId) > 0;
+
+        // 포함 일수 계산
+        const daysInclusive = (s?: Date | null, e?: Date | null) => {
+            if (!s || !e) return null;
+            const start = strip(s);
+            const end = strip(e);
+            return Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        };
+
+        const duration = daysInclusive(project.startDate, project.endDate);
+        const isDurationInvalid = duration !== null && (duration < MIN_DAYS || duration > MAX_DAYS);
+
+        const minStartLeadDate = new Date(today);
+        minStartLeadDate.setDate(minStartLeadDate.getDate() + MIN_START_LEAD_DAYS);
+
+        const startDateStripped = project.startDate ? strip(project.startDate) : undefined;
+        const isStartPast = !!startDateStripped && startDateStripped < today;
+        const isStartLeadInvalid = !!startDateStripped && startDateStripped < strip(minStartLeadDate);
 
         const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-            const start = parseLocalDate(e.target.value);
-            const end = addDays(start, END_MIN_OFFSET);
-            setProject(prev => ({ ...prev, startDate: start, endDate: end }));
+            let picked = parseLocalDate(e.target.value);
+
+            if (!isEditMode && picked < today) picked = today;
+
+            const newEnd = addDays(picked, END_MIN_OFFSET);
+            setProject(prev => ({ ...prev, startDate: picked, endDate: newEnd }));
+            clearProjectError?.("startDate");
+            clearProjectError?.("endDate");
         }
 
         const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             const pick = parseLocalDate(e.target.value);
-            if (!project.startDate) {
-                setProject(prev => ({ ...prev, endDate: pick }));
-                return;
-            }
-            const minEnd = addDays(project.startDate, END_MIN_OFFSET);
-            const maxEnd = addDays(project.startDate, END_MAX_OFFSET);
-            setProject(prev => ({ ...prev, endDate: clampDate(pick, minEnd, maxEnd) }));
+            setProject(prev => ({ ...prev, endDate: pick }));
+            clearProjectError?.("endDate");
         };
 
         return (
@@ -216,13 +276,14 @@ export function CreateProjectSteps(props: {
                         placeholder="목표 금액을 입력하세요"
                         value={project.goalAmount}
                         onChange={(e) => {
-                            const numeric = e.target.value.replace(/[^0-9]/g, "");
-                            setProject(prev => ({ ...prev, goalAmount: Number(numeric) }));
+                            setProject(prev => ({ ...prev, goalAmount: Number(e.target.value.replace(/[^0-9]/g, "")) }));
+                            clearProjectError?.("goalAmount");
                         }}
                     />
                     <p className="mt-2 text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded-md inline-block">
-                        {project.goalAmount ? `${numberKR(project.goalAmount)}원` : ""}
+                        {project.goalAmount ? `${formatPrice(project.goalAmount)}원` : ""}
                     </p>
+                    {projectErrors.goalAmount && <p className="mt-1 text-sm text-red-600">{projectErrors.goalAmount}</p>}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -230,9 +291,23 @@ export function CreateProjectSteps(props: {
                         <Input
                             id="startDate"
                             type="date"
+                            min={isEditMode ? undefined : todayStr}
                             value={project.startDate ? formatDate(project.startDate) : ""}
                             onChange={handleStartDateChange}
                         />
+                        {projectErrors.startDate && <p className="mt-1 text-sm text-red-600">{projectErrors.startDate}</p>}
+
+                        {!projectErrors.startDate && isStartPast && (
+                            <p className="mt-1 text-sm text-red-600">
+                                시작일이 이미 지났습니다. 일정을 조정하세요.
+                            </p>
+                        )}
+
+                        {!projectErrors.startDate && isStartLeadInvalid && (
+                            <p className="mt-1 text-sm text-red-600">
+                                시작일은 오늘로부터 최소 {MIN_START_LEAD_DAYS}일 이후여야 합니다.
+                            </p>
+                        )}
                     </div>
                     <div>
                         <Label htmlFor="endDate">펀딩 종료일 *</Label>
@@ -244,8 +319,19 @@ export function CreateProjectSteps(props: {
                             value={project.endDate ? formatDate(project.endDate) : ""}
                             onChange={handleEndDateChange}
                         />
+                        {projectErrors.endDate && <p className="mt-1 text-sm text-red-600">{projectErrors.endDate}</p>}
                     </div>
                 </div>
+
+                {/* 기간 가이드 + 현재 선택한 기간 */}
+                <p
+                    id="funding-period-hint"
+                    className={`text-sm mt-1 ${isDurationInvalid ? "text-red-600" : "text-muted-foreground"
+                        }`}
+                >
+                    펀딩 기간은 최소 {MIN_DAYS}일, 최대 {MAX_DAYS}일까지 가능합니다.
+                    {duration !== null && <span className="ml-2 font-medium">(현재: {duration}일)</span>}
+                </p>
                 <FeesCard goalAmount={project.goalAmount} />
             </div>
         );
@@ -264,10 +350,13 @@ export function CreateProjectSteps(props: {
                                     <Input
                                         id="price"
                                         value={newReward.price ?? ""}
-                                        onChange={(e) => setNewReward({ ...newReward, price: Number(e.target.value.replace(/[^0-9]/g, "")) })}
+                                        onChange={(e) => {
+                                            setNewReward({ ...newReward, price: Number(e.target.value.replace(/[^0-9]/g, "")) })
+                                            clearRewardError?.("price");
+                                        }}
                                     />
                                     {newReward.price ? (
-                                        <p className="mt-1 text-xs text-muted-foreground">{numberKR(newReward.price)}원</p>
+                                        <p className="mt-1 text-xs text-muted-foreground">{formatPrice(newReward.price)}원</p>
                                     ) : null}
                                     {rewardErrors.price && <p className="mt-1 text-xs text-red-500">{rewardErrors.price}</p>}
                                 </div>
@@ -281,6 +370,7 @@ export function CreateProjectSteps(props: {
                                         onChange={(e) => {
                                             const raw = e.target.value.replace(/[^0-9]/g, "");
                                             setNewReward({ ...newReward, rewardCnt: raw === "" ? null : Number(raw) });
+                                            clearRewardError?.("rewardCnt");
                                         }}
                                     />
                                     {rewardErrors.rewardCnt && <p className="mt-1 text-xs text-red-500">{rewardErrors.rewardCnt}</p>}
@@ -293,7 +383,10 @@ export function CreateProjectSteps(props: {
                                     id="rewardTitle"
                                     placeholder="얼리버드 패키지"
                                     value={newReward.rewardName}
-                                    onChange={(e) => setNewReward({ ...newReward, rewardName: e.target.value })}
+                                    onChange={(e) => {
+                                        setNewReward({ ...newReward, rewardName: e.target.value })
+                                        clearRewardError?.("rewardName");
+                                    }}
                                 />
                                 {rewardErrors.rewardName && <p className="mt-1 text-xs text-red-500">{rewardErrors.rewardName}</p>}
                             </div>
@@ -305,7 +398,10 @@ export function CreateProjectSteps(props: {
                                     rows={3}
                                     placeholder="리워드 구성품과 혜택을 설명하세요"
                                     value={newReward.rewardContent}
-                                    onChange={(e) => setNewReward({ ...newReward, rewardContent: e.target.value })}
+                                    onChange={(e) => {
+                                        setNewReward({ ...newReward, rewardContent: e.target.value })
+                                        clearRewardError?.("rewardContent");
+                                    }}
                                 />
                                 {rewardErrors.rewardContent && <p className="mt-1 text-xs text-red-500">{rewardErrors.rewardContent}</p>}
                             </div>
@@ -316,7 +412,10 @@ export function CreateProjectSteps(props: {
                                     id="deliveryDate"
                                     type="date"
                                     value={formatDate(newReward.deliveryDate)}
-                                    onChange={(e) => setNewReward({ ...newReward, deliveryDate: parseLocalDate(e.target.value) })}
+                                    onChange={(e) => {
+                                        setNewReward({ ...newReward, deliveryDate: parseLocalDate(e.target.value) })
+                                        clearRewardError?.("deliveryDate");
+                                    }}
                                 />
                                 {rewardErrors.deliveryDate && <p className="mt-1 text-xs text-red-500">{rewardErrors.deliveryDate}</p>}
                             </div>
@@ -343,6 +442,7 @@ export function CreateProjectSteps(props: {
                             </Button>
                         </CardContent>
                     </Card>
+                    {rewardListError && <p className="mt-3 text-sm text-red-600">{rewardListError}</p>}
                 </div>
 
                 <div>
@@ -354,7 +454,7 @@ export function CreateProjectSteps(props: {
                                     <div className="flex justify-between items-start">
                                         <div className="flex-1">
                                             <div className="flex items-center space-x-2 mb-2">
-                                                <span className="text-lg font-semibold">{numberKR(r.price)}원</span>
+                                                <span className="text-lg font-semibold">{formatPrice(r.price)}원</span>
 
                                                 {r.rewardCnt === null
                                                     ? <Badge variant="secondary">무제한</Badge>
@@ -389,6 +489,9 @@ export function CreateProjectSteps(props: {
     }
 
     if (step === 5) {
+        const hasBizNum = !!String(project.businessNum ?? "").trim();
+        const hasBizDoc = (project.businessDoc instanceof File) || !!project.businessDocPreviewUrl;
+
         return (
             <div className="space-y-6">
                 <Card>
@@ -397,53 +500,53 @@ export function CreateProjectSteps(props: {
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div>
-                            <Label htmlFor="creatorName">창작자명 *</Label>
-                            <Input
-                                id="creatorName"
-                                placeholder="개인명 또는 단체명"
-                                value={project.creatorName}
-                                onChange={(e) => setProject(prev => ({ ...prev, creatorName: e.target.value }))}
-                            />
+                            <Label>창작자명</Label>
+                            <Input value={project.creatorName ?? ''} readOnly disabled />
                         </div>
                         <div>
-                            <Label htmlFor="businessNum">사업자등록번호 *</Label>
-                            <Input
-                                id="businessNum"
-                                placeholder="000-00-00000"
-                                value={project.businessNum}
-                                onChange={(e) => setProject(prev => ({ ...prev, businessNum: e.target.value }))}
-                                inputMode="numeric"
-                            />
+                            <Label>사업자등록번호</Label>
+                            <Input value={project.businessNum ?? ''} readOnly disabled />
                         </div>
                         <div>
                             <BusinessDocUploader
-                                label="사업자등록증 첨부파일 *"
                                 file={project.businessDoc ?? null}
                                 previewUrl={project.businessDocPreviewUrl}
-                                onSelect={(f) =>
-                                    setProject(prev => ({ ...prev, businessDoc: f, businessDocPreviewUrl: f ? undefined : prev.businessDocPreviewUrl, }))}
+                                onSelect={(f) => {
+                                    setProject(prev => ({ ...prev, businessDoc: f, businessDocPreviewUrl: f ? undefined : prev.businessDocPreviewUrl, }));
+                                    clearProjectError?.("businessDoc");
+                                }}
                                 onCleared={() =>
                                     setProject(prev => ({ ...prev, businessDoc: null, businessDocPreviewUrl: undefined, }))}
                             />
+                            {projectErrors.businessDoc && (
+                                <p className="mt-1 text-sm text-red-600" role="alert">
+                                    {projectErrors.businessDoc}
+                                </p>
+                            )}
+
+                            {!projectErrors.businessDoc && hasBizNum && !hasBizDoc && (
+                                <p className="mt-1 text-sm text-red-600" role="alert">
+                                    사업자등록증 사본을 첨부해주세요.
+                                </p>
+                            )}
+
+                            {!hasBizNum && (
+                                <p className="mt-1 text-sm text-muted-foreground">
+                                    일반 창작자는 사업자등록증 첨부가 필요 없습니다.
+                                </p>
+                            )}
                         </div>
                         <div>
-                            <Label htmlFor="email">문의 이메일 *</Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                placeholder="contact@example.com"
-                                value={project.email}
-                                onChange={(e) => setProject(prev => ({ ...prev, email: e.target.value }))}
-                            />
+                            <Label>이메일</Label>
+                            <Input value={project.email ?? ''} readOnly disabled />
                         </div>
                         <div>
-                            <Label htmlFor="phone">문의 전화번호 *</Label>
-                            <Input
-                                id="phone"
-                                placeholder="010-1234-5678"
-                                value={project.phone}
-                                onChange={(e) => setProject(prev => ({ ...prev, phone: e.target.value }))}
-                            />
+                            <Label>전화번호</Label>
+                            <Input value={project.phone ?? ''} readOnly disabled />
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <Badge variant="secondary">프로필 수정은 &quot;창작자 프로필&quot; 화면에서 진행해주세요.</Badge>
                         </div>
                     </CardContent>
                 </Card>
@@ -471,7 +574,7 @@ export function CreateProjectSteps(props: {
                             </div>
                             <div>
                                 <h4 className="font-medium text-gray-700">목표 금액</h4>
-                                <p>{project.goalAmount ? `${numberKR(project.goalAmount)}원` : "-"}</p>
+                                <p>{project.goalAmount ? `${formatPrice(project.goalAmount)}원` : "-"}</p>
                             </div>
                             <div>
                                 <h4 className="font-medium text-gray-700">펀딩 기간</h4>
@@ -528,7 +631,7 @@ function TagEditor({
     tags, onAdd, onRemove
 }: { tags: string[]; onAdd: (tag: string) => void; onRemove: (tag: string) => void }) {
     const [value, setValue] = useState("");
-    const add = () => { onAdd(value); setValue(""); };
+    const add = () => { const v = value.trim(); if (v) { onAdd(v); setValue(""); } };
 
     return (
         <div>
@@ -544,9 +647,17 @@ function TagEditor({
             </div>
             <div className="flex flex-wrap gap-2">
                 {tags.map(tag => (
-                    <Badge key={tag} variant="secondary" className="cursor-pointer">
+                    <Badge key={tag} variant="secondary" className="inline-flex items-center gap-1 pr-1">
                         {tag}
-                        <X className="h-3 w-3 ml-1" onClick={() => onRemove(tag)} />
+                        <button
+                            type="button"
+                            aria-label={`${tag} 삭제`}
+                            onClick={() => onRemove(tag)}
+                            onMouseDown={(e) => e.preventDefault()}
+                            className="ml-0.5 rounded-full p-0.5 hover:bg-foreground/10 pointer-events-auto"
+                        >
+                            <X className="h-3 w-3 ml-1" onClick={() => onRemove(tag)} />
+                        </button>
                     </Badge>
                 ))}
             </div>

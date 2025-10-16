@@ -15,7 +15,6 @@ import FundingLoader from './components/FundingLoader';
 import { ApprovalDetail } from './views/admin/tabs/ApprovalDetail';
 import AdminProjectEdit from './views/admin/tabs/AdminProjectEdit';
 import NotificationsPage from './components/NotificationsPage';
-import CreateProject from './views/creator/pages/EditProject';
 import CreatorProjects from './views/creator/pages/CreatorProjects';
 import CreatorLayout from './views/creator/CreatorLayout';
 import AdminLayout from './views/admin/AdminLayout';
@@ -53,6 +52,7 @@ import { NoticeAdminTab } from './views/admin/tabs/NoticeAdminTab';
 import { NoticeAddTab } from './views/admin/tabs/NoticeAddTab';
 import { NoticeUpdtTab } from './views/admin/tabs/NoticeUpdtTab';
 import SettlementTab from './views/admin/tabs/SettlementTab';
+import EditProject from './views/creator/pages/EditProject';
 
 const OverviewTab = lazy(() => import('./views/admin/tabs/OverviewTab').then(module => ({ default: module.OverviewTab })));
 const CreatorDashboard = lazy(() => import('./views/creator/pages/CreatorDashboard').then(module => ({ default: module.default })));
@@ -123,8 +123,8 @@ export default function App() {
             <Route path="/creator" element={<CreatorLayout />}>
               <Route index element={<CreatorDashboard />} />
               <Route path="dashboard" element={<CreatorDashboard />} />
-              <Route path="project/new" element={<CreateProject />} />
-              <Route path="project/:projectId" element={<CreateProject />} />
+              <Route path="project/new" element={<EditProject />} />
+              <Route path="project/:projectId" element={<EditProject />} />
               <Route path="projects">
                 <Route index element={<CreatorProjects />} />
                 <Route path=":projectId" element={<CreatorProjectDetail />} />

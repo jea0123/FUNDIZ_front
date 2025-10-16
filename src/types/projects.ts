@@ -13,7 +13,9 @@ export interface Project {
     startDate: Date;
     endDate: Date;
     content: string;
+    contentBlocks: string;
     thumbnail: string;
+    businessDoc: string;
     createdAt: Date;
     updatedAt: Date;
     projectStatus: string;
@@ -21,6 +23,7 @@ export interface Project {
     likeCnt: number;
     viewCnt: number;
     isReqReview: string;
+    requestedAt: Date;
     rejectedReason: string;
 };
 
