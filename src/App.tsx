@@ -15,8 +15,7 @@ import FundingLoader from './components/FundingLoader';
 import { ApprovalDetail } from './views/admin/tabs/ApprovalDetail';
 import AdminProjectEdit from './views/admin/tabs/AdminProjectEdit';
 import NotificationsPage from './components/NotificationsPage';
-import CreateProject from './views/creator/pages/CreateProject';
-import CreatorDashboard from './views/creator/pages/CreatorDashboard';
+import CreateProject from './views/creator/pages/EditProject';
 import CreatorProjects from './views/creator/pages/CreatorProjects';
 import CreatorLayout from './views/creator/CreatorLayout';
 import AdminLayout from './views/admin/AdminLayout';
@@ -44,7 +43,6 @@ import LikedProjectTab from './views/user/tabs/LikedProjectTab';
 import { BackingPage } from './views/backing/backingPage';
 import { AdminRegisterPage } from './views/auth/admin/AdminRegisterPage';
 import { AdminLoginPage } from './views/auth/admin/AdminLoginPage';
-import { OverviewTab } from './views/admin/tabs/OverviewTab';
 import { ApprovalsTab } from './views/admin/tabs/ApprovalsTab';
 import { ProjectsTab } from './views/admin/tabs/ProjectsTab';
 import { ReportsAdminTab } from './views/admin/tabs/ReportsAdminTab';
@@ -56,7 +54,8 @@ import { NoticeAddTab } from './views/admin/tabs/NoticeAddTab';
 import { NoticeUpdtTab } from './views/admin/tabs/NoticeUpdtTab';
 import SettlementTab from './views/admin/tabs/SettlementTab';
 
-const AdminTabs = lazy(() => import('./views/admin/AdminTabs').then((module) => ({ default: module.AdminTabs })));
+const OverviewTab = lazy(() => import('./views/admin/tabs/OverviewTab').then((module) => ({ default: module.OverviewTab })));
+const CreatorDashboard = lazy(() => import('./views/creator/pages/CreatorDashboard').then((module) => ({ default: module.default })));
 
 export default function App() {
   const { setLoginUser, resetLoginUser } = useLoginUserStore();
@@ -111,7 +110,7 @@ export default function App() {
 
             <Route path="/user" element={<MyPageLayout />}>
               <Route index element={<BackingTab />} />
-              {/* <Route path="support" element={<BackingTab />} /> */}
+              <Route path="support" element={<BackingTab />} />
               <Route path="wishlist" element={<LikedProjectTab />} />
               <Route path="settings" element={<AccountSettingTab />} />
               <Route path="notifications" element={<NotificationTab />} />
@@ -140,7 +139,7 @@ export default function App() {
             </Route>
 
             <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<OverviewTab/>} />
+              <Route index element={<OverviewTab />} />
               <Route path="overview" element={<OverviewTab />} />
               <Route path="approvals" element={<ApprovalsTab />} />
               <Route path="verify/:projectId" element={<ApprovalDetail />} />
@@ -157,8 +156,8 @@ export default function App() {
             </Route>
 
             <Route path="/admin">
-              <Route path='register' element={<AdminRegisterPage />} />
-              <Route path='login' element={<AdminLoginPage />} />
+              <Route path="register" element={<AdminRegisterPage />} />
+              <Route path="login" element={<AdminLoginPage />} />
             </Route>
 
             <Route path="/cs" element={<CSLayout />}>

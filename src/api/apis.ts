@@ -27,7 +27,7 @@ export const kyInstance = ky.create({
         }
 
         if (pathname.includes('/api/v1/creator/')) {
-          const devId = localStorage.getItem('DEV_CREATOR_ID') || '4';
+          const devId = localStorage.getItem('DEV_CREATOR_ID') || '1';
           req.headers.set('X-Dev-Creator-Id', devId);
         }
       },
@@ -117,11 +117,18 @@ export const endpoints = {
   getMypage: (userId: number) => `user/userPage/${userId}`,
   getLikedList: (userId: number) => `user/likedList/${userId}`,
   getQnAListOfUser: (userId: number, p: SearchQnaParams) => `user/qna/${userId}?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup })}`,
+  addRecentView: (projectId: number) => `user/recentView/${projectId}`,
   getRecentView: `user/recentViewProjects`,
   getQnAListDetail: (userId: number, projectId: number) => `user/QnAListDetail/${userId}/project/${projectId}`,
   updateNickname: 'user/nickname',
   updateProfileImg: 'user/profileImg',
   changePassword: 'user/password',
+  likeProject: (projectId: number) => `user/like/${projectId}`,
+  dislikeProject: (projectId: number) => `user/dislike/${projectId}`,
+  checkLiked: (projectId: number) => `user/checkLike/${projectId}`,
+  followCreator: (creatorId: number) => `user/follow/${creatorId}`,
+  unfollowCreator: (creatorId: number) => `user/unfollow/${creatorId}`,
+  checkFollowed: (creatorId: number) => `user/checkFollow/${creatorId}`,
 
   // ==================== Creator API ====================
   getCreatorProjectList: (p: SearchCreatorProjectDto) => `creator/projects?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
@@ -142,6 +149,7 @@ export const endpoints = {
   creatorShippingList: 'creator/shippingList',
   creatorShippingBackerList: (projectId: number) => `creator/shippingBackerList/${projectId}`,
   postCreatorNews: (projectId: number) => `creator/projects/${projectId}/news`,
+  getFollowerCnt: (creatorId: number) => `creator/followerCnt/${creatorId}`,
 
   // ==================== Project API ====================
   getFeatured: 'project/featured',
@@ -155,6 +163,7 @@ export const endpoints = {
   postReply: (cmId: number) => `project/community/${cmId}/reply`,
   getQnaListOfProject: (projectId: number) => `project/${projectId}/qna`,
   addQuestion: (projectId: number, userId: number) => `project/${projectId}/qna/${userId}/add`,
+  getLikeCnt: (projectId: number) => `project/${projectId}/likeCnt`,
 
   // ==================== QnaReply API ====================
   getQnaReplyList: (qnaId: number) => `qna/reply/${qnaId}`,
@@ -169,7 +178,7 @@ export const endpoints = {
 
   // ==================== Backing API ====================
   getBackingList: (userId: number) => `backing/page/${userId}`,
-  getBackingDetail: (userId: number, projectId: number, rewardId: number) => `backing/page/${userId}/project/${projectId}/reward/${rewardId}`,
+  getBackingDetail: (userId: number, projectId: number, rewardId: number, backingId: number) => `backing/page/${userId}/project/${projectId}/reward/${rewardId}/backing/${backingId}`,
   backingPrepare: (userId: number, projectId: number) => `backing/${userId}/create/${projectId}`,
   addBacking: (userId: number) => `backing/create/${userId}`,
 
