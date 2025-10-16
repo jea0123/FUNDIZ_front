@@ -111,6 +111,8 @@ export default function App() {
             <Route path="/user" element={<MyPageLayout />}>
               <Route index element={<BackingTab />} />
               <Route path="support" element={<BackingTab />} />
+              {/*<Route index element={<BackingTab />} />
+              <Route path="support" element={<BackingTab />} />*/}
               <Route path="wishlist" element={<LikedProjectTab />} />
               <Route path="settings" element={<AccountSettingTab />} />
               <Route path="notifications" element={<NotificationTab />} />
