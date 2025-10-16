@@ -12,20 +12,32 @@ import type { Subcategory } from "@/types/projects";
 import type { RewardDraft, RewardForm } from "@/types/reward";
 import type { FieldErrors } from "@/types/reward-validator";
 import { formatDate } from "@/utils/utils";
-import { Plus, Trash, Truck, Upload, X } from "lucide-react";
-import { useRef, useState } from "react";
-import { ThumbnailUploader } from "./ThumbnailUploader";
-import clsx from "clsx";
+import { Plus, Truck, X } from "lucide-react";
+import { useState } from "react";
+import { BusinessDocUploader, ThumbnailUploader } from "./FileUploader";
 import ProjectDetailEditor from "./ProjectDetailEditor";
 
 const numberKR = (n?: number | null) => new Intl.NumberFormat("ko-KR").format(n || 0);
 
 const normalizeName = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
 
+const parseLocalDate = (s: string) => {
+    const [y, m, d] = s.split("-").map(Number);
+    return new Date(y, (m ?? 1) - 1, d ?? 1);
+};
+
+export type CreateProjectViewModel = ProjectCreateRequestDto & {
+    files?: File[];
+    businessDoc: File | null;
+    contentBlocks: any;
+    thumbnailPreviewUrl?: string;
+    businessDocPreviewUrl?: string;
+};
+
 export function CreateProjectSteps(props: {
     step: number;
-    project: ProjectCreateRequestDto & { files?: File[]; contentBlocks?: any };
-    setProject: React.Dispatch<React.SetStateAction<ProjectCreateRequestDto & { files?: File[]; contentBlocks?: any }>>;
+    project: CreateProjectViewModel;
+    setProject: React.Dispatch<React.SetStateAction<CreateProjectViewModel>>;
     categories: Category[];
     subcategories: Subcategory[];
     rewardList: RewardForm[];
@@ -78,7 +90,9 @@ export function CreateProjectSteps(props: {
                             </SelectTrigger>
                             <SelectContent>
                                 {subcategories.map(sc => (
-                                    <SelectItem key={sc.subctgrId} value={String(sc.subctgrId)}>{sc.subctgrName}</SelectItem>
+                                    <SelectItem key={sc.subctgrId} value={String(sc.subctgrId)}>
+                                        {sc.subctgrName}
+                                    </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
@@ -98,10 +112,12 @@ export function CreateProjectSteps(props: {
                 </div>
 
                 <ThumbnailUploader
-                    file={project.thumbnail instanceof File ? project.thumbnail : null}
-                    // previewUrl={typeof project.thumbnail === "string" ? project.thumbnail : project.thumbnailUrl}
-                    onSelect={(f) => setProject((p) => ({ ...p, thumbnail: f }))}
-                    onCleared={() => setProject((p) => ({ ...p, thumbnail: null, thumbnailUrl: "" }))}
+                    file={project.thumbnail}
+                    previewUrl={project.thumbnailPreviewUrl}
+                    onSelect={(f) =>
+                        setProject((p) => ({ ...p, thumbnail: f, thumbnailPreviewUrl: f ? undefined : p.thumbnailPreviewUrl }))}
+                    onCleared={() =>
+                        setProject((p) => ({ ...p, thumbnail: null, thumbnailPreviewUrl: undefined }))}
                 />
 
                 <TagEditor
@@ -131,44 +147,9 @@ export function CreateProjectSteps(props: {
     }
 
     if (step === 2) {
-        const MAX_MB = 4 * 1024 * 1024 * 1024;;
-        const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-
         const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
             const next = e.target.value;
             setProject(prev => ({ ...prev, content: next }));
-        };
-
-        const handleAddFiles = (incoming: FileList | File[]) => {
-            const arr = Array.from(incoming);
-
-            const filtered = arr.filter(f =>
-                ACCEPTED_TYPES.includes(f.type) && f.size <= MAX_MB
-            );
-
-            setProject(prev => {
-                const before = prev.files ?? [];
-                const deduped = [...before];
-
-                filtered.forEach(f => {
-                    if (!deduped.some(df =>
-                        df.name === f.name &&
-                        df.size === f.size &&
-                        df.lastModified === f.lastModified
-                    )) {
-                        deduped.push(f);
-                    }
-                });
-
-                return { ...prev, files: deduped };
-            });
-        };
-
-        const handleRemoveFile = (idx: number) => {
-            setProject(prev => {
-                const next = (prev.files ?? []).filter((_, i) => i !== idx);
-                return { ...prev, files: next };
-            });
         };
 
         return (
@@ -183,20 +164,18 @@ export function CreateProjectSteps(props: {
                         onChange={handleContentChange}
                         className="mt-1 min-h-[100px]"
                     />
-                    <p className="mt-1 text-xs text-muted-foreground">
-                        • 가독성을 위해 단락을 나누고, 핵심 정보를 굵게 처리하거나 리스트로 정리해 주세요.
-                    </p>
                 </div>
 
-                <div>
-                    <FileAttach
-                        files={project.files ?? []}
-                        onAddFiles={handleAddFiles}
-                        onRemoveFile={handleRemoveFile}
-                    />
-                    <p className="mt-1 text-xs text-muted-foreground">
-                        • 본문 이미지는 여기 첨부해 주세요.
+                <div className="space-y-4">
+                    <Label>상세 설명 (이미지 + 텍스트) *</Label>
+                    <p className="text-xs text-muted-foreground">
+                        쇼핑몰 상세 페이지처럼 이미지를 추가하고 위/아래에 설명을 작성하세요.
                     </p>
+                    <ProjectDetailEditor
+                        initialData={project.contentBlocks}
+                        uploadUrl={"http://localhost:9099/api/v1/attach/image"}
+                        onChange={(data) => setProject((prev: any) => ({ ...prev, contentBlocks: data }))}
+                    />
                 </div>
             </div>
         );
@@ -208,11 +187,6 @@ export function CreateProjectSteps(props: {
         const MAX_DAYS = 60;
         const END_MIN_OFFSET = MIN_DAYS - 1;
         const END_MAX_OFFSET = MAX_DAYS - 1;
-
-        const parseLocalDate = (s: string) => {
-            const [y, m, d] = s.split("-").map(Number);
-            return new Date(y, (m ?? 1) - 1, d ?? 1);
-        };
 
         const clampDate = (d: Date, min: Date, max: Date) => d < min ? min : d > max ? max : d;
 
@@ -256,7 +230,7 @@ export function CreateProjectSteps(props: {
                         <Input
                             id="startDate"
                             type="date"
-                            value={formatDate(project.startDate)}
+                            value={project.startDate ? formatDate(project.startDate) : ""}
                             onChange={handleStartDateChange}
                         />
                     </div>
@@ -304,7 +278,10 @@ export function CreateProjectSteps(props: {
                                         id="rewardQuantity"
                                         placeholder="비워두면 무제한"
                                         value={newReward.rewardCnt ?? ""}
-                                        onChange={(e) => setNewReward({ ...newReward, rewardCnt: Number(e.target.value.replace(/[^0-9]/g, "")) })}
+                                        onChange={(e) => {
+                                            const raw = e.target.value.replace(/[^0-9]/g, "");
+                                            setNewReward({ ...newReward, rewardCnt: raw === "" ? null : Number(raw) });
+                                        }}
                                     />
                                     {rewardErrors.rewardCnt && <p className="mt-1 text-xs text-red-500">{rewardErrors.rewardCnt}</p>}
                                 </div>
@@ -339,7 +316,7 @@ export function CreateProjectSteps(props: {
                                     id="deliveryDate"
                                     type="date"
                                     value={formatDate(newReward.deliveryDate)}
-                                    onChange={(e) => setNewReward({ ...newReward, deliveryDate: new Date(e.target.value) })}
+                                    onChange={(e) => setNewReward({ ...newReward, deliveryDate: parseLocalDate(e.target.value) })}
                                 />
                                 {rewardErrors.deliveryDate && <p className="mt-1 text-xs text-red-500">{rewardErrors.deliveryDate}</p>}
                             </div>
@@ -439,11 +416,14 @@ export function CreateProjectSteps(props: {
                             />
                         </div>
                         <div>
-                            <BusinessDocAttach
+                            <BusinessDocUploader
                                 label="사업자등록증 첨부파일 *"
                                 file={project.businessDoc ?? null}
-                                onSelect={(file) => setProject(prev => ({ ...prev, businessDoc: file }))}
-                                onClear={() => setProject(prev => ({ ...prev, businessDoc: null }))}
+                                previewUrl={project.businessDocPreviewUrl}
+                                onSelect={(f) =>
+                                    setProject(prev => ({ ...prev, businessDoc: f, businessDocPreviewUrl: f ? undefined : prev.businessDocPreviewUrl, }))}
+                                onCleared={() =>
+                                    setProject(prev => ({ ...prev, businessDoc: null, businessDocPreviewUrl: undefined, }))}
                             />
                         </div>
                         <div>
@@ -542,22 +522,6 @@ export function CreateProjectSteps(props: {
             </div>
         );
     }
-
-    if (step === 7) {
-        return (
-            <div className="space-y-4">
-                <Label>상세 설명 (이미지 + 텍스트)</Label>
-                <p className="text-xs text-muted-foreground">
-                    쇼핑몰 상세 페이지처럼 이미지를 추가하고 위/아래에 설명을 작성하세요.
-                </p>
-                <ProjectDetailEditor
-                    initialData={project.contentBlocks}
-                    uploadUrl={"http://localhost:9099/api/v1/attach/image"}
-                    onChange={(data) => setProject((prev: any) => ({ ...prev, contentBlocks: data }))}
-                />
-            </div>
-        );
-    }
 }
 
 function TagEditor({
@@ -591,7 +555,7 @@ function TagEditor({
 }
 
 function FeesCard({ goalAmount }: { goalAmount: number }) {
-    const earned = goalAmount ? Math.round(goalAmount * 0.92) : 0;
+    const collectedAmount = goalAmount ? Math.round(goalAmount * 0.92) : 0;
 
     return (
         <Card>
@@ -605,316 +569,11 @@ function FeesCard({ goalAmount }: { goalAmount: number }) {
                     </div>
                     {goalAmount > 0 && (
                         <div className="mt-2 p-2 bg-blue-50 rounded">
-                            <p>목표 달성 시 예상 수익: {new Intl.NumberFormat("ko-KR").format(earned)}원</p>
+                            <p>목표금액 기준 예상 수령액: {new Intl.NumberFormat("ko-KR").format(collectedAmount)}원</p>
                         </div>
                     )}
                 </div>
             </CardContent>
         </Card>
-    );
-}
-
-function FileAttach({
-    label = "파일 첨부",
-    files,
-    onAddFiles,
-    onRemoveFile,
-    disabled = false,
-}: {
-    label?: string;
-    files: File[];
-    onAddFiles: (files: FileList | File[]) => void;
-    onRemoveFile: (index: number) => void;
-    disabled?: boolean;
-}) {
-    const inputRef = useRef<HTMLInputElement>(null);
-    const [dragOver, setDragOver] = useState(false);
-
-    const openPicker = () => !disabled && inputRef.current?.click();
-
-    const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files) onAddFiles(e.target.files);
-        if (inputRef.current) inputRef.current.value = "";
-    };
-
-    const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-        if (disabled) return;
-        e.preventDefault();
-        e.stopPropagation();
-        setDragOver(true);
-    };
-
-    const onDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-        if (disabled) return;
-        e.preventDefault();
-        e.stopPropagation();
-        setDragOver(false);
-    };
-
-    const onDrop = (e: React.DragEvent<HTMLDivElement>) => {
-        if (disabled) return;
-        e.preventDefault();
-        e.stopPropagation();
-        setDragOver(false);
-        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            onAddFiles(e.dataTransfer.files);
-            e.dataTransfer.clearData();
-        }
-    };
-
-    return (
-        <div>
-            <Label className="mb-2 block">{label}</Label>
-
-            <div
-                className={clsx(
-                    "relative rounded-lg border-2 border-dashed p-6 text-center transition-colors cursor-pointer",
-                    dragOver ? "border-blue-400 bg-blue-50/40" : "border-gray-300",
-                    disabled && "opacity-60 cursor-not-allowed"
-                )}
-                role="button"
-                onClick={openPicker}
-                onDrop={onDrop}
-                onDragOver={onDragOver}
-                onDragLeave={onDragLeave}
-            >
-                <div className="py-6">
-                    <Upload className="mx-auto mb-3 h-10 w-10 text-gray-400" />
-                    <p className="mb-2 text-sm text-gray-600">
-                        클릭하거나 드래그하여 파일을 업로드
-                    </p>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            openPicker();
-                        }}
-                        disabled={disabled}
-                    >
-                        파일 선택
-                    </Button>
-                    <p className="mt-2 text-xs text-gray-400">
-                        이미지(JPG/PNG/WEBP/GIF)
-                    </p>
-                </div>
-
-                <input
-                    ref={inputRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif"
-                    multiple
-                    className="hidden"
-                    onChange={handleInput}
-                />
-            </div>
-
-            {files.length > 0 && (
-                <div className="mt-4 space-y-3">
-                    <div className="text-sm font-medium">
-                        첨부된 파일 ({files.length})
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                        {files.map((f, idx) => {
-                            const isImage = f.type.startsWith("image/");
-                            return (
-                                <Card key={`${f.name}-${f.lastModified}`} className="overflow-hidden">
-                                    <CardContent className="p-0">
-                                        <div className="relative">
-                                            {isImage ? (
-                                                <img
-                                                    src={URL.createObjectURL(f)}
-                                                    alt={f.name}
-                                                    className="w-full h-32 object-cover"
-                                                    onLoad={(e) =>
-                                                        URL.revokeObjectURL(
-                                                            (e.target as HTMLImageElement).src
-                                                        )
-                                                    }
-                                                />
-                                            ) : (
-                                                <div className="w-full h-32 flex items-center justify-center text-xs text-muted-foreground">
-                                                    PDF 문서
-                                                </div>
-                                            )}
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="icon"
-                                                className="absolute top-1 right-1 h-7 w-7 rounded-full bg-white/80 hover:bg-white"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onRemoveFile(idx);
-                                                }}
-                                                aria-label={`${f.name} 제거`}
-                                            >
-                                                <X className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                        <div className="p-2 text-xs truncate">{f.name}</div>
-                                    </CardContent>
-                                </Card>
-                            );
-                        })}
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-}
-
-function BusinessDocAttach({
-    label = "사업자등록증 첨부파일",
-    file,
-    onSelect,
-    onClear,
-    disabled = false,
-}: {
-    label?: string;
-    file: File | null;
-    onSelect: (file: File | null) => void;
-    onClear: () => void;
-    disabled?: boolean;
-}) {
-    const inputRef = useRef<HTMLInputElement>(null);
-    const [dragOver, setDragOver] = useState(false);
-
-    const openPicker = () => !disabled && inputRef.current?.click();
-
-    const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const f = e.target.files?.[0] ?? null;
-        onSelect(f);
-        if (inputRef.current) inputRef.current.value = "";
-    };
-
-    const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-        if (disabled) return;
-        e.preventDefault();
-        e.stopPropagation();
-        setDragOver(true);
-    };
-
-    const onDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-        if (disabled) return;
-        e.preventDefault();
-        e.stopPropagation();
-        setDragOver(false);
-    };
-
-    const onDrop = (e: React.DragEvent<HTMLDivElement>) => {
-        if (disabled) return;
-        e.preventDefault();
-        e.stopPropagation();
-        setDragOver(false);
-        const f = e.dataTransfer.files?.[0] ?? null;
-        if (f) onSelect(f);
-        e.dataTransfer.clearData();
-    };
-
-    const isImage = file ? file.type.startsWith("image/") : false;
-
-    return (
-        <div>
-            <Label className="mb-2 block">{label}</Label>
-
-            <div
-                className={clsx(
-                    "relative rounded-lg border-2 border-dashed p-6 text-center transition-colors cursor-pointer",
-                    dragOver ? "border-blue-400 bg-blue-50/40" : "border-gray-300",
-                    disabled && "opacity-60 cursor-not-allowed"
-                )}
-                role="button"
-                onClick={openPicker}
-                onDrop={onDrop}
-                onDragOver={onDragOver}
-                onDragLeave={onDragLeave}
-            >
-                {file ? (
-                    <div className="relative">
-                        <div className="mx-auto max-w-md">
-                            {isImage ? (
-                                <img
-                                    src={URL.createObjectURL(file)}
-                                    alt={file.name}
-                                    className="mx-auto max-h-80 w-auto rounded-md object-contain"
-                                    onLoad={(e) =>
-                                        URL.revokeObjectURL((e.target as HTMLImageElement).src)
-                                    }
-                                />
-                            ) : (
-                                <div className="h-40 flex flex-col items-center justify-center rounded-md bg-muted/40">
-                                    <div className="text-sm text-muted-foreground">PDF 문서</div>
-                                    <div className="mt-1 text-xs text-muted-foreground truncate max-w-[80%]">
-                                        {file.name}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="mt-3 flex items-center justify-center gap-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    openPicker();
-                                }}
-                                disabled={disabled}
-                            >
-                                파일 교체
-                            </Button>
-                            <Button
-                                type="button"
-                                variant="destructive"
-                                size="sm"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onClear();
-                                }}
-                                disabled={disabled}
-                            >
-                                삭제
-                            </Button>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="py-6">
-                        <Upload className="mx-auto mb-3 h-10 w-10 text-gray-400" />
-                        <p className="mb-2 text-sm text-gray-600">
-                            클릭하거나 드래그하여 파일을 업로드
-                        </p>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                openPicker();
-                            }}
-                            disabled={disabled}
-                        >
-                            파일 선택
-                        </Button>
-                        <p className="mt-2 text-xs text-gray-400">
-                            PDF 또는 이미지(JPG/PNG) 지원
-                        </p>
-                    </div>
-                )}
-
-                <input
-                    ref={inputRef}
-                    type="file"
-                    accept="application/pdf,image/*"
-                    className="hidden"
-                    onChange={handleInput}
-                />
-            </div>
-
-            {file && isImage && (
-                <div className="mt-2 text-xs text-gray-500 truncate">{file.name}</div>
-            )}
-        </div>
     );
 }

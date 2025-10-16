@@ -15,7 +15,7 @@ import FundingLoader from './components/FundingLoader';
 import { ApprovalDetail } from './views/admin/tabs/ApprovalDetail';
 import AdminProjectEdit from './views/admin/tabs/AdminProjectEdit';
 import NotificationsPage from './components/NotificationsPage';
-import CreateProject from './views/creator/pages/CreateProject';
+import CreateProject from './views/creator/pages/EditProject';
 import CreatorDashboard from './views/creator/pages/CreatorDashboard';
 import CreatorProjects from './views/creator/pages/CreatorProjects';
 import CreatorLayout from './views/creator/CreatorLayout';
@@ -111,7 +111,7 @@ export default function App() {
 
             <Route path="/user" element={<MyPageLayout />}>
               <Route index element={<BackingTab />} />
-              {/* <Route path="support" element={<BackingTab />} /> */}
+              <Route path="support" element={<BackingTab />} />
               <Route path="wishlist" element={<LikedProjectTab />} />
               <Route path="settings" element={<AccountSettingTab />} />
               <Route path="notifications" element={<NotificationTab />} />

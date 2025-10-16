@@ -125,6 +125,9 @@ export const endpoints = {
   likeProject: (projectId: number) => `user/like/${projectId}`,
   dislikeProject: (projectId: number) => `user/dislike/${projectId}`,
   checkLiked: (projectId: number) => `user/checkLike/${projectId}`,
+  followCreator: (creatorId: number) => `user/follow/${creatorId}`,
+  unfollowCreator: (creatorId: number) => `user/unfollow/${creatorId}`,
+  checkFollowed: (creatorId: number) => `user/checkFollow/${creatorId}`,
 
   // ==================== Creator API ====================
   getCreatorProjectList: (p: SearchCreatorProjectDto) => `creator/projects?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
@@ -145,6 +148,7 @@ export const endpoints = {
   creatorShippingList: 'creator/shippingList',
   creatorShippingBackerList: (projectId: number) => `creator/shippingBackerList/${projectId}`,
   postCreatorNews: (projectId: number) => `creator/projects/${projectId}/news`,
+  getFollowerCnt: (creatorId: number) => `creator/followerCnt/${creatorId}`,
 
   // ==================== Project API ====================
   getFeatured: 'project/featured',

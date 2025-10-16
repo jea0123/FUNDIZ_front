@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Heart, Share2, Calendar, Users, MessageCircle, Star, MessageSquarePlus, X } from 'lucide-react';
+import { Heart, Share2, Calendar, Users, MessageCircle, Star, MessageSquarePlus, X, UserMinus, Loader2 } from 'lucide-react';
 import type { ProjectDetail } from '@/types/projects';
 import { deleteData, endpoints, getData, postData } from '@/api/apis';
 import { useParams } from 'react-router-dom';
@@ -18,8 +18,7 @@ import type { CommunityDto, Cursor, CursorPage, ReviewDto } from '@/types/commun
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogClose } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import type { ReplyDto } from '@/types/reply';
-import type { Qna, QnaDto, QnaAddRequest } from "@/types/qna";
-import { is } from 'date-fns/locale';
+import type { Qna, QnaAddRequest } from "@/types/qna";
 
 const CM_MAX = 1000;
 const getByteLen = (s: string) => new TextEncoder().encode(s).length;
@@ -63,6 +62,7 @@ export function ProjectDetailPage() {
 
     const [project, setProject] = useState<ProjectDetail>();
     const [likeCnt, setLikeCnt] = useState(0);
+    const [followerCnt, setFollowerCnt] = useState(0);
     const [loadingProject, setLoadingProject] = useState(false);
 
     const [community, setCommunity] = useState<CommunityDto[]>([]);
@@ -76,6 +76,7 @@ export function ProjectDetailPage() {
 
     const [tab, setTab] = useState<"description" | "news" | "community" | "review">("description");
     const [isLiked, setIsLiked] = useState(false);
+    const [isFollowed, setIsFollowed] = useState(false);
 
     const [cart, setCart] = useState<Record<number, number>>({});
     const [cartPing, setCartPing] = useState(false);
@@ -95,7 +96,11 @@ export function ProjectDetailPage() {
     const [replyInput, setReplyInput] = useState<Record<number, string>>({});
     const [replySecret, setReplySecret] = useState<Record<number, boolean>>({});
 
-    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+    const [loadingLike, setLoadingLike] = useState(false);      // 좋아요 상태/카운트 조회중
+    const [mutatingLike, setMutatingLike] = useState(false);    // 좋아요/취소 토글중
+
+    const [loadingFollow, setLoadingFollow] = useState(false);  // 팔로우 상태/카운트 조회중
+    const [mutatingFollow, setMutatingFollow] = useState(false);// 팔로우/언팔 토글중
 
     /* ------------------------------- Derived ---------------------------------- */
 
@@ -212,40 +217,97 @@ export function ProjectDetailPage() {
         }
     }, []);
 
-    const likeProject = useCallback(async () => {
-        if (!projectId) return;
-        if (!ensureLogin()) return;
-        const response = await postData(endpoints.likeProject(Number(projectId)));
-        if (response.status === 200) {
-            setIsLiked(true);
-            toastSuccess('프로젝트를 좋아합니다.');
+    const likeProject = useCallback(async (projectId: number) => {
+        if (!projectId || !ensureLogin()) return;
+        setMutatingLike(true);
+        try {
+            const res = await postData(endpoints.likeProject(projectId));
+            if (res.status === 200) {
+                setIsLiked(true);
+                await getLikeCnt(projectId);
+                toastSuccess('프로젝트를 좋아합니다.');
+            }
+        } finally {
+            setMutatingLike(false);
         }
-    }, [projectId, ensureLogin]);
+    }, [ensureLogin]);
 
-    const dislikeProject = useCallback(async () => {
-        if (!projectId) return;
-        if (!ensureLogin()) return;
-        const response = await deleteData(endpoints.dislikeProject(Number(projectId)));
-        if (response.status === 200) {
-            setIsLiked(false);
-            toastError('프로젝트 좋아요를 취소합니다.');
+    const dislikeProject = useCallback(async (projectId: number) => {
+        if (!projectId || !ensureLogin()) return;
+        setMutatingLike(true);
+        try {
+            const res = await deleteData(endpoints.dislikeProject(projectId));
+            if (res.status === 200) {
+                setIsLiked(false);
+                await getLikeCnt(projectId);
+                toastSuccess('프로젝트 좋아요를 취소합니다.');
+            }
+        } finally {
+            setMutatingLike(false);
         }
-    }, [projectId, ensureLogin]);
+    }, [ensureLogin]);
 
-    const checkLiked = async () => {
+    const checkLiked = async (projectId: number) => {
         if (!projectId) return;
         if (!ensureLogin()) return;
-        const response = await getData(endpoints.checkLiked(Number(projectId)));
+        const response = await getData(endpoints.checkLiked(projectId));
         if (response.status === 200) {
             setIsLiked(response.data);
         }
     }
 
-    const getLikeCnt = async () => {
+    const getLikeCnt = async (projectId: number) => {
         if (!projectId) return;
-        const response = await getData(endpoints.getLikeCnt(Number(projectId)));
+        const response = await getData(endpoints.getLikeCnt(projectId));
         if (response.status === 200) {
             setLikeCnt(response.data);
+        }
+    };
+
+    const followCreator = useCallback(async (creatorId: number) => {
+        if (!creatorId || !ensureLogin()) return;
+        setMutatingFollow(true);
+        try {
+            const res = await postData(endpoints.followCreator(creatorId));
+            if (res.status === 200) {
+                setIsFollowed(true);
+                await getFollowerCnt(creatorId);
+                toastSuccess('크리에이터를 팔로우합니다.');
+            }
+        } finally {
+            setMutatingFollow(false);
+        }
+    }, [ensureLogin]);
+
+    const unfollowCreator = useCallback(async (creatorId: number) => {
+        if (!creatorId || !ensureLogin()) return;
+        setMutatingFollow(true);
+        try {
+            const res = await deleteData(endpoints.unfollowCreator(creatorId));
+            if (res.status === 200) {
+                setIsFollowed(false);
+                await getFollowerCnt(creatorId);
+                toastSuccess('크리에이터 팔로우를 취소합니다.');
+            }
+        } finally {
+            setMutatingFollow(false);
+        }
+    }, [ensureLogin]);
+
+    const checkFollowed = async (creatorId: number) => {
+        if (!creatorId) return;
+        if (!ensureLogin()) return;
+        const response = await getData(endpoints.checkFollowed(creatorId));
+        if (response.status === 200) {
+            setIsFollowed(response.data);
+        }
+    }
+
+    const getFollowerCnt = async (creatorId: number) => {
+        if (!creatorId) return;
+        const response = await getData(endpoints.getFollowerCnt(creatorId));
+        if (response.status === 200) {
+            setFollowerCnt(response.data);
         }
     };
 
@@ -526,11 +588,34 @@ export function ProjectDetailPage() {
         return () => observers.forEach(o => o.disconnect());
     }, [tab, replyCursor, loadingReply, replyData]);
 
-    // 좋아요 여부
     useEffect(() => {
-        checkLiked();
-        getLikeCnt();
-    }, [projectId, isLiked, likeProject, dislikeProject]);
+        if (!projectId) return;
+        let canceled = false;
+        (async () => {
+            setLoadingLike(true);
+            try {
+                await Promise.all([checkLiked(Number(projectId)), getLikeCnt(Number(projectId)),]);
+            } finally {
+                if (!canceled) setLoadingLike(false);
+            }
+        })();
+        return () => { canceled = true };
+    }, [projectId]);
+
+    useEffect(() => {
+        const cid = project?.creatorId;
+        if (!cid) return;
+        let canceled = false;
+        (async () => {
+            setLoadingFollow(true);
+            try {
+                await Promise.all([checkFollowed(cid), getFollowerCnt(cid),]);
+            } finally {
+                if (!canceled) setLoadingFollow(false);
+            }
+        })();
+        return () => { canceled = true };
+    }, [project?.creatorId]);
 
     /* --------------------------------- Render --------------------------------- */
 
@@ -552,10 +637,13 @@ export function ProjectDetailPage() {
                             <Button
                                 variant="secondary"
                                 size="sm"
-                                onClick={isLiked ? dislikeProject : likeProject}
+                                disabled={loadingLike || mutatingLike}
+                                onClick={() => (isLiked ? dislikeProject(Number(projectId)) : likeProject(Number(projectId)))}
                                 className={isLiked ? 'text-red-500' : ''}
                             >
-                                <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
+                                {(loadingLike || mutatingLike)
+                                    ? <Loader2 className="h-4 w-4 animate-spin" />
+                                    : <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />}
                                 <span className="ml-1">{likeCnt}</span>
                             </Button>
                             <Button variant="secondary" size="sm" onClick={handleShare}>
@@ -584,11 +672,27 @@ export function ProjectDetailPage() {
                             <div className="flex-1">
                                 <h4 className="font-semibold">{project.creatorName}</h4>
                                 <p className="text-sm text-gray-600">
-                                    팔로워 {formatCurrency(project.followerCnt)}명 · 프로젝트 {project.projectCnt}개
+                                    팔로워 {formatCurrency(followerCnt)}명 · 프로젝트 {project.projectCnt}개
                                 </p>
                             </div>
-                            <Button variant="outline" size="sm">팔로우</Button>
-                            < QnaAddModal />
+                            {isFollowed ? (
+                                <Button variant="outline" size="sm" disabled={loadingFollow || mutatingFollow}
+                                    onClick={() => unfollowCreator(project.creatorId)}
+                                    className="border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
+                                >
+                                    {(loadingFollow || mutatingFollow) ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserMinus className="h-4 w-4" />}
+                                    <span className="ml-1">언팔로우</span>
+                                </Button>
+                            ) : (
+                                <Button variant="outline" size="sm" disabled={loadingFollow || mutatingFollow}
+                                    onClick={() => followCreator(project.creatorId)}
+                                    className="border-blue-500 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950"
+                                >
+                                    {(loadingFollow || mutatingFollow) ? <Loader2 className="h-4 w-4 animate-spin" /> : <Users className="h-4 w-4" />}
+                                    <span className="ml-1">팔로우</span>
+                                </Button>
+                            )}
+                            <QnaAddModal />
                         </div>
                     </div>
 

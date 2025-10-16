@@ -1,4 +1,4 @@
-import { ChartColumnBig, Gauge, LayoutList, Megaphone, MessagesSquare, SearchCheck, Siren, Users } from "lucide-react";
+import { ChartColumnBig, Gauge, LayoutList, Megaphone, MessagesSquare, Receipt, SearchCheck, Siren, Users } from "lucide-react";
 import { NavLink, useLocation  } from "react-router-dom";
 
 export function AdminSidebar() {
@@ -9,10 +9,10 @@ export function AdminSidebar() {
 
     const linkCls = (isActive: boolean) =>
         `w-full justify-start px-3 py-2 rounded-md text-left flex items-center gap-2
-        ${isActive ? "bg-[rgba(21,93,252,0.85)] text-white font-semibold" : "text-gray-700 hover:bg-[rgba(21,93,252,0.1)] font-semibold"}`;
+        ${isActive ? "bg-[rgba(75,143,250,1)] text-white font-semibold" : "text-gray-700 hover:bg-[rgba(75,143,250,0.2)] font-semibold"}`;
     
         return (
-            <nav className="w-56 shrink-0 pr-2 space-y-1">
+            <nav className="w-56 shrink-0 pr-2 space-y-1 text-base font-semibold">
                 <NavLink to="/admin/overview" className={({ isActive }) => linkCls(isActive)}>
                         <Gauge className="mr-2 h-4 w-4" /> 대시보드
                     </NavLink>
@@ -38,7 +38,7 @@ export function AdminSidebar() {
                         <Megaphone className="mr-2 h-4 w-4" /> 공지사항 관리
                     </NavLink>
                     <NavLink to="/admin/settlement" className={({ isActive }) => linkCls(isActive)}>
-                        <Users className="mr-2 h-4 w-4" /> 정산 관리
+                        <Receipt className="mr-2 h-4 w-4" /> 정산 관리
                     </NavLink>
             </nav>
         )
