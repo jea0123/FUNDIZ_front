@@ -54,8 +54,8 @@ import { NoticeUpdtTab } from './views/admin/tabs/NoticeUpdtTab';
 import SettlementTab from './views/admin/tabs/SettlementTab';
 import EditProject from './views/creator/pages/EditProject';
 
-const OverviewTab = lazy(() => import('./views/admin/tabs/OverviewTab').then(module => ({ default: module.OverviewTab })));
-const CreatorDashboard = lazy(() => import('./views/creator/pages/CreatorDashboard').then(module => ({ default: module.default })));
+const OverviewTab = lazy(() => import('./views/admin/tabs/OverviewTab').then((module) => ({ default: module.OverviewTab })));
+const CreatorDashboard = lazy(() => import('./views/creator/pages/CreatorDashboard').then((module) => ({ default: module.default })));
 
 export default function App() {
   const { setLoginUser, resetLoginUser } = useLoginUserStore();
@@ -139,7 +139,7 @@ export default function App() {
             </Route>
 
             <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<OverviewTab/>} />
+              <Route index element={<OverviewTab />} />
               <Route path="overview" element={<OverviewTab />} />
               <Route path="approvals" element={<ApprovalsTab />} />
               <Route path="verify/:projectId" element={<ApprovalDetail />} />
@@ -156,8 +156,8 @@ export default function App() {
             </Route>
 
             <Route path="/admin">
-              <Route path='register' element={<AdminRegisterPage />} />
-              <Route path='login' element={<AdminLoginPage />} />
+              <Route path="register" element={<AdminRegisterPage />} />
+              <Route path="login" element={<AdminLoginPage />} />
             </Route>
 
             <Route path="/cs" element={<CSLayout />}>
