@@ -1,3 +1,4 @@
+import { useNotificationStore } from "@/store/NotificationStore.store";
 import type { Notification } from "@/types/notification";
 import { useEffect, useRef } from "react";
 
@@ -6,8 +7,10 @@ import { useEffect, useRef } from "react";
  * @param {number} userId 사용자 ID
  * @param {function} onMessage 실시간 알림 수신 이벤트 핸들러
  */
-export function useNotificationSSE(userId: number, onMessage: (noti: Notification) => void) {
+export function useNotificationSSE(userId: number) {
     const esRef = useRef<EventSource | null>(null);
+    const addOrUpdate = useNotificationStore(s => s.addOrUpdate);
+
     useEffect(() => {
         if (!userId) return;
         const evtSource = new EventSource('http://localhost:9099/api/v1/notifications/stream?userId=' + userId);
@@ -20,9 +23,9 @@ export function useNotificationSSE(userId: number, onMessage: (noti: Notificatio
         const onNoti = (e: MessageEvent) => {
             try {
                 const parsed: Notification = JSON.parse(e.data);
-                onMessage(parsed);
+                addOrUpdate(parsed);
             } catch {
-                
+
             }
         };
 
@@ -49,5 +52,5 @@ export function useNotificationSSE(userId: number, onMessage: (noti: Notificatio
             evtSource.close();
             esRef.current = null;
         };
-    }, [userId, onMessage]);
+    }, [userId, addOrUpdate]);
 }

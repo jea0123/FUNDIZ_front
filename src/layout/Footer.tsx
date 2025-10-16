@@ -1,8 +1,6 @@
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Facebook, Instagram, Youtube, Github, Mail, ArrowRight, Heart } from "lucide-react";
+import { Facebook, Instagram, Youtube, Github, Heart } from "lucide-react";
 
 const nav = {
     about: [
@@ -44,7 +42,7 @@ export default function SiteFooter() {
 
     return (
         <footer className="bg-neutral-50 text-neutral-600 border-t border-neutral-200">
-            <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
+            <div className="mx-auto max-w-7xl py-12 w-[1232px]">
 
                 {/* Link grid */}
                 <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-6">

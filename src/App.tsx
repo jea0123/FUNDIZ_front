@@ -16,7 +16,6 @@ import { ApprovalDetail } from './views/admin/tabs/ApprovalDetail';
 import AdminProjectEdit from './views/admin/tabs/AdminProjectEdit';
 import NotificationsPage from './components/NotificationsPage';
 import CreateProject from './views/creator/pages/EditProject';
-import CreatorDashboard from './views/creator/pages/CreatorDashboard';
 import CreatorProjects from './views/creator/pages/CreatorProjects';
 import CreatorLayout from './views/creator/CreatorLayout';
 import AdminLayout from './views/admin/AdminLayout';
@@ -44,7 +43,6 @@ import LikedProjectTab from './views/user/tabs/LikedProjectTab';
 import { BackingPage } from './views/backing/backingPage';
 import { AdminRegisterPage } from './views/auth/admin/AdminRegisterPage';
 import { AdminLoginPage } from './views/auth/admin/AdminLoginPage';
-import { OverviewTab } from './views/admin/tabs/OverviewTab';
 import { ApprovalsTab } from './views/admin/tabs/ApprovalsTab';
 import { ProjectsTab } from './views/admin/tabs/ProjectsTab';
 import { ReportsAdminTab } from './views/admin/tabs/ReportsAdminTab';
@@ -56,7 +54,8 @@ import { NoticeAddTab } from './views/admin/tabs/NoticeAddTab';
 import { NoticeUpdtTab } from './views/admin/tabs/NoticeUpdtTab';
 import SettlementTab from './views/admin/tabs/SettlementTab';
 
-const AdminTabs = lazy(() => import('./views/admin/AdminTabs').then((module) => ({ default: module.AdminTabs })));
+const OverviewTab = lazy(() => import('./views/admin/tabs/OverviewTab').then(module => ({ default: module.OverviewTab })));
+const CreatorDashboard = lazy(() => import('./views/creator/pages/CreatorDashboard').then(module => ({ default: module.default })));
 
 export default function App() {
   const { setLoginUser, resetLoginUser } = useLoginUserStore();
