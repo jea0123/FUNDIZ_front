@@ -23,7 +23,7 @@ export const kyInstance = ky.create({
     //TODO: beforeRequest 추가 (X-Dev-Creator-Id)
     beforeRequest: [
       (req) => {
-        const isDev = import.meta.env?.DEV === true || import.meta.env?.MODE === "development";
+        const isDev = import.meta.env?.DEV === true || import.meta.env?.MODE === 'development';
         if (!isDev) return;
 
         let url: URL | null = null;
@@ -31,25 +31,25 @@ export const kyInstance = ky.create({
           url = new URL(req.url);
         } catch {
           try {
-            url = new URL(String(req.url), "http://dummy");
+            url = new URL(String(req.url), 'http://dummy');
           } catch {
             url = null;
           }
         }
         const pathname = url?.pathname ?? String(req.url);
 
-        if (pathname.includes("/api/v1/creator/")) {
+        if (pathname.includes('/api/v1/creator/')) {
           // 우선순위: 훅 주입값 > URL 쿼리 > localStorage > (없으면 미부착)
           const fromOverride = _devCreatorIdOverride;
-          const fromQuery = url?.searchParams.get("creatorId") || null;
-          const fromLocal = localStorage.getItem("DEV_CREATOR_ID");
+          const fromQuery = url?.searchParams.get('creatorId') || null;
+          const fromLocal = localStorage.getItem('DEV_CREATOR_ID');
 
           const devId = fromOverride ?? fromQuery ?? fromLocal ?? null;
 
           if (devId) {
-            req.headers.set("X-Dev-Creator-Id", devId);
+            req.headers.set('X-Dev-Creator-Id', devId);
           } else {
-            req.headers.delete?.("X-Dev-Creator-Id");
+            req.headers.delete?.('X-Dev-Creator-Id');
           }
         }
       },
@@ -201,6 +201,10 @@ export const endpoints = {
   // ==================== Backing API ====================
   getBackingList: (userId: number) => `backing/page/${userId}`,
   getBackingDetail: (userId: number, projectId: number, rewardId: number, backingId: number) => `backing/page/${userId}/project/${projectId}/reward/${rewardId}/backing/${backingId}`,
+  //교체후보
+  getMypageBackingList: (userId: number) => `backing/myPageBackingList/${userId}`,
+  getMypageBackingDetail: (userId: number) => `backing/myPageBackingDetail/${userId}`,
+  //여기까지
   backingPrepare: (userId: number, projectId: number) => `backing/${userId}/create/${projectId}`,
   addBacking: (userId: number) => `backing/create/${userId}`,
 
