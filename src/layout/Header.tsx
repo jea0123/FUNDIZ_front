@@ -1,8 +1,8 @@
 import { type KeyboardEvent } from 'react';
-import { useEffect, useState, type JSX } from 'react';
+import { useState } from 'react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { Search, User, Bell, Menu, X, CreditCard, Truck, Package, MessageCircle, CheckCircle2 } from 'lucide-react';
+import { Search, User, Bell, Menu, CheckCircle2, X } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../components/ui/dropdown-menu';
 import { useNavigate } from 'react-router-dom';
 import { useLoginUserStore } from '@/store/LoginUserStore.store';
@@ -12,18 +12,7 @@ import { useNotificationSSE } from '@/hooks/useNotificationSSE';
 import type { Notification } from '@/types/notification';
 import { getElapsedTime, toastError, toastSuccess } from '@/utils/utils';
 import { useNotificationStore, useUnreadCount } from '@/store/NotificationStore.store';
-
-const typeIcon: Record<string, JSX.Element> = {
-    FUNDING_SUCCESS: <></>,
-    FUNDING_FAILURE: <></>,
-    SHIPPING_SENT: <Truck className="h-4 w-4 text-purple-500" />,
-    SHIPPING_DELIVERED: <Truck className="h-4 w-4 text-green-500" />,
-    COMMENT_REPLY: <MessageCircle className="h-4 w-4 text-indigo-500" />,
-    BACKING_SUCCESS: <CreditCard className="h-4 w-4 text-blue-500" />,
-    BACKING_FAIL: <CreditCard className="h-4 w-4 text-red-500" />,
-    PAYMENT_SUCCESS: <CreditCard className="h-4 w-4 text-blue-500" />,
-    PAYMENT_FAIL: <CreditCard className="h-4 w-4 text-red-500" />,
-};
+import { TypeIcon } from '@/components/TypeIcon';
 
 export function Header() {
     const [cookie] = useCookies();
@@ -51,7 +40,7 @@ export function Header() {
         const curr = useNotificationStore.getState().notifications
             .find(n => n.notificationId === id);
         if (!curr || curr.isRead === "Y") return;
-        
+
         const response = await putData(endpoints.markAsRead(id), {}, cookie.accessToken);
         if (response && response.status === 200) {
             markReadLocal(id);
@@ -207,7 +196,7 @@ export function Header() {
                                                         >
                                                             {/* 유형 아이콘 */}
                                                             <div className="pt-0.5">
-                                                                {typeIcon[n.type] ?? <Bell className="h-4 w-4 text-gray-400" />}
+                                                                {TypeIcon[n.type] ?? <Bell className="h-4 w-4 text-gray-400" />}
                                                             </div>
 
                                                             {/* 본문 */}
