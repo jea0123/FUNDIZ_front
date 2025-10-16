@@ -14,6 +14,7 @@ export const img = "https://gongu.copyright.or.kr/gongu/wrt/cmmn/wrtFileImageVie
 export default function Main() {
     const [cookie] = useCookies();
     const [featuredProjects, setFeaturedProjects] = useState<Featured[]>([]);
+    const navigate = useNavigate();
 
     /**
      * @description 주목할 만한 프로젝트 불러오기
@@ -46,7 +47,7 @@ export default function Main() {
                                 <h3 className="text-lg font-semibold md:text-xl">주목할 만한 프로젝트</h3>
                                 <p className="text-sm text-muted-foreground">오늘 뜨는 프로젝트를 만나보세요.</p>
                             </div>
-                            <Button variant="ghost" className="h-8 px-2 text-xs">
+                            <Button variant="ghost" className="h-8 px-2 text-xs" onClick={() => navigate("/project")}>
                                 전체보기 <ChevronRight className="ml-1 h-4 w-4" />
                             </Button>
                         </div>
@@ -63,7 +64,7 @@ export default function Main() {
 
             <Separator />
 
-            {!cookie.accessToken && (
+            {cookie.accessToken && (
                 <RecentView title="최근 본 프로젝트" />
             )}
         </div>
@@ -127,7 +128,7 @@ function PopularSidebar() {
         <aside className="rounded-xl border bg-card p-4 pl-7 h-full flex flex-col">
             <div className="mb-3 flex items-center justify-between">
                 <h3 className="text-sm font-semibold">인기 프로젝트</h3>
-                <Button variant="ghost" className="h-6 px-1 text-xs">전체보기</Button>
+                <Button variant="ghost" className="h-6 px-1 text-xs" onClick={() => navigate("/project")}>전체보기</Button>
             </div>
             <p className="mb-2 text-[11px] text-muted-foreground">{new Date().toLocaleString()} 기준</p>
 
@@ -169,9 +170,6 @@ export function RecentView({ title, perRow = 5, }: { title?: string; perRow?: nu
     const [page, setPage] = useState(0);
     const [cookie] = useCookies();
 
-    // 로그인 상태가 아니면 최근 본 프로젝트를 불러오지 않음
-    if (!cookie.accessToken) return <></>;
-
     /**
      * @description 최근 본 프로젝트 불러오기
      * @example
@@ -186,7 +184,7 @@ export function RecentView({ title, perRow = 5, }: { title?: string; perRow?: nu
 
     useEffect(() => {
         getRecentViewProjects();
-    }, []);
+    }, [cookie.accessToken]);
 
     const canPrev = page > 0;
     const canNext = page < Math.max(pages.length - 1, 0);
@@ -206,6 +204,8 @@ export function RecentView({ title, perRow = 5, }: { title?: string; perRow?: nu
         el.addEventListener("keydown", onKey);
         return () => el.removeEventListener("keydown", onKey);
     }, [goPrev, goNext]);
+
+    if (!recentView || recentView.length === 0) return <></>;
 
     return (
         <section className="space-y-4" ref={wrapRef} tabIndex={0}>
