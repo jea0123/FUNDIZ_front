@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, BadgeCheck, Mail, Phone, ShieldCheck, Wallet } from "lucide-react";
+import { ArrowLeft, BadgeCheck, ExternalLink, FileText, ImageIcon, Mail, Phone, ShieldCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import type { Category } from "@/types/admin";
 import type { Subcategory } from "@/types/projects";
 import { formatDate, formatPrice, toPublicUrl } from "@/utils/utils";
 import { useCreatorId } from "../../../types/useCreatorId";
+import { ProjectDetailViewer } from "../components/ProjectDetailViewer";
 
 /* ------------------------------- Types ------------------------------- */
 
@@ -49,7 +50,7 @@ export default function CreatorProjectDetail() {
     const [rewards, setRewards] = useState<RewardView[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
-    const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+    const [thumbnailFile] = useState<File | null>(null);
 
     const categoryPath = useMemo(() => {
         if (!project) return "-";
@@ -139,6 +140,8 @@ export default function CreatorProjectDetail() {
     const publicThumbnailUrl = useMemo(() => toPublicUrl(project?.thumbnail ?? null), [project?.thumbnail]);
     const thumbnailUrl = filePreviewUrl || publicThumbnailUrl;
 
+    const publicBusinessDocUrl = useMemo(() => toPublicUrl(project?.businessDoc ?? null), [project?.businessDoc]);
+
     if (loading) return <FundingLoader />;
 
     if (!project) {
@@ -159,7 +162,7 @@ export default function CreatorProjectDetail() {
                 </div>
             </div>
 
-            {thumbnailUrl &&  (
+            {thumbnailUrl && (
                 <div className="mb-6 overflow-hidden rounded-xl border bg-background">
                     <img src={thumbnailUrl} alt={project.title} className="w-full max-h-[420px] object-cover" />
                 </div>
@@ -176,7 +179,7 @@ export default function CreatorProjectDetail() {
                     <CardContent className="space-y-4">
                         <KV label="카테고리" value={categoryPath} />
                         <KV label="펀딩 기간" value={`${formatDate(project.startDate)} ~ ${formatDate(project.endDate)}`} />
-                        <KV label="목표 금액" value={`${formatPrice(project.goalAmount)}원`} icon={<Wallet className="h-4 w-4" />} />
+                        <KV label="목표 금액" value={`${formatPrice(project.goalAmount)}원`} />
                         <div>
                             <div className="text-sm text-muted-foreground mb-2">검색 태그</div>
                             {toTagNames(project.tagList).length ? (
@@ -189,25 +192,18 @@ export default function CreatorProjectDetail() {
                                 <p className="text-sm">-</p>
                             )}
                         </div>
-                        <div>
-                            <div className="text-sm text-muted-foreground mb-2">프로젝트 소개</div>
-                            <div className="prose max-w-none whitespace-pre-wrap leading-relaxed">
-                                {project.content}
-                            </div>
+                        <div className="space-y-6">
+                            <section>
+                                <div className="text-sm text-muted-foreground mb-2">프로젝트 내용</div>
+                                <div className="whitespace-pre-wrap leading-relaxed">
+                                    {project.content}
+                                </div>
+                            </section>
+                            <section>
+                                <div className="text-sm text-muted-foreground mb-2">프로젝트 소개</div>
+                                <ProjectDetailViewer data={project.contentBlocks} />
+                            </section>
                         </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>창작자 정보</CardTitle>
-                    </CardHeader>
-
-                    <CardContent className="space-y-3">
-                        <KV label="창작자명" value={project.creatorName} />
-                        <KV label="사업자등록번호" value={project.businessNum || "-"} />
-                        <KV label="이메일" value={project.email} icon={<Mail className="h-4 w-4" />} />
-                        <KV label="전화번호" value={project.phone} icon={<Phone className="h-4 w-4" />} />
                     </CardContent>
                 </Card>
 
@@ -231,7 +227,7 @@ export default function CreatorProjectDetail() {
                                         </div>
                                         <div className="font-medium">{r.rewardName}</div>
                                         <div className="text-sm text-muted-foreground whitespace-pre-wrap mt-1">{r.rewardContent}</div>
-                                        <div className="text-xs text-muted-foreground mt-2">배송 예정일: {formatDate(r.deliveryDate)}</div>
+                                        <div className="text-xs text-muted-foreground mt-2">배송/제공 예정일: {formatDate(r.deliveryDate)}</div>
                                     </div>
                                 </div>
                             </div>
@@ -241,14 +237,37 @@ export default function CreatorProjectDetail() {
 
                 <Card>
                     <CardHeader>
+                        <CardTitle>창작자 정보</CardTitle>
+                    </CardHeader>
+
+                    <CardContent className="space-y-3">
+                        <KV label="창작자명" value={project.creatorName} />
+                        <KV label="사업자등록번호" value={project.businessNum || "-"} />
+                        <Card className="mt-6">
+                            <CardHeader>
+                                <CardTitle>사업자등록증</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <BusinessDocViewer src={publicBusinessDocUrl} fileName={`사업자등록증_${project.creatorName || project.projectId}.pdf`} />
+                            </CardContent>
+                        </Card>
+                        <KV label="이메일" value={project.email} icon={<Mail className="h-4 w-4" />} />
+                        <KV label="전화번호" value={project.phone} icon={<Phone className="h-4 w-4" />} />
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <ShieldCheck className="h-5 w-5" /> 심사 정보
+                            <ShieldCheck className="h-5 w-5" /> 심사 안내
                         </CardTitle>
                     </CardHeader>
 
                     <CardContent className="space-y-2 text-sm">
-                        <p>• 심사중에는 수정이 제한됩니다. (반려 시 새로운 프로젝트 생성)</p>
-                        <p>• 등록된 이메일/전화로 안내드립니다.</p>
+                        <p>• 프로젝트 심사는 영업일 기준 3-5일 소요됩니다.</p>
+                        <p>• 심사 결과는 등록된 이메일로 안내드립니다.</p>
+                        <p>• 심사 승인 후 펀딩 시작일에 자동으로 공개됩니다.</p>
+                        <p>• 심사 반려되었을 경우에는 새로운 프로젝트를 생성하셔야 합니다.</p>
                     </CardContent>
                 </Card>
             </div>
@@ -299,4 +318,72 @@ function EmptyState({ message, onBack }: { message: string; onBack: () => void }
             </CardContent>
         </Card>
     );
+}
+
+function BusinessDocViewer({ src, fileName }: { src?: string | null; fileName?: string }) {
+    if (!src) {
+        return <p className="text-sm text-muted-foreground">등록된 파일이 없습니다.</p>;
+    }
+
+    const ext = getExt(src);
+    const isPdf = ext === "pdf";
+    const isImg = ["png", "jpg", "jpeg", "webp", "gif"].includes(ext);
+
+    return (
+        <div className="space-y-3">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm">
+                    {isPdf ? <FileText className="h-4 w-4" /> : isImg ? <ImageIcon className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+                    <a href={src} target="_blank" rel="noreferrer" className="underline underline-offset-2 break-all">
+                        {fileName || getFileName(src)}
+                    </a>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <a
+                        href={src}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center rounded-md border px-2.5 py-1.5 text-xs"
+                        title="새 탭에서 열기"
+                    >
+                        <ExternalLink className="h-3.5 w-3.5 mr-1" /> 열기
+                    </a>
+                </div>
+            </div>
+
+            {isPdf ? (
+                <object data={src} type="application/pdf" className="w-full h-[520px] rounded-md border">
+                    <p className="text-sm p-4">
+                        PDF 미리보기를 지원하지 않는 브라우저입니다.{" "}
+                    </p>
+                </object>
+            ) : isImg ? (
+                <div className="rounded-md border overflow-hidden">
+                    <img src={src} alt="사업자등록증" className="w-full max-h-[560px] object-contain bg-muted" />
+                </div>
+            ) : (
+                <p className="text-sm text-muted-foreground">이 형식은 미리보기를 지원하지 않습니다.</p>
+            )}
+        </div>
+    );
+}
+
+function getExt(url: string): string {
+    try {
+        const q = url.split("?")[0];
+        const m = q.match(/\.([a-zA-Z0-9]+)$/);
+        return (m?.[1] || "").toLowerCase();
+    } catch {
+        return "";
+    }
+}
+
+function getFileName(url: string): string {
+  try {
+    const q = url.split("?")[0];
+    return decodeURIComponent(q.substring(q.lastIndexOf("/") + 1)) || "document";
+  } catch {
+    return "document";
+  }
 }

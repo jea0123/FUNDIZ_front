@@ -41,7 +41,7 @@ export default function CreatorAddReward() {
     }, [projectIdParam]);
 
     //TODO: 임시용 id (나중에 삭제하기)
-    const { loading: idLoading } = useCreatorId(28);
+    const { loading: idLoading } = useCreatorId(2);
 
     const [loading, setLoading] = useState(true);
     const [errors, setErrors] = useState<Record<string, string>>({});

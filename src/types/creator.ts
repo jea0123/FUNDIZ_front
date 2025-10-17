@@ -1,6 +1,5 @@
 import type { DailyCount, MonthCount } from './backing';
 import type { Reward, RewardCreateRequestDto } from './reward';
-import type { Tag } from './tag';
 
 export interface CreatorProjectListDto {
     projectId: number;

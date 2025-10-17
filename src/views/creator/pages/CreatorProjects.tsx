@@ -13,8 +13,8 @@ import { formatDate, getDaysLeft } from "@/utils/utils";
 import QuickActions from "../components/QuickActions";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import NewsSheet from "../components/NewsSheet";
 import ReviewsSheet from "../components/ReviewsSheet";
+import NewsModal from "../components/NewsModal";
 
 /* --------------------------------- Status --------------------------------- */
 const PREP_STATUSES: Status[] = ["DRAFT", "VERIFYING"];
@@ -283,7 +283,7 @@ export default function CreatorProjects() {
                                             <CardTitle className="flex items-center gap-2 flex-wrap">
                                                 <span className="mr-1 truncate">{p.title}</span>
                                                 <StatusBadge status={st} />
-                                                {OPER_STATUSES.includes(st) && (
+                                                {st === "OPEN" && (
                                                     <span>({getDaysLeft(p.endDate)}일 남음)</span>
                                                 )}
 
@@ -347,33 +347,18 @@ export default function CreatorProjects() {
                 />
             </CardContent>
 
-            {/* === 새소식 등록 시트 === */}
+            {/* === 새소식 등록 모달 === */}
             {activeProject && (
-                <Sheet
+                <NewsModal
                     open={newsOpen}
-                    onOpenChange={(open) => {
-                        setNewsOpen(open);
-                        if (!open) setActiveProject(null); // 닫히면 초기화
+                    projectId={activeProject.id}
+                    projectTitle={activeProject.title}
+                    onClose={() => {
+                        setNewsOpen(false);
+                        setActiveProject(null);
                     }}
-                >
-                    <SheetContent className="w-[860px] max-w-full">
-                        <SheetHeader>
-                            <SheetTitle>새소식 등록</SheetTitle>
-                            <SheetDescription>{activeProject.title}</SheetDescription>
-                        </SheetHeader>
-
-                        <NewsSheet
-                            open={newsOpen}
-                            projectId={activeProject.id}
-                            projectTitle={activeProject.title}
-                            onClose={() => {
-                                setNewsOpen(false);
-                                setActiveProject(null);
-                            }}
-                            onPosted={fetchData}
-                        />
-                    </SheetContent>
-                </Sheet>
+                    onPosted={fetchData}
+                />
             )}
 
             {/* === 후기 관리 시트 === */}

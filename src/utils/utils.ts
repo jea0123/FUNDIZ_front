@@ -124,7 +124,7 @@ export const getDaysBefore = (date: string | Date): string => {
 
 /**
  * @description 날짜를 "YYYY-MM-DD" 형식으로 변환
- * @param {string | Date} date 날짜 문자열 또는 Date 객체
+ * @param {string | Date | null} date 날짜 문자열 또는 Date 객체 또는 null
  * @returns {string} "YYYY-MM-DD" 형식의 날짜 문자열
  */
 export const formatDate = (date: string | Date | null): string => {
@@ -141,6 +141,32 @@ export const formatDate = (date: string | Date | null): string => {
     const day = String(d.getDate()).padStart(2, "0");
 
     return `${year}-${month}-${day}`;
+}
+
+/**
+ * @description "yyyy-MM-dd" 날짜를 "yyyy-MM-ddTHH:mm:ss" 형식으로 변환
+ * @param {string | Date} dateStr 날짜 문자열 또는 Date 객체
+ * @returns {Date} "yyyy-MM-ddTHH:mm:ss" 형식의 날짜 객체
+ */
+export function toIsoDateTime(dateLike: Date | string | null | undefined, endOfDay = false): string {
+    if (!dateLike) return "";
+
+    const toYmd = (d: Date) =>
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+    let ymd: string;
+
+    if (dateLike instanceof Date) {
+        if (isNaN(dateLike.getTime())) return "";
+        ymd = toYmd(dateLike);
+    } else {
+        const s = dateLike.trim();
+        if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(s)) return s;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return "";
+        ymd = s;
+    }
+
+    return endOfDay ? `${ymd}T23:59:59` : `${ymd}T00:00:00`;
 }
 
 /**
