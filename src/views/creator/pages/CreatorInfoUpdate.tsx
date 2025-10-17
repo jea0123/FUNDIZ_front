@@ -13,6 +13,7 @@ import { useCookies } from "react-cookie";
 import { useNavigate } from "react-router-dom";
 import { useCreatorId } from "@/types/useCreatorId";
 
+
 export type CreatorType = "GENERAL" | "INDIVIDUAL" | "CORPORATION";
 
 const hintCls = "h-5 mt-1 text-xs leading-4";
