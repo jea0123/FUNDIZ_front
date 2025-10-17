@@ -278,7 +278,7 @@ export default function EditProject() {
     /* ----------------------------- State ----------------------------- */
 
     //TODO: dev id
-    const { creatorId, loading } = useCreatorId(26);
+    const { creatorId, loading } = useCreatorId(2);
 
     const { projectId: projectIdParam } = useParams();
     const projectId = projectIdParam ? Number(projectIdParam) : null;
@@ -523,9 +523,13 @@ export default function EditProject() {
         try {
             if (isEdit && projectId) {
                 // 기존 Draft 업데이트
-                await postData(endpoints.updateProject(projectId), formData);
-                alert("저장이 완료되었습니다.");
-                goList();
+                const response = await postData(endpoints.updateProject(projectId), formData);
+                if (response.status === 200) {
+                    alert("저장이 완료되었습니다.");
+                    goList();
+                } else {
+                    alert("저장에 실패했습니다.");
+                }
             } else {
                 // 신규 Draft 생성
                 const response = await postData(endpoints.createProject, formData);
@@ -566,15 +570,30 @@ export default function EditProject() {
                 await postData(endpoints.updateProject(projectId), formData);
 
                 // 편집 중인 Draft 심사요청
-                await postData(endpoints.submitProject(projectId), {});
-                alert("심사요청이 완료되었습니다.");
-                return goList();
+                const response = await postData(endpoints.submitProject(projectId), {});
+                if (response.status === 200) {
+                    alert("심사요청이 완료되었습니다.");
+                    return goList();
+                } else {
+                    alert("심사요청이 실패했습니다");
+                }
             }
 
             // 신규 작성 후 즉시 심사요청
-            await postData(endpoints.createProject, formData);
-            alert("심사요청이 완료되었습니다.");
-            goList();
+            const res = await postData(endpoints.createProject, formData);
+            const newId = res.data.projectId ?? res.data.id ?? null;
+
+            if (!newId) {
+                throw new Error("생성은 되었지만 projectId를 확인할 수 없습니다. 서버 응답을 점검해 주세요.");
+            }
+
+            const response = await postData(endpoints.submitProject(newId), {});
+            if (response.status === 200) {
+                alert("심사요청이 완료되었습니다.");
+                goList();
+            } else {
+                alert("심사요청이 실패했습니다.");
+            }
         } catch (e: any) {
             const status = e?.response?.status;
             const msg =
