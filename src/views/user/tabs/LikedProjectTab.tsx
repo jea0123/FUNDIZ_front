@@ -10,10 +10,11 @@ const tempUserId = 1;
 
 export default function LikedProjectTab() {
     const navigate = useNavigate();
-    const [likedProjects, setLikedProjects] = useState<LikedDetail[]>();
-
+    const [likedProjects, setLikedProjects] = useState<LikedDetail[]>([]);
     const [likedPage, setLikedPage] = useState(1);
-    const itemsPerPage = 5; // 한 페이지당 보여줄 항목 수
+
+    const itemsPerPage = 5; // 한 페이지당 항목 수
+    const pagesPerGroup = 10; // 페이지 버튼 10개씩 보여주기
 
     const [likedSearch, setLikedSearch] = useState('');
 
@@ -29,6 +30,14 @@ export default function LikedProjectTab() {
         MypageLikedList();
     }, []);
 
+    // 전체 페이지 수 계산
+    const totalPages = Math.max(1, Math.ceil(likedProjects.length / itemsPerPage));
+
+    // 현재 페이지 그룹 계산
+    const currentGroup = Math.ceil(likedPage / pagesPerGroup);
+    const startPage = (currentGroup - 1) * pagesPerGroup + 1;
+    const endPage = Math.min(startPage + pagesPerGroup - 1, totalPages);
+
     return (
         <Card>
             <CardHeader className="flex justify-between items-center">
@@ -40,55 +49,88 @@ export default function LikedProjectTab() {
                     value={likedSearch}
                     onChange={(e) => {
                         setLikedSearch(e.target.value);
-                        setLikedPage(1); // 검색 시 1페이지로 이동
+                        setLikedPage(1);
                     }}
                 />
             </CardHeader>
+
             <CardContent>
                 <div className="space-y-4">
                     {likedProjects
-                        ?.filter((l) => l.title.toLowerCase().includes(likedSearch.toLowerCase()) || l.creatorName.toLowerCase().includes(likedSearch.toLowerCase()))
+                        ?.filter(
+                            (l) =>
+                                l.title.toLowerCase().includes(likedSearch.toLowerCase()) ||
+                                l.creatorName.toLowerCase().includes(likedSearch.toLowerCase())
+                        )
                         .slice((likedPage - 1) * itemsPerPage, likedPage * itemsPerPage)
                         .map((likedList) => (
                             <div key={likedList.projectId} className="flex items-center space-x-4 p-4 border rounded-lg">
-                                <ImageWithFallback src={likedList.thumbnail} alt={likedList.title} className="w-16 h-16 object-cover rounded" />
+                                <ImageWithFallback
+                                    src={likedList.thumbnail}
+                                    alt={likedList.title}
+                                    className="w-16 h-16 object-cover rounded"
+                                />
                                 <div className="flex-1">
                                     <h4 className="font-medium mb-1">{likedList.title}</h4>
                                     <p className="text-sm text-gray-600 mb-2">by {likedList.creatorName}</p>
                                     <div className="flex items-center space-x-4 text-sm">
-                                        <span>달성률: {((likedList.currAmount / likedList.goalAmount) * 100).toFixed(2)}%</span>
+                                        <span>
+                                            달성률:{' '}
+                                            {((likedList.currAmount / likedList.goalAmount) * 100).toFixed(2)}%
+                                        </span>
                                         <span className="text-gray-500">{3}일 남음</span>
                                     </div>
                                 </div>
                                 <div className="flex space-x-2">
-                                    <Button variant="outline" size="sm" onClick={() => navigate(`/project/${likedList.userId}`)}>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => navigate(`/project/${likedList.projectId}`)}
+                                    >
                                         해당 프로젝트로
                                     </Button>
                                 </div>
                             </div>
                         ))}
                 </div>
+
                 {/* 페이지네이션 */}
-                {likedProjects && (
-                    <div className="flex justify-center items-center gap-2 mt-6">
-                        <Button size="sm" variant="outline" disabled={likedPage === 1} onClick={() => setLikedPage(likedPage - 1)}>
+                {likedProjects && totalPages > 1 && (
+                    <div className="flex justify-center items-center gap-2 mt-6 flex-wrap">
+                        {/* 이전 그룹 */}
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={startPage === 1}
+                            onClick={() => setLikedPage(startPage - 1)}
+                        >
                             이전
                         </Button>
 
-                        {Array.from({
-                            length: Math.max(1, Math.ceil(likedProjects.length / itemsPerPage)),
-                        }).map((_, idx) => (
-                            <Button key={idx} size="sm" variant={likedPage === idx + 1 ? 'default' : 'outline'} onClick={() => setLikedPage(idx + 1)}>
-                                {idx + 1}
+                        {/* 현재 그룹의 페이지 번호 */}
+                        {Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i).map((pageNum) => (
+                            <Button
+                                key={pageNum}
+                                size="sm"
+                                variant={likedPage === pageNum ? 'default' : 'outline'}
+                                onClick={() => setLikedPage(pageNum)}
+                            >
+                                {pageNum}
                             </Button>
                         ))}
 
-                        <Button size="sm" variant="outline" disabled={likedPage === Math.max(1, Math.ceil(likedProjects.length / itemsPerPage))} onClick={() => setLikedPage(likedPage + 1)}>
+                        {/* 다음 그룹 */}
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={endPage >= totalPages}
+                            onClick={() => setLikedPage(endPage + 1)}
+                        >
                             다음
                         </Button>
                     </div>
                 )}
             </CardContent>
         </Card>
-    )
+    );
 }
