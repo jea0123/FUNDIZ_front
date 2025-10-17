@@ -54,6 +54,7 @@ import { NoticeAddTab } from './views/admin/tabs/NoticeAddTab';
 import { NoticeUpdtTab } from './views/admin/tabs/NoticeUpdtTab';
 import SettlementTab from './views/admin/tabs/SettlementTab';
 import EditProject from './views/creator/pages/EditProject';
+import BackingDetailTab from './views/user/tabs/BackingDetailTab';
 
 const OverviewTab = lazy(() => import('./views/admin/tabs/OverviewTab').then((module) => ({ default: module.OverviewTab })));
 const CreatorDashboard = lazy(() => import('./views/creator/pages/CreatorDashboard').then((module) => ({ default: module.default })));
@@ -112,6 +113,7 @@ export default function App() {
             <Route path="/user" element={<MyPageLayout />}>
               <Route index element={<BackingTab />} />
               <Route path="support" element={<BackingTab />} />
+              <Route path="support/:backingId" element={<BackingDetailTab />} />
               {/*<Route index element={<BackingTab />} />
               <Route path="support" element={<BackingTab />} />*/}
               <Route path="wishlist" element={<LikedProjectTab />} />
