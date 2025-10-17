@@ -346,7 +346,7 @@ export function EditProjectSteps(props: StepsProps) {
                         <CardContent className="p-4 space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <Label htmlFor="price">후원 금액 *</Label>
+                                    <Label htmlFor="price">리워드 가격 *</Label>
                                     <Input
                                         id="price"
                                         value={newReward.price ?? ""}

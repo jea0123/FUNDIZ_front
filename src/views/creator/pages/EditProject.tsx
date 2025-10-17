@@ -89,14 +89,7 @@ const cleanTags = (list: any): string[] => {
 // contentBlocks 문자열/객체 대응
 const parseBlocks = (input?: string | ContentBlocks | null | undefined): ContentBlocks => {
     if (input == null) return { blocks: [] };
-
-    // 객체로 온 경우
-    if (typeof input === "object") {
-        const obj = input as any;
-        if (Array.isArray(obj.blocks)) return obj as ContentBlocks;
-        return { blocks: [] };
-    }
-
+    
     // 문자열로 온 경우
     const s = String(input).trim();
     if (!s) return { blocks: [] };

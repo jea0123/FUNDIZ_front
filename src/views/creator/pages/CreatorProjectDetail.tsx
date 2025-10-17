@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import FundingLoader from "@/components/FundingLoader";
 import { endpoints, getData, kyInstance } from "@/api/apis";
-import type { CreatorProjectDetailDto, ProjectCreateRequestDto } from "@/types/creator";
+import type { CreatorProjectDetailDto } from "@/types/creator";
 import type { RewardCreateRequestDto } from "@/types/reward";
 import type { Category } from "@/types/admin";
 import type { Subcategory } from "@/types/projects";
-import { formatDate, formatPrice } from "@/utils/utils";
+import { formatDate, formatPrice, toPublicUrl } from "@/utils/utils";
 import { useCreatorId } from "../../../types/useCreatorId";
 
 /* ------------------------------- Types ------------------------------- */
@@ -49,6 +49,17 @@ export default function CreatorProjectDetail() {
     const [rewards, setRewards] = useState<RewardView[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
+    const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+
+    const categoryPath = useMemo(() => {
+        if (!project) return "-";
+
+        const sub = subcategories.find((s) => Number(s.subctgrId) === Number(project.subctgrId));
+        if (!sub) return "-";
+        const ctg = categories.find((c) => Number(c.ctgrId) === Number(sub.ctgrId));
+
+        return `${ctg?.ctgrName} > ${sub.subctgrName}`;
+    }, [project, categories, subcategories]);
 
     useEffect(() => {
         let mounted = true;
@@ -93,12 +104,12 @@ export default function CreatorProjectDetail() {
                     contentBlocks: draft.contentBlocks ?? { blocks: [] },
                     thumbnail: draft.thumbnail ?? null,
                     businessDoc: draft.businessDoc ?? null,
-                    tagList: toTagNames(draft.tagList),
-                    rewardList: [],
                     creatorName: draft.creatorName ?? "",
                     businessNum: draft.businessNum ?? "",
                     email: draft.email ?? "",
                     phone: draft.phone ?? "",
+                    tagList: toTagNames(draft.tagList),
+                    rewardList: [],
                 };
                 setProject(project);
 
@@ -124,15 +135,9 @@ export default function CreatorProjectDetail() {
         };
     }, [projectId, idLoading, creatorId]);
 
-    const categoryPath = useMemo(() => {
-        if (!project) return "-";
-
-        const sub = subcategories.find((s) => Number(s.subctgrId) === Number(project.subctgrId));
-        if (!sub) return "-";
-        const ctg = categories.find((c) => Number(c.ctgrId) === Number(sub.ctgrId));
-
-        return `${ctg?.ctgrName} > ${sub.subctgrName}`;
-    }, [project, categories, subcategories]);
+    const filePreviewUrl = useObjectUrl(thumbnailFile);
+    const publicThumbnailUrl = useMemo(() => toPublicUrl(project?.thumbnail ?? null), [project?.thumbnail]);
+    const thumbnailUrl = filePreviewUrl || publicThumbnailUrl;
 
     if (loading) return <FundingLoader />;
 
@@ -154,10 +159,9 @@ export default function CreatorProjectDetail() {
                 </div>
             </div>
 
-            {/* TODO: 대표이미지 수정 */}
-            {useObjectUrl(project.thumbnail) && (
+            {thumbnailUrl &&  (
                 <div className="mb-6 overflow-hidden rounded-xl border bg-background">
-                    <img src={useObjectUrl(project.thumbnail)} alt={project.title} className="w-full max-h-[420px] object-cover" />
+                    <img src={thumbnailUrl} alt={project.title} className="w-full max-h-[420px] object-cover" />
                 </div>
             )}
 

@@ -54,7 +54,7 @@ export interface CreatorProjectDetailDto {
     creatorId: number;
     title: string;
     goalAmount: number;
-    currAmount: number;
+    currAmount?: number;
     startDate: Date;
     endDate: Date;
     content: string;
@@ -63,16 +63,16 @@ export interface CreatorProjectDetailDto {
     businessDoc: string;
 
     ctgrId: number;
-    ctgrName: string;
+    ctgrName?: string;
     subctgrId: number;
-    subctgrName: string;
+    subctgrName?: string;
 
     creatorName: string;
     businessNum: string;
     email: string;
     phone: string;
 
-    tagList: Tag[];
+    tagList: string[];
     rewardList: Reward[];
 }
 
