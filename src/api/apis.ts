@@ -132,6 +132,8 @@ export const endpoints = {
   // ==================== Creator API ====================
   getCreatorProjectList: (p: SearchCreatorProjectDto) => `creator/projects?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
   registerCreator: 'creator/register',
+  getCreatorInfo:  'creator/info',
+  updateCreatorInfo: (creatorId: number) => `creator/update/${creatorId}`,
   getCreatorProjectDetail: (projectId: number) => `creator/projects/${projectId}`,
   getCreatorProjectSummary: (projectId: number) => `creator/projects/${projectId}/summary`,
   createProject: 'creator/project/new',
@@ -198,6 +200,9 @@ export const endpoints = {
   updateStatus: 'admin/settlement',
   getUserInfo: (userId: number) => `admin/user/info/${userId}`,
   updateUser: (userId: number) => `admin/user/update/${userId}`,
+  addNotice: 'admin/notice/add',
+  updateNotice: (noticeId: number) => `admin/notice/update/${noticeId}`,
+  deleteNotice: (noticeId: number) => `admin/notice/delete/${noticeId}`,
 
   // ==================== Category API ====================
   getCategories: 'categories',
@@ -206,9 +211,6 @@ export const endpoints = {
   // ==================== Customer Service API ====================
   getNotices: (p: SearchNoticeParams) => `cs/notice/list?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
   getNoticeDetail: (noticeId: number) => `cs/notice/${noticeId}`,
-  addNotice: 'cs/notice/add',
-  updateNotice: (noticeId: number) => `cs/notice/update/${noticeId}`,
-  deleteNotice: (noticeId: number) => `cs/notice/delete/${noticeId}`,
   getInquiries: (p: SearchIqrParams) => `cs/inquiry/list?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
   getMyInquiries: (userId: number, p: SearchIqrParams) => `cs/inquiry/mylist/${userId}?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
   getInqDetail: (inqId: number) => `cs/inquiry/${inqId}`,

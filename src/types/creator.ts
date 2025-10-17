@@ -120,3 +120,28 @@ export interface CreatorDashboard {
   dailyStatus: DailyCount[];
   monthStatus: MonthCount[];
 }
+
+export interface CreatorUpdateRequest {
+    creatorId: number;
+    creatorName: string;
+    creatorType: string;
+    email: string;
+    phone: string;
+    bank: string;
+    account: string;
+    businessNum: string;
+    profileImg: string;
+    profileImgUrl: string;
+}
+
+export interface CreatorInfo {
+  creatorId: number;
+    creatorName: string;
+    creatorType: string;
+    email: string;
+    phone: string;
+    bank: string;
+    account: string;
+    businessNum: string;
+    profileImg: string;
+}

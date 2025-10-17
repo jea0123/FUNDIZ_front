@@ -1,4 +1,4 @@
-import { Gauge, LayoutList, MessagesSquare, PlusSquare, Receipt, Truck, Wallet } from "lucide-react";
+import { Gauge, LayoutList, MessagesSquare, PlusSquare, Receipt, Settings, Truck, Wallet } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 export function CreatorSidebar() {
@@ -10,6 +10,9 @@ export function CreatorSidebar() {
             <nav className="w-56 shrink-0 pr-2 mt-6 space-y-2">
                 <NavLink to="/creator/dashboard" className={({ isActive }) => linkCls(isActive)}>
                     <Gauge className="mr-2 h-4 w-4" /> 대시보드
+                </NavLink>
+                <NavLink to="/creator/settings" className={({ isActive }) => linkCls(isActive)}>
+                    <Settings className="mr-2 h-4 w-4" /> 창작자 정보 수정
                 </NavLink>
                 <NavLink to="/creator/project/new" className={({ isActive }) => linkCls(isActive)}>
                     <PlusSquare className="mr-2 h-4 w-4" /> 프로젝트 만들기

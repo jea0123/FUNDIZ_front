@@ -33,6 +33,7 @@ import CreatorBacking from './views/creator/pages/CreatorBacking';
 import CreatorAddReward from './views/creator/pages/CreatorAddReward';
 import CreatorSettlementPage from './views/creator/pages/CreatorSettlementPage';
 import RegisterCreator from './views/creator/RegistCreator';
+import CreatorInfoUpdate from './views/creator/pages/CreatorInfoUpdate';
 import MyPageLayout from './views/user/MyPageLayout';
 import NotificationTab from './views/user/tabs/NotificationTab';
 import AccountSettingTab from './views/user/tabs/AccountSettingTab';
@@ -124,6 +125,7 @@ export default function App() {
             <Route path="/creator" element={<CreatorLayout />}>
               <Route index element={<CreatorDashboard />} />
               <Route path="dashboard" element={<CreatorDashboard />} />
+              <Route path="settings" element={<CreatorInfoUpdate />} />
               <Route path="project/new" element={<CreateProject />} />
               <Route path="project/:projectId" element={<CreateProject />} />
               <Route path="projects">
