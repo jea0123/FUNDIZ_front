@@ -11,7 +11,7 @@ import { endpoints, getData, postData } from "@/api/apis";
 import { toastError, toastSuccess, toPublicUrl } from "@/utils/utils";
 import { useCookies } from "react-cookie";
 import { useNavigate } from "react-router-dom";
-import { useCreatorId } from "../useCreatorId";
+import { useCreatorId } from "@/types/useCreatorId";
 
 export type CreatorType = "GENERAL" | "INDIVIDUAL" | "CORPORATION";
 
