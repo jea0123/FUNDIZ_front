@@ -9,7 +9,7 @@ export type RewardInput =
     | RewardCreateRequestDto
     | Pick<Reward, "rewardName" | "price" | "rewardContent" | "deliveryDate" | "rewardCnt" | "isPosting">;
 
-export type FieldErrors = Partial<{
+export type RewardFieldErrors = Partial<{
     rewardName: string;
     price: string;
     rewardContent: string;
@@ -20,14 +20,14 @@ export type FieldErrors = Partial<{
 
 export type SingleValidateResult = {
     ok: boolean;
-    errors: FieldErrors;
+    errors: RewardFieldErrors;
     allErrors: string[];
     normalized?: RewardDraft;
 };
 
 export type ListValidateResult = {
     ok: boolean;
-    fieldErrorsList: FieldErrors[];
+    fieldErrorsList: RewardFieldErrors[];
     allErrors: string[];
     duplicates: string[];
 };
@@ -36,6 +36,7 @@ export const REWARD_RULES = {
     MAX_REWARD_NAME_LEN: 255,
     MAX_REWARD_CONTENT_LEN: 255,
     MIN_REWARD_PRICE: 1_000,
+    MAX_REWARD_PRICE: 30_000_000,
 } as const;
 
 const normalizeName = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
@@ -66,8 +67,8 @@ export function validateReward(
         now?: Date;
     }
 ): SingleValidateResult {
-    const { MAX_REWARD_NAME_LEN, MAX_REWARD_CONTENT_LEN, MIN_REWARD_PRICE } = REWARD_RULES;
-    const errors: FieldErrors = {};
+    const { MAX_REWARD_NAME_LEN, MAX_REWARD_CONTENT_LEN, MIN_REWARD_PRICE, MAX_REWARD_PRICE } = REWARD_RULES;
+    const errors: RewardFieldErrors = {};
     const allErrors: string[] = [];
 
     // 리워드명
@@ -82,6 +83,8 @@ export function validateReward(
     const price = input.price == null ? null : Number(input.price);
     if (price == null || isNaN(price) || price < MIN_REWARD_PRICE) {
         errors.price = `리워드 가격은 최소 ${MIN_REWARD_PRICE.toLocaleString()}원 이상이어야 합니다.`;
+    } else if (price == null || isNaN(price) || price > MAX_REWARD_PRICE) {
+        errors.price= `리워드 가격은 최대 ${MAX_REWARD_PRICE.toLocaleString()}원 이하이어야 합니다.`;
     }
 
     // 리워드 내용
@@ -141,7 +144,7 @@ export function validateRewardList(
     rewards: RewardInput[],
     opts?: Parameters<typeof validateReward>[1]
 ): ListValidateResult {
-    const fieldErrorsList: FieldErrors[] = rewards.map(() => ({}));
+    const fieldErrorsList: RewardFieldErrors[] = rewards.map(() => ({}));
     const allErrors: string[] = [];
 
     // 개별 항목 검사

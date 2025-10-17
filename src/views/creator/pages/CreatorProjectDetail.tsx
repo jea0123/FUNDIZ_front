@@ -6,21 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import FundingLoader from "@/components/FundingLoader";
 import { endpoints, getData, kyInstance } from "@/api/apis";
-import type { ProjectCreateRequestDto } from "@/types/creator";
+import type { CreatorProjectDetailDto } from "@/types/creator";
 import type { RewardCreateRequestDto } from "@/types/reward";
 import type { Category } from "@/types/admin";
 import type { Subcategory } from "@/types/projects";
-import { formatDate } from "@/utils/utils";
-import { useCreatorId } from "../useCreatorId";
+import { formatDate, formatPrice, toPublicUrl } from "@/utils/utils";
+import { useCreatorId } from "../../../types/useCreatorId";
 
 /* ------------------------------- Types ------------------------------- */
 
 type RewardView = RewardCreateRequestDto & { rewardId?: number };
 
 /* ------------------------------- Utils ------------------------------- */
-
-const fmtKRW = (n?: number) =>
-    typeof n === "number" && !isNaN(n) ? new Intl.NumberFormat("ko-KR").format(n) : "-";
 
 const toTagNames = (list: any): string[] =>
     Array.isArray(list)
@@ -29,11 +26,17 @@ const toTagNames = (list: any): string[] =>
             .filter((s: any): s is string => typeof s === "string" && s.trim().length > 0)
         : [];
 
+function useObjectUrl(file: File | null | undefined) {
+    const url = useMemo(() => (file ? URL.createObjectURL(file) : ""), [file]);
+    useEffect(() => () => { if (url) URL.revokeObjectURL(url); }, [url]);
+    return url;
+}
+
 /* ------------------------------- Page ------------------------------- */
 
 export default function CreatorProjectDetail() {
     //TODO: 임시용 id (나중에 삭제하기)
-    const { creatorId, loading: idLoading } = useCreatorId(7);
+    const { creatorId, loading: idLoading } = useCreatorId(2);
 
     const { projectId: projectIdParam } = useParams();
     const projectId = projectIdParam ? Number(projectIdParam) : null;
@@ -42,10 +45,21 @@ export default function CreatorProjectDetail() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const [project, setProject] = useState<ProjectCreateRequestDto | null>(null);
+    const [project, setProject] = useState<CreatorProjectDetailDto | null>(null);
     const [rewards, setRewards] = useState<RewardView[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
+    const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+
+    const categoryPath = useMemo(() => {
+        if (!project) return "-";
+
+        const sub = subcategories.find((s) => Number(s.subctgrId) === Number(project.subctgrId));
+        if (!sub) return "-";
+        const ctg = categories.find((c) => Number(c.ctgrId) === Number(sub.ctgrId));
+
+        return `${ctg?.ctgrName} > ${sub.subctgrName}`;
+    }, [project, categories, subcategories]);
 
     useEffect(() => {
         let mounted = true;
@@ -72,28 +86,30 @@ export default function CreatorProjectDetail() {
                 const res = await kyInstance.get(endpoints.getCreatorProjectDetail(projectId), {
                     headers: { "X-DEV-CREATOR-ID": String(creatorId) },
                 });
-                
+
                 if (!mounted) return;
                 const body = await res.json<any>();
                 const draft = body?.data ?? body ?? {};
 
-                const project: ProjectCreateRequestDto = {
+                const project: CreatorProjectDetailDto = {
                     projectId: Number(draft.projectId) || 0,
+                    creatorId: Number(draft.creatorId) || 0,
                     ctgrId: Number(draft.ctgrId) || 0,
                     subctgrId: Number(draft.subctgrId) || 0,
-                    creatorId: Number(draft.creatorId) || 0,
                     title: draft.title ?? "",
-                    content: draft.content ?? "",
-                    thumbnail: draft.thumbnail ?? "",
                     goalAmount: Number(draft.goalAmount) || 0,
                     startDate: draft.startDate ? new Date(draft.startDate) : new Date(),
                     endDate: draft.endDate ? new Date(draft.endDate) : new Date(),
-                    tagList: toTagNames(draft.tagList),
-                    rewardList: [],
+                    content: draft.content ?? "",
+                    contentBlocks: draft.contentBlocks ?? { blocks: [] },
+                    thumbnail: draft.thumbnail ?? null,
+                    businessDoc: draft.businessDoc ?? null,
                     creatorName: draft.creatorName ?? "",
                     businessNum: draft.businessNum ?? "",
                     email: draft.email ?? "",
                     phone: draft.phone ?? "",
+                    tagList: toTagNames(draft.tagList),
+                    rewardList: [],
                 };
                 setProject(project);
 
@@ -119,15 +135,9 @@ export default function CreatorProjectDetail() {
         };
     }, [projectId, idLoading, creatorId]);
 
-    const categoryPath = useMemo(() => {
-        if (!project) return "-";
-
-        const sub = subcategories.find((s) => Number(s.subctgrId) === Number(project.subctgrId));
-        if (!sub) return "-";
-        const ctg = categories.find((c) => Number(c.ctgrId) === Number(sub.ctgrId));
-
-        return `${ctg?.ctgrName} > ${sub.subctgrName}`;
-    }, [project, categories, subcategories]);
+    const filePreviewUrl = useObjectUrl(thumbnailFile);
+    const publicThumbnailUrl = useMemo(() => toPublicUrl(project?.thumbnail ?? null), [project?.thumbnail]);
+    const thumbnailUrl = filePreviewUrl || publicThumbnailUrl;
 
     if (loading) return <FundingLoader />;
 
@@ -149,10 +159,9 @@ export default function CreatorProjectDetail() {
                 </div>
             </div>
 
-            {/* TODO: 대표이미지 수정 */}
-            {project.thumbnail && (
+            {thumbnailUrl &&  (
                 <div className="mb-6 overflow-hidden rounded-xl border bg-background">
-                    <img src={project.thumbnail} alt={project.title} className="w-full max-h-[420px] object-cover" />
+                    <img src={thumbnailUrl} alt={project.title} className="w-full max-h-[420px] object-cover" />
                 </div>
             )}
 
@@ -167,7 +176,7 @@ export default function CreatorProjectDetail() {
                     <CardContent className="space-y-4">
                         <KV label="카테고리" value={categoryPath} />
                         <KV label="펀딩 기간" value={`${formatDate(project.startDate)} ~ ${formatDate(project.endDate)}`} />
-                        <KV label="목표 금액" value={`${fmtKRW(project.goalAmount)}원`} icon={<Wallet className="h-4 w-4" />} />
+                        <KV label="목표 금액" value={`${formatPrice(project.goalAmount)}원`} icon={<Wallet className="h-4 w-4" />} />
                         <div>
                             <div className="text-sm text-muted-foreground mb-2">검색 태그</div>
                             {toTagNames(project.tagList).length ? (
@@ -214,7 +223,7 @@ export default function CreatorProjectDetail() {
                                 <div className="flex items-start justify-between gap-4">
                                     <div className="min-w-0">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <span className="text-lg font-semibold">{fmtKRW(r.price)}원</span>
+                                            <span className="text-lg font-semibold">{formatPrice(r.price)}원</span>
                                             {r.rewardCnt ? <Badge variant="secondary">한정 {r.rewardCnt}개</Badge> : null}
                                             <Badge variant={r.isPosting === "Y" ? "default" : "outline"}>
                                                 {r.isPosting === "Y" ? "배송 필요" : "배송 불필요"}

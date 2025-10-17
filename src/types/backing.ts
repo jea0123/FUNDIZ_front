@@ -1,5 +1,5 @@
-import type { AddressResponse } from './address';
-import type { BackingPagePayment } from './payment';
+import type { Address, AddressResponse } from './address';
+import type { BackingPagePayment, Payment } from './payment';
 
 export interface MyPageBacking {
   backingId: number;
@@ -117,7 +117,6 @@ export interface BackingRequest {
     status: string;
     paidAt: string;
   };
-  
 }
 
 export interface DailyCount {
@@ -127,5 +126,99 @@ export interface DailyCount {
 
 export interface MonthCount {
   createdAt: Date;
-  count: number
+  count: number;
+}
+// 후원하기페이지용
+export interface BackingCreate {
+  backingId: number;
+  backing: Backing;
+  backingDetail: BackingDetail;
+  payment: Payment;
+  address: Address;
+
+  rewards: RewardBackingRequest[];
+}
+
+export interface RewardBackingRequest {
+  rewardId: number;
+  rewardName: string;
+  price: number;
+  rewardContent: string;
+  quantity: number;
+}
+
+export interface Backing {
+  backingId: number;
+  userId: number;
+  amount: number;
+  createdAt: Date;
+  backingStatus: string;
+}
+export interface BackingDetail {
+  backingId: number;
+  rewardId: number;
+  price: number; // => = reward.price * quantity
+  quantity: number;
+}
+//여기까지
+
+//user - 후원리스트 (신규) TODO: 작동시 다른내용 중복제거
+//리스트 페이지에서 보여줄내용
+export interface MyPageBacking_Reward {
+  projectId: number;
+  rewardName: string;
+  price: number;
+  deliveryDate: Date;
+
+  quantity: number;
+  backingId: number;
+  userId: number;
+}
+
+//상세 페이지에서 보여줄내용
+export interface MyPageBackingDetail {
+  backingId: number;
+  userId: number;
+  amount: number;
+  createdAt: Date;
+  backingStatus: string;
+
+  rewardList: MyPageBacking_Reward[];
+
+  method: string;
+  cardCompany: string;
+
+  shippingStatus: string;
+  trackingNum: number;
+  shippedAt: Date;
+  deliveredAt: Date;
+
+  title: string;
+  thumbnail: string;
+
+  addrName: string;
+  recipient: string;
+  postalCode: string;
+  roadAddr: string;
+  detailAddr: string;
+  recipientPhone: string;
+}
+//공통으로 쓸 리워드 리스트화
+export interface MyPgaeBackingList {
+  projectId: number;
+  title: string;
+  goalAmount: number;
+  currAmount: number;
+  thumbnail: string;
+
+  rewardList: MyPageBacking_Reward[];
+
+  userId: number;
+  backingId: number;
+
+  amount: number;
+  createdAt: Date;
+  backingStatus: string;
+  shippingStatus: string;
+  creatorName: string;
 }

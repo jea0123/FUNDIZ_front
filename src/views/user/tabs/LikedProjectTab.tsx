@@ -62,7 +62,7 @@ export default function LikedProjectTab() {
                                 </div>
                                 <div className="flex space-x-2">
                                     <Button variant="outline" size="sm" onClick={() => navigate(`/project/${likedList.userId}`)}>
-                                        상세보기
+                                        해당 프로젝트로
                                     </Button>
                                 </div>
                             </div>

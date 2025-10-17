@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { deleteData, endpoints, getData } from "@/api/apis";
+import { deleteData, endpoints, getData, setDevCreatorIdHeader } from "@/api/apis";
 import FundingLoader from "@/components/FundingLoader";
 import { StatusBadge, type Status } from "@/views/admin/tabs/ProjectsTab";
 import type { CreatorProjectListDto } from "@/types/creator";
-import { useCreatorId } from "../useCreatorId";
+import { useCreatorId } from "../../../types/useCreatorId";
 import { useNavigate } from "react-router-dom";
 import { useQueryState } from "@/views/admin/tabs/ApprovalsTab";
 import { Pagination } from "@/views/project/ProjectAllPage";
@@ -25,7 +25,7 @@ type Bucket = "PREP" | "OPER";
 
 export default function CreatorProjects() {
     //TODO: 임시용 id (나중에 삭제하기)
-    const { creatorId, loading: idLoading } = useCreatorId(28);
+    const { creatorId, loading: idLoading } = useCreatorId(2);
 
     const [projects, setProjects] = useState<CreatorProjectListDto[]>([]);
     const [total, setTotal] = useState(0);
@@ -119,6 +119,8 @@ export default function CreatorProjects() {
     };
 
     /* ------------------------------------ URL ------------------------------------ */
+
+    useEffect(() => { setDevCreatorIdHeader(creatorId ?? null); }, [creatorId]);
 
     const url = useMemo(() => {
         if (idLoading) return null;

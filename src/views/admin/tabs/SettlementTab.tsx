@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Loader2, Search, CheckCircle2, Clock, ChevronsUpDown, Download } from "lucide-react";
+import { Search, CheckCircle2, Clock, ChevronsUpDown, Download, Eye } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -8,10 +8,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import type { SettlementItem, SettlementSummary } from "@/types/settlement";
 import { endpoints, getData, postData } from "@/api/apis";
-import type { PageResult } from "@/types/admin";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { formatDate, formatNumber, formatPrice } from "@/utils/utils";
+import { formatDate, formatNumber, formatPrice, toastError, toastSuccess } from "@/utils/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import type { PageResult } from "@/types/projects";
+import { cn } from "@/lib/utils";
+import FundingLoader from "@/components/FundingLoader";
 
 export type SettlementStatus = "WAITING" | "PAID";
 
@@ -28,7 +30,7 @@ const SettlementTab: React.FC = () => {
     const [to, setTo] = useState("");
     const [page, setPage] = useState(1);  // 1-based
     const [size, setSize] = useState(10);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [list, setList] = useState<PageResult<SettlementItem> | null>(null);
     const [summary, setSummary] = useState<SettlementSummary>({ waitingAmount: 0, completedAmount: 0, settledCount: 0, bank: null, account: null });
 
@@ -39,8 +41,8 @@ const SettlementTab: React.FC = () => {
         if (res?.status === 200 && res.data) {
             setList(res.data as PageResult<SettlementItem>);
         } else {
-            console.error("Failed to fetch settlements:", res);
             setList(null);
+            toastError("정산 내역을 불러오지 못했습니다.");
         }
     };
 
@@ -49,7 +51,8 @@ const SettlementTab: React.FC = () => {
         if (res?.status === 200 && res.data) {
             setSummary(res.data as SettlementSummary);
         } else {
-            console.error("Failed to fetch settlement summary:", res);
+            setSummary({ waitingAmount: 0, completedAmount: 0, settledCount: 0, bank: null, account: null });
+            toastError("정산 요약 정보를 불러오지 못했습니다.");
         }
     };
 
@@ -72,8 +75,13 @@ const SettlementTab: React.FC = () => {
         if (res && res.status === 200) {
             getSettlements();
             getSettlementSummary();
+            toastSuccess("정산 상태가 변경되었습니다.");
+        } else {
+            toastError("정산 상태 변경에 실패했습니다.");
         }
     };
+
+    {loading && <FundingLoader />}
 
     return (
         <div className="space-y-6">
@@ -143,18 +151,19 @@ const SettlementTab: React.FC = () => {
                                     <TableHead className="text-right">정산액</TableHead>
                                     <TableHead className="text-center">상태</TableHead>
                                     <TableHead className="text-center">보기</TableHead>
+                                    <TableHead className="text-center">처리</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {loading ? (
-                                    <TableRow>
-                                        <TableCell colSpan={7} className="text-center py-10">
-                                            <Loader2 className="h-4 w-4 inline-block mr-2 animate-spin" /> 불러오는 중…
-                                        </TableCell>
-                                    </TableRow>
-                                ) : list && list.items.length ? (
+                                {list && list.items.length ? (
                                     list.items.map((s) => (
-                                        <TableRow key={s.settlementId}>
+                                        <TableRow
+                                            key={s.settlementId}
+                                            className={cn(
+                                                "hover:bg-muted/50 transition-colors",
+                                                s.settlementStatus === "PAID" && "bg-emerald-50/60 dark:bg-emerald-950/20"
+                                            )}
+                                        >
                                             <TableCell>{formatDate(s.settlementDate as any)}</TableCell>
                                             <TableCell className="max-w-[240px] truncate" title={s.projectTitle ?? String(s.projectId)}>
                                                 {s.projectTitle ?? `#${s.projectId}`}
@@ -162,36 +171,64 @@ const SettlementTab: React.FC = () => {
                                             <TableCell className="max-w-[200px] truncate" title={s.creatorName ?? String(s.creatorId)}>
                                                 {s.creatorName ?? `#${s.creatorId}`}
                                             </TableCell>
-                                            <TableCell className="text-right">{formatPrice(s.totalAmount)}</TableCell>
-                                            <TableCell className="text-right">{formatPrice(s.fee)}</TableCell>
-                                            <TableCell className="text-right font-medium flex items-center justify-end gap-2">
-                                                {formatPrice(s.settlementAmount)}
+
+                                            {/* 금액 부분: 총금액 + 수수료 + 정산액 */}
+                                            <TableCell className="text-right">
+                                                <span className="text-sm text-muted-foreground">
+                                                    {formatPrice(s.totalAmount)}
+                                                </span>
                                             </TableCell>
-                                            <TableCell className="text-center">{statusBadge(s.settlementStatus as SettlementStatus)}</TableCell>
+                                            <TableCell className="text-right space-y-1">
+                                                <span className="text-xs text-gray-400">
+                                                    {formatPrice(s.fee)}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                {s.settlementStatus === "PAID" ? (
+                                                    <span className="text-base font-semibold text-emerald-500">
+                                                        {formatPrice(s.settlementAmount)}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-base font-semibold text-red-500 dark:text-red-500">
+                                                        {formatPrice(s.settlementAmount)}
+                                                    </span>
+                                                )}
+                                            </TableCell>
+
                                             <TableCell className="text-center">
-                                                <Button variant="outline" size="sm" onClick={() => setSelected(s)}>상세보기</Button>
+                                                {statusBadge(s.settlementStatus as SettlementStatus)}
                                             </TableCell>
-                                            <TableCell className="text-right font-medium flex items-center justify-end gap-2">
-                                                {formatPrice(s.settlementAmount)}
+
+                                            <TableCell className="text-center">
+                                                <button
+                                                    onClick={() => setSelected(s)}
+                                                    className="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-muted/50 hover:text-primary transition"
+                                                    aria-label="상세보기"
+                                                >
+                                                    <Eye className="h-4 w-4" />
+                                                </button>
+                                            </TableCell>
+
+                                            <TableCell className="text-center">
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
-                                                        <button className="inline-flex items-center">
-                                                            {statusBadge(s.settlementStatus as any)}
+                                                        <Button variant="secondary" size="sm" className="inline-flex items-center">
+                                                            상태 변경
                                                             <ChevronsUpDown className="ml-1 h-3 w-3 opacity-60" />
-                                                        </button>
+                                                        </Button>
                                                     </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end" className="w-32">
+                                                    <DropdownMenuContent align="end" className="w-36">
                                                         <DropdownMenuItem
                                                             disabled={s.settlementStatus === "WAITING"}
                                                             onClick={() => updateSettlementStatus(s.settlementId, s.projectId, s.creatorId, "WAITING")}
                                                         >
-                                                            지급대기
+                                                            <Clock className="mr-2 h-4 w-4" /> 지급대기
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem
                                                             disabled={s.settlementStatus === "PAID"}
                                                             onClick={() => updateSettlementStatus(s.settlementId, s.projectId, s.creatorId, "PAID")}
                                                         >
-                                                            지급완료
+                                                            <CheckCircle2 className="mr-2 h-4 w-4" /> 지급완료
                                                         </DropdownMenuItem>
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
@@ -199,7 +236,11 @@ const SettlementTab: React.FC = () => {
                                         </TableRow>
                                     ))
                                 ) : (
-                                    <TableRow><TableCell colSpan={7} className="text-center py-10">정산 내역이 없습니다.</TableCell></TableRow>
+                                    <TableRow>
+                                        <TableCell colSpan={7} className="text-center py-10">
+                                            정산 내역이 없습니다.
+                                        </TableCell>
+                                    </TableRow>
                                 )}
                             </TableBody>
                         </Table>

@@ -2,7 +2,7 @@ import { Progress } from "@/components/ui/progress";
 
 type Step = { id: number; title: string; description: string };
 
-export function CreateProjectStepper({
+export function EditProjectStepper({
     steps, currentStep, progress, title = "프로젝트 만들기"
 }: { steps: Step[]; currentStep: number; progress: number, title?: string }) {
     return (

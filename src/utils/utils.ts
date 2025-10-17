@@ -53,18 +53,6 @@ export const toWon = (amount?: number): string => {
 }
 
 /**
- * @description 한국 표준시(KST)로 해당 날짜의 23:59:59 시각을 반환
- * @param {string | Date} date 날짜 문자열 또는 Date 객체
- * @returns {Date} 해당 날짜의 23:59:59 시각을 나타내는 Date 객체
- * @example
- * toKstEndOfDay("2023-10-05") // 2023-10-05T23:59:59+09:00
- * toKstEndOfDay(new Date("2023-10-05")) // 2023-10-05T23:59:59+09:00
- */
-function toKstEndOfDay(date: string | Date): Date {
-    return new Date(`${date}T23:59:59+09:00`);
-}
-
-/**
  * @description 특정 날짜까지 남은 일수를 계산하여 문자열로 반환
  * @param {string | Date} date 날짜 문자열 또는 Date 객체
  * @return {string} 남은 일수를 나타내는 문자열 (예: "5"), 이미 지난 날짜인 경우 "0", 잘못된 날짜 포맷인 경우 "-"
@@ -72,7 +60,7 @@ function toKstEndOfDay(date: string | Date): Date {
  * getDaysLeft("2023-10-10") // "5" (오늘이 2023-10-05인 경우)
  */
 export function getDaysLeft(date: string | Date): string {
-    const end = toKstEndOfDay(date);
+    const end = new Date(date);
     const diffMs = end.getTime() - Date.now();
 
     if (diffMs <= 0) return "0";
@@ -139,8 +127,10 @@ export const getDaysBefore = (date: string | Date): string => {
  * @param {string | Date} date 날짜 문자열 또는 Date 객체
  * @returns {string} "YYYY-MM-DD" 형식의 날짜 문자열
  */
-export const formatDate = (date: string | Date): string => {
+export const formatDate = (date: string | Date | null): string => {
+    if (!date) return "";
     const d = new Date(date);
+    if (isNaN(d.getTime())) return "";
 
     if (isNaN(d.getTime())) {
         console.log("잘못된 날짜 포맷");
@@ -195,6 +185,9 @@ export const formatNumber = (num: number, locale: string = 'ko-KR'): string => {
 export const formatPrice = (price: number): string => {
     return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(price);
 }
+
+// 문자길이 byte로
+export const getByteLen = (s: string) => new TextEncoder().encode(s).length;
 
 /**
  * @description 파일 경로를 공개 URL로 변환

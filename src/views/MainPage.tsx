@@ -14,6 +14,7 @@ export const img = "https://gongu.copyright.or.kr/gongu/wrt/cmmn/wrtFileImageVie
 export default function Main() {
     const [cookie] = useCookies();
     const [featuredProjects, setFeaturedProjects] = useState<Featured[]>([]);
+    const navigate = useNavigate();
 
     /**
      * @description 주목할 만한 프로젝트 불러오기
@@ -32,23 +33,21 @@ export default function Main() {
     }, []);
 
     return (
-        // TODO: max-w-[1160px] -> container
-        <div className="mx-auto max-w-[1160px] px-4 py-6 space-y-10">
-            {/* 좌측: Hero + 주목할 만한 프로젝트 / 우측: 인기 프로젝트 사이드바 */}
-            {/* TODO: gap-15 -> gap-?? */}
-            <div className="grid grid-cols-1 gap-15 lg:grid-cols-[1fr_320px] lg:items-start">
-                <div className="space-y-8">
+        <div className="mx-auto max-w-[1232px] py-6 space-y-5">
+            <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1fr_320px] lg:items-start">
+                <div className="divide-y divide-border">
                     <Hero />
-
-                    <section className="space-y-4 mt-0">
-                        <div className="flex items-end justify-between">
-                            <div>
-                                <h3 className="text-lg font-semibold md:text-xl">주목할 만한 프로젝트</h3>
-                                <p className="text-sm text-muted-foreground">오늘 뜨는 프로젝트를 만나보세요.</p>
+                    <section className="space-y-4 pt-8">
+                        <div className="border-b pb-3">
+                            <div className="flex items-end justify-between pt-10">
+                                <div>
+                                    <h3 className="text-lg font-semibold md:text-xl">주목할 만한 프로젝트</h3>
+                                    <p className="text-sm text-muted-foreground">오늘 뜨는 프로젝트를 만나보세요.</p>
+                                </div>
+                                <Button variant="ghost" className="h-8 px-2 text-xs" onClick={() => navigate("/project")}>
+                                    전체보기 <ChevronRight className="ml-1 h-4 w-4" />
+                                </Button>
                             </div>
-                            <Button variant="ghost" className="h-8 px-2 text-xs">
-                                전체보기 <ChevronRight className="ml-1 h-4 w-4" />
-                            </Button>
                         </div>
                         <div className="grid grid-cols-2 gap-7 md:grid-cols-3 lg:grid-cols-4">
                             {featuredProjects.map((it) => (
@@ -57,13 +56,9 @@ export default function Main() {
                         </div>
                     </section>
                 </div>
-
                 <PopularSidebar />
             </div>
-
-            <Separator />
-
-            {!cookie.accessToken && (
+            {cookie.accessToken && (
                 <RecentView title="최근 본 프로젝트" />
             )}
         </div>
@@ -73,8 +68,8 @@ export default function Main() {
 /* -------------------------------- Hero ----------------------------------- */
 function Hero() {
     return (
-        <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
-            <div className="relative h-[220px] md:h-[260px] rounded-t-xl bg-zinc-200 dark:bg-zinc-800" />
+        <div className="rounded-sm border bg-card text-card-foreground shadow-sm h-[450px]">
+            <div className="relative h-[350px] rounded-sm bg-zinc-200 dark:bg-zinc-800" />
             <div className="flex items-center justify-between px-5 py-4">
                 <div>
                     <h2 className="text-xl md:text-2xl font-semibold leading-tight">메인메인 메인 메인메인 메인메인</h2>
@@ -123,39 +118,55 @@ function PopularSidebar() {
     }
 
     return (
-        // TODO: pl-7 -> pl-??
-        <aside className="rounded-xl border bg-card p-4 pl-7 h-full flex flex-col">
-            <div className="mb-3 flex items-center justify-between">
+        <aside className="rounded-sm h-full flex flex-col lg:border-l border-border lg:pl-10">
+            <div className="mb-2 flex items-center justify-between">
                 <h3 className="text-sm font-semibold">인기 프로젝트</h3>
-                <Button variant="ghost" className="h-6 px-1 text-xs">전체보기</Button>
+                <Button variant="ghost" className="h-6 px-1 text-xs" onClick={() => navigate("/project")}>
+                    전체보기
+                </Button>
             </div>
-            <p className="mb-2 text-[11px] text-muted-foreground">{new Date().toLocaleString()} 기준</p>
+            <p className="mb-3 text-[11px] text-muted-foreground">{new Date().toLocaleString()} 기준</p>
 
-            <div className="space-y-5">
-                {recentProjects.length == 0 && <p className="text-sm text-muted-foreground">인기 프로젝트이 없습니다.</p>}
-                {recentProjects.length > 0 && recentProjects.map((it, idx) => (
-                    <div key={it.projectId} className="flex gap-3 cursor-pointer" onClick={() => onClickCard(it.projectId)}>
-                        {/* 썸네일 */}
-                        <div className="relative size-20 shrink-0 overflow-hidden rounded-lg bg-muted group">
-                            {/* <img src={it.thumbnail} className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-115" /> */}
-                            <img src={img} className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-115" />
-                        </div>
+            <div className="rounded-sm">
+                {recentProjects.length === 0 && (
+                    <p className="p-4 text-sm text-muted-foreground">인기 프로젝트가 없습니다.</p>
+                )}
 
-                        {/* 정보 */}
-                        <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                <span className="font-bold text-red-600">{idx + 1}</span>
-                                <span className="truncate">{it.creatorName ?? "크리에이터"}</span>
+                {recentProjects.length > 0 &&
+                    recentProjects.map((it, idx) => (
+                        <div
+                            key={it.projectId}
+                            className="flex gap-4 cursor-pointer py-2"
+                            onClick={() => onClickCard(it.projectId)}
+                        >
+                            <div className="relative w-28 h-28 shrink-0 overflow-hidden rounded-md bg-muted group">
+                                <img
+                                    src={img}
+                                    className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-110"
+                                />
                             </div>
-                            <p className="line-clamp-2 text-sm font-medium leading-snug">{it.title}</p>
-                            <div className="mt-1 font-semibold text-red-600 flex flex-wrap gap-2 text-xs">{it.percentNow}% 달성</div>
-                            <div className="mt-1 flex flex-wrap gap-2 text-[10px] font-bold whitespace-nowrap h-[18px]">
-                                <div className="text-muted-foreground px-2 bg-[#f0f0f0]">{toWonPlus(it.currAmount)}</div>
-                                <div className="text-muted-foreground px-2 bg-[#f0f0f0]">{getDaysLeft(it.endDate)}일 남음</div>
+
+                            <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1 text-[13px] text-muted-foreground">
+                                    <span className="font-bold text-red-600">{idx + 1}</span>
+                                    <span className="truncate text-[10px]">{it.creatorName ?? "크리에이터"}</span>
+                                </div>
+
+                                <p className="line-clamp-2 text-base text-[14px] font-normal leading-relaxed">
+                                    {it.title}
+                                </p>
+                                <div className="mt-1 font-medium text-red-600 text-sm">{it.percentNow}% 달성</div>
+                                <div className="mt-1 flex flex-wrap gap-2 text-[11px] font-bold whitespace-nowrap h-[22px]">
+                                    <div className="text-muted-foreground px-2 py-[2px] bg-[#f0f0f0] rounded">
+                                        {toWonPlus(it.currAmount)}
+                                    </div>
+                                    <div className="text-muted-foreground px-2 py-[2px] bg-[#f0f0f0] rounded">
+                                        {getDaysLeft(it.endDate)}일 남음
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                ))}
+                    ))}
             </div>
         </aside>
     );
@@ -168,9 +179,6 @@ export function RecentView({ title, perRow = 5, }: { title?: string; perRow?: nu
     const pages = useMemo(() => chunk(recentView ?? [], perRow), [recentView, perRow]);
     const [page, setPage] = useState(0);
     const [cookie] = useCookies();
-
-    // 로그인 상태가 아니면 최근 본 프로젝트를 불러오지 않음
-    if (!cookie.accessToken) return <></>;
 
     /**
      * @description 최근 본 프로젝트 불러오기
@@ -186,7 +194,7 @@ export function RecentView({ title, perRow = 5, }: { title?: string; perRow?: nu
 
     useEffect(() => {
         getRecentViewProjects();
-    }, []);
+    }, [cookie.accessToken]);
 
     const canPrev = page > 0;
     const canNext = page < Math.max(pages.length - 1, 0);
@@ -207,8 +215,11 @@ export function RecentView({ title, perRow = 5, }: { title?: string; perRow?: nu
         return () => el.removeEventListener("keydown", onKey);
     }, [goPrev, goNext]);
 
+    if (!recentView || recentView.length === 0) return <></>;
+
     return (
         <section className="space-y-4" ref={wrapRef} tabIndex={0}>
+            <Separator />
             <div className="flex items-center justify-between">
                 <h4 className="text-base font-semibold">{title}</h4>
                 {pages.length > 1 && (
@@ -230,7 +241,6 @@ export function RecentView({ title, perRow = 5, }: { title?: string; perRow?: nu
                 <div className="flex transition-transform duration-300 ease-in-out" style={{ transform: `translateX(-${page * 100}%)` }}>
                     {pages.map((group, idx) => (
                         <div key={idx} className="w-full shrink-0 px-0">
-                            {/* TODO: gap-10 -> gap-?? */}
                             <div className="grid grid-cols-2 gap-10 md:grid-cols-3 lg:grid-cols-5">
                                 {group.map((it) => (
                                     <ProjectCard items={it} key={it.projectId} />
@@ -256,7 +266,7 @@ export function ProjectCard({ items }: { items: any; }) {
     {
         return (
             <div className="overflow-hidden cursor-pointer" onClick={() => onClickCard(items.projectId)}>
-                <div className="relative aspect-[1] w-full overflow-hidden rounded-lg group">
+                <div className="relative aspect-[1] w-full overflow-hidden rounded-sm group">
                     {/* <img src={items.thumbnail} alt={items.title} className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-115" /> */}
                     <img src={img} alt={items.title} className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-115" />
                     <button aria-label="찜" className="absolute right-2 top-2 bg-transparent p-2">
@@ -265,13 +275,13 @@ export function ProjectCard({ items }: { items: any; }) {
                 </div>
                 <div className="space-y-1 py-3">
                     <p className="text-[11px] text-muted-foreground m-0">{items.creatorName}</p>
-                    <p className="line-clamp-1 text-[14px] font-medium leading-snug text-ellipsis m-0">{items.title}</p>
+                    <p className="line-clamp-1 text-sm leading-snug text-ellipsis m-0">{items.title}</p>
                     <div className="flex items-center justify-between pt-1 text-xs">
-                        <div className="text-[14px] font-bold text-red-600 bg-none">{items.percentNow}% 달성</div>
+                        <div className="text-[14px] font-medium text-red-600 bg-none">{items.percentNow}% 달성</div>
                     </div>
                     <div className="mt-1 flex flex-wrap gap-2 text-[10px] font-bold whitespace-nowrap h-[18px]">
-                        {items.endDate && <span className="text-muted-foreground px-2 bg-[#f0f0f0]">{getDaysLeft(items.endDate)}일 남음</span>}
-                        {items.currAmount && <span className="text-muted-foreground px-2 bg-[#f0f0f0]">{toWonPlus(items.currAmount)}</span>}
+                        {items.endDate && <span className="text-muted-foreground px-1 bg-[#f0f0f0]">{getDaysLeft(items.endDate)}일 남음</span>}
+                        {items.currAmount && <span className="text-muted-foreground px-1 bg-[#f0f0f0]">{toWonPlus(items.currAmount)}</span>}
                     </div>
                 </div>
             </div>
