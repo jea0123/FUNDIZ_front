@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Loader2, Search, CheckCircle2, Clock, ChevronsUpDown, Download, Eye } from "lucide-react";
+import { Search, CheckCircle2, Clock, ChevronsUpDown, Download, Eye } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -12,8 +12,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { formatDate, formatNumber, formatPrice, toastError, toastSuccess } from "@/utils/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { PageResult } from "@/types/projects";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import FundingLoader from "@/components/FundingLoader";
 
 export type SettlementStatus = "WAITING" | "PAID";
 
@@ -80,6 +80,8 @@ const SettlementTab: React.FC = () => {
             toastError("정산 상태 변경에 실패했습니다.");
         }
     };
+
+    {loading && <FundingLoader />}
 
     return (
         <div className="space-y-6">
@@ -182,9 +184,15 @@ const SettlementTab: React.FC = () => {
                                                 </span>
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <span className="text-base font-semibold text-emerald-600 dark:text-emerald-400">
-                                                    {formatPrice(s.settlementAmount)}
-                                                </span>
+                                                {s.settlementStatus === "PAID" ? (
+                                                    <span className="text-base font-semibold text-emerald-500">
+                                                        {formatPrice(s.settlementAmount)}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-base font-semibold text-red-500 dark:text-red-500">
+                                                        {formatPrice(s.settlementAmount)}
+                                                    </span>
+                                                )}
                                             </TableCell>
 
                                             <TableCell className="text-center">
