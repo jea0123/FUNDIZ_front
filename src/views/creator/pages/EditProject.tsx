@@ -8,7 +8,7 @@ import type { RewardDraft, RewardForm } from '@/types/reward';
 import type { Category } from '@/types/admin';
 import FundingLoader from '@/components/FundingLoader';
 import { useNavigate, useParams } from 'react-router-dom';
-import type { ContentBlocks, ProjectCreateRequestDto } from '@/types/creator';
+import type { ContentBlocks } from '@/types/creator';
 import { assertValidReward, validateReward, type RewardFieldErrors } from '@/types/reward-validator';
 import { EditProjectSteps, type CreateProjectViewModel } from '../components/EditProjectSteps';
 import { EditProjectStepper } from '../components/EditProjectStepper';
@@ -35,8 +35,8 @@ export type ProjectFieldErrors = Partial<{
 
 const STEPS = [
     { id: 1, title: "프로젝트 정보", description: "기본 정보 입력" },
-    { id: 2, title: "프로젝트 소개", description: "프로젝트 본문 입력" },
-    { id: 3, title: "프로젝트 설정", description: '목표 금액 및 기간 설정' },
+    { id: 2, title: "프로젝트 설정", description: '목표 금액 및 기간 설정' },
+    { id: 3, title: "프로젝트 소개", description: "프로젝트 본문 입력" },
     { id: 4, title: "리워드 설계", description: "후원자 리워드 구성" },
     { id: 5, title: "창작자 정보", description: "창작자 기본 정보" },
     { id: 6, title: "검토 및 제출", description: "프로젝트 요약 및 심사 안내" },
@@ -48,16 +48,18 @@ const PROJECT_RULES = {
     MIN_CONTENT_LEN: 30,
     MAX_CONTENT_LEN: 3000,
     MIN_GOAL_AMOUNT: 10_000,
+    MAX_GOAL_AMOUNT: 2_000_000_000,
     MIN_DAYS: 7,
     MAX_DAYS: 60,
     MIN_START_LEAD_DAYS: 7,
+    MAX_THUMBNAIL_LEN: 500,
     MAX_TAGS: 10,
     MIN_TAG_LEN: 2,
     MAX_TAG_LEN: 20,
 } as const;
 
 const DAY = 1000 * 60 * 60 * 24;
-const stripTime = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+export const stripTime = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
 /* -------------------------------- Utils -------------------------------- */
 
@@ -89,7 +91,7 @@ const cleanTags = (list: any): string[] => {
 // contentBlocks 문자열/객체 대응
 const parseBlocks = (input?: string | ContentBlocks | null | undefined): ContentBlocks => {
     if (input == null) return { blocks: [] };
-    
+
     // 문자열로 온 경우
     const s = String(input).trim();
     if (!s) return { blocks: [] };
@@ -112,7 +114,7 @@ const addDays = (date: Date, days: number) => {
 
 /* ---------------------------- Validaators / builders ---------------------------- */
 
-const validateProject = (p: ProjectCreateRequestDto & {
+const validateProject = (p: CreateProjectViewModel & {
     thumbnailPreviewUrl?: string;
     businessDocPreviewUrl?: string;
     businessNum?: string | null;
@@ -121,6 +123,8 @@ const validateProject = (p: ProjectCreateRequestDto & {
     const R = PROJECT_RULES;
     const errors: ProjectFieldErrors = {};
 
+    // 1단계
+    if (!p.ctgrId) errors.ctgrId = "카테고리를 선택해주세요.";
     if (!p.subctgrId) errors.subctgrId = "세부카테고리를 선택해주세요.";
 
     const title = (p.title ?? "").trim();
@@ -130,13 +134,58 @@ const validateProject = (p: ProjectCreateRequestDto & {
 
     const hasThumbnail = (p.thumbnail instanceof File) || !!p.thumbnailPreviewUrl;
     if (!hasThumbnail) {
-        errors.thumbnail = "대표 이미지를 업로드해주세요.";
+        errors.thumbnail = "대표 이미지를 첨부해주세요.";
     }
 
     const tags = cleanTags(p.tagList);
     if (tags.length > R.MAX_TAGS) errors.tagList = `태그는 최대 ${R.MAX_TAGS}개까지 가능합니다.`;
     if (tags.some(t => t.trim().length < R.MIN_TAG_LEN)) errors.tagList = `태그는 최소 ${R.MIN_TAG_LEN}자 이상이어야 합니다.`;
 
+    // 2단계
+    if (!p.goalAmount || p.goalAmount < R.MIN_GOAL_AMOUNT) {
+        errors.goalAmount = `목표 금액은 최소 ${R.MIN_GOAL_AMOUNT.toLocaleString()}원 이상이어야 합니다.`;
+    } else if (p.goalAmount > R.MAX_GOAL_AMOUNT) {
+        errors.goalAmount = `목표 금액은 최대 ${R.MAX_GOAL_AMOUNT.toLocaleString()}원 이하이어야 합니다.`;
+    }
+
+    const asValidDate = (v: unknown) =>
+        v instanceof Date && !isNaN(v.getTime()) ? stripTime(v) : null;
+
+    const start = asValidDate(p.startDate);
+    const end = asValidDate(p.endDate);
+
+    if (!start || !end) {
+        if (!start) errors.startDate = "시작일을 선택해주세요.";
+        if (!end) errors.endDate = "종료일을 선택해주세요.";
+        return { ok: Object.keys(errors).length === 0, errors };
+    }
+
+    if (start > end) {
+        errors.startDate = "시작일은 종료일 이전이어야 합니다.";
+        errors.endDate = "종료일은 시작일 이후여야 합니다.";
+    }
+
+    const days = Math.floor((end.getTime() - start.getTime()) / DAY) + 1;
+    if (days < R.MIN_DAYS || days > R.MAX_DAYS) {
+        errors.endDate = `펀딩 기간은 최소 ${R.MIN_DAYS}일, 최대 ${R.MAX_DAYS}일까지 가능합니다.`;
+    }
+
+    const isEditMode = !!p.projectId && Number(p.projectId) > 0;
+    const today = stripTime(new Date());
+    const minStart = new Date(today);
+    minStart.setDate(minStart.getDate() + R.MIN_START_LEAD_DAYS);
+
+    if (isEditMode) {
+        if (start < today) {
+            errors.startDate = "시작일이 이미 지났습니다. 일정을 조정하세요.";
+        }
+    } else {
+        if (start < minStart) {
+            errors.startDate = `시작일은 오늘로부터 최소 ${R.MIN_START_LEAD_DAYS}일 이후여야 합니다.`;
+        }
+    }
+
+    // 3단계
     const content = (p.content ?? "").trim();
     if (content.length < R.MIN_CONTENT_LEN || content.length > R.MAX_CONTENT_LEN) {
         errors.content = `내용은 ${R.MIN_CONTENT_LEN}~${R.MAX_CONTENT_LEN}자여야 합니다.`;
@@ -149,33 +198,7 @@ const validateProject = (p: ProjectCreateRequestDto & {
         errors.contentBlocks = "프로젝트 소개를 추가해주세요. (이미지 또는 텍스트 1개 이상)";
     }
 
-    if (!p.goalAmount || p.goalAmount < R.MIN_GOAL_AMOUNT) {
-        errors.goalAmount = `목표 금액은 최소 ${R.MIN_GOAL_AMOUNT.toLocaleString()}원 이상이어야 합니다.`;
-    }
-
-    const start = stripTime(new Date(p.startDate));
-    const end = stripTime(new Date(p.endDate));
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-        if (isNaN(start.getTime())) errors.startDate = "시작일을 입력해주세요.";
-        if (isNaN(end.getTime())) errors.endDate = "종료일을 입력해주세요.";
-    } else {
-        if (start > end) {
-            errors.startDate = "시작일은 종료일 이전이어야 합니다.";
-            errors.endDate = "종료일은 시작일 이후여야 합니다.";
-        }
-        const days = Math.floor((end.getTime() - start.getTime()) / DAY) + 1;
-        if (days < R.MIN_DAYS || days > R.MAX_DAYS) {
-            errors.endDate = `펀딩 기간은 ${R.MIN_DAYS}~${R.MAX_DAYS}일이어야 합니다.`;
-        }
-        const today = stripTime(new Date());
-        const minStart = new Date(today);
-        minStart.setDate(minStart.getDate() + R.MIN_START_LEAD_DAYS);
-        if (start < today) errors.startDate = "시작일이 이미 지났습니다. 일정을 조정하세요.";
-        else if (start < minStart) {
-            errors.startDate = `시작일은 오늘로부터 최소 ${R.MIN_START_LEAD_DAYS}일 이후여야 합니다.`;
-        }
-    }
-
+    // 5단계
     const hasBizNum = !!(p.businessNum && String(p.businessNum).trim());
     const hasBizDoc = (p.businessDoc instanceof File) || !!p.businessDocPreviewUrl;
     if (hasBizNum && !hasBizDoc) {
@@ -187,7 +210,7 @@ const validateProject = (p: ProjectCreateRequestDto & {
 
 const validateByStep = (
     step: number,
-    p: ProjectCreateRequestDto & {
+    p: CreateProjectViewModel & {
         thumbnailPreviewUrl?: string;
         businessDocPreviewUrl?: string;
         businessNum?: string | null;
@@ -203,12 +226,12 @@ const validateByStep = (
         if (all.title) stepErrors.title = all.title;
         if (all.thumbnail) stepErrors.thumbnail = all.thumbnail;
     } else if (step === 2) {
-        if (all.content) stepErrors.content = all.content;
-        if (all.contentBlocks) stepErrors.contentBlocks = all.contentBlocks;
-    } else if (step === 3) {
         if (all.goalAmount) stepErrors.goalAmount = all.goalAmount;
         if (all.startDate) stepErrors.startDate = all.startDate;
         if (all.endDate) stepErrors.endDate = all.endDate;
+    } else if (step === 3) {
+        if (all.content) stepErrors.content = all.content;
+        if (all.contentBlocks) stepErrors.contentBlocks = all.contentBlocks;
     } else if (step === 5) {
         if (all.businessDoc) stepErrors.businessDoc = all.businessDoc;
     }
@@ -216,8 +239,16 @@ const validateByStep = (
     return { ok: Object.keys(stepErrors).length === 0, projectStepErrors: stepErrors };
 };
 
-const buildFormData = (
-    project: ProjectCreateRequestDto,
+const appendAll = (fd: FormData, key: string, values?: (string | number | null | undefined)[]) => {
+    if (!values) return;
+    values.forEach(v => {
+        if (v === null || v === undefined) return;
+        fd.append(key, String(v));
+    });
+};
+
+export const buildFormData = (
+    project: CreateProjectViewModel,
     rewards: RewardForm[],
 ) => {
     const fd = new FormData();
@@ -225,10 +256,10 @@ const buildFormData = (
     fd.append("subctgrId", String(project.subctgrId ?? 0));
     fd.append("title", project.title ?? "");
     fd.append("goalAmount", String(project.goalAmount ?? 0));
-    fd.append("startDate", formatDate(project.startDate as any));
-    fd.append("endDate", formatDate(project.endDate as any));
+    fd.append("startDate", formatDate(project.startDate));
+    fd.append("endDate", formatDate(project.endDate));
     fd.append("content", project.content ?? "");
-    fd.append("contentBlocks", JSON.stringify(project.contentBlocks ?? { blocks: [] })); // 상세 설명(JSON)
+    fd.append("contentBlocks", JSON.stringify(project.contentBlocks ?? { blocks: [] }));
 
     if (project.thumbnail instanceof File) {
         fd.append("thumbnail", project.thumbnail);
@@ -237,14 +268,14 @@ const buildFormData = (
         fd.append("businessDoc", project.businessDoc);
     }
 
-    cleanTags(project.tagList).forEach(t => fd.append("tagList", t));
+    appendAll(fd, "tagList", cleanTags(project.tagList));
 
     rewards.forEach((r, i) => {
-        const v = assertValidReward(r, { fundingEndDate: project.endDate });
+        const v = assertValidReward(r, { fundingEndDate: project.endDate ?? undefined });
         fd.append(`rewardList[${i}].rewardName`, v.rewardName);
         fd.append(`rewardList[${i}].price`, String(v.price));
         fd.append(`rewardList[${i}].rewardContent`, v.rewardContent);
-        fd.append(`rewardList[${i}].deliveryDate`, formatDate(v.deliveryDate as any));
+        fd.append(`rewardList[${i}].deliveryDate`, formatDate(v.deliveryDate as Date | string | null));
         fd.append(`rewardList[${i}].rewardCnt`, v.rewardCnt == null ? "" : String(v.rewardCnt));
         fd.append(`rewardList[${i}].isPosting`, v.isPosting);
     });
@@ -296,19 +327,19 @@ export default function EditProject() {
         subctgrId: 0,
         creatorId: 0,
         title: "",
-        content: "",
-        thumbnail: null,
         goalAmount: 0,
-        startDate: addDays(new Date(), PROJECT_RULES.MIN_START_LEAD_DAYS),
-        endDate: addDays(addDays(new Date(), PROJECT_RULES.MIN_START_LEAD_DAYS), PROJECT_RULES.MIN_DAYS - 1),
+        startDate: null,
+        endDate: null,
+        content: "",
+        contentBlocks: { blocks: [] }, // EditorJS JSON,
+        thumbnail: null,
+        businessDoc: null,
         tagList: [],
         rewardList: [],
         creatorName: "",
         businessNum: "",
         email: "",
         phone: "",
-        businessDoc: null,
-        contentBlocks: { blocks: [] }, // EditorJS JSON,
         thumbnailPreviewUrl: undefined, // 편집 모드
         businessDocPreviewUrl: undefined, // 편집 모드
     });

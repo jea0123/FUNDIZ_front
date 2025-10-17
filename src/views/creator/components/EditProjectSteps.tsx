@@ -20,13 +20,19 @@ import type { RewardFieldErrors } from "@/types/reward-validator";
 
 /* -------------------------------- Type -------------------------------- */
 
-export type CreateProjectViewModel = ProjectCreateRequestDto & {
+export type CreateProjectViewModel = Omit<
+    ProjectCreateRequestDto,
+    "startDate" | "endDate" | "thumbnail" | "businessDoc"
+> & {
+    startDate: Date | null;
+    endDate: Date | null;
+    thumbnail: File | null;
+    businessDoc: File | null;
     creatorName: string;
     businessNum: string;
     email: string;
     phone: string;
     thumbnailPreviewUrl?: string;
-    businessDoc?: File | null;
     businessDocPreviewUrl?: string;
 };
 
@@ -79,7 +85,10 @@ export function EditProjectSteps(props: StepsProps) {
                         <Label htmlFor="category">카테고리 *</Label>
                         <Select
                             value={project.ctgrId ? String(project.ctgrId) : undefined}
-                            onValueChange={(value) => setProject(prev => ({ ...prev, ctgrId: Number(value), subctgrId: 0 }))}
+                            onValueChange={(value) => {
+                                setProject(prev => ({ ...prev, ctgrId: Number(value), subctgrId: 0 }))
+                                clearProjectError?.("ctgrId");
+                            }}
                         >
                             <SelectTrigger id="category" className="w-full">
                                 <SelectValue placeholder="카테고리 선택" />
@@ -90,6 +99,7 @@ export function EditProjectSteps(props: StepsProps) {
                                 )}
                             </SelectContent>
                         </Select>
+                        {projectErrors?.ctgrId && <p className="mt-1 text-sm text-red-600">{projectErrors.ctgrId}</p>}
                     </div>
 
                     <div className="min-w-0">
@@ -113,9 +123,7 @@ export function EditProjectSteps(props: StepsProps) {
                                         </SelectItem>
                                     ))
                                 ) : (
-                                    <div className="px-2 py-3 text-sm text-muted-foreground">
-                                        선택한 카테고리에 해당하는 세부카테고리가 없습니다.
-                                    </div>
+                                    <SelectItem value="__none" disabled>선택한 카테고리에 해당 세부카테고리가 없습니다</SelectItem>
                                 )}
                             </SelectContent>
                         </Select>
@@ -178,6 +186,142 @@ export function EditProjectSteps(props: StepsProps) {
     }
 
     if (step === 2) {
+        const MIN_DAYS = 7;
+        const MAX_DAYS = 60;
+        const END_MIN_OFFSET = MIN_DAYS - 1;
+        const END_MAX_OFFSET = MAX_DAYS - 1;
+        const MIN_START_LEAD_DAYS = 7;
+
+        const hasStart = project.startDate instanceof Date && !isNaN(project.startDate.getTime());
+        const hasEnd = project.endDate instanceof Date && !isNaN(project.endDate.getTime());
+        const showLeadHint = hasStart;
+        const showDurationHint = hasStart && hasEnd;
+
+        const isEditMode = !!project.projectId && Number(project.projectId) > 0;
+
+        const strip = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        const today = strip(new Date());
+
+        // 포함 일수 계산
+        const daysInclusive = (s?: Date | null, e?: Date | null) => {
+            if (!s || !e) return null;
+            const start = strip(s);
+            const end = strip(e);
+            return Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        };
+
+        const duration = daysInclusive(project.startDate, project.endDate);
+        const isDurationInvalid = duration !== null && (duration < MIN_DAYS || duration > MAX_DAYS);
+
+        const minStartLeadDate = new Date(today);
+        minStartLeadDate.setDate(minStartLeadDate.getDate() + MIN_START_LEAD_DAYS);
+        const minStartLeadStr = formatDate(minStartLeadDate);
+
+        const startDateStripped = project.startDate ? strip(project.startDate) : undefined;
+        const isStartPast = !!startDateStripped && startDateStripped < today;
+
+        const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const raw = e.target.value;
+            if (!raw) {
+                setProject(prev => ({ ...prev, startDate: null, endDate: null }));
+                return;
+            }
+            let picked = parseLocalDate(raw);
+
+            if (!isEditMode && picked < today) picked = new Date(minStartLeadDate);
+
+            const minEnd = addDays(picked, END_MIN_OFFSET);
+            const maxEnd = addDays(picked, END_MAX_OFFSET);
+
+            let nextEnd = project.endDate ?? minEnd;
+            if (nextEnd < minEnd) nextEnd = minEnd;
+            if (nextEnd > maxEnd) nextEnd = maxEnd;
+
+            setProject(prev => ({ ...prev, startDate: picked, endDate: nextEnd }));
+            clearProjectError?.("startDate");
+            clearProjectError?.("endDate");
+        }
+
+        const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const pick = parseLocalDate(e.target.value);
+            setProject(prev => ({ ...prev, endDate: pick }));
+            clearProjectError?.("endDate");
+        };
+
+        return (
+            <div className="space-y-6">
+                <div>
+                    <Label htmlFor="goalAmount">목표 금액 *</Label>
+                    <Input
+                        id="goalAmount"
+                        placeholder="목표 금액을 입력하세요"
+                        value={project.goalAmount}
+                        onChange={(e) => {
+                            setProject(prev => ({ ...prev, goalAmount: Number(e.target.value.replace(/[^0-9]/g, "")) }));
+                            clearProjectError?.("goalAmount");
+                        }}
+                    />
+                    <p className="mt-2 text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded-md inline-block">
+                        {project.goalAmount ? `${formatPrice(project.goalAmount)}원` : ""}
+                    </p>
+                    {projectErrors.goalAmount && <p className="mt-1 text-sm text-red-600">{projectErrors.goalAmount}</p>}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <Label htmlFor="startDate">펀딩 시작일 *</Label>
+                        <Input
+                            id="startDate"
+                            type="date"
+                            min={isEditMode ? undefined : minStartLeadStr}
+                            value={project.startDate ? formatDate(project.startDate) : ""}
+                            onChange={handleStartDateChange}
+                        />
+                        {projectErrors.startDate && <p className="mt-1 text-sm text-red-600">{projectErrors.startDate}</p>}
+
+                        {!projectErrors.startDate && isEditMode && isStartPast && (
+                            <p className="mt-1 text-sm text-red-600">
+                                시작일이 이미 지났습니다. 일정을 조정하세요.
+                            </p>
+                        )}
+                    </div>
+                    <div>
+                        <Label htmlFor="endDate">펀딩 종료일 *</Label>
+                        <Input
+                            id="endDate"
+                            type="date"
+                            min={project.startDate ? formatDate(addDays(project.startDate, END_MIN_OFFSET)) : undefined}
+                            max={project.startDate ? formatDate(addDays(project.startDate, END_MAX_OFFSET)) : undefined}
+                            value={project.endDate ? formatDate(project.endDate) : ""}
+                            onChange={handleEndDateChange}
+                        />
+                        {projectErrors.endDate && <p className="mt-1 text-sm text-red-600">{projectErrors.endDate}</p>}
+                    </div>
+                </div>
+
+                {/* 기간 가이드 + 현재 선택한 기간 */}
+                <div className="mt-1 space-y-1">
+                    {showDurationHint && (
+                        <p
+                            id="funding-period-hint"
+                            className={`text-sm ${isDurationInvalid ? "text-red-600" : "text-muted-foreground"}`}
+                        >
+                            펀딩 기간은 최소 {MIN_DAYS}일, 최대 {MAX_DAYS}일까지 가능합니다.
+                            {duration !== null && <span className="ml-2 font-medium">(현재: {duration}일)</span>}
+                        </p>
+                    )}
+
+                    {showLeadHint && (
+                        <p className="text-sm text-muted-foreground">
+                            시작일은 오늘로부터 최소 {MIN_START_LEAD_DAYS}일 이후여야 합니다.
+                        </p>
+                    )}
+                </div>
+                <FeesCard goalAmount={project.goalAmount} />
+            </div>
+        );
+    }
+
+    if (step === 3) {
         const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
             const next = e.target.value;
             setProject(prev => ({ ...prev, content: next }));
@@ -215,124 +359,6 @@ export function EditProjectSteps(props: StepsProps) {
                     />
                     {projectErrors.contentBlocks && <p className="mt-1 text-sm text-red-600">{projectErrors.contentBlocks}</p>}
                 </div>
-            </div>
-        );
-    }
-
-    if (step === 3) {
-        const MIN_DAYS = 7;
-        const MAX_DAYS = 60;
-        const END_MIN_OFFSET = MIN_DAYS - 1;
-        const END_MAX_OFFSET = MAX_DAYS - 1;
-        const MIN_START_LEAD_DAYS = 7;
-
-        const strip = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-        const today = strip(new Date());
-        const todayStr = formatDate(today);
-
-        const isEditMode = !!project.projectId && Number(project.projectId) > 0;
-
-        // 포함 일수 계산
-        const daysInclusive = (s?: Date | null, e?: Date | null) => {
-            if (!s || !e) return null;
-            const start = strip(s);
-            const end = strip(e);
-            return Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-        };
-
-        const duration = daysInclusive(project.startDate, project.endDate);
-        const isDurationInvalid = duration !== null && (duration < MIN_DAYS || duration > MAX_DAYS);
-
-        const minStartLeadDate = new Date(today);
-        minStartLeadDate.setDate(minStartLeadDate.getDate() + MIN_START_LEAD_DAYS);
-
-        const startDateStripped = project.startDate ? strip(project.startDate) : undefined;
-        const isStartPast = !!startDateStripped && startDateStripped < today;
-        const isStartLeadInvalid = !!startDateStripped && startDateStripped < strip(minStartLeadDate);
-
-        const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-            let picked = parseLocalDate(e.target.value);
-
-            if (!isEditMode && picked < today) picked = today;
-
-            const newEnd = addDays(picked, END_MIN_OFFSET);
-            setProject(prev => ({ ...prev, startDate: picked, endDate: newEnd }));
-            clearProjectError?.("startDate");
-            clearProjectError?.("endDate");
-        }
-
-        const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-            const pick = parseLocalDate(e.target.value);
-            setProject(prev => ({ ...prev, endDate: pick }));
-            clearProjectError?.("endDate");
-        };
-
-        return (
-            <div className="space-y-6">
-                <div>
-                    <Label htmlFor="goalAmount">목표 금액 *</Label>
-                    <Input
-                        id="goalAmount"
-                        placeholder="목표 금액을 입력하세요"
-                        value={project.goalAmount}
-                        onChange={(e) => {
-                            setProject(prev => ({ ...prev, goalAmount: Number(e.target.value.replace(/[^0-9]/g, "")) }));
-                            clearProjectError?.("goalAmount");
-                        }}
-                    />
-                    <p className="mt-2 text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded-md inline-block">
-                        {project.goalAmount ? `${formatPrice(project.goalAmount)}원` : ""}
-                    </p>
-                    {projectErrors.goalAmount && <p className="mt-1 text-sm text-red-600">{projectErrors.goalAmount}</p>}
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <Label htmlFor="startDate">펀딩 시작일 *</Label>
-                        <Input
-                            id="startDate"
-                            type="date"
-                            min={isEditMode ? undefined : todayStr}
-                            value={project.startDate ? formatDate(project.startDate) : ""}
-                            onChange={handleStartDateChange}
-                        />
-                        {projectErrors.startDate && <p className="mt-1 text-sm text-red-600">{projectErrors.startDate}</p>}
-
-                        {!projectErrors.startDate && isStartPast && (
-                            <p className="mt-1 text-sm text-red-600">
-                                시작일이 이미 지났습니다. 일정을 조정하세요.
-                            </p>
-                        )}
-
-                        {!projectErrors.startDate && isStartLeadInvalid && (
-                            <p className="mt-1 text-sm text-red-600">
-                                시작일은 오늘로부터 최소 {MIN_START_LEAD_DAYS}일 이후여야 합니다.
-                            </p>
-                        )}
-                    </div>
-                    <div>
-                        <Label htmlFor="endDate">펀딩 종료일 *</Label>
-                        <Input
-                            id="endDate"
-                            type="date"
-                            min={project.startDate ? formatDate(addDays(project.startDate, END_MIN_OFFSET)) : undefined}
-                            max={project.startDate ? formatDate(addDays(project.startDate, END_MAX_OFFSET)) : undefined}
-                            value={project.endDate ? formatDate(project.endDate) : ""}
-                            onChange={handleEndDateChange}
-                        />
-                        {projectErrors.endDate && <p className="mt-1 text-sm text-red-600">{projectErrors.endDate}</p>}
-                    </div>
-                </div>
-
-                {/* 기간 가이드 + 현재 선택한 기간 */}
-                <p
-                    id="funding-period-hint"
-                    className={`text-sm mt-1 ${isDurationInvalid ? "text-red-600" : "text-muted-foreground"
-                        }`}
-                >
-                    펀딩 기간은 최소 {MIN_DAYS}일, 최대 {MAX_DAYS}일까지 가능합니다.
-                    {duration !== null && <span className="ml-2 font-medium">(현재: {duration}일)</span>}
-                </p>
-                <FeesCard goalAmount={project.goalAmount} />
             </div>
         );
     }
@@ -656,7 +682,7 @@ function TagEditor({
                             onMouseDown={(e) => e.preventDefault()}
                             className="ml-0.5 rounded-full p-0.5 hover:bg-foreground/10 pointer-events-auto"
                         >
-                            <X className="h-3 w-3 ml-1" onClick={() => onRemove(tag)} />
+                            <X className="h-3 w-3 ml-1" />
                         </button>
                     </Badge>
                 ))}
@@ -680,7 +706,7 @@ function FeesCard({ goalAmount }: { goalAmount: number }) {
                     </div>
                     {goalAmount > 0 && (
                         <div className="mt-2 p-2 bg-blue-50 rounded">
-                            <p>목표금액 기준 예상 수령액: {new Intl.NumberFormat("ko-KR").format(collectedAmount)}원</p>
+                            <p>목표금액 기준 예상 정산액: {new Intl.NumberFormat("ko-KR").format(collectedAmount)}원</p>
                         </div>
                     )}
                 </div>
