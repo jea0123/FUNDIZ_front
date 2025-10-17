@@ -148,10 +148,26 @@ export const formatDate = (date: string | Date | null): string => {
  * @param {string | Date} dateStr 날짜 문자열 또는 Date 객체
  * @returns {Date} "yyyy-MM-ddTHH:mm:ss" 형식의 날짜 객체
  */
-export const toIsoDateTime = (dateStr: string, endOfDay = false) => {
-    if (!dateStr) return "";
-    return endOfDay ? `${dateStr}T23:59:59` : `${dateStr}T00:00:00`;
-};
+export function toIsoDateTime(dateLike: Date | string | null | undefined, endOfDay = false): string {
+    if (!dateLike) return "";
+
+    const toYmd = (d: Date) =>
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+    let ymd: string;
+
+    if (dateLike instanceof Date) {
+        if (isNaN(dateLike.getTime())) return "";
+        ymd = toYmd(dateLike);
+    } else {
+        const s = dateLike.trim();
+        if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(s)) return s;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return "";
+        ymd = s;
+    }
+
+    return endOfDay ? `${ymd}T23:59:59` : `${ymd}T00:00:00`;
+}
 
 /**
  * @description 숫자를 한국 원화(KRW) 통화 형식으로 변환 (예: 1200 → "₩1.2K", 1000000 → "₩1M")

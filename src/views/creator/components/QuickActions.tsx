@@ -16,7 +16,7 @@ type Props = {
 
 export default function QuickActions({ project, deletingId, onDetail, onEdit, onDelete, onAddReward, onWriteNews, onManageReviews }: Props) {
     const status = project.projectStatus as Status;
-    const isOper = status === "UPCOMING" || status === "OPEN";
+    const isOpen = status === "OPEN";
 
     const publicUrl = `${window.location.origin}/project/${(project as any).slug ?? project.projectId}`;
 
@@ -64,8 +64,8 @@ export default function QuickActions({ project, deletingId, onDetail, onEdit, on
                     variant="outline"
                     size="sm"
                     onClick={() => onWriteNews?.(project.projectId)}
-                    disabled={!onWriteNews || !isOper}
-                    title={!isOper ? "오픈 예정/진행 중에서만 새소식 등록 가능" : undefined}
+                    disabled={!onWriteNews || !isOpen}
+                    title={!isOpen ? "진행 중에서만 새소식 등록 가능" : undefined}
                 >
                     <Megaphone className="h-4 w-4 mr-1" /> 새소식 등록
                 </Button>
@@ -74,8 +74,8 @@ export default function QuickActions({ project, deletingId, onDetail, onEdit, on
                     variant="outline"
                     size="sm"
                     onClick={() => onManageReviews?.(project.projectId)}
-                    disabled={!onManageReviews || !isOper}
-                    title={!isOper ? "오픈 예정/진행 중에서만 후기 관리 가능" : undefined}
+                    disabled={!onManageReviews || !isOpen}
+                    title={!isOpen ? "진행 중에서만 후기 관리 가능" : undefined}
                 >
                     <MessageSquareMore className="h-4 w-4 mr-1" /> 후기 관리
                 </Button>
