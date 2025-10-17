@@ -300,6 +300,12 @@ export function EditProjectSteps(props: StepsProps) {
 
                 {/* 기간 가이드 + 현재 선택한 기간 */}
                 <div className="mt-1 space-y-1">
+                    {showLeadHint && (
+                        <p className="text-sm text-muted-foreground">
+                            시작일은 오늘로부터 최소 {MIN_START_LEAD_DAYS}일 이후여야 합니다.
+                        </p>
+                    )}
+
                     {showDurationHint && (
                         <p
                             id="funding-period-hint"
@@ -308,13 +314,7 @@ export function EditProjectSteps(props: StepsProps) {
                             펀딩 기간은 최소 {MIN_DAYS}일, 최대 {MAX_DAYS}일까지 가능합니다.
                             {duration !== null && <span className="ml-2 font-medium">(현재: {duration}일)</span>}
                         </p>
-                    )}
-
-                    {showLeadHint && (
-                        <p className="text-sm text-muted-foreground">
-                            시작일은 오늘로부터 최소 {MIN_START_LEAD_DAYS}일 이후여야 합니다.
-                        </p>
-                    )}
+                    )}  
                 </div>
                 <FeesCard goalAmount={project.goalAmount} />
             </div>
@@ -572,7 +572,7 @@ export function EditProjectSteps(props: StepsProps) {
                         </div>
 
                         <div className="md:col-span-2">
-                            <Badge variant="secondary">프로필 수정은 &quot;창작자 프로필&quot; 화면에서 진행해주세요.</Badge>
+                            <Badge variant="secondary">변경사항은 &quot;창작자 정보 수정&quot; 화면에서 진행해주세요.</Badge>
                         </div>
                     </CardContent>
                 </Card>
@@ -633,7 +633,7 @@ export function EditProjectSteps(props: StepsProps) {
                             <p>• 프로젝트 심사는 영업일 기준 3-5일 소요됩니다.</p>
                             <p>• 심사 결과는 등록된 이메일로 안내드립니다.</p>
                             <p>• 심사 승인 후 펀딩 시작일에 자동으로 공개됩니다.</p>
-                            <p>• 심사 반려 시 수정 후 재제출이 가능합니다.</p>
+                            <p>• 심사 반려되었을 경우에는 새로운 프로젝트를 생성하셔야 합니다.</p>
                         </div>
                     </CardContent>
                 </Card>

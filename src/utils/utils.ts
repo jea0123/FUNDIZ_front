@@ -124,7 +124,7 @@ export const getDaysBefore = (date: string | Date): string => {
 
 /**
  * @description 날짜를 "YYYY-MM-DD" 형식으로 변환
- * @param {string | Date} date 날짜 문자열 또는 Date 객체
+ * @param {string | Date | null} date 날짜 문자열 또는 Date 객체 또는 null
  * @returns {string} "YYYY-MM-DD" 형식의 날짜 문자열
  */
 export const formatDate = (date: string | Date | null): string => {
@@ -142,6 +142,16 @@ export const formatDate = (date: string | Date | null): string => {
 
     return `${year}-${month}-${day}`;
 }
+
+/**
+ * @description "yyyy-MM-dd" 날짜를 "yyyy-MM-ddTHH:mm:ss" 형식으로 변환
+ * @param {string | Date} dateStr 날짜 문자열 또는 Date 객체
+ * @returns {Date} "yyyy-MM-ddTHH:mm:ss" 형식의 날짜 객체
+ */
+export const toIsoDateTime = (dateStr: string, endOfDay = false) => {
+    if (!dateStr) return "";
+    return endOfDay ? `${dateStr}T23:59:59` : `${dateStr}T00:00:00`;
+};
 
 /**
  * @description 숫자를 한국 원화(KRW) 통화 형식으로 변환 (예: 1200 → "₩1.2K", 1000000 → "₩1M")

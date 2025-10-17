@@ -13,7 +13,7 @@ import { assertValidReward, validateReward, type RewardFieldErrors } from '@/typ
 import { EditProjectSteps, type CreateProjectViewModel } from '../components/EditProjectSteps';
 import { EditProjectStepper } from '../components/EditProjectStepper';
 import { useCreatorId } from '../../../types/useCreatorId';
-import { formatDate, toPublicUrl } from '@/utils/utils';
+import { formatDate, toIsoDateTime, toPublicUrl } from '@/utils/utils';
 
 /* -------------------------------- Type -------------------------------- */
 
@@ -188,7 +188,7 @@ const validateProject = (p: CreateProjectViewModel & {
     // 3단계
     const content = (p.content ?? "").trim();
     if (content.length < R.MIN_CONTENT_LEN || content.length > R.MAX_CONTENT_LEN) {
-        errors.content = `내용은 ${R.MIN_CONTENT_LEN}~${R.MAX_CONTENT_LEN}자여야 합니다.`;
+        errors.content = `내용은 최소 ${R.MIN_CONTENT_LEN}자, 최대 ${R.MAX_CONTENT_LEN}자까지 가능합니다.`;
     }
 
     const blocks = Array.isArray((p as any)?.contentBlocks?.blocks)
@@ -247,7 +247,7 @@ const appendAll = (fd: FormData, key: string, values?: (string | number | null |
     });
 };
 
-export const buildFormData = (
+const buildFormData = (
     project: CreateProjectViewModel,
     rewards: RewardForm[],
 ) => {
@@ -256,8 +256,8 @@ export const buildFormData = (
     fd.append("subctgrId", String(project.subctgrId ?? 0));
     fd.append("title", project.title ?? "");
     fd.append("goalAmount", String(project.goalAmount ?? 0));
-    fd.append("startDate", formatDate(project.startDate));
-    fd.append("endDate", formatDate(project.endDate));
+    fd.append("startDate", toIsoDateTime(formatDate(project.startDate)));
+    fd.append("endDate", toIsoDateTime(formatDate(project.endDate)));
     fd.append("content", project.content ?? "");
     fd.append("contentBlocks", JSON.stringify(project.contentBlocks ?? { blocks: [] }));
 
@@ -275,7 +275,7 @@ export const buildFormData = (
         fd.append(`rewardList[${i}].rewardName`, v.rewardName);
         fd.append(`rewardList[${i}].price`, String(v.price));
         fd.append(`rewardList[${i}].rewardContent`, v.rewardContent);
-        fd.append(`rewardList[${i}].deliveryDate`, formatDate(v.deliveryDate as Date | string | null));
+        fd.append(`rewardList[${i}].deliveryDate`, toIsoDateTime(formatDate(v.deliveryDate as Date | string | null)));
         fd.append(`rewardList[${i}].rewardCnt`, v.rewardCnt == null ? "" : String(v.rewardCnt));
         fd.append(`rewardList[${i}].isPosting`, v.isPosting);
     });
@@ -604,10 +604,22 @@ export default function EditProject() {
             }
 
             // 신규 작성 후 즉시 심사요청
-            const res = await postData(endpoints.createProject, formData);
-            const newId = res.data.projectId ?? res.data.id ?? null;
+            const extractProjectId = (res: any): number | null => {
+                const data = res?.data?.data ?? res?.data ?? res;
 
-            if (!newId) {
+                if (typeof data === "number") return data;
+
+                if (data && typeof data === "object") {
+                    const id = (data as any).project ?? (data as any).id ?? null;
+                    return (typeof id === "number") ? id : null;
+                }
+                return null;
+            }
+
+            const form = await postData(endpoints.createProject, formData);
+            const newId = extractProjectId(form);
+
+            if (newId == null) {
                 throw new Error("생성은 되었지만 projectId를 확인할 수 없습니다. 서버 응답을 점검해 주세요.");
             }
 
