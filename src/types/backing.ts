@@ -202,6 +202,8 @@ export interface MyPageBackingDetail {
   roadAddr: string;
   detailAddr: string;
   recipientPhone: string;
+
+  creatorName: string;
 }
 //공통으로 쓸 리워드 리스트화
 export interface MyPgaeBackingList {
