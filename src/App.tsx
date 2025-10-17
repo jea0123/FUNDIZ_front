@@ -129,8 +129,6 @@ export default function App() {
               <Route index element={<CreatorDashboard />} />
               <Route path="dashboard" element={<CreatorDashboard />} />
               <Route path="settings" element={<CreatorInfoUpdate />} />
-              <Route path="project/new" element={<CreateProject />} />
-              <Route path="project/:projectId" element={<CreateProject />} />
               <Route path="project/new" element={<EditProject />} />
               <Route path="project/:projectId" element={<EditProject />} />
               <Route path="projects">
