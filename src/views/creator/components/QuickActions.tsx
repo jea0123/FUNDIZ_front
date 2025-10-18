@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import type { CreatorProjectListDto } from "@/types/creator"
-import type { Status } from "@/views/admin/tabs/ProjectsTab";
+import type { ProjectStatus } from "@/views/admin/components/ProjectStatusChip";
 import { ExternalLink, Eye, Gift, Megaphone, MessageSquareMore, Pencil, XCircle } from "lucide-react";
 
 type Props = {
@@ -15,7 +15,7 @@ type Props = {
 };
 
 export default function QuickActions({ project, deletingId, onDetail, onEdit, onDelete, onAddReward, onWriteNews, onManageReviews }: Props) {
-    const status = project.projectStatus as Status;
+    const status = project.projectStatus as ProjectStatus;
     const isOpen = status === "OPEN";
 
     const publicUrl = `${window.location.origin}/project/${(project as any).slug ?? project.projectId}`;
@@ -56,6 +56,7 @@ export default function QuickActions({ project, deletingId, onDetail, onEdit, on
                         <ExternalLink className="h-4 w-4 mr-1" /> 라이브 페이지
                     </a>
                 </Button>
+
                 <Button variant="outline" size="sm" onClick={() => onAddReward(project.projectId)}>
                     <Gift className="h-4 w-4 mr-1" /> 리워드 추가
                 </Button>

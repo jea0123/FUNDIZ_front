@@ -3,25 +3,31 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button";
 import { deleteData, endpoints, getData, setDevCreatorIdHeader } from "@/api/apis";
 import FundingLoader from "@/components/FundingLoader";
-import { StatusBadge, type Status } from "@/views/admin/tabs/ProjectsTab";
 import type { CreatorProjectListDto } from "@/types/creator";
 import { useCreatorId } from "../../../types/useCreatorId";
 import { useNavigate } from "react-router-dom";
 import { useQueryState } from "@/views/admin/tabs/ApprovalsTab";
 import { Pagination } from "@/views/project/ProjectAllPage";
-import { formatDate, getDaysLeft } from "@/utils/utils";
+import { formatDate, formatPrice } from "@/utils/utils";
 import QuickActions from "../components/QuickActions";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import ReviewsSheet from "../components/ReviewsSheet";
 import NewsModal from "../components/NewsModal";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, Eye, Heart, Users, type LucideIcon } from "lucide-react";
+import { ProjectStatusChip, type ProjectStatus } from "@/views/admin/components/ProjectStatusChip";
+import clsx from "clsx";
 
 /* --------------------------------- Status --------------------------------- */
-const HIDE_BADGE_STATUSES: Status[] = ["DRAFT", "VERIFYING", "REJECTED", "UPCOMING"];
+
+type Stage = keyof typeof STAGE_STATUS_MAP;
+type ClosedResult = "ALL" | "SUCCESS" | "FAILED" | "CANCELED";
+
+const HIDE_BADGE_STATUSES: ProjectStatus[] = ["DRAFT", "VERIFYING", "REJECTED", "UPCOMING"];
 
 const STAGE_STATUS_MAP = {
+    all: ["DRAFT", "VERIFYING", "UPCOMING", "OPEN", "SUCCESS", "FAILED", "CANCELED", "REJECTED", "SETTLED"],
     draft: ["DRAFT"],
     verifying: ["VERIFYING"],
     upcoming: ["UPCOMING"],
@@ -31,19 +37,37 @@ const STAGE_STATUS_MAP = {
     settled: ["SETTLED"],
 } as const;
 
-type Stage = keyof typeof STAGE_STATUS_MAP;
-type ClosedResult = "" | "SUCCESS" | "FAILED" | "CANCELED";
+
+const STAGES: { key: Stage; label: string }[] = [
+    { key: "all", label: "전체" },
+    { key: "draft", label: "작성중" },
+    { key: "verifying", label: "심사중" },
+    { key: "upcoming", label: "오픈예정" },
+    { key: "open", label: "진행중" },
+    { key: "closed", label: "종료" },
+    { key: "rejected", label: "반려" },
+    { key: "settled", label: "정산" },
+];
+
+const CLOSED_RESULTS: { label: string; value: ClosedResult }[] = [
+    { label: "전체", value: "ALL" },
+    { label: "성공", value: "SUCCESS" },
+    { label: "실패", value: "FAILED" },
+    { label: "취소", value: "CANCELED" },
+];
+
+const stageLabel = (s: Stage) => STAGES.find(x => x.key === s)?.label ?? "상태";
 
 /* ---------------------------------- Page ---------------------------------- */
 
 export default function CreatorProjects() {
-    //TODO: 임시용 id (나중에 삭제하기)
+    //TODO: dev id
     const { creatorId, loading: idLoading } = useCreatorId(2);
 
     const [projects, setProjects] = useState<CreatorProjectListDto[]>([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<unknown>(null);
+    const [error, setError] = useState<string | null>(null);
 
     const [deletingId, setDeletingId] = useState<number | null>(null);
 
@@ -65,9 +89,11 @@ export default function CreatorProjects() {
         const tokens = (projectStatus || "")
             .split(",")
             .map((t) => t.trim())
-            .filter(Boolean) as Status[];
+            .filter(Boolean) as ProjectStatus[];
 
-        const has = (s: Status | Status[]) =>
+        if (tokens.length === 0) return "all";
+
+        const has = (s: ProjectStatus | ProjectStatus[]) =>
             (Array.isArray(s) ? s : [s]).some((x) => tokens.includes(x));
 
         if (has("REJECTED")) return "rejected";
@@ -80,22 +106,30 @@ export default function CreatorProjects() {
     }, [projectStatus]);
 
     const [stage, setStage] = useState<Stage>(initialStage);
-    const [closedResult, setClosedResult] = useState<ClosedResult>("");
+    const [closedResult, setClosedResult] = useState<ClosedResult>("ALL");
 
     // stage 변경 시 서버/URL 동기화
-    const applyStageToQuery = (next: Stage, nextClosedResult: ClosedResult = "") => {
+    const applyStageToQuery = (next: Stage, nextClosedResult: ClosedResult = "ALL") => {
         setStage(next);
-        setClosedResult(next === "closed" ? nextClosedResult : "");
+        setClosedResult(next === "closed" ? nextClosedResult : "ALL");
         setPage(1);
         setRangeType("");
 
-        const base = STAGE_STATUS_MAP[next];
-        const statusCsv =
-            next === "closed" && nextClosedResult
-                ? nextClosedResult
-                : base.join(",");
+        if (next === "all") {
+            setProjectStatus("");
+            return;
+        }
 
-        setProjectStatus(statusCsv);
+        if (next === "closed") {
+            const statusCsv =
+                nextClosedResult === "ALL"
+                    ? STAGE_STATUS_MAP.closed.join(",")
+                    : nextClosedResult;
+            setProjectStatus(statusCsv);
+            return;
+        }
+
+        setProjectStatus(STAGE_STATUS_MAP[next].join(","));
     };
 
     useEffect(() => {
@@ -106,14 +140,13 @@ export default function CreatorProjects() {
 
     /* ------------------------------------ URL ------------------------------------ */
 
-    useEffect(() => {
-        setDevCreatorIdHeader(creatorId ?? null);
-    }, [creatorId]);
-
     // 현재 상태 CSV
     const currentStatusCsv = useMemo(() => {
+        if (stage === "all") return "";
         if (stage === "closed") {
-            return closedResult ? closedResult : STAGE_STATUS_MAP.closed.join(",");
+            return closedResult === "ALL"
+                ? STAGE_STATUS_MAP.closed.join(",")
+                : closedResult;
         }
         return STAGE_STATUS_MAP[stage].join(",");
     }, [stage, closedResult]);
@@ -124,7 +157,7 @@ export default function CreatorProjects() {
             return endpoints.getCreatorProjectList({
                 page,
                 size,
-                projectStatus: currentStatusCsv,
+                projectStatus: currentStatusCsv || undefined,
                 rangeType: rangeType || undefined,
             });
         }
@@ -133,7 +166,7 @@ export default function CreatorProjects() {
 
     /* -------------------------------- Data fetching -------------------------------- */
 
-    const fetchData = useCallback(async () => {
+    const projectsData = useCallback(async () => {
         if (!url) return;
         setLoading(true);
         setError(null);
@@ -147,8 +180,8 @@ export default function CreatorProjects() {
                 setProjects([]);
                 setTotal(0);
             }
-        } catch (e) {
-            setError(e);
+        } catch (e: any) {
+            setError(e?.message || "데이터 로드 중 에러가 발생했습니다.");
             setProjects([]);
             setTotal(0);
         } finally {
@@ -157,8 +190,13 @@ export default function CreatorProjects() {
     }, [url]);
 
     useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+        projectsData();
+    }, [projectsData]);
+
+    // TODO: dev id
+    useEffect(() => {
+        setDevCreatorIdHeader(creatorId ?? null);
+    }, [creatorId]);
 
     /* -------------------------------- Handler --------------------------------- */
 
@@ -167,15 +205,14 @@ export default function CreatorProjects() {
         try {
             setDeletingId(projectId);
             await deleteData(endpoints.deleteProject(projectId));
-            await fetchData();
+            await projectsData();
             alert("프로젝트가 삭제되었습니다.");
-        } catch (e) {
-            setError(e);
-            alert("삭제 실패하였습니다. 잠시 후 다시 시도해주세요.");
+        } catch (e: any) {
+            setError(e?.message || "삭제 실패하였습니다. 잠시 후 다시 시도해주세요.");
         } finally {
             setDeletingId(null);
         }
-    }, [fetchData]);
+    }, [projectsData]);
 
     const openNewsById = useCallback((projectId: number) => {
         const p = projects.find(x => x.projectId === projectId);
@@ -192,91 +229,97 @@ export default function CreatorProjects() {
     /* -------------------------------- Safe Filtering --------------------------------- */
 
     // 서버가 콤마 분리 다중 상태를 지원하지 않을 경우를 대비한 클라이언트 필터
-    const activeStatuses = useMemo<Status[]>(() => {
-        return currentStatusCsv.split(",").map((st) => st.trim()).filter(Boolean) as Status[];
+    const activeStatuses = useMemo<ProjectStatus[]>(() => {
+        return currentStatusCsv.split(",").map((st) => st.trim()).filter(Boolean) as ProjectStatus[];
     }, [currentStatusCsv]);
 
     const visible = useMemo(() => {
-        return projects.filter(p => activeStatuses.includes(p.projectStatus as Status))
-    }, [projects, activeStatuses]);
+        if (!currentStatusCsv) return projects;
+        return projects.filter(p => activeStatuses.includes(p.projectStatus as ProjectStatus))
+    }, [projects, activeStatuses, currentStatusCsv]);
 
     /* ----------------------------------- Render ----------------------------------- */
 
-    if (idLoading || loading) return <FundingLoader />;
-    if (error) return <p className="text-red-600">프로젝트를 불러오지 못했습니다.</p>;
-
-    const closedChips = [
-        { label: "전체", value: "" as ClosedResult },
-        { label: "성공", value: "SUCCESS" as ClosedResult },
-        { label: "실패", value: "FAILED" as ClosedResult },
-        { label: "취소", value: "CANCELED" as ClosedResult },
-    ];
+    if (loading) return <FundingLoader />;
+    if (!projects) {
+        return (
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+                <EmptyState onBack={() => navigate(-1)} message={error ?? "프로젝트를 불러오지 못했습니다."} />
+            </div>
+        );
+    }
 
     return (
         <Card>
-            <CardHeader className="gap-3">
+            <CardHeader className="gap-6">
                 <div className="flex items-center justify-between">
                     <CardTitle>프로젝트 목록</CardTitle>
                 </div>
 
-                <div className="flex items-center justify-between gap-3 flex-wrap">
-                    {/* 상단 탭 */}
-                    <Tabs value={stage} onValueChange={(v) => applyStageToQuery(v as Stage)} className="mt-2">
-                        <TabsList className="flex flex-wrap gap-1">
-                            <TabsTrigger value="draft">작성중</TabsTrigger>
-                            <TabsTrigger value="verifying">심사중</TabsTrigger>
-                            <TabsTrigger value="upcoming">오픈예정</TabsTrigger>
-                            <TabsTrigger value="open">진행중</TabsTrigger>
-                            <TabsTrigger value="closed">종료</TabsTrigger>
-                            <TabsTrigger value="rejected">반려</TabsTrigger>
-                            <TabsTrigger value="settled">정산</TabsTrigger>
-                        </TabsList>
-                    </Tabs>
-
-                    {/* 기간 Select */}
+                <div className="flex items-center justify-between gap-2 flex-wrap">
                     <div className="flex items-center gap-2">
                         <Select
-                            value={rangeType || ""}
-                            onValueChange={(v) => {
-                                setPage(1);
-                                setRangeType(v === "ALL" ? "" : v);
-                            }}
+                            value={stage}
+                            onValueChange={(v) => applyStageToQuery(v as Stage)}
                         >
-                            <SelectTrigger className="w-[140px]">
-                                <SelectValue placeholder="전체" />
+                            <SelectTrigger className="h-8 w-[120px] text-xs">
+                                <SelectValue placeholder="상태">{stageLabel(stage)}</SelectValue>
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="ALL">전체</SelectItem>
-                                <SelectItem value="7d">최근 7일</SelectItem>
-                                <SelectItem value="30d">최근 30일</SelectItem>
-                                <SelectItem value="90d">최근 90일</SelectItem>
+                                {STAGES.map(s => (
+                                    <SelectItem key={s.key} value={s.key} className="text-sm">
+                                        {s.label}
+                                    </SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
+
+                        {stage === "closed" && (
+                            <Select
+                                value={closedResult ? closedResult : "ALL"}
+                                onValueChange={(v) => {
+                                    applyStageToQuery("closed", v as ClosedResult);
+                                }}
+                            >
+                                <SelectTrigger className="h-8 w-[110px] text-xs">
+                                    <SelectValue placeholder="전체">
+                                        {CLOSED_RESULTS.find(c => c.value === closedResult)?.label ?? "전체"}
+                                    </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {CLOSED_RESULTS.map(c => (
+                                        <SelectItem key={c.label} value={c.value} className="text-sm">
+                                            {c.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
                     </div>
+
+                    <Select
+                        value={rangeType || ""}
+                        onValueChange={(v) => {
+                            setPage(1);
+                            setRangeType(v === "ALL" ? "" : v);
+                        }}
+                    >
+                        <SelectTrigger className="h-8 w-[120px] text-xs">
+                            <SelectValue placeholder="기간">
+                                {rangeType === "" ? "전체" : rangeType === "7d" ? "최근 7일" : rangeType === "30d" ? "최근 30일" : "최근 90일"}
+                            </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="ALL">전체</SelectItem>
+                            <SelectItem value="7d">최근 7일</SelectItem>
+                            <SelectItem value="30d">최근 30일</SelectItem>
+                            <SelectItem value="90d">최근 90일</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
 
-                {/* 종료 탭 전용 하위 칩 */}
-                {stage === "closed" && (
-                    <div className="flex flex-wrap items-center gap-2 mt-3">
-                        <span className="text-xs text-muted-foreground mr-1">종료 결과</span>
-                        {closedChips.map((chip) => {
-                            const active = closedResult === chip.value;
-                            return (
-                                <Button
-                                    key={chip.label}
-                                    size="sm"
-                                    variant={active ? "default" : "outline"}
-                                    onClick={() => applyStageToQuery("closed", chip.value)}
-                                >
-                                    {chip.label}
-                                </Button>
-                            );
-                        })}
-                    </div>
-                )}
-
-                <div className="text-xs text-gray-500 mt-2 pl-1">
-                    총 {total.toLocaleString()}건 · 표시 {visible.length.toLocaleString()}건
+                <div className="text-xs text-muted-foreground ml-2">
+                    총 {total.toLocaleString()}건
                 </div>
             </CardHeader>
 
@@ -289,60 +332,115 @@ export default function CreatorProjects() {
                 ) : (
                     <ul className="space-y-4">
                         {visible.map((p) => {
-                            const st = p.projectStatus as Status;
+                            const st = p.projectStatus as ProjectStatus;
 
                             return (
                                 <li key={p.projectId}>
-                                    <Card className="block">
-                                        <CardHeader className="pb-2">
-                                            <CardTitle className="flex items-center gap-2 flex-wrap">
-                                                <span className="mr-1 truncate">{p.title}</span>
-                                                <StatusBadge status={st} />
-                                                {st === "OPEN" && <span>({getDaysLeft(p.endDate)}일 남음)</span>}
+                                    <Card>
+                                        <CardHeader className="space-y-3">
+                                            <CardTitle className="flex flex-wrap items-center gap-3">
+                                                <span className="truncate">{p.title}</span>
+                                                <ProjectStatusChip status={st} />
+                                            </CardTitle>
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <StatPill
+                                                    icon={Users}
+                                                    label=""
+                                                    value={p.backerCnt?.toLocaleString?.() ?? 0}
+                                                    tooltip="후원자수"
+                                                    emphasize
+                                                />
+                                                <StatPill
+                                                    icon={Heart}
+                                                    label=""
+                                                    value={p.likeCnt?.toLocaleString?.() ?? 0}
+                                                    tooltip="좋아요수"
+                                                    emphasize
+                                                />
+                                                <StatPill
+                                                    icon={Eye}
+                                                    label=""
+                                                    value={p.viewCnt?.toLocaleString?.() ?? 0}
+                                                    tooltip="조회수"
+                                                    emphasize
+                                                />
 
                                                 {!HIDE_BADGE_STATUSES.includes(st) && (
-                                                    <span className="ml-2 inline-flex items-center gap-1 text-xs text-muted-foreground">
-                                                        <TooltipProvider>
-                                                            <Tooltip>
-                                                                <TooltipTrigger asChild>
-                                                                    <span className="rounded-full bg-muted px-2 py-0.5">
-                                                                        새소식 {p.newsCount ?? 0}
-                                                                    </span>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent>
-                                                                    마지막: {p.lastNewsAt ? formatDate(p.lastNewsAt) : "없음"}
-                                                                </TooltipContent>
-                                                            </Tooltip>
-
-                                                            <Tooltip>
-                                                                <TooltipTrigger asChild>
-                                                                    <span className="rounded-full bg-muted px-2 py-0.5">
-                                                                        후기 {p.reviewNewCount ?? 0} / 미답글 {p.reviewPendingCount ?? 0}
-                                                                    </span>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent>
-                                                                    마지막: {p.lastReviewAt ? formatDate(p.lastReviewAt) : "없음"}
-                                                                </TooltipContent>
-                                                            </Tooltip>
-                                                        </TooltipProvider>
-                                                    </span>
+                                                    <>
+                                                        <div className="h-3 w-px bg-border mx-1 hidden sm:block" aria-hidden="true"></div>
+                                                        <StatPill
+                                                            label="새소식"
+                                                            value={(p.newsCount ?? 0).toLocaleString?.()}
+                                                            tooltip={
+                                                                <span>최근 : {p.lastNewsAt ? formatDate(p.lastNewsAt) : "없음"}</span>
+                                                            }
+                                                            emphasize
+                                                        />
+                                                        <StatPill
+                                                            label="후기"
+                                                            value={`${p.reviewPendingCount ?? 0} / ${(p.reviewNewCount ?? 0)}`}
+                                                            tooltip={
+                                                                <span>최근 : {p.lastReviewAt ? formatDate(p.lastReviewAt) : "없음"}</span>
+                                                            }
+                                                            emphasize
+                                                        />
+                                                    </>
                                                 )}
-                                            </CardTitle>
+                                            </div>
                                         </CardHeader>
 
                                         <CardContent>
-                                            <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
-                                                <div>기간: {formatDate(p.startDate)} ~ {formatDate(p.endDate)}</div>
-                                                <div>카테고리: {p.ctgrName} &gt; {p.subctgrName}</div>
-                                                <div>현재/목표금액: {p.currAmount.toLocaleString()} / {p.goalAmount.toLocaleString()} ({p.percentNow}%)</div>
-                                                <div>후원자 수: {p.backerCnt.toLocaleString()}</div>
+                                            <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                                                <div className="space-y-0.5">
+                                                    <dt className="text-xs text-muted-foreground">카테고리</dt>
+                                                    <dd className="font-medium text-foreground/90">
+                                                        {p.ctgrName} <span className="mx-1 text-muted-foreground">›</span> {p.subctgrName}
+                                                    </dd>
+                                                </div>
+
+                                                <div className="space-y-0.5">
+                                                    <dt className="text-xs text-muted-foreground">기간</dt>
+                                                    <dd className="font-medium text-foreground/90">
+                                                        {formatDate(p.startDate)} <span className="mx-1 text-muted-foreground">~</span> {formatDate(p.endDate)}
+                                                    </dd>
+                                                </div>
+
+                                                <div className="space-y-0.5">
+                                                    <dt className="text-xs text-muted-foreground">현재/목표 금액</dt>
+                                                    <dd className="font-semibold text-foreground tabular-nums">
+                                                        {formatPrice(p.currAmount)}
+                                                        <span className="mx-1 text-muted-foreground">/</span>
+                                                        {formatPrice(p.goalAmount)}
+                                                        <span className="ml-1 text-emerald-600">({p.percentNow}%)</span>
+                                                    </dd>
+                                                </div>
+
+                                                <div className="space-y-0.5">
+                                                    <dt className="text-xs text-muted-foreground">작성일 · 수정일</dt>
+                                                    <dd className="text-foreground/90">
+                                                        {formatDate(p.createdAt)}
+                                                        <span className="mx-1 text-muted-foreground">·</span>
+                                                        {formatDate(p.updatedAt)}
+                                                    </dd>
+                                                </div>
+
                                                 {st === "VERIFYING" && p.requestedAt && (
-                                                    <div>심사요청일: {formatDate(p.requestedAt)}</div>
+                                                    <div className="space-y-0.5 md:col-span-2">
+                                                        <dt className="text-xs text-muted-foreground">심사요청일</dt>
+                                                        <dd className="text-foreground/90">{formatDate(p.requestedAt)}</dd>
+                                                    </div>
                                                 )}
-                                            </div>
+
+                                                {st === "REJECTED" && p.rejectedReason && (
+                                                    <div className="space-y-0.5 md:col-span-2">
+                                                        <dt className="text-xs text-muted-foreground">반려 사유</dt>
+                                                        <dd className="text-foreground/90">{p.rejectedReason}</dd>
+                                                    </div>
+                                                )}
+                                            </dl>
                                         </CardContent>
 
-                                        <CardFooter className="justify-end gap-2 pt-5">
+                                        <CardFooter className="justify-end gap-2">
                                             <QuickActions
                                                 project={p}
                                                 deletingId={deletingId}
@@ -380,7 +478,7 @@ export default function CreatorProjects() {
                         setNewsOpen(false);
                         setActiveProject(null);
                     }}
-                    onPosted={fetchData}
+                    onPosted={projectsData}
                 />
             )}
 
@@ -407,11 +505,73 @@ export default function CreatorProjects() {
                                 setReviewsOpen(false);
                                 setActiveProject(null);
                             }}
-                            onReplied={fetchData}
+                            onReplied={projectsData}
                         />
                     </SheetContent>
                 </Sheet>
             )}
         </Card >
+    );
+}
+
+/* ------------------------------- UI Bits ------------------------------- */
+
+function EmptyState({ message, onBack }: { message: string; onBack: () => void }) {
+    return (
+        <Card>
+            <CardContent className="p-8 text-center space-y-4">
+                <p className="text-sm text-muted-foreground">{message}</p>
+                <Button variant="outline" onClick={onBack}>
+                    <ArrowLeft className="h-4 w-4 mr-2" /> 뒤로가기
+                </Button>
+            </CardContent>
+        </Card>
+    );
+}
+
+type StatPillProps = {
+    icon?: LucideIcon;
+    label: string;
+    value?: React.ReactNode;
+    tooltip?: React.ReactNode;
+    className?: string;
+    emphasize?: boolean;
+    as?: "span" | "button" | "div";
+};
+
+export function StatPill({
+    icon: Icon,
+    label,
+    value,
+    tooltip,
+    className,
+    emphasize,
+    as: As = "span",
+}: StatPillProps) {
+    const Pill = (
+        <As
+            className={clsx(
+                "inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5",
+                "text-xs text-muted-foreground",
+                className
+            )}
+        >
+            {Icon && <Icon className="h-3.5 w-3.5" aria-hidden="true" />}
+            <span className="whitespace-nowrap">{label}</span>
+            {typeof value !== "undefined" && (
+                <span className={clsx("tabular-nums", emphasize && "font-semibold text-foreground")}>
+                    {value}
+                </span>
+            )}
+        </As>
+    );
+
+    if (!tooltip) return Pill;
+
+    return (
+        <Tooltip>
+            <TooltipTrigger asChild>{Pill}</TooltipTrigger>
+            <TooltipContent>{tooltip}</TooltipContent>
+        </Tooltip>
     );
 }

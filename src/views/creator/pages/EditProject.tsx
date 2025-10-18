@@ -3,7 +3,7 @@ import { ArrowLeft, Save, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Subcategory } from '@/types/projects';
-import { endpoints, getData, postData } from '@/api/apis';
+import { endpoints, getData, postData, setDevCreatorIdHeader } from '@/api/apis';
 import type { RewardDraft, RewardForm } from '@/types/reward';
 import type { Category } from '@/types/admin';
 import FundingLoader from '@/components/FundingLoader';
@@ -302,7 +302,7 @@ export default function EditProject() {
     /* ----------------------------- State ----------------------------- */
 
     //TODO: dev id
-    const { creatorId, loading } = useCreatorId(2);
+    const { creatorId, loading: idLoading } = useCreatorId(2);
 
     const { projectId: projectIdParam } = useParams();
     const projectId = projectIdParam ? Number(projectIdParam) : null;
@@ -312,7 +312,7 @@ export default function EditProject() {
     const goList = () => navigate("/creator/projects", { replace: true });
 
     const [currentStep, setCurrentStep] = useState(1);
-    const [isLoading, setIsLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [projectErrors, setProjectErrors] = useState<ProjectFieldErrors>({});
     const [rewardErrors, setRewardErrors] = useState<RewardFieldErrors>({});
     const [rewardListError, setRewardListError] = useState<string | null>(null);
@@ -396,7 +396,7 @@ export default function EditProject() {
     useEffect(() => {
         let alive = true;
         (async () => {
-            setIsLoading(true);
+            setLoading(true);
             try {
                 const [catRes, subRes, infoRes] = await Promise.all([
                     getData(endpoints.getCategories),
@@ -477,19 +477,24 @@ export default function EditProject() {
                     "정보를 불러오는 중 오류가 발생했습니다.";
                 alert(msg);
             } finally {
-                if (alive) setIsLoading(false);
+                if (alive) setLoading(false);
             }
         })();
         return () => { alive = false; };
     }, [isEdit, projectId]);
 
     //TODO: dev id
+    // useEffect(() => {
+    //     if (!import.meta.env.DEV) return;
+    //     if (!idLoading && creatorId) {
+    //         localStorage.setItem("DEV_CREATOR_ID", String(creatorId));
+    //     }
+    // }, [idLoading, creatorId])
     useEffect(() => {
-        if (!import.meta.env.DEV) return;
-        if (!loading && creatorId) {
-            localStorage.setItem("DEV_CREATOR_ID", String(creatorId));
-        }
-    }, [loading, creatorId])
+            if (!idLoading && creatorId) {
+                setDevCreatorIdHeader(creatorId ?? null);
+            }
+        }, [idLoading, creatorId]);
 
     /* ---------------------------- Handlers ---------------------------- */
 
@@ -541,9 +546,9 @@ export default function EditProject() {
 
     //저장
     const handleSaveDraft = async () => {
-        if (isLoading) return; // 중복 제출 방지
+        if (loading) return; // 중복 제출 방지
         const formData = buildFormData(project, rewardList);
-        setIsLoading(true);
+        setLoading(true);
         try {
             if (isEdit && projectId) {
                 // 기존 Draft 업데이트
@@ -567,13 +572,13 @@ export default function EditProject() {
         } catch (err: any) {
             alert(err?.message ?? "저장 중 오류가 발생했습니다.");
         } finally {
-            setIsLoading(false);
+            setLoading(false);
         }
     };
 
     //심사요청(제출)
     const handleSubmit = async () => {
-        if (isLoading) return; // 중복 제출 방지
+        if (loading) return; // 중복 제출 방지
         if (!validateAgree(agree, setAgreeError)) return;
 
         const { ok, errors } = validateProject(project);
@@ -585,7 +590,7 @@ export default function EditProject() {
         }
         setRewardListError(null);
 
-        setIsLoading(true);
+        setLoading(true);
         try {
             const formData = buildFormData(project, rewardList);
 
@@ -640,13 +645,13 @@ export default function EditProject() {
                 "요청 처리 중 오류가 발생했습니다.";
             alert(msg);
         } finally {
-            setIsLoading(false);
+            setLoading(false);
         }
     };
 
     /* --------------------------- Render --------------------------- */
 
-    if (isLoading) return <FundingLoader></FundingLoader>;
+    if (loading) return <FundingLoader></FundingLoader>;
 
     const progress = (currentStep / STEPS.length) * 100;
 
@@ -704,7 +709,7 @@ export default function EditProject() {
                             <Button variant="outline" onClick={handleSaveDraft}>
                                 <Save className="h-4 w-4 mr-2" /> 저장
                             </Button>
-                            <Button onClick={handleSubmit} disabled={!agree || isLoading || !canSubmit}>
+                            <Button onClick={handleSubmit} disabled={!agree || loading || !canSubmit}>
                                 <Send className="h-4 w-4 mr-2" /> 심사요청
                             </Button>
                         </>

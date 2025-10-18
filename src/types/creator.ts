@@ -4,16 +4,21 @@ import type { Reward, RewardCreateRequestDto } from './reward';
 export interface CreatorProjectListDto {
     projectId: number;
     title: string;
-    projectStatus: string;
-    startDate: Date;
-    endDate: Date;
     goalAmount: number;
     currAmount: number;
+    startDate: Date;
+    endDate: Date;
+    createdAt: Date;
+    updatedAt: Date;
+    projectStatus: string;
     backerCnt: number;
-    ctgrName: string;
-    subctgrName: string;
-    percentNow: number;
+    likeCnt: number;
+    viewCnt: number;
     requestedAt?: string;
+    rejectedReason?: string;
+    subctgrName: string;
+    ctgrName: string;
+    percentNow?: number;
 
     newsCount?: number; // 새 새소식 수
     lastNewsAt?: string | null; // 마지막 작성일
@@ -53,18 +58,18 @@ export interface CreatorProjectDetailDto {
     creatorId: number;
     title: string;
     goalAmount: number;
-    currAmount?: number;
+    currAmount: number;
     startDate: Date;
     endDate: Date;
+    createdAt: Date;
+    updatedAt: Date;
+    projectStatus: string;
     content: string;
     contentBlocks: ContentBlocks; // EditorJS JSON
     thumbnail: string;
-    businessDoc: string;
-
-    ctgrId: number;
-    ctgrName?: string;
-    subctgrId: number;
-    subctgrName?: string;
+    businessDoc?: string;
+    subctgrName: string;
+    ctgrName: string;
 
     creatorName: string;
     businessNum: string;
@@ -88,7 +93,7 @@ export interface ProjectCreateRequestDto {
     content: string;
     contentBlocks: ContentBlocks; // EditorJS JSON
     thumbnail: File | null;
-    businessDoc: File | null;
+    businessDoc?: File | null;
 
     tagList: string[];
     rewardList: RewardCreateRequestDto[];
