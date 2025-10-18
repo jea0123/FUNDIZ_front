@@ -1,4 +1,4 @@
-import type { SortKey } from "@/views/project/components/SortBar";
+import type { SortKey } from "@/views/project/components/ProjectsSortBar";
 import type { News } from "./news";
 import type { Reward } from "./reward";
 import type { Tag } from "./tag";
@@ -27,7 +27,7 @@ export interface Project {
     rejectedReason: string;
 };
 
-export interface RecentTop10{
+export interface RecentTop10 {
     projectId: number;
     title: string;
     thumbnail: string;
@@ -71,7 +71,7 @@ export interface ProjectDetail {
     newsList: News[];
 }
 
-export interface Featured{
+export interface Featured {
     projectId: number;
     title: string;
     creatorName: string;
@@ -82,7 +82,7 @@ export interface Featured{
     score: number;
 }
 
-export interface RecentView{
+export interface RecentView {
     projectId: number;
     title: string;
     thumbnail: string;

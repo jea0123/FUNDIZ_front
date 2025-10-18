@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 import type { Category } from "@/types/admin";
 import type { Featured, SearchProjectParams, Subcategory } from "@/types/projects";
 import { endpoints, getData } from "@/api/apis";
-import type { SortKey } from "./components/SortBar";
+import type { SortKey } from "./components/ProjectsSortBar";
 import { ProjectCard } from "../MainPage";
-import Crumbs from "./components/Crumbs";
-import CategoryChips from "./components/CategoryChips";
-import SortBar from "./components/SortBar";
-import SubcategoryTabs from "./components/SubcategoryTabs";
+import ProjectsCrumbs from "./components/ProjectsCrumbs";
+import ProjectsCategoryChips from "./components/ProjectsCategoryChips";
+import ProjectsSortBar from "./components/ProjectsSortBar";
+import ProjectsSubcategoryTabs from "./components/ProjectsSubcategoryTabs";
 import FundingLoader from "@/components/FundingLoader";
 
 /* ------------------------------ Common hook ------------------------------ */
@@ -22,22 +22,22 @@ function useCatalogData() {
         let alive = true;
         (async () => {
             try {
-            const [catRes, subRes] = await Promise.all([
-                getData(endpoints.getCategories),
-                getData(endpoints.getSubcategories)
-            ]);
+                const [catRes, subRes] = await Promise.all([
+                    getData(endpoints.getCategories),
+                    getData(endpoints.getSubcategories)
+                ]);
 
-            const catData = catRes?.data;
-            const subData = subRes?.data;
+                const catData = catRes?.data;
+                const subData = subRes?.data;
 
-            const cats = Array.isArray(catData) ? catData : [];
-            const subs = Array.isArray(subData) ? subData : [];
+                const cats = Array.isArray(catData) ? catData : [];
+                const subs = Array.isArray(subData) ? subData : [];
 
-            if (!alive) return;
-            setCategories(cats);
-            setSubcategories(subs);
+                if (!alive) return;
+                setCategories(cats);
+                setSubcategories(subs);
             } catch {
-            // 상단 필터 UI만 비어보이게 두기
+                // 상단 필터 UI만 비어보이게 두기
             }
         })();
         return () => {
@@ -45,7 +45,7 @@ function useCatalogData() {
         };
     }, []);
 
-  return { categories, subcategories };
+    return { categories, subcategories };
 }
 
 function useQueryState() {
@@ -103,7 +103,7 @@ function useProject(params: SearchProjectParams) {
                 setTotal(typeof data.totalElements === "number" ? data.totalElements : 0);
             } catch (err: any) {
                 if (cancel) return;
-                setError(true);
+                setError(err);
             } finally {
                 if (!cancel) setLoading(false);
             }
@@ -121,9 +121,9 @@ export function Pagination({ page, size, total, onPage }: { page: number; size: 
 
     return (
         <div className="flex items-center justify-center gap-2 mt-6">
-        <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onPage(page - 1)}>이전</Button>
-        <span className="text-sm text-gray-600">{page} / {lastPage}</span>
-        <Button variant="outline" size="sm" disabled={page >= lastPage} onClick={() => onPage(page + 1)}>다음</Button>
+            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onPage(page - 1)}>이전</Button>
+            <span className="text-sm text-gray-600">{page} / {lastPage}</span>
+            <Button variant="outline" size="sm" disabled={page >= lastPage} onClick={() => onPage(page + 1)}>다음</Button>
         </div>
     );
 }
@@ -145,16 +145,16 @@ function ProjectGrid({ items }: { items: Featured[] }) {
 
 /* --------------------------------- Pages --------------------------------- */
 
-export default function ProjectAllPage() {
+export default function ProjectsBrowsePage() {
     const { categories, subcategories } = useCatalogData();
     const { sort, page, size, keyword, setSort, setPage } = useQueryState();
     const { items, total, loading, error } = useProject({ page, size, keyword, sort });
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <Crumbs categories={categories} subcategories={subcategories} />
-            <CategoryChips categories={categories} activeCatId="all" />
-            <SortBar value={sort} onChange={setSort} total={total} />
+            <ProjectsCrumbs categories={categories} subcategories={subcategories} />
+            <ProjectsCategoryChips categories={categories} activeCatId="all" />
+            <ProjectsSortBar value={sort} onChange={setSort} total={total} />
 
             {loading && <FundingLoader />}
             {error && <p className="text-red-600">목록을 불러오지 못했습니다.</p>}
@@ -165,7 +165,7 @@ export default function ProjectAllPage() {
     );
 }
 
-export function SearchProjectPage() {
+export function ProjectsSearchPage() {
     const { sort, page, size, keyword, setSort, setPage, setKeyword } = useQueryState();
     const { items, total, loading, error } = useProject({ page, size, keyword, sort });
 
@@ -174,7 +174,7 @@ export function SearchProjectPage() {
     useEffect(() => {
         if (!keyword.length) navigate("/project");
     }, [keyword, navigate]);
-    
+
     if (!keyword.length) return null;
 
     return (
@@ -183,7 +183,7 @@ export function SearchProjectPage() {
                 검색어: <span className="font-medium">{keyword}</span>
                 <Button variant="link" size="sm" className="ml-2" onClick={() => setKeyword("")}>검색어 지우기</Button>
             </div>
-            <SortBar value={sort} onChange={setSort} total={total} />
+            <ProjectsSortBar value={sort} onChange={setSort} total={total} />
             {loading && <FundingLoader />}
             {error && <p className="text-red-600">목록을 불러오지 못했습니다.</p>}
             {!loading && !error && <ProjectGrid items={items} />}
@@ -193,22 +193,22 @@ export function SearchProjectPage() {
     );
 }
 
-export function ProjectByCategoryPage() {
+export function ProjectsByCategoryPage() {
     const { ctgrId: catParam } = useParams();
     const ctgrId = catParam ? Number(catParam) : undefined;
 
     const { categories, subcategories } = useCatalogData();
     const { sort, page, size, keyword, setSort, setPage } = useQueryState();
     const { items, total, loading, error } = useProject({ page, size, keyword, sort, ctgrId });
-    
+
     if (!ctgrId) return null;
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <Crumbs categories={categories} subcategories={subcategories} ctgrId={ctgrId} />
-            <CategoryChips categories={categories} activeCatId={ctgrId} />
-            <SubcategoryTabs ctgrId={ctgrId} subcategories={subcategories} activeSubId="all" />
-            <SortBar value={sort} onChange={setSort} total={total} />
+            <ProjectsCrumbs categories={categories} subcategories={subcategories} ctgrId={ctgrId} />
+            <ProjectsCategoryChips categories={categories} activeCatId={ctgrId} />
+            <ProjectsSubcategoryTabs ctgrId={ctgrId} subcategories={subcategories} activeSubId="all" />
+            <ProjectsSortBar value={sort} onChange={setSort} total={total} />
 
             {loading && <FundingLoader />}
             {error && <p className="text-red-600">목록을 불러오지 못했습니다.</p>}
@@ -219,23 +219,23 @@ export function ProjectByCategoryPage() {
     );
 }
 
-export function ProjectBySubcategoryPage() {
+export function ProjectsBySubcategoryPage() {
     const { ctgrId: catParam, subctgrId: subParam } = useParams();
     const ctgrId = catParam ? Number(catParam) : undefined;
     const subctgrId = subParam ? Number(subParam) : undefined;
 
     const { categories, subcategories } = useCatalogData();
     const { sort, page, size, keyword, setSort, setPage } = useQueryState();
-    const { items, total, loading, error } = useProject({ page, size, keyword, sort, ctgrId, subctgrId});
+    const { items, total, loading, error } = useProject({ page, size, keyword, sort, ctgrId, subctgrId });
 
     if (!ctgrId || !subctgrId) return null;
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <Crumbs categories={categories} subcategories={subcategories} ctgrId={ctgrId} subctgrId={subctgrId} />
-            <CategoryChips categories={categories} activeCatId={ctgrId} />
-            <SubcategoryTabs ctgrId={ctgrId} subcategories={subcategories} activeSubId={subctgrId} />
-            <SortBar value={sort} onChange={setSort} total={total} />
+            <ProjectsCrumbs categories={categories} subcategories={subcategories} ctgrId={ctgrId} subctgrId={subctgrId} />
+            <ProjectsCategoryChips categories={categories} activeCatId={ctgrId} />
+            <ProjectsSubcategoryTabs ctgrId={ctgrId} subcategories={subcategories} activeSubId={subctgrId} />
+            <ProjectsSortBar value={sort} onChange={setSort} total={total} />
 
             {loading && <FundingLoader />}
             {error && <p className="text-red-600">목록을 불러오지 못했습니다.</p>}

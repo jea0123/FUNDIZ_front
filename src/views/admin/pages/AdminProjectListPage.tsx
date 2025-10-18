@@ -5,41 +5,17 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { endpoints, getData, postData } from "@/api/apis";
 import { useNavigate } from "react-router-dom";
 import FundingLoader from "@/components/FundingLoader";
-import { useQueryState } from "./ApprovalsTab";
+import { useQueryState } from "./VerificationQueue";
 import { formatDate, getDaysLeft } from "@/utils/utils";
-import { Pagination } from "@/views/project/ProjectAllPage";
 import type { AdminProjectList } from "@/types/admin";
+import { ProjectStatusChip, type ProjectStatus } from "../components/ProjectStatusChip";
+import { Pagination } from "@/views/project/ProjectsBrowsePage";
 
-/* -------------------------------- Types -------------------------------- */
-
-export type Status = "DRAFT" | "VERIFYING" | "UPCOMING" | "OPEN" | "SUCCESS" | "FAILED" | "REJECTED" | "CANCELED" | "SETTLED";
-
-/* ------------------------------ UI helpers ------------------------------ */
-
-function cls(...xs: (string | false | undefined)[]) { return xs.filter(Boolean).join(" "); }
-
-export function StatusBadge({ status }: { status: Status }) {
-    const map: Record<Status, string> = {
-        DRAFT: "bg-slate-100 text-slate-700",
-        VERIFYING: "bg-blue-100 text-blue-700",
-        UPCOMING: "bg-slate-100 text-slate-700",
-        OPEN: "bg-emerald-100 text-emerald-700",
-        SUCCESS: "bg-green-100 text-green-700",
-        FAILED: "bg-rose-100 text-rose-700",
-        REJECTED: "bg-rose-100 text-rose-700",
-        CANCELED: "bg-rose-100 text-rose-700",
-        SETTLED: "bg-yellow-100 text-yellow-800",
-    };
-    return <span className={cls("inline-flex items-center px-2 py-0.5 rounded text-xs font-medium", map[status])}>{status}</span>;
-}
-
-/* ------------------------------ Card ------------------------------ */
-
-function Project({ p, onChanged }: { p: AdminProjectList; onChanged: () => void }) {
+function ProjectCard({ p, onChanged }: { p: AdminProjectList; onChanged: () => void }) {
     const canVerify = p.projectStatus === "VERIFYING";
     const canCancel = ["VERIFYING", "UPCOMING", "OPEN"].includes(p.projectStatus);
     const [cancel, setCancel] = useState(false);
-    
+
     const navigate = useNavigate();
 
     const goEdit = () => navigate(`/admin/project/${p.projectId}`);
@@ -64,7 +40,7 @@ function Project({ p, onChanged }: { p: AdminProjectList; onChanged: () => void 
             <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 flex-wrap">
                     <span className="mr-1 truncate">{p.title}</span>
-                    <StatusBadge status={p.projectStatus as Status} />
+                    <ProjectStatusChip status={p.projectStatus as ProjectStatus} />
                     {["UPCOMING", "OPEN"].includes(p.projectStatus) && (
                         <span>({getDaysLeft(p.endDate)}일 남음)</span>
                     )}
@@ -81,7 +57,7 @@ function Project({ p, onChanged }: { p: AdminProjectList; onChanged: () => void 
                     <div>마지막 수정일: {formatDate(p.updatedAt)}</div>
                 </div>
             </CardContent>
-            
+
             <CardFooter className="justify-end gap-2 pt-2">
                 <Button variant="outline" size="sm" onClick={goEdit}>
                     <Pencil className="h-4 w-4 mr-1" /> 수정
@@ -96,7 +72,7 @@ function Project({ p, onChanged }: { p: AdminProjectList; onChanged: () => void 
                 {canVerify && (
                     <Button variant="default" size="sm" onClick={goVerifyDetail}>
                         심사
-                    </Button>   
+                    </Button>
                 )}
             </CardFooter>
         </Card>
@@ -105,7 +81,7 @@ function Project({ p, onChanged }: { p: AdminProjectList; onChanged: () => void 
 
 /* --------------------------------- Page --------------------------------- */
 
-export function ProjectsTab() {
+export function AdminProjectListPage() {
     const [items, setItems] = useState<AdminProjectList[]>([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(false);
@@ -202,7 +178,7 @@ export function ProjectsTab() {
                     <p>조건에 맞는 프로젝트가 없습니다.</p>
                 ) : (
                     <div className="space-y-4">
-                        {items.map(p => <Project key={p.projectId} p={p} onChanged={fetchData} />)}
+                        {items.map(p => <ProjectCard key={p.projectId} p={p} onChanged={fetchData} />)}
                         <Pagination
                             key={`${projectStatus || 'ALL'}-${rangeType || 'ALL'}-${size}`}
                             page={page} size={size} total={total} onPage={setPage}

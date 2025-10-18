@@ -1,24 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, BadgeCheck, ExternalLink, FileText, ImageIcon, Mail, Phone, ShieldCheck } from "lucide-react";
+import { ArrowLeft, BadgeCheck, ExternalLink, FileText, Gift, Paperclip, ShieldCheck, UserRound } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import FundingLoader from "@/components/FundingLoader";
-import { endpoints, getData, kyInstance } from "@/api/apis";
 import type { CreatorProjectDetailDto } from "@/types/creator";
-import type { RewardCreateRequestDto } from "@/types/reward";
-import type { Category } from "@/types/admin";
-import type { Subcategory } from "@/types/projects";
 import { formatDate, formatPrice, toPublicUrl } from "@/utils/utils";
 import { useCreatorId } from "../../../types/useCreatorId";
 import { ProjectDetailViewer } from "../components/ProjectDetailViewer";
-
-/* ------------------------------- Types ------------------------------- */
-
-type RewardView = RewardCreateRequestDto & { rewardId?: number };
-
-/* ------------------------------- Utils ------------------------------- */
+import { endpoints, getData, setDevCreatorIdHeader } from "@/api/apis";
+import { ProjectStatusChip, type ProjectStatus } from "@/views/admin/components/ProjectStatusChip";
 
 const toTagNames = (list: any): string[] =>
     Array.isArray(list)
@@ -27,128 +19,62 @@ const toTagNames = (list: any): string[] =>
             .filter((s: any): s is string => typeof s === "string" && s.trim().length > 0)
         : [];
 
-function useObjectUrl(file: File | null | undefined) {
-    const url = useMemo(() => (file ? URL.createObjectURL(file) : ""), [file]);
-    useEffect(() => () => { if (url) URL.revokeObjectURL(url); }, [url]);
-    return url;
-}
-
 /* ------------------------------- Page ------------------------------- */
 
-export default function CreatorProjectDetail() {
+export default function CreatorProjectDetailsPage() {
+
+    /* --------------------------- Router helpers --------------------------- */
+
+    const navigate = useNavigate();
+    const { projectId } = useParams();
+
+    /* ---------------------------- Auth helper ----------------------------- */
+
     //TODO: 임시용 id (나중에 삭제하기)
     const { creatorId, loading: idLoading } = useCreatorId(2);
 
-    const { projectId: projectIdParam } = useParams();
-    const projectId = projectIdParam ? Number(projectIdParam) : null;
-    const navigate = useNavigate();
+    /* ------------------------------- States ------------------------------- */
 
+    const [project, setProject] = useState<CreatorProjectDetailDto | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const [project, setProject] = useState<CreatorProjectDetailDto | null>(null);
-    const [rewards, setRewards] = useState<RewardView[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
-    const [thumbnailFile] = useState<File | null>(null);
+    const thumbnailUrl = useMemo(() => toPublicUrl(project?.thumbnail ?? null), [project?.thumbnail]);
+    const businessDocUrl = useMemo(() => toPublicUrl(project?.businessDoc ?? null), [project?.businessDoc]);
 
-    const categoryPath = useMemo(() => {
-        if (!project) return "-";
-
-        const sub = subcategories.find((s) => Number(s.subctgrId) === Number(project.subctgrId));
-        if (!sub) return "-";
-        const ctg = categories.find((c) => Number(c.ctgrId) === Number(sub.ctgrId));
-
-        return `${ctg?.ctgrName} > ${sub.subctgrName}`;
-    }, [project, categories, subcategories]);
+    const projectData = useCallback(async () => {
+        if (!projectId) return;
+        setLoading(true);
+        try {
+            const res = await getData(endpoints.getCreatorProjectDetail(Number(projectId)));
+            if (res.status === 200) {
+                setProject(res.data);
+            }
+        } catch (e: any) {
+            setError(e?.message || "데이터 로드 중 에러가 발생했습니다.");
+        } finally {
+            setLoading(false);
+        }
+    }, [projectId]);
 
     useEffect(() => {
-        let mounted = true;
+        projectData();
+    }, [projectData]);
 
-        if (!projectId) return;
-        if (idLoading) return;
-        if (creatorId == null) return;
+    // TODO: dev id
+    useEffect(() => {
+        if (!idLoading && creatorId) {
+            setDevCreatorIdHeader(creatorId ?? null);
+        }
+    }, [idLoading, creatorId]);
 
-        (async () => {
-            try {
-                setLoading(true);
-                setError(null);
-
-                const [catRes, subRes] = await Promise.all([
-                    getData(endpoints.getCategories),
-                    getData(endpoints.getSubcategories),
-                ]);
-
-                if (!mounted) return;
-                setCategories(Array.isArray(catRes?.data) ? catRes.data : []);
-                setSubcategories(Array.isArray(subRes?.data) ? subRes.data : []);
-
-                //TODO: dev 헤더에 creatorId 주입
-                const res = await kyInstance.get(endpoints.getCreatorProjectDetail(projectId), {
-                    headers: { "X-DEV-CREATOR-ID": String(creatorId) },
-                });
-
-                if (!mounted) return;
-                const body = await res.json<any>();
-                const draft = body?.data ?? body ?? {};
-
-                const project: CreatorProjectDetailDto = {
-                    projectId: Number(draft.projectId) || 0,
-                    creatorId: Number(draft.creatorId) || 0,
-                    ctgrId: Number(draft.ctgrId) || 0,
-                    subctgrId: Number(draft.subctgrId) || 0,
-                    title: draft.title ?? "",
-                    goalAmount: Number(draft.goalAmount) || 0,
-                    startDate: draft.startDate ? new Date(draft.startDate) : new Date(),
-                    endDate: draft.endDate ? new Date(draft.endDate) : new Date(),
-                    content: draft.content ?? "",
-                    contentBlocks: draft.contentBlocks ?? { blocks: [] },
-                    thumbnail: draft.thumbnail ?? null,
-                    businessDoc: draft.businessDoc ?? null,
-                    creatorName: draft.creatorName ?? "",
-                    businessNum: draft.businessNum ?? "",
-                    email: draft.email ?? "",
-                    phone: draft.phone ?? "",
-                    tagList: toTagNames(draft.tagList),
-                    rewardList: [],
-                };
-                setProject(project);
-
-                const rewardArr: RewardView[] = (draft.rewardList ?? []).map((r: any) => ({
-                    rewardId: r.rewardId ? Number(r.rewardId) : undefined,
-                    rewardName: r.rewardName ?? "",
-                    price: Number(r.price) || 0,
-                    rewardContent: r.rewardContent ?? "",
-                    deliveryDate: r.deliveryDate ? new Date(r.deliveryDate) : new Date(),
-                    rewardCnt: r.rewardCnt ? Number(r.rewardCnt) : 0,
-                    isPosting: ((r.isPosting ?? "Y") + "").trim() === "N" ? "N" : "Y",
-                }));
-                setRewards(rewardArr);
-            } catch (e: any) {
-                setError(e?.message ?? "데이터 로드 중 오류가 발생했습니다.");
-            } finally {
-                if (mounted) setLoading(false);
-            }
-        })();
-
-        return () => {
-            mounted = false;
-        };
-    }, [projectId, idLoading, creatorId]);
-
-    const filePreviewUrl = useObjectUrl(thumbnailFile);
-    const publicThumbnailUrl = useMemo(() => toPublicUrl(project?.thumbnail ?? null), [project?.thumbnail]);
-    const thumbnailUrl = filePreviewUrl || publicThumbnailUrl;
-
-    const publicBusinessDocUrl = useMemo(() => toPublicUrl(project?.businessDoc ?? null), [project?.businessDoc]);
+    /* ----------------------------------- Render ----------------------------------- */
 
     if (loading) return <FundingLoader />;
-
     if (!project) {
-
         return (
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-                <EmptyState onBack={() => navigate(-1)} message={error ?? "프로젝트를 찾을 수 없습니다."} />
+                <EmptyState onBack={() => navigate(-1)} message={error ?? "프로젝트를 불러오지 못했습니다."} />
             </div>
         );
     }
@@ -158,15 +84,9 @@ export default function CreatorProjectDetail() {
             <div className="mb-6">
                 <h1 className="text-2xl font-semibold truncate">{project.title}</h1>
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                    <StatusChip status="VERIFYING" />
+                    <ProjectStatusChip status={project.projectStatus as ProjectStatus} />
                 </div>
             </div>
-
-            {thumbnailUrl && (
-                <div className="mb-6 overflow-hidden rounded-xl border bg-background">
-                    <img src={thumbnailUrl} alt={project.title} className="w-full max-h-[420px] object-cover" />
-                </div>
-            )}
 
             <div className="space-y-6">
                 <Card>
@@ -177,11 +97,16 @@ export default function CreatorProjectDetail() {
                     </CardHeader>
 
                     <CardContent className="space-y-4">
-                        <KV label="카테고리" value={categoryPath} />
-                        <KV label="펀딩 기간" value={`${formatDate(project.startDate)} ~ ${formatDate(project.endDate)}`} />
-                        <KV label="목표 금액" value={`${formatPrice(project.goalAmount)}원`} />
+                        <KV label="작성일 / 수정일" value={`${formatDate(project.createdAt)} / ${formatDate(project.updatedAt)}`} />
+                        <>
+                            <div className="text-sm text-muted-foreground">대표 이미지</div>
+                            <div className="mb-6 overflow-hidden rounded-xl border bg-background">
+                                <img src={thumbnailUrl} alt={project.title} className="w-full max-h-[420px] object-cover" />
+                            </div>
+                        </>
+                        <KV label="카테고리" value={`${project.ctgrName} > ${project.subctgrName}`} />
                         <div>
-                            <div className="text-sm text-muted-foreground mb-2">검색 태그</div>
+                            <div className="text-sm text-muted-foreground">태그</div>
                             {toTagNames(project.tagList).length ? (
                                 <div className="flex flex-wrap gap-2">
                                     {toTagNames(project.tagList).map((t) => (
@@ -192,6 +117,9 @@ export default function CreatorProjectDetail() {
                                 <p className="text-sm">-</p>
                             )}
                         </div>
+                        <KV label="펀딩 기간" value={`${formatDate(project.startDate)} ~ ${formatDate(project.endDate)}`} />
+                        <KV label="목표 금액" value={`${formatPrice(project.goalAmount)}원`} />
+                        <KV label="현재 금액" value={`${formatPrice(project.currAmount)}원`} />
                         <div className="space-y-6">
                             <section>
                                 <div className="text-sm text-muted-foreground mb-2">프로젝트 내용</div>
@@ -209,12 +137,14 @@ export default function CreatorProjectDetail() {
 
                 <Card className="mt-6">
                     <CardHeader>
-                        <CardTitle>리워드 구성 ({rewards.length}개)</CardTitle>
+                        <CardTitle className="flex items-center gap-2">
+                            <Gift className="h-5 w-5" /> 리워드 구성 ({project.rewardList.length}개)
+                        </CardTitle>
                     </CardHeader>
 
                     <CardContent className="space-y-3">
-                        {rewards.length === 0 && <p className="text-sm text-muted-foreground">등록된 리워드가 없습니다.</p>}
-                        {rewards.map((r) => (
+                        {project.rewardList.length === 0 && <p className="text-sm text-muted-foreground">등록된 리워드가 없습니다.</p>}
+                        {project.rewardList.map((r) => (
                             <div key={(r as any).rewardId ?? `${r.rewardName}-${r.price}`} className="rounded-lg border p-4">
                                 <div className="flex items-start justify-between gap-4">
                                     <div className="min-w-0">
@@ -237,24 +167,31 @@ export default function CreatorProjectDetail() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>창작자 정보</CardTitle>
+                        <CardTitle className="flex items-center gap-2">
+                            <UserRound className="h-5 w-5" /> 창작자 정보
+                        </CardTitle>
                     </CardHeader>
 
                     <CardContent className="space-y-3">
                         <KV label="창작자명" value={project.creatorName} />
-                        <KV label="사업자등록번호" value={project.businessNum || "-"} />
-                        <Card className="mt-6">
-                            <CardHeader>
-                                <CardTitle>사업자등록증</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <BusinessDocViewer src={publicBusinessDocUrl} fileName={`사업자등록증_${project.creatorName || project.projectId}.pdf`} />
-                            </CardContent>
-                        </Card>
-                        <KV label="이메일" value={project.email} icon={<Mail className="h-4 w-4" />} />
-                        <KV label="전화번호" value={project.phone} icon={<Phone className="h-4 w-4" />} />
+                        <KV label="이메일" value={project.email} />
+                        <KV label="전화번호" value={project.phone} />
+                        <KV label="사업자번호" value={project.businessNum || "-"} />
                     </CardContent>
                 </Card>
+
+                {businessDocUrl && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <FileText className="h-5 w-5" /> 사업자등록증
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <BusinessDocViewer src={businessDocUrl} fileName={`사업자등록증_${project.creatorName || project.projectId}.pdf`} />
+                        </CardContent>
+                    </Card>
+                )}
 
                 <Card>
                     <CardHeader>
@@ -270,15 +207,12 @@ export default function CreatorProjectDetail() {
                         <p>• 심사 반려되었을 경우에는 새로운 프로젝트를 생성하셔야 합니다.</p>
                     </CardContent>
                 </Card>
-            </div>
 
-            <div className="mt-6">
-                <Button
-                    variant="outline"
-                    onClick={() => navigate("/creator/projects", { replace: true })}
-                >
-                    <ArrowLeft className="h-4 w-4 mr-2" /> 목록으로
-                </Button>
+                <div className="sticky bottom-0 left-0 right-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border rounded-xl p-3 shadow-sm">
+                    <Button variant="ghost" className="leading-none min-w-0 w-auto" onClick={() => navigate(-1)}>
+                        <ArrowLeft /> 뒤로
+                    </Button>
+                </div>
             </div>
         </div>
     );
@@ -295,15 +229,6 @@ function KV({ label, value, icon }: { label: string; value: string; icon?: React
             </div>
             <div className="min-w-0 text-sm leading-relaxed break-all [overflow-wrap:anywhere]">{value || "-"}</div>
         </div>
-    );
-}
-
-function StatusChip({ status }: { status: "VERIFYING" | string }) {
-    return (
-        <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium bg-amber-50 text-amber-700 border-amber-200">
-            <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-amber-500" />
-            {status === "VERIFYING" ? "심사중" : status}
-        </span>
     );
 }
 
@@ -333,7 +258,7 @@ function BusinessDocViewer({ src, fileName }: { src?: string | null; fileName?: 
         <div className="space-y-3">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm">
-                    {isPdf ? <FileText className="h-4 w-4" /> : isImg ? <ImageIcon className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+                    {isPdf ? <Paperclip className="h-4 w-4" /> : isImg ? <Paperclip className="h-4 w-4" /> : <Paperclip className="h-4 w-4" />}
                     <a href={src} target="_blank" rel="noreferrer" className="underline underline-offset-2 break-all">
                         {fileName || getFileName(src)}
                     </a>
@@ -363,7 +288,7 @@ function BusinessDocViewer({ src, fileName }: { src?: string | null; fileName?: 
                     <img src={src} alt="사업자등록증" className="w-full max-h-[560px] object-contain bg-muted" />
                 </div>
             ) : (
-                <p className="text-sm text-muted-foreground">이 형식은 미리보기를 지원하지 않습니다.</p>
+                <p className="text-sm text-muted-foreground">미리보기를 지원하지 않는 형식입니다.</p>
             )}
         </div>
     );
@@ -380,10 +305,10 @@ function getExt(url: string): string {
 }
 
 function getFileName(url: string): string {
-  try {
-    const q = url.split("?")[0];
-    return decodeURIComponent(q.substring(q.lastIndexOf("/") + 1)) || "document";
-  } catch {
-    return "document";
-  }
+    try {
+        const q = url.split("?")[0];
+        return decodeURIComponent(q.substring(q.lastIndexOf("/") + 1)) || "document";
+    } catch {
+        return "document";
+    }
 }

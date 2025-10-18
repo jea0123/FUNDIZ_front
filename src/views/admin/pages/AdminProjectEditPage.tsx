@@ -19,7 +19,7 @@ export type AdminStatus = typeof ADMIN_STATUSES[number];
 
 /* --------------------------- Component --------------------------- */
 
-export default function AdminProjectEdit() {
+export default function AdminProjectEditPage() {
     const { projectId } = useParams<{ projectId: string }>();
     const navigate = useNavigate();
 

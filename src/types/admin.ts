@@ -1,7 +1,7 @@
-import type { Status } from "@/views/admin/tabs/ProjectsTab";
 import type { Reward } from "./reward";
 import type { Tag } from "./tag";
-import type { AdminStatus } from "@/views/admin/tabs/AdminProjectEdit";
+import type { AdminStatus } from "@/views/admin/pages/AdminProjectEditPage";
+import type { ProjectStatus } from "@/views/admin/components/ProjectStatusChip";
 
 export interface Analytics {
     kpi: {
@@ -99,7 +99,7 @@ export interface AdminProjectList {
     projectId: number;
     title: string;
     creatorName: string;
-    projectStatus: Status;
+    projectStatus: ProjectStatus;
     startDate: Date;
     endDate: Date;
     goalAmount: number;
