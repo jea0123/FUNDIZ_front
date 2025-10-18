@@ -232,9 +232,9 @@ export default function CreatorInfoUpdate() {
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
-                                                    <SelectItem value="GENERAL">GENERAL · 일반</SelectItem>
-                                                    <SelectItem value="INDIVIDUAL">INDIVIDUAL · 개인사업자</SelectItem>
-                                                    <SelectItem value="CORPORATION">CORPORATION · 법인사업자</SelectItem>
+                                                    <SelectItem value="GENERAL">일반</SelectItem>
+                                                    <SelectItem value="INDIVIDUAL">개인사업자</SelectItem>
+                                                    <SelectItem value="CORPORATION">법인사업자</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <div className={hintCls}>
@@ -380,9 +380,9 @@ export default function CreatorInfoUpdate() {
                     <div className="mt-6 rounded-xl border bg-muted/30 p-4 text-sm">
                         <p className="font-medium">유형 안내</p>
                         <ul className="mt-2 list-disc pl-5 space-y-1">
-                            <li><span className="font-semibold">GENERAL</span> : 일반 · 취미 기반 개인</li>
-                            <li><span className="font-semibold">INDIVIDUAL</span> : 개인사업자 (사업자번호 필수)</li>
-                            <li><span className="font-semibold">CORPORATION</span> : 법인사업자 (사업자번호 필수)</li>
+                            <li><span className="font-semibold">일반</span> : 일반 · 취미 기반 개인</li>
+                            <li><span className="font-semibold">개인사업자</span> : 개인사업자 (사업자번호 필수)</li>
+                            <li><span className="font-semibold">법인사업자</span> : 법인사업자 (사업자번호 필수)</li>
                         </ul>
                     </div>
                 </CardContent>
