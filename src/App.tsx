@@ -55,6 +55,9 @@ import { NoticeUpdtTab } from './views/admin/tabs/NoticeUpdtTab';
 import SettlementTab from './views/admin/tabs/SettlementTab';
 import EditProject from './views/creator/pages/EditProject';
 import BackingDetailTab from './views/user/tabs/BackingDetailTab';
+// import { setDevCreatorIdHeader } from '@/api/apis';
+
+// setDevCreatorIdHeader(11);
 
 const OverviewTab = lazy(() => import('./views/admin/tabs/OverviewTab').then((module) => ({ default: module.OverviewTab })));
 const CreatorDashboard = lazy(() => import('./views/creator/pages/CreatorDashboard').then((module) => ({ default: module.default })));

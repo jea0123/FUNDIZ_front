@@ -62,7 +62,7 @@ export const kyInstance = ky.create({
             .json()
             .catch(() => null);
           const msg = body?.message ?? res.statusText;
-          const reqURI = _req.url.replace(String(_opts.prefixUrl ?? ''), '');
+          const reqURI = _req.url.replace(String(_opts.prefixUrl ?? ''), '2');
           console.error(`${res.status} ${msg}`, reqURI);
           // appNavigate('/error', { state: { message: msg, status: res.status } });
         }
@@ -155,7 +155,7 @@ export const endpoints = {
   // ==================== Creator API ====================
   getCreatorProjectList: (p: SearchCreatorProjectDto) => `creator/projects?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
   registerCreator: 'creator/register',
-  getCreatorInfo:  'creator/info',
+  getCreatorInfo: 'creator/info',
   updateCreatorInfo: (creatorId: number) => `creator/update/${creatorId}`,
   getCreatorProjectDetail: (projectId: number) => `creator/projects/${projectId}`,
   getCreatorProjectSummary: (projectId: number) => `creator/projects/${projectId}/summary`,
@@ -209,6 +209,7 @@ export const endpoints = {
   //여기까지
   backingPrepare: (userId: number, projectId: number) => `backing/${userId}/create/${projectId}`,
   addBacking: (userId: number) => `backing/create/${userId}`,
+  cancelBacking:(),
 
   // ==================== Admin API ====================
   getAdminAnalytics: (period: string, metric: string) => `admin/analytics?period=${period}&metric=${metric}`,

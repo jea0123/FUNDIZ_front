@@ -14,20 +14,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import type { BackingPrepare, BackingPagePayment } from '@/types/backing';
 
+const getProgressColor = (rate: number) => {
+  if (rate < 34) return 'bg-red-500'; // 0~33%
+  if (rate < 67) return 'bg-yellow-400'; // 34~66%
+  return 'bg-green-500'; // 67% 이상
+};
+
+function ColoredProgress({ value }: { value: number }) {
+  const color = getProgressColor(value);
+  return (
+    <div className="relative w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+      <div className={`h-full transition-all duration-500 ${color}`} style={{ width: `${value}%` }} />
+    </div>
+  );
+}
+
 //결제 모달
-function PaymentModal({
-  open,
-  onClose,
-  totalAmount,
-  paymentList,
-  onConfirmPayment,
-}: {
-  open: boolean;
-  onClose: () => void;
-  totalAmount: number;
-  paymentList: BackingPagePayment[];
-  onConfirmPayment: (method: string) => void;
-}) {
+function PaymentModal({ open, onClose, totalAmount, paymentList, onConfirmPayment }: { open: boolean; onClose: () => void; totalAmount: number; paymentList: BackingPagePayment[]; onConfirmPayment: (method: string) => void }) {
   const [selectedPayment, setSelectedPayment] = useState<string>(''); // 저장된 결제 선택
   const [method, setMethod] = useState(''); // 새 결제수단 선택
 
@@ -57,12 +60,7 @@ function PaymentModal({
               <p className="font-medium text-sm mb-2">💾 저장된 결제 정보</p>
               <RadioGroup value={selectedPayment} onValueChange={handleSelectSaved} className="space-y-2">
                 {paymentList.map((p, idx) => (
-                  <div
-                    key={p.cardCompany ?? idx}
-                    className={`flex items-center justify-between p-2 rounded-md border hover:bg-gray-100 transition ${
-                      selectedPayment === p.cardCompany ? 'bg-blue-50 border-blue-300' : ''
-                    }`}
-                  >
+                  <div key={p.cardCompany ?? idx} className={`flex items-center justify-between p-2 rounded-md border hover:bg-gray-100 transition ${selectedPayment === p.cardCompany ? 'bg-blue-50 border-blue-300' : ''}`}>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value={p.cardCompany ?? `pay-${idx}`} id={`pay-${idx}`} />
                       <Label htmlFor={`pay-${idx}`} className="cursor-pointer text-sm font-medium">
@@ -103,8 +101,11 @@ function PaymentModal({
           <Button
             className="bg-blue-600 hover:bg-blue-700"
             onClick={() => {
-              const chosen = selectedPayment || method || '선택된 결제수단 없음';
-              onConfirmPayment(chosen);
+              const payload = {
+                method: method || 'CARD',
+                cardCompany: selectedPayment || '', // 저장된 카드사 선택
+              };
+              onConfirmPayment(payload);
               onClose();
             }}
             disabled={!selectedPayment && !method}
@@ -117,7 +118,7 @@ function PaymentModal({
   );
 }
 
-//BackingPage 본문 
+//BackingPage 본문
 export function BackingPage() {
   const tempUserId = 1;
   const { projectId } = useParams<{ projectId: string }>();
@@ -178,9 +179,7 @@ export function BackingPage() {
             }
           }
 
-          const selectedRewards = rewards.filter((r) =>
-            rewardEntries.some((entry) => entry.rewardId === r.rewardId)
-          );
+          const selectedRewards = rewards.filter((r) => rewardEntries.some((entry) => entry.rewardId === r.rewardId));
 
           const initialQuantities: Record<number, number> = {};
           selectedRewards.forEach((r) => {
@@ -206,16 +205,12 @@ export function BackingPage() {
   if (loading) return <p className="text-center py-10 text-gray-500">데이터를 불러오는 중...</p>;
   if (!prepareData) return <p className="text-center py-10 text-gray-500">후원 정보를 불러올 수 없습니다.</p>;
 
-  const { title, thumbnail, creatorName, goalAmount, currAmount, rewardList, nickname, email, paymentList } =
-    prepareData as any;
+  const { title, thumbnail, creatorName, goalAmount, currAmount, rewardList, nickname, email, paymentList } = prepareData as any;
 
-  const achievementRate = Math.round((currAmount / goalAmount) * 100);
+  const achievementRate = goalAmount && goalAmount > 0 && currAmount != null ? Math.round((currAmount / goalAmount) * 100) : 0;
 
   const getTotalAmount = () => {
-    const rewardsTotal = rewardList.reduce(
-      (sum, r) => sum + (rewardQuantities[r.rewardId] ?? 1) * r.price,
-      0
-    );
+    const rewardsTotal = rewardList.reduce((sum, r) => sum + (rewardQuantities[r.rewardId] ?? 1) * r.price, 0);
     const additional = customAmount ? parseInt(customAmount) : 0;
     return rewardsTotal + additional;
   };
@@ -228,19 +223,17 @@ export function BackingPage() {
     setIsPaymentOpen(true);
   };
 
-  const handleConfirmPayment = async (method: string) => {
-    const rewardsTotal = rewardList.reduce(
-      (sum, r) => sum + (rewardQuantities[r.rewardId] ?? 1) * r.price,
-      0
-    );
+  const handleConfirmPayment = async ({ method, cardCompany }: { method: string; cardCompany: string }) => {
+    const rewardsTotal = rewardList.reduce((sum, r) => sum + (rewardQuantities[r.rewardId] ?? 1) * r.price, 0);
     const additional = customAmount ? parseInt(customAmount) : 0;
     const totalAmount = rewardsTotal + additional;
-    const toLocalDate = (date: Date) => date.toISOString().split('T')[0];
 
     if (!shippingAddress?.addrId) {
       alert('배송지를 선택해주세요.');
       return;
     }
+
+    const now = new Date().toISOString();
 
     const backingData = {
       backingId: 0,
@@ -248,14 +241,8 @@ export function BackingPage() {
         backingId: 0,
         userId: tempUserId,
         amount: totalAmount,
-        createdAt: toLocalDate(new Date()),
+        createdAt: now,
         backingStatus: 'COMPLETED',
-      },
-      backingDetail: {
-        backingId: 0,
-        rewardId: rewardList[0]?.rewardId ?? 0,
-        price: rewardList[0]?.price ?? 0,
-        quantity: rewardQuantities[rewardList[0]?.rewardId] ?? 1,
       },
       payment: {
         paymentId: 0,
@@ -264,8 +251,8 @@ export function BackingPage() {
         method: method || 'CARD',
         status: 'COMPLETED',
         amount: totalAmount,
-        cardCompany: '',
-        createdAt: new Date(),
+        cardCompany: cardCompany || null,
+        createdAt: now,
       },
       address: {
         addrId: shippingAddress.addrId,
@@ -291,12 +278,15 @@ export function BackingPage() {
 
     try {
       const res = await postData(endpoints.addBacking(tempUserId), backingData);
-
       if (res.status === 200) {
-        alert(
-          `결제가 완료되었습니다!\n결제수단: ${method}\n총 금액: ${totalAmount.toLocaleString()}원`
-        );
-        navigate('/user/mypage');
+        const message = `결제가 완료되었습니다!\n\n결제방식: ${method}\n카드사: ${cardCompany || '-'}\n총 금액: ${totalAmount.toLocaleString()}원
+        \n\n마이페이지로 이동하시겠습니까? (취소 시 이전 페이지로 이동합니다.)`;
+
+        if (window.confirm(message)) {
+          navigate('/user');
+        } else {
+          navigate(-1); // 이전 페이지로 이동
+        }
       } else {
         alert('후원 저장 실패: ' + (res.message || '서버 오류'));
       }
@@ -317,13 +307,7 @@ export function BackingPage() {
           <h1 className="text-3xl font-bold">프로젝트 후원하기</h1>
         </div>
 
-        <PaymentModal
-          open={isPaymentOpen}
-          onClose={() => setIsPaymentOpen(false)}
-          totalAmount={getTotalAmount()}
-          paymentList={paymentList}
-          onConfirmPayment={handleConfirmPayment}
-        />
+        <PaymentModal open={isPaymentOpen} onClose={() => setIsPaymentOpen(false)} totalAmount={getTotalAmount()} paymentList={paymentList} onConfirmPayment={handleConfirmPayment} />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             {/* 프로젝트 요약 */}
@@ -335,7 +319,7 @@ export function BackingPage() {
                 <div>
                   <h3 className="text-xl font-semibold">{title}</h3>
                   <p className="text-sm text-muted-foreground">by {creatorName}</p>
-                  <Progress value={achievementRate} className="h-2 mt-2" />
+                  <ColoredProgress value={achievementRate} />
                   <p className="text-sm mt-1">{achievementRate}% 달성</p>
                 </div>
               </CardContent>
