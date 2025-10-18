@@ -9,7 +9,7 @@ import { formatDate } from "@/utils/utils";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import FundingLoader from "@/components/FundingLoader";
-import { Pagination } from "@/views/project/ProjectAllPage";
+import { Pagination } from "@/views/project/ProjectsBrowsePage";
 
 /* ------------------------------ Common hook ------------------------------ */
 
@@ -40,7 +40,7 @@ export function useQueryState() {
     return { page, size, rangeType, projectStatus, setPage, setSize, setRangeType, setProjectStatus };
 }
 
-function ApprovalCard({ project, projectData }: { project: ProjectVerifyList; projectData: () => Promise<void> }) {
+function ProjectCard({ project, projectData }: { project: ProjectVerifyList; projectData: () => Promise<void> }) {
     const navigate = useNavigate();
 
     const [approvingId, setApprovingId] = useState<number | null>(null);
@@ -48,7 +48,7 @@ function ApprovalCard({ project, projectData }: { project: ProjectVerifyList; pr
 
     const [reason, setReason] = useState("");
     const [openRejectModal, setOpenRejectModal] = useState(false);
-    const [targetProject, setTargetProject] = useState< { id: number; title: string } | null>(null);
+    const [targetProject, setTargetProject] = useState<{ id: number; title: string } | null>(null);
 
     const goDetail = (projectId: number) => navigate(`/admin/verify/${projectId}`);
 
@@ -90,75 +90,75 @@ function ApprovalCard({ project, projectData }: { project: ProjectVerifyList; pr
 
     return (
         <>
-        <Card className="block">
-            <CardHeader className="pb-2">
-                <CardTitle>{project.title}</CardTitle>
-            </CardHeader>
+            <Card className="block">
+                <CardHeader className="pb-2">
+                    <CardTitle>{project.title}</CardTitle>
+                </CardHeader>
 
-            <CardContent>
-                <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
-                    <div>기간: {formatDate(project.startDate)} ~ {formatDate(project.endDate)}</div>
-                    <div>카테고리: {project.ctgrName} &gt; {project.subctgrName}</div>
-                    <div>목표금액: {project.goalAmount}원</div>
-                    <div>창작자: {project.creatorName}</div>
-                    <div>심사요청일: {formatDate(project.requestedAt)}</div>
-                </div>
-            </CardContent>
+                <CardContent>
+                    <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
+                        <div>기간: {formatDate(project.startDate)} ~ {formatDate(project.endDate)}</div>
+                        <div>카테고리: {project.ctgrName} &gt; {project.subctgrName}</div>
+                        <div>목표금액: {project.goalAmount}원</div>
+                        <div>창작자: {project.creatorName}</div>
+                        <div>심사요청일: {formatDate(project.requestedAt)}</div>
+                    </div>
+                </CardContent>
 
-            <CardFooter className="justify-end gap-2 pt-2">
-                <Button variant="outline" size="sm" onClick={() => goDetail(project.projectId)}>
-                    <Eye className="h-4 w-4 mr-1" /> 상세보기
-                </Button>
-                <Button 
-                    variant="default"
-                    size="sm"
-                    onClick={() => handleApproveButton(project.projectId, project.title)}
-                    disabled={approvingId === project.projectId}
-                >
-                    <CheckCircle className="h-4 w-4 mr-1"/>{approvingId === project.projectId ? "승인중" : "승인"}
-                </Button>
-                <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => {
-                        setTargetProject({ id: project.projectId, title: project.title });
-                        setReason("");
-                        setOpenRejectModal(true);
-                    }}
-                >
-                    <XCircle className="h-4 w-4 mr-1" /> 반려
-                </Button>
-            </CardFooter>
-        </Card>
-
-        <Dialog open={openRejectModal} onOpenChange={setOpenRejectModal}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>프로젝트 반려</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-2">
-                    <p>[{targetProject?.title}]</p>
-                    <Input value={reason} placeholder="프로젝트 반려 사유를 입력하세요." onChange={(e) => setReason(e.target.value)} />
-                </div>
-                <DialogFooter>
-                    <Button variant="ghost" onClick={() => setOpenRejectModal(false)}>취소</Button>
+                <CardFooter className="justify-end gap-2 pt-2">
+                    <Button variant="outline" size="sm" onClick={() => goDetail(project.projectId)}>
+                        <Eye className="h-4 w-4 mr-1" /> 상세보기
+                    </Button>
+                    <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => handleApproveButton(project.projectId, project.title)}
+                        disabled={approvingId === project.projectId}
+                    >
+                        <CheckCircle className="h-4 w-4 mr-1" />{approvingId === project.projectId ? "승인중" : "승인"}
+                    </Button>
                     <Button
                         variant="destructive"
-                        disabled={!reason.trim() || rejectingId === targetProject?.id}
-                        onClick={() => handleRejectButton(targetProject!.id, targetProject!.title)}
+                        size="sm"
+                        onClick={() => {
+                            setTargetProject({ id: project.projectId, title: project.title });
+                            setReason("");
+                            setOpenRejectModal(true);
+                        }}
                     >
-                        {rejectingId === targetProject?.id ? "반려중" : "확인"}
+                        <XCircle className="h-4 w-4 mr-1" /> 반려
                     </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+                </CardFooter>
+            </Card>
+
+            <Dialog open={openRejectModal} onOpenChange={setOpenRejectModal}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>프로젝트 반려</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-2">
+                        <p>[{targetProject?.title}]</p>
+                        <Input value={reason} placeholder="프로젝트 반려 사유를 입력하세요." onChange={(e) => setReason(e.target.value)} />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="ghost" onClick={() => setOpenRejectModal(false)}>취소</Button>
+                        <Button
+                            variant="destructive"
+                            disabled={!reason.trim() || rejectingId === targetProject?.id}
+                            onClick={() => handleRejectButton(targetProject!.id, targetProject!.title)}
+                        >
+                            {rejectingId === targetProject?.id ? "반려중" : "확인"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }
 
 /* --------------------------------- Page --------------------------------- */
 
-export function ApprovalsTab() {
+export function VerificationQueue() {
     const [verifyList, setVerifyList] = useState<ProjectVerifyList[]>([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(false);
@@ -216,7 +216,7 @@ export function ApprovalsTab() {
             <CardHeader>
                 <CardTitle>프로젝트 심사</CardTitle>
                 <CardDescription>창작자가 제출한 프로젝트를 심사하고 승인/반려를 결정하세요.</CardDescription>
-                
+
                 <div className="flex flex-wrap items-center gap-2 mt-2">
                     <span className="text-xs text-muted-foreground mr-1">기간</span>
                     <RangeButton label="전체" value="" />
@@ -229,20 +229,20 @@ export function ApprovalsTab() {
                     총 {total.toLocaleString()}건
                 </div>
             </CardHeader>
-            
+
             <CardContent>
                 {verifyList.length === 0 ? (
                     <p>심사 대기중인 프로젝트가 없습니다.</p>
                 ) : (
-                <div className="space-y-4">
-                    {verifyList.map((r) => (
-                        <ApprovalCard key={r.projectId} project={r} projectData={projectData} />
-                    ))}
-                    <Pagination
-                        key={`${projectStatus || 'ALL'}-${rangeType || 'ALL'}-${size}`}
-                        page={page} size={size} total={total} onPage={setPage}
-                    />
-                </div>
+                    <div className="space-y-4">
+                        {verifyList.map((r) => (
+                            <ProjectCard key={r.projectId} project={r} projectData={projectData} />
+                        ))}
+                        <Pagination
+                            key={`${projectStatus || 'ALL'}-${rangeType || 'ALL'}-${size}`}
+                            page={page} size={size} total={total} onPage={setPage}
+                        />
+                    </div>
                 )}
             </CardContent>
         </Card>

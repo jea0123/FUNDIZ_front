@@ -13,9 +13,9 @@ import type { RewardDraft, RewardForm } from "@/types/reward";
 import { formatDate, formatPrice } from "@/utils/utils";
 import { Plus, Truck, X } from "lucide-react";
 import { useState } from "react";
-import { BusinessDocUploader, ThumbnailUploader } from "./FileUploader";
+import { BusinessDocUploader, ThumbnailUploader } from "./CreatorUploaders";
 import ProjectDetailEditor from "./ProjectDetailEditor";
-import type { ProjectFieldErrors } from "../pages/EditProject";
+import type { ProjectFieldErrors } from "../pages/CreatorProjectEditPage";
 import type { RewardFieldErrors } from "@/types/reward-validator";
 
 /* -------------------------------- Type -------------------------------- */
@@ -69,7 +69,7 @@ const parseLocalDate = (s: string) => {
 
 /* -------------------------------- Page -------------------------------- */
 
-export function EditProjectSteps(props: StepsProps) {
+export function CreatorProjectEditSteps(props: StepsProps) {
     const {
         step, project, setProject, categories, subcategories, rewardList, newReward,
         setNewReward, addReward, removeReward, agree = false, setAgree, agreeError,

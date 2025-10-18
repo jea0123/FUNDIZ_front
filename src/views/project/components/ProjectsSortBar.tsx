@@ -17,17 +17,17 @@ type Props = {
     total: number;
 };
 
-export default function SortBar({ value, onChange, total }: Props) {
-  return (
-    <div className="flex justify-between items-center mb-6">
-        <p className="text-gray-600">총 {total}개의 프로젝트</p>
-        <div className="flex gap-2">
-            {SORT_OPTIONS.map((opt) => (
-                <Button key={opt.id} variant={value === opt.id ? "default" : "ghost"} size="sm" onClick={() => onChange(opt.id)}>
-                    {opt.name}
-                </Button>
-            ))}
+export default function ProjectsSortBar({ value, onChange, total }: Props) {
+    return (
+        <div className="flex justify-between items-center mb-6">
+            <p className="text-gray-600">총 {total}개의 프로젝트</p>
+            <div className="flex gap-2">
+                {SORT_OPTIONS.map((opt) => (
+                    <Button key={opt.id} variant={value === opt.id ? "default" : "ghost"} size="sm" onClick={() => onChange(opt.id)}>
+                        {opt.name}
+                    </Button>
+                ))}
+            </div>
         </div>
-    </div>
-  );
+    );
 }

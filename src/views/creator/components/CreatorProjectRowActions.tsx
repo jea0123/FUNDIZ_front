@@ -14,7 +14,7 @@ type Props = {
     onManageReviews?: (id: number) => void;
 };
 
-export default function QuickActions({ project, deletingId, onDetail, onEdit, onDelete, onAddReward, onWriteNews, onManageReviews }: Props) {
+export default function CreatorProjectRowActions({ project, deletingId, onDetail, onEdit, onDelete, onAddReward, onWriteNews, onManageReviews }: Props) {
     const status = project.projectStatus as ProjectStatus;
     const isOpen = status === "OPEN";
 

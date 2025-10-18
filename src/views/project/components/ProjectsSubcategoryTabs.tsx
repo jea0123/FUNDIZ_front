@@ -8,7 +8,7 @@ type Props = {
     activeSubId?: number | "all";
 };
 
-export default function SubcategoryTabs({ ctgrId, subcategories, activeSubId }: Props) {
+export default function ProjectsSubcategoryTabs({ ctgrId, subcategories, activeSubId }: Props) {
     if (!ctgrId) return null;
 
     const subs = subcategories

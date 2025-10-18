@@ -1,16 +1,16 @@
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useSearchParams } from "react-router-dom";
-import { OverviewTab } from "./tabs/OverviewTab";
-import { ApprovalsTab } from "./tabs/ApprovalsTab";
-import { ReportsAdminTab } from "./tabs/ReportsAdminTab";
-import { UsersTab } from "./tabs/UsersTab";
-import { AnalyticsTab } from "./tabs/AnalyticsTab";
-import { InquiryAdminTab } from "./tabs/InquiryAdminTab";
-import { NoticeAdminTab } from "./tabs/NoticeAdminTab";
-import { NoticeAddTab } from "./tabs/NoticeAddTab";
-import { NoticeUpdtTab } from "./tabs/NoticeUpdtTab";
-import { ProjectsTab } from "./tabs/ProjectsTab";
-import SettlementTab from "./tabs/SettlementTab";
+import { OverviewTab } from "./pages/OverviewTab";
+import { VerificationQueue } from "./pages/VerificationQueue";
+import { ReportsAdminTab } from "./pages/ReportsAdminTab";
+import { UsersTab } from "./pages/UsersTab";
+import { AnalyticsTab } from "./pages/AnalyticsTab";
+import { InquiryAdminTab } from "./pages/InquiryAdminTab";
+import { NoticeAdminTab } from "./pages/NoticeAdminTab";
+import { NoticeAddTab } from "./pages/NoticeAddTab";
+import { NoticeUpdtTab } from "./pages/NoticeUpdtTab";
+import { AdminProjectListPage } from "./pages/AdminProjectListPage";
+import SettlementTab from "./pages/SettlementTab";
 
 export function AdminTabs() {
     const [sp, setSp] = useSearchParams();
@@ -26,8 +26,8 @@ export function AdminTabs() {
             className="w-full"
         >
             <TabsContent value="overview"><OverviewTab /></TabsContent>
-            <TabsContent value="approvals"><ApprovalsTab /></TabsContent>
-            <TabsContent value="projects"><ProjectsTab /></TabsContent>
+            <TabsContent value="approvals"><VerificationQueue /></TabsContent>
+            <TabsContent value="projects"><AdminProjectListPage /></TabsContent>
             <TabsContent value="reports"><ReportsAdminTab /></TabsContent>
             <TabsContent value="users"><UsersTab /></TabsContent>
             <TabsContent value="analytics"><AnalyticsTab /></TabsContent>
