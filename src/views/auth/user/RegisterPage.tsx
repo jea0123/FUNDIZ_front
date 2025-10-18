@@ -25,7 +25,8 @@ const RegisterSchema = z
         password: z
             .string({ message: '비밀번호를 입력해주세요.' })
             .min(1, '비밀번호를 입력해주세요.')
-            .min(8, '비밀번호는 8자 이상이어야 해요.'),
+            .min(8, '비밀번호는 8자 이상이어야 해요.')
+            .max(20, '비밀번호는 20자 이하여야 해요.'),
         confirmPassword: z.string({ message: '비밀번호 확인을 입력해주세요.' }).min(1, '비밀번호 확인을 입력해주세요.'),
         terms: z.boolean().refine(v => v === true, { message: '이용약관에 동의가 필요해요.' }),
         privacy: z.boolean().refine(v => v === true, { message: '개인정보처리방침 동의가 필요해요.' }),
