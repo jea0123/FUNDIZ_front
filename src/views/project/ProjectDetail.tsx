@@ -52,7 +52,7 @@ export function ProjectDetailPage() {
     const replySentinelRef = useRef<Record<number, HTMLDivElement | null>>({});
     const replyLoadingLockRef = useRef<Record<number, boolean>>({}); // 중복 호출 방지용 락
 
-    /* --------------------------------- State --------------------------------- */
+    /* --------------------------------- States --------------------------------- */
 
     const [project, setProject] = useState<ProjectDetail>();
     const [likeCnt, setLikeCnt] = useState(0);
@@ -65,7 +65,6 @@ export function ProjectDetailPage() {
 
     const [review, setReview] = useState<ReviewDto[]>([]);
     const [reviewCursor, setReviewCursor] = useState<Cursor | null>(null);
-
     const [loadingReview, setLoadingReview] = useState(false);
 
     const [tab, setTab] = useState<"description" | "news" | "community" | "review">("description");
