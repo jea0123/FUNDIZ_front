@@ -10,13 +10,13 @@ import { CheckCircle, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-export function ApprovalDetail() {
+export function VerificationDetails() {
     const navigate = useNavigate();
     const { projectId } = useParams<{ projectId: string }>();
 
-    const [ detail, setDetail ] = useState<ProjectVerifyDetail>();
-    const [ loading, setLoading ] = useState(false);
-    const [ error, setError ] = useState<unknown>(null);
+    const [detail, setDetail] = useState<ProjectVerifyDetail>();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<unknown>(null);
 
     const [approving, setApproving] = useState(false);
     const [rejecting, setRejecting] = useState(false);
@@ -97,7 +97,7 @@ export function ApprovalDetail() {
                         <h3 className="text-lg font-semibold mb-4">{detail.title}</h3>
                         <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
                             <div>
-                                <span className="text-gray-500 mr-2">기간</span> 
+                                <span className="text-gray-500 mr-2">기간</span>
                                 {formatDate(detail.startDate)} ~ {formatDate(detail.endDate)}
                             </div>
                             <div>
@@ -173,7 +173,7 @@ export function ApprovalDetail() {
                                                 <p className="font-semibold">{r.rewardName}</p>
                                                 <span className="text-sm font-medium">{r.price.toLocaleString()}원</span>
                                             </div>
-                                            <p  className="mt-1 text-sm text-gray-700">{r.rewardContent}</p>
+                                            <p className="mt-1 text-sm text-gray-700">{r.rewardContent}</p>
 
                                             <div className="mt-2 flex items-center gap-2">
                                                 {hasRemain && (
@@ -183,9 +183,9 @@ export function ApprovalDetail() {
                                                             isSoldOut
                                                                 ? "bg-rose-100 text-rose-800"
                                                                 : isLow
-                                                                ? "bg-amber-100 text-amber-800"
-                                                                : "bg-gray-100 text-gray-700",
-                                                            ].join(" ")}
+                                                                    ? "bg-amber-100 text-amber-800"
+                                                                    : "bg-gray-100 text-gray-700",
+                                                        ].join(" ")}
                                                         aria-label={isSoldOut ? "품절" : `재고 ${r.remain}개`}
                                                         title={isSoldOut ? "품절" : `재고 ${r.remain}개`}
                                                     >
@@ -208,7 +208,7 @@ export function ApprovalDetail() {
                     </section>
                 </CardContent>
             </Card>
-            
+
             <div className="sticky bottom-0 left-0 right-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border rounded-xl p-3 shadow-sm">
                 <div className="flex items-center justify-between gap-2">
                     <Button variant="ghost" className="leading-none min-w-0 w-auto" onClick={() => navigate(-1)}>뒤로</Button>

@@ -5,11 +5,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { endpoints, getData, postData } from "@/api/apis";
 import { useNavigate } from "react-router-dom";
 import FundingLoader from "@/components/FundingLoader";
-import { useQueryState } from "./ApprovalsTab";
+import { useQueryState } from "./VerificationQueue";
 import { formatDate, getDaysLeft } from "@/utils/utils";
-import { Pagination } from "@/views/project/ProjectAllPage";
 import type { AdminProjectList } from "@/types/admin";
 import { ProjectStatusChip, type ProjectStatus } from "../components/ProjectStatusChip";
+import { Pagination } from "@/views/project/ProjectsBrowsePage";
 
 function ProjectCard({ p, onChanged }: { p: AdminProjectList; onChanged: () => void }) {
     const canVerify = p.projectStatus === "VERIFYING";
@@ -81,7 +81,7 @@ function ProjectCard({ p, onChanged }: { p: AdminProjectList; onChanged: () => v
 
 /* --------------------------------- Page --------------------------------- */
 
-export function ProjectsTab() {
+export function AdminProjectListPage() {
     const [items, setItems] = useState<AdminProjectList[]>([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(false);

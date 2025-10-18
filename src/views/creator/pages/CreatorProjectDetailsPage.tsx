@@ -21,7 +21,7 @@ const toTagNames = (list: any): string[] =>
 
 /* ------------------------------- Page ------------------------------- */
 
-export default function CreatorProjectDetail() {
+export default function CreatorProjectDetailsPage() {
 
     /* --------------------------- Router helpers --------------------------- */
 

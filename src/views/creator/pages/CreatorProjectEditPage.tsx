@@ -10,8 +10,8 @@ import FundingLoader from '@/components/FundingLoader';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { ContentBlocks } from '@/types/creator';
 import { assertValidReward, validateReward, type RewardFieldErrors } from '@/types/reward-validator';
-import { EditProjectSteps, type CreateProjectViewModel } from '../components/EditProjectSteps';
-import { EditProjectStepper } from '../components/EditProjectStepper';
+import { CreatorProjectEditSteps, type CreateProjectViewModel } from '../components/CreatorProjectEditSteps';
+import { CreatorProjectEditStepper } from '../components/CreatorProjectEditStepper';
 import { useCreatorId } from '../../../types/useCreatorId';
 import { formatDate, toIsoDateTime, toPublicUrl } from '@/utils/utils';
 
@@ -112,7 +112,7 @@ const addDays = (date: Date, days: number) => {
     return d;
 };
 
-/* ---------------------------- Validaators / builders ---------------------------- */
+/* ---------------------------- Validators / builders ---------------------------- */
 
 const validateProject = (p: CreateProjectViewModel & {
     thumbnailPreviewUrl?: string;
@@ -297,9 +297,7 @@ const validateAgree = (
 
 /* -------------------------------- Page -------------------------------- */
 
-export default function EditProject() {
-
-    /* ----------------------------- State ----------------------------- */
+export default function CreatorProjectEditPage() {
 
     //TODO: dev id
     const { creatorId, loading: idLoading } = useCreatorId(2);
@@ -484,17 +482,11 @@ export default function EditProject() {
     }, [isEdit, projectId]);
 
     //TODO: dev id
-    // useEffect(() => {
-    //     if (!import.meta.env.DEV) return;
-    //     if (!idLoading && creatorId) {
-    //         localStorage.setItem("DEV_CREATOR_ID", String(creatorId));
-    //     }
-    // }, [idLoading, creatorId])
     useEffect(() => {
-            if (!idLoading && creatorId) {
-                setDevCreatorIdHeader(creatorId ?? null);
-            }
-        }, [idLoading, creatorId]);
+        if (!idLoading && creatorId) {
+            setDevCreatorIdHeader(creatorId ?? null);
+        }
+    }, [idLoading, creatorId]);
 
     /* ---------------------------- Handlers ---------------------------- */
 
@@ -657,11 +649,11 @@ export default function EditProject() {
 
     return (
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <EditProjectStepper steps={STEPS} currentStep={currentStep} progress={progress} title={isEdit ? "프로젝트 수정" : "프로젝트 만들기"} />
+            <CreatorProjectEditStepper steps={STEPS} currentStep={currentStep} progress={progress} title={isEdit ? "프로젝트 수정" : "프로젝트 만들기"} />
 
             <Card className="mt-6">
                 <CardContent className="p-6">
-                    <EditProjectSteps
+                    <CreatorProjectEditSteps
                         key={isEdit ? `edit-${projectId}` : "new"}
                         step={currentStep}
                         project={project}

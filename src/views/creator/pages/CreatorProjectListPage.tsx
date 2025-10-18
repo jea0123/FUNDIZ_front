@@ -6,18 +6,18 @@ import FundingLoader from "@/components/FundingLoader";
 import type { CreatorProjectListDto } from "@/types/creator";
 import { useCreatorId } from "../../../types/useCreatorId";
 import { useNavigate } from "react-router-dom";
-import { useQueryState } from "@/views/admin/tabs/ApprovalsTab";
-import { Pagination } from "@/views/project/ProjectAllPage";
+import { useQueryState } from "@/views/admin/pages/VerificationQueue";
 import { formatDate, formatPrice } from "@/utils/utils";
-import QuickActions from "../components/QuickActions";
+import CreatorProjectRowActions from "../components/CreatorProjectRowActions";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import ReviewsSheet from "../components/ReviewsSheet";
-import NewsModal from "../components/NewsModal";
+import CreatorReviewReplySheet from "../components/CreatorReviewReplySheet";
+import CreatorCreateNewsModal from "../components/CreatorCreateNewsModal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Eye, Heart, Users, type LucideIcon } from "lucide-react";
 import { ProjectStatusChip, type ProjectStatus } from "@/views/admin/components/ProjectStatusChip";
 import clsx from "clsx";
+import { Pagination } from "@/views/project/ProjectsBrowsePage";
 
 /* --------------------------------- Status --------------------------------- */
 
@@ -60,7 +60,7 @@ const stageLabel = (s: Stage) => STAGES.find(x => x.key === s)?.label ?? "상태
 
 /* ---------------------------------- Page ---------------------------------- */
 
-export default function CreatorProjects() {
+export default function CreatorProjectListPage() {
     //TODO: dev id
     const { creatorId, loading: idLoading } = useCreatorId(2);
 
@@ -441,7 +441,7 @@ export default function CreatorProjects() {
                                         </CardContent>
 
                                         <CardFooter className="justify-end gap-2">
-                                            <QuickActions
+                                            <CreatorProjectRowActions
                                                 project={p}
                                                 deletingId={deletingId}
                                                 onDetail={goDetail}
@@ -470,7 +470,7 @@ export default function CreatorProjects() {
 
             {/* === 새소식 등록 모달 === */}
             {activeProject && (
-                <NewsModal
+                <CreatorCreateNewsModal
                     open={newsOpen}
                     projectId={activeProject.id}
                     projectTitle={activeProject.title}
@@ -497,7 +497,7 @@ export default function CreatorProjects() {
                             <SheetDescription>{activeProject.title}</SheetDescription>
                         </SheetHeader>
 
-                        <ReviewsSheet
+                        <CreatorReviewReplySheet
                             open={reviewsOpen}
                             projectId={activeProject.id}
                             projectTitle={activeProject.title}
