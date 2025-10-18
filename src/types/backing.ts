@@ -55,6 +55,8 @@ export interface BackingPrepare {
   projectId: number;
   title: string;
   thumbnail: string;
+  currAmount: string;
+  goalAmount: string;
 
   rewardList: BackingRewardList[];
 
