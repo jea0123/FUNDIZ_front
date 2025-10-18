@@ -257,7 +257,7 @@ const buildFormData = (
     fd.append("title", project.title ?? "");
     fd.append("goalAmount", String(project.goalAmount ?? 0));
     fd.append("startDate", toIsoDateTime(formatDate(project.startDate)));
-    fd.append("endDate", toIsoDateTime(formatDate(project.endDate)));
+    fd.append("endDate", toIsoDateTime(formatDate(project.endDate), true));
     fd.append("content", project.content ?? "");
     fd.append("contentBlocks", JSON.stringify(project.contentBlocks ?? { blocks: [] }));
 

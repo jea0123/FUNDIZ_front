@@ -15,11 +15,24 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import ReviewsSheet from "../components/ReviewsSheet";
 import NewsModal from "../components/NewsModal";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 /* --------------------------------- Status --------------------------------- */
-const PREP_STATUSES: Status[] = ["DRAFT", "VERIFYING"];
-const OPER_STATUSES: Status[] = ["UPCOMING", "OPEN"];
-type Bucket = "PREP" | "OPER";
+const HIDE_BADGE_STATUSES: Status[] = ["DRAFT", "VERIFYING", "REJECTED", "UPCOMING"];
+
+const STAGE_STATUS_MAP = {
+    draft: ["DRAFT"],
+    verifying: ["VERIFYING"],
+    upcoming: ["UPCOMING"],
+    open: ["OPEN"],
+    closed: ["SUCCESS", "FAILED", "CANCELED"],
+    rejected: ["REJECTED"],
+    settled: ["SETTLED"],
+} as const;
+
+type Stage = keyof typeof STAGE_STATUS_MAP;
+type ClosedResult = "" | "SUCCESS" | "FAILED" | "CANCELED";
 
 /* ---------------------------------- Page ---------------------------------- */
 
@@ -42,95 +55,81 @@ export default function CreatorProjects() {
     const goDetail = (projectId: number) => navigate(`/creator/projects/${projectId}`);
     const goEdit = (projectId: number) => navigate(`/creator/project/${projectId}`);
     const goAddReward = (projectId: number) => navigate(`/creator/projects/${projectId}/reward`)
+    const goCreate = () => navigate('creator/project/new');
 
     const { page, size, projectStatus, rangeType, setPage, setProjectStatus, setRangeType } = useQueryState();
 
-    /* ------------------------------- Bucket state ------------------------------- */
+    /* ----------------------------- Stage & Result ----------------------------- */
 
-    const initialBucket: Bucket = useMemo(() => {
-        const tokens = (projectStatus || "").split(",").map((token) => token.trim());
-        const hasOper = tokens.some((st) => OPER_STATUSES.includes(st as Status));
-        return hasOper ? "OPER" : "PREP";
+    const initialStage: Stage = useMemo(() => {
+        const tokens = (projectStatus || "")
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean) as Status[];
+
+        const has = (s: Status | Status[]) =>
+            (Array.isArray(s) ? s : [s]).some((x) => tokens.includes(x));
+
+        if (has("REJECTED")) return "rejected";
+        if (has("SETTLED")) return "settled";
+        if (has(["SUCCESS", "FAILED", "CANCELED"])) return "closed";
+        if (has("OPEN")) return "open";
+        if (has("UPCOMING")) return "upcoming";
+        if (has("VERIFYING")) return "verifying";
+        return "draft";
     }, [projectStatus]);
 
-    const [bucket, setBucket] = useState<Bucket>(initialBucket);
+    const [stage, setStage] = useState<Stage>(initialStage);
+    const [closedResult, setClosedResult] = useState<ClosedResult>("");
 
-    //버킷 스위치 시 서버/URL 상태 동기화
-    const switchBucket = (b: Bucket) => {
-        setBucket(b);
+    // stage 변경 시 서버/URL 동기화
+    const applyStageToQuery = (next: Stage, nextClosedResult: ClosedResult = "") => {
+        setStage(next);
+        setClosedResult(next === "closed" ? nextClosedResult : "");
         setPage(1);
-        if (b === "PREP") {
-            setProjectStatus("DRAFT,VERIFYING");
-        } else {
-            setProjectStatus("UPCOMING,OPEN");
-        }
-    }
+        setRangeType("");
+
+        const base = STAGE_STATUS_MAP[next];
+        const statusCsv =
+            next === "closed" && nextClosedResult
+                ? nextClosedResult
+                : base.join(",");
+
+        setProjectStatus(statusCsv);
+    };
 
     useEffect(() => {
         if (!projectStatus || projectStatus.length === 0) {
-            switchBucket(initialBucket);
+            applyStageToQuery(initialStage);
         }
     }, []);
 
-    /* --------------------------------- Quick Filters --------------------------------- */
-
-    // 버킷 기본값
-    const bucketDefaultStatuses = bucket === "PREP" ? PREP_STATUSES : OPER_STATUSES;
-    const defaultStatusValue = bucketDefaultStatuses.join(",");
-
-    // 순서/공백 무시
-    const normalizeStatuses = (v: string) =>
-        v.split(",").map(st => st.trim()).filter(Boolean).sort().join(",");
-
-    // 현재가 전체인지 판단
-    const isAllStatus = useMemo(() => {
-        const current = normalizeStatuses(projectStatus && projectStatus.length ? projectStatus : defaultStatusValue);
-        const all = normalizeStatuses(defaultStatusValue);
-        return current === all;
-    }, [projectStatus, defaultStatusValue]);
-
-    const StatusButton = ({ label, value }: { label: string; value: string; }) => {
-        const current = normalizeStatuses(projectStatus && projectStatus.length ? projectStatus : defaultStatusValue);
-        const target = normalizeStatuses(value);
-        const active = current === target;
-
-        return (
-            <Button
-                variant={active ? "default" : "outline"}
-                size="sm"
-                onClick={() => { setPage(1); setProjectStatus(value); }}
-            >
-                {label}
-            </Button>
-        );
-    };
-
-    const RangeButton = ({ label, value }: { label: string; value: string }) => {
-        const active = rangeType === value;
-        return (
-            <Button
-                variant={active ? "default" : "outline"}
-                size="sm"
-                onClick={() => { setPage(1); setRangeType(active ? "" : value); }}
-            >
-                {label}
-            </Button>
-        );
-    };
-
     /* ------------------------------------ URL ------------------------------------ */
 
-    useEffect(() => { setDevCreatorIdHeader(creatorId ?? null); }, [creatorId]);
+    useEffect(() => {
+        setDevCreatorIdHeader(creatorId ?? null);
+    }, [creatorId]);
+
+    // 현재 상태 CSV
+    const currentStatusCsv = useMemo(() => {
+        if (stage === "closed") {
+            return closedResult ? closedResult : STAGE_STATUS_MAP.closed.join(",");
+        }
+        return STAGE_STATUS_MAP[stage].join(",");
+    }, [stage, closedResult]);
 
     const url = useMemo(() => {
         if (idLoading) return null;
         if (creatorId != null) {
             return endpoints.getCreatorProjectList({
-                page, size, projectStatus: isAllStatus ? undefined : (projectStatus || undefined), rangeType: rangeType || undefined
+                page,
+                size,
+                projectStatus: currentStatusCsv,
+                rangeType: rangeType || undefined,
             });
         }
         return null;
-    }, [creatorId, idLoading, page, size, projectStatus, rangeType, isAllStatus]);
+    }, [creatorId, idLoading, page, size, currentStatusCsv, rangeType]);
 
     /* -------------------------------- Data fetching -------------------------------- */
 
@@ -157,7 +156,9 @@ export default function CreatorProjects() {
         }
     }, [url]);
 
-    useEffect(() => { fetchData(); }, [fetchData]);
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
 
     /* -------------------------------- Handler --------------------------------- */
 
@@ -167,12 +168,12 @@ export default function CreatorProjects() {
             setDeletingId(projectId);
             await deleteData(endpoints.deleteProject(projectId));
             await fetchData();
+            alert("프로젝트가 삭제되었습니다.");
         } catch (e) {
             setError(e);
             alert("삭제 실패하였습니다. 잠시 후 다시 시도해주세요.");
         } finally {
             setDeletingId(null);
-            alert("프로젝트가 삭제되었습니다.");
         }
     }, [fetchData]);
 
@@ -192,74 +193,87 @@ export default function CreatorProjects() {
 
     // 서버가 콤마 분리 다중 상태를 지원하지 않을 경우를 대비한 클라이언트 필터
     const activeStatuses = useMemo<Status[]>(() => {
-        const tokens = (projectStatus || "").split(",").map((token) => token.trim()).filter(Boolean) as Status[];
-        if (tokens.length === 0) {
-            return bucket === "PREP" ? PREP_STATUSES : OPER_STATUSES;
-        }
-        const allowed = (bucket === "PREP" ? PREP_STATUSES : OPER_STATUSES);
-        return tokens.filter((st) => allowed.includes(st));
-    }, [projectStatus, bucket]);
+        return currentStatusCsv.split(",").map((st) => st.trim()).filter(Boolean) as Status[];
+    }, [currentStatusCsv]);
 
-    const visible = useMemo(() =>
-        projects.filter((p) => activeStatuses.includes(p.projectStatus as Status))
-        , [projects, activeStatuses]
-    );
+    const visible = useMemo(() => {
+        return projects.filter(p => activeStatuses.includes(p.projectStatus as Status))
+    }, [projects, activeStatuses]);
 
     /* ----------------------------------- Render ----------------------------------- */
 
     if (idLoading || loading) return <FundingLoader />;
-    if (error) return <p className="text-red-600">프로젝트 리스트를 불러오지 못했습니다.</p>;
+    if (error) return <p className="text-red-600">프로젝트를 불러오지 못했습니다.</p>;
 
-    const statusFilterChips =
-        bucket === "PREP"
-            ? [
-                { label: "전체", value: PREP_STATUSES.join(",") },
-                { label: "작성중", value: "DRAFT" },
-                { label: "심사중", value: "VERIFYING" }
-            ]
-            : [
-                { label: "전체", value: OPER_STATUSES.join(",") },
-                { label: "오픈예정", value: "UPCOMING" },
-                { label: "진행중", value: "OPEN" }
-            ];
+    const closedChips = [
+        { label: "전체", value: "" as ClosedResult },
+        { label: "성공", value: "SUCCESS" as ClosedResult },
+        { label: "실패", value: "FAILED" as ClosedResult },
+        { label: "취소", value: "CANCELED" as ClosedResult },
+    ];
 
     return (
         <Card>
             <CardHeader className="gap-3">
                 <div className="flex items-center justify-between">
                     <CardTitle>프로젝트 목록</CardTitle>
-                    <div className="inline-flex rounded-md border p-1 bg-muted">
-                        <Button
-                            size="sm"
-                            variant={bucket === "PREP" ? "default" : "ghost"}
-                            onClick={() => switchBucket("PREP")}
+                </div>
+
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                    {/* 상단 탭 */}
+                    <Tabs value={stage} onValueChange={(v) => applyStageToQuery(v as Stage)} className="mt-2">
+                        <TabsList className="flex flex-wrap gap-1">
+                            <TabsTrigger value="draft">작성중</TabsTrigger>
+                            <TabsTrigger value="verifying">심사중</TabsTrigger>
+                            <TabsTrigger value="upcoming">오픈예정</TabsTrigger>
+                            <TabsTrigger value="open">진행중</TabsTrigger>
+                            <TabsTrigger value="closed">종료</TabsTrigger>
+                            <TabsTrigger value="rejected">반려</TabsTrigger>
+                            <TabsTrigger value="settled">정산</TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+
+                    {/* 기간 Select */}
+                    <div className="flex items-center gap-2">
+                        <Select
+                            value={rangeType || ""}
+                            onValueChange={(v) => {
+                                setPage(1);
+                                setRangeType(v === "ALL" ? "" : v);
+                            }}
                         >
-                            사전 준비
-                        </Button>
-                        <Button
-                            size="sm"
-                            variant={bucket === "OPER" ? "default" : "ghost"}
-                            onClick={() => switchBucket("OPER")}
-                        >
-                            운영
-                        </Button>
+                            <SelectTrigger className="w-[140px]">
+                                <SelectValue placeholder="전체" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="ALL">전체</SelectItem>
+                                <SelectItem value="7d">최근 7일</SelectItem>
+                                <SelectItem value="30d">최근 30일</SelectItem>
+                                <SelectItem value="90d">최근 90일</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 mt-2">
-                    <span className="text-xs text-muted-foreground mr-1">상태</span>
-                    {statusFilterChips.map((chip) => (
-                        <StatusButton key={chip.value} label={chip.label} value={chip.value} />
-                    ))}
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2 mt-2">
-                    <span className="text-xs text-muted-foreground mr-1">기간</span>
-                    <RangeButton label="전체" value="" />
-                    <RangeButton label="최근 7일" value="7d" />
-                    <RangeButton label="최근 30일" value="30d" />
-                    <RangeButton label="최근 90일" value="90d" />
-                </div>
+                {/* 종료 탭 전용 하위 칩 */}
+                {stage === "closed" && (
+                    <div className="flex flex-wrap items-center gap-2 mt-3">
+                        <span className="text-xs text-muted-foreground mr-1">종료 결과</span>
+                        {closedChips.map((chip) => {
+                            const active = closedResult === chip.value;
+                            return (
+                                <Button
+                                    key={chip.label}
+                                    size="sm"
+                                    variant={active ? "default" : "outline"}
+                                    onClick={() => applyStageToQuery("closed", chip.value)}
+                                >
+                                    {chip.label}
+                                </Button>
+                            );
+                        })}
+                    </div>
+                )}
 
                 <div className="text-xs text-gray-500 mt-2 pl-1">
                     총 {total.toLocaleString()}건 · 표시 {visible.length.toLocaleString()}건
@@ -268,9 +282,10 @@ export default function CreatorProjects() {
 
             <CardContent>
                 {visible.length === 0 ? (
-                    <p className="text-gray-500">
-                        {bucket === "PREP" ? "작성 중인 프로젝트가 없습니다." : "오픈 예정/진행 중인 프로젝트가 없습니다."}
-                    </p>
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                        <p className="text-gray-600 mb-4">새 프로젝트를 준비해보세요.</p>
+                        <Button onClick={goCreate}>프로젝트 만들기</Button>
+                    </div>
                 ) : (
                     <ul className="space-y-4">
                         {visible.map((p) => {
@@ -283,33 +298,38 @@ export default function CreatorProjects() {
                                             <CardTitle className="flex items-center gap-2 flex-wrap">
                                                 <span className="mr-1 truncate">{p.title}</span>
                                                 <StatusBadge status={st} />
-                                                {st === "OPEN" && (
-                                                    <span>({getDaysLeft(p.endDate)}일 남음)</span>
+                                                {st === "OPEN" && <span>({getDaysLeft(p.endDate)}일 남음)</span>}
+
+                                                {!HIDE_BADGE_STATUSES.includes(st) && (
+                                                    <span className="ml-2 inline-flex items-center gap-1 text-xs text-muted-foreground">
+                                                        <TooltipProvider>
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <span className="rounded-full bg-muted px-2 py-0.5">
+                                                                        새소식 {p.newsCount ?? 0}
+                                                                    </span>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>
+                                                                    마지막: {p.lastNewsAt ? formatDate(p.lastNewsAt) : "없음"}
+                                                                </TooltipContent>
+                                                            </Tooltip>
+
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <span className="rounded-full bg-muted px-2 py-0.5">
+                                                                        후기 {p.reviewNewCount ?? 0} / 미답글 {p.reviewPendingCount ?? 0}
+                                                                    </span>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>
+                                                                    마지막: {p.lastReviewAt ? formatDate(p.lastReviewAt) : "없음"}
+                                                                </TooltipContent>
+                                                            </Tooltip>
+                                                        </TooltipProvider>
+                                                    </span>
                                                 )}
-
-                                                <span className="ml-2 inline-flex items-center gap-1 text-xs text-muted-foreground">
-                                                    <TooltipProvider>
-                                                        <Tooltip>
-                                                            <TooltipTrigger asChild>
-                                                                <span className="rounded-full bg-muted px-2 py-0.5">
-                                                                    새소식 {p.newsCount ?? 0}
-                                                                </span>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>마지막: {p.lastNewsAt ? formatDate(p.lastNewsAt) : "없음"}</TooltipContent>
-                                                        </Tooltip>
-
-                                                        <Tooltip>
-                                                            <TooltipTrigger asChild>
-                                                                <span className="rounded-full bg-muted px-2 py-0.5">
-                                                                    후기 {p.reviewNewCount ?? 0} / 미답글 {p.reviewPendingCount ?? 0}
-                                                                </span>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>마지막: {p.lastReviewAt ? formatDate(p.lastReviewAt) : "없음"}</TooltipContent>
-                                                        </Tooltip>
-                                                    </TooltipProvider>
-                                                </span>
                                             </CardTitle>
                                         </CardHeader>
+
                                         <CardContent>
                                             <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
                                                 <div>기간: {formatDate(p.startDate)} ~ {formatDate(p.endDate)}</div>
@@ -342,8 +362,11 @@ export default function CreatorProjects() {
                 )}
 
                 <Pagination
-                    key={`${projectStatus || 'ALL'}-${rangeType || 'ALL'}-${size}`}
-                    page={page} size={size} total={total} onPage={setPage}
+                    key={`${stage}-${closedResult || "ALL"}-${rangeType || "ALL"}-${size}`}
+                    page={page}
+                    size={size}
+                    total={total}
+                    onPage={setPage}
                 />
             </CardContent>
 
@@ -367,7 +390,7 @@ export default function CreatorProjects() {
                     open={reviewsOpen}
                     onOpenChange={(open) => {
                         setReviewsOpen(open);
-                        if (!open) setActiveProject(null); // 닫히면 초기화
+                        if (!open) setActiveProject(null);
                     }}
                 >
                     <SheetContent className="w-[860px] max-w-full overflow-y-auto">

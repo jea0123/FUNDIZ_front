@@ -15,11 +15,11 @@ export interface CreatorProjectListDto {
     percentNow: number;
     requestedAt?: string;
 
-    newsCount?: number;
-    lastNewsAt?: string | null;
+    newsCount?: number; // 새 새소식 수
+    lastNewsAt?: string | null; // 마지막 작성일
     reviewNewCount?: number; // 새 후기 수
     reviewPendingCount?: number; // 미답글 수
-    lastReviewAt?: string | null;
+    lastReviewAt?: string | null; // 마지막 작성일
 }
 
 export interface SearchCreatorProjectDto {

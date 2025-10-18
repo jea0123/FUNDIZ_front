@@ -27,7 +27,7 @@ export function StatusBadge({ status }: { status: Status }) {
         SUCCESS: "bg-green-100 text-green-700",
         FAILED: "bg-rose-100 text-rose-700",
         REJECTED: "bg-rose-100 text-rose-700",
-        CANCELED: "bg-rose-100 text-rose-700",
+        CANCELED: "bg-slate-100 text-slate-700",
         SETTLED: "bg-yellow-100 text-yellow-800",
     };
     return <span className={cls("inline-flex items-center px-2 py-0.5 rounded text-xs font-medium", map[status])}>{status}</span>;
