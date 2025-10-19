@@ -62,7 +62,7 @@ export const kyInstance = ky.create({
             .json()
             .catch(() => null);
           const msg = body?.message ?? res.statusText;
-          const reqURI = _req.url.replace(String(_opts.prefixUrl ?? ''), '2');
+          const reqURI = _req.url.replace(String(_opts.prefixUrl ?? ''), '');
           console.error(`${res.status} ${msg}`, reqURI);
           // appNavigate('/error', { state: { message: msg, status: res.status } });
         }
@@ -174,6 +174,9 @@ export const endpoints = {
   creatorShippingBackerList: (projectId: number) => `creator/shippingBackerList/${projectId}`,
   postCreatorNews: (projectId: number) => `creator/projects/${projectId}/news`,
   getFollowerCnt: (creatorId: number) => `creator/followerCnt/${creatorId}`,
+
+  getCreatorSummary: (creatorId: number) => `creator/summary/${creatorId}`,
+  getCreatorProjects: (creatorId: number, sort: string, page: number, size: number) => `creator/projectsList/${creatorId}?${toQueryString({ sort, page, size })}`,
 
   // ==================== Project API ====================
   getFeatured: 'project/featured',
