@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getData, endpoints } from '@/api/apis';
+import { getData, postData, endpoints } from '@/api/apis';
 import { useCreatorId } from '../../../types/useCreatorId';
-import type { creatorShippingBackerList } from '@/types/shipping';
+import type { creatorShippingBackerList, creatorShippingStatus } from '@/types/shipping';
 import FundingLoader from '@/components/FundingLoader';
 
 export default function CreatorShippingDetail() {
@@ -11,9 +11,7 @@ export default function CreatorShippingDetail() {
   const navigate = useNavigate();
 
   const fetched = useRef(false);
-
   const [shippingList, setShippingList] = useState<creatorShippingBackerList[]>([]);
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [selectedItem, setSelectedItem] = useState<creatorShippingBackerList | null>(null);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<'recent' | 'oldest' | 'status'>('recent');
@@ -22,6 +20,7 @@ export default function CreatorShippingDetail() {
   const [error, setError] = useState<string | null>(null);
   const itemsPerPage = 5;
 
+  // 데이터 로드
   useEffect(() => {
     if (idLoading || !projectId) return;
     if (fetched.current) return;
@@ -30,14 +29,10 @@ export default function CreatorShippingDetail() {
     (async () => {
       try {
         setLoading(true);
-        console.log('요청 URL:', endpoints.creatorShippingBackerList(Number(projectId)));
         const res = await getData(endpoints.creatorShippingBackerList(Number(projectId)));
-        console.log('응답:', res);
-
         if (res?.status === 200 && Array.isArray(res.data)) {
           setShippingList(res.data);
         } else {
-          console.warn('서버 응답 이상:', res);
           setError(`서버 응답 코드 ${res?.status}`);
         }
       } catch (err) {
@@ -49,6 +44,67 @@ export default function CreatorShippingDetail() {
     })();
   }, [idLoading, projectId]);
 
+  // 상태 전환 허용 규칙
+  const allowedTransitions: Record<string, string[]> = {
+    PENDING: ['READY'], // 후원 완료 → 준비중
+    READY: ['SHIPPED'], // 준비중 → 배송시작
+    SHIPPED: ['DELIVERED', 'FAILED'], // 배송중 → 완료/실패
+    DELIVERED: ['CANCELED'], // 완료 → 취소
+    CANCELED: [],
+    FAILED: [],
+  };
+
+  const statusLabel: Record<string, string> = {
+    PENDING: '후원 완료',
+    READY: '상품 준비 중',
+    SHIPPED: '배송 시작',
+    DELIVERED: '배송 완료',
+    CANCELED: '취소',
+    FAILED: '배송 실패',
+  };
+
+  // 배송상태 변경 함수
+  const changeStatus = async (idx: number, newStatus: string) => {
+    const item = shippingList[idx];
+    const current = item.shippingStatus;
+
+    // 허용되지 않은 상태 전환 방지
+    if (!allowedTransitions[current]?.includes(newStatus)) {
+      alert(`현재 상태(${statusLabel[current]})에서는 '${statusLabel[newStatus]}'(으)로 변경할 수 없습니다.\n\n가능한 상태: ${allowedTransitions[current].length > 0 ? allowedTransitions[current].map((s) => statusLabel[s]).join(', ') : '없음'}`);
+      return;
+    }
+
+    // 운송장번호 필수 검사
+    if ((newStatus === 'SHIPPED' || newStatus === 'DELIVERED') && (!item.trackingNum || !/^[0-9]{10,14}$/.test(item.trackingNum))) {
+      alert(`${statusLabel[newStatus]} 상태로 변경하려면 10~14자리 운송장 번호가 필요합니다.`);
+      return;
+    }
+
+    const updateDto: creatorShippingStatus = {
+      backingId: item.backingId,
+      shippingStatus: newStatus,
+      trackingNum: item.trackingNum || '',
+      shippedAt: newStatus === 'SHIPPED' ? new Date() : null,
+      deliveredAt: newStatus === 'DELIVERED' ? new Date() : null,
+    };
+
+    try {
+      const res = await postData(endpoints.creatorShippingBackerList(Number(projectId)), updateDto);
+      if (res.status === 200) {
+        alert('배송 상태가 변경되었습니다.');
+        setShippingList((prev) => prev.map((it, i) => (i === idx ? { ...it, shippingStatus: newStatus } : it)));
+        if (selectedItem && item.backingId === selectedItem.backingId) {
+          setSelectedItem((prev) => (prev ? { ...prev, shippingStatus: newStatus } : prev));
+        }
+      } else {
+        alert(`배송 상태 변경 실패 (code: ${res.status})`);
+      }
+    } catch (err) {
+      console.error('배송 상태 변경 오류:', err);
+      alert('배송 상태 변경 중 오류가 발생했습니다.');
+    }
+  };
+
   // 검색 + 정렬
   const filtered = shippingList
     .filter((i) => i.nickname.toLowerCase().includes(search.toLowerCase()) || i.rewardName.toLowerCase().includes(search.toLowerCase()))
@@ -56,61 +112,29 @@ export default function CreatorShippingDetail() {
       if (sortBy === 'recent') return new Date(b.shippedAt || '').getTime() - new Date(a.shippedAt || '').getTime();
       if (sortBy === 'oldest') return new Date(a.shippedAt || '').getTime() - new Date(b.shippedAt || '').getTime();
       if (sortBy === 'status') {
-        const order = { READY: 1, SHIPPING: 2, DONE: 3 };
+        const order = { READY: 1, SHIPPED: 2, DELIVERED: 3 };
         return order[a.shippingStatus] - order[b.shippingStatus];
       }
       return 0;
     });
 
-  // 페이지네이션
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const start = (page - 1) * itemsPerPage;
   const currentList = filtered.slice(start, start + itemsPerPage);
 
-  // 선택 기능
-  const toggleSelect = (idx: number) => {
-    setSelectedIds((prev) => (prev.includes(idx) ? prev.filter((x) => x !== idx) : [...prev, idx]));
-  };
-
-  const toggleSelectAll = (checked: boolean) => {
-    setSelectedIds(checked ? currentList.map((_, idx) => idx) : []);
-  };
-
-  const changeStatus = (idx: number, newStatus: string) => {
-    setShippingList((prev) => prev.map((item, i) => (i === idx ? { ...item, shippingStatus: newStatus } : item)));
-    if (selectedItem && shippingList[idx]?.recipient === selectedItem.recipient) {
-      setSelectedItem((prev) => (prev ? { ...prev, shippingStatus: newStatus } : prev));
-    }
-  };
-
-  const bulkChange = (newStatus: string) => {
-    if (!newStatus) return;
-    setShippingList((prev) => prev.map((item, idx) => (selectedIds.includes(idx) ? { ...item, shippingStatus: newStatus } : item)));
-    setSelectedIds([]);
-  };
-
-  //배송상태
   const renderStatusBadge = (status: string) => {
     const base = 'px-2 py-1 rounded text-xs font-medium';
-    switch (status) {
-      case 'PENDING':
-        return <span className={`${base} bg-gray-100 text-gray-700`}>후원 완료</span>;
-      case 'READY':
-        return <span className={`${base} bg-yellow-100 text-yellow-700`}>상품 준비 중</span>;
-      case 'SHIPPED':
-        return <span className={`${base} bg-blue-100 text-blue-700`}>배송 시작</span>;
-      case 'DELIVERED':
-        return <span className={`${base} bg-green-100 text-green-700`}>배송 완료</span>;
-      case 'CANCELED':
-        return <span className={`${base} bg-gray-300 text-gray-800`}>취소</span>;
-      case 'FAILED':
-        return <span className={`${base} bg-red-100 text-red-700`}>배송 실패</span>;
-      default:
-        return <span className={`${base} bg-gray-100 text-gray-700`}>{status}</span>;
-    }
+    const colors: Record<string, string> = {
+      PENDING: 'bg-gray-100 text-gray-700',
+      READY: 'bg-yellow-100 text-yellow-700',
+      SHIPPED: 'bg-blue-100 text-blue-700',
+      DELIVERED: 'bg-green-100 text-green-700',
+      CANCELED: 'bg-gray-300 text-gray-800',
+      FAILED: 'bg-red-100 text-red-700',
+    };
+    return <span className={`${base} ${colors[status] || ''}`}>{statusLabel[status] || status}</span>;
   };
 
-  // 로딩 및 오류
   if (loading || idLoading) return <FundingLoader />;
   if (error)
     return (
@@ -121,7 +145,6 @@ export default function CreatorShippingDetail() {
       </div>
     );
 
-  // UI (기존 구조 유지)
   return (
     <div className="p-6">
       <div className="flex justify-between mb-4">
@@ -131,97 +154,81 @@ export default function CreatorShippingDetail() {
         </button>
       </div>
 
-      {/* 검색 / 정렬 / 일괄 변경 */}
+      {/* 검색/정렬 */}
       <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            placeholder="후원자명 또는 리워드 검색"
-            className="border rounded px-2 py-1"
-          />
-        </div>
-
-        <div className="flex gap-2">
-          <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)} className="border rounded px-2 py-1">
-            <option value="recent">최신순</option>
-            <option value="oldest">오래된순</option>
-            <option value="status">배송 상태순</option>
-          </select>
-
-          <select onChange={(e) => bulkChange(e.target.value)} className="border rounded px-2 py-1">
-            <option value="">일괄 상태 변경</option>
-            <option value="PENDING">후원 완료</option>
-            <option value="READY">상품 준비 중</option>
-            <option value="SHIPPED">배송 시작</option>
-            <option value="DELIVERED">배송 완료</option>
-            <option value="CANCELED">취소</option>
-            <option value="FAILED">배송 실패</option>
-          </select>
-        </div>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
+          placeholder="후원자명 또는 리워드 검색"
+          className="border rounded px-2 py-1"
+        />
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)} className="border rounded px-2 py-1">
+          <option value="recent">최신순</option>
+          <option value="oldest">오래된순</option>
+          <option value="status">배송 상태순</option>
+        </select>
       </div>
 
       {/* 테이블 */}
       <table className="w-full border text-sm">
         <thead className="bg-gray-100">
           <tr>
-            <th className="p-2 text-center">
-              <input type="checkbox" checked={currentList.every((_, idx) => selectedIds.includes(idx))} onChange={(e) => toggleSelectAll(e.target.checked)} />
-            </th>
             <th className="p-2">후원자명</th>
             <th className="p-2">리워드명</th>
             <th className="p-2 text-center">수량</th>
             <th className="p-2">주소</th>
+            <th className="p-2 text-center">운송장번호</th>
             <th className="p-2 text-center">발송일</th>
             <th className="p-2 text-center">상태</th>
             <th className="p-2 text-center">변경</th>
           </tr>
         </thead>
         <tbody>
-          {currentList.map((item, idx) => (
-            <tr key={idx} onClick={() => setSelectedItem(item)} className={`border-b hover:bg-gray-50 cursor-pointer ${selectedItem?.recipient === item.recipient ? 'bg-yellow-50' : ''}`}>
-              <td className="text-center">
-                <input
-                  type="checkbox"
-                  checked={selectedIds.includes(idx)}
-                  onChange={(e) => {
-                    e.stopPropagation();
-                    toggleSelect(idx);
-                  }}
-                />
-              </td>
-              <td className="p-2">{item.nickname}</td>
-              <td className="p-2">{item.rewardName}</td>
-              <td className="p-2 text-center">{item.quantity}</td>
-              <td className="p-2">
-                {item.roadAddr} {item.detailAddr}
-              </td>
-              <td className="p-2 text-center">{item.shippedAt ? new Date(item.shippedAt).toLocaleDateString() : '—'}</td>
-              <td className="p-2 text-center">{renderStatusBadge(item.shippingStatus)}</td>
-              <td className="p-2 text-center">
-                <select value={item.shippingStatus} onChange={(e) => changeStatus(idx, e.target.value)} className="border rounded px-2 py-1" onClick={(e) => e.stopPropagation()}>
-                  <option value="PENDING">후원 완료</option>
-                  <option value="READY">상품 준비 중</option>
-                  <option value="SHIPPED">배송 시작</option>
-                  <option value="DELIVERED">배송 완료</option>
-                  <option value="CANCELED">취소</option>
-                  <option value="FAILED">배송 실패</option>
-                </select>
-              </td>
-            </tr>
-          ))}
-
-          {currentList.length === 0 && (
-            <tr>
-              <td colSpan={8} className="text-center p-4 text-gray-500">
-                검색 결과가 없습니다.
-              </td>
-            </tr>
-          )}
+          {currentList.map((item, idx) => {
+            const current = item.shippingStatus;
+            const trackingDisabled = ['SHIPPED', 'DELIVERED', 'CANCELED', 'FAILED'].includes(current); // 🚫 운송장 수정 제한
+            return (
+              <tr key={idx} onClick={() => setSelectedItem(item)} className={`border-b hover:bg-gray-50 cursor-pointer ${selectedItem?.backingId === item.backingId ? 'bg-yellow-50' : ''}`}>
+                <td className="p-2">{item.nickname}</td>
+                <td className="p-2">{item.rewardName}</td>
+                <td className="p-2 text-center">{item.quantity}</td>
+                <td className="p-2">
+                  {item.roadAddr} {item.detailAddr}
+                </td>
+                <td className="p-2 text-center">
+                  <input type="text" value={item.trackingNum || ''} onChange={(e) => setShippingList((prev) => prev.map((it, i) => (i === idx ? { ...it, trackingNum: e.target.value } : it)))} placeholder="운송장번호" className="border rounded px-2 py-1 w-32 text-center" onClick={(e) => e.stopPropagation()} disabled={trackingDisabled} />
+                </td>
+                <td className="p-2 text-center">{item.shippedAt ? new Date(item.shippedAt).toLocaleDateString() : '—'}</td>
+                <td className="p-2 text-center">{renderStatusBadge(item.shippingStatus)}</td>
+                <td className="p-2 text-center flex items-center justify-center gap-2">
+                  <select value={item.shippingStatus} onChange={(e) => changeStatus(idx, e.target.value)} className="border rounded px-2 py-1" onClick={(e) => e.stopPropagation()} disabled={current === 'CANCELED' || current === 'FAILED'}>
+                    {Object.keys(statusLabel).map((status) => {
+                      const disabled = !allowedTransitions[current]?.includes(status) && status !== current;
+                      return (
+                        <option key={status} value={status} disabled={disabled}>
+                          {statusLabel[status]}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      changeStatus(idx, item.shippingStatus);
+                    }}
+                    className={`border rounded px-2 py-1 text-xs ${item.shippingStatus === 'DELIVERED' ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-blue-100 hover:bg-blue-200'}`}
+                    disabled={item.shippingStatus === 'DELIVERED'}
+                  >
+                    변경
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
 
@@ -230,7 +237,6 @@ export default function CreatorShippingDetail() {
         <div className="mt-6 p-6 border rounded-xl bg-gray-50 shadow-md space-y-6">
           <h3 className="text-lg font-semibold mb-4">{selectedItem.recipient} 님 배송 상세정보</h3>
 
-          {/*유저 정보 */}
           <section>
             <h4 className="font-semibold text-gray-800 mb-2">👤 유저 정보</h4>
             <div className="grid grid-cols-2 gap-2 text-sm">
@@ -243,7 +249,6 @@ export default function CreatorShippingDetail() {
             </div>
           </section>
 
-          {/*리워드 정보 */}
           <section>
             <h4 className="font-semibold text-gray-800 mb-2">🎁 리워드 정보</h4>
             <div className="grid grid-cols-2 gap-2 text-sm">
@@ -256,7 +261,6 @@ export default function CreatorShippingDetail() {
             </div>
           </section>
 
-          {/* 배송지 정보 */}
           <section>
             <h4 className="font-semibold text-gray-800 mb-2">🏠 배송지 정보</h4>
             <div className="grid grid-cols-2 gap-2 text-sm">
@@ -275,7 +279,6 @@ export default function CreatorShippingDetail() {
             </div>
           </section>
 
-          {/* 배송 정보 */}
           <section>
             <h4 className="font-semibold text-gray-800 mb-2">🚚 배송 정보</h4>
             <div className="grid grid-cols-2 gap-2 text-sm">
@@ -294,34 +297,14 @@ export default function CreatorShippingDetail() {
             </div>
           </section>
 
-          {/*프로젝트 정보 */}
           <section>
             <h4 className="font-semibold text-gray-800 mb-2">📦 프로젝트 정보</h4>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <p>
-                <strong>프로젝트명:</strong> {selectedItem.title}
-              </p>
-            </div>
+            <p>
+              <strong>프로젝트명:</strong> {selectedItem.title}
+            </p>
           </section>
         </div>
       )}
-
-      {/* 페이지네이션 */}
-      <div className="flex justify-center gap-2 mt-4">
-        <button className="border px-3 py-1 rounded" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
-          이전
-        </button>
-
-        {Array.from({ length: totalPages }).map((_, i) => (
-          <button key={i} className={`border px-3 py-1 rounded ${page === i + 1 ? 'bg-gray-200' : ''}`} onClick={() => setPage(i + 1)}>
-            {i + 1}
-          </button>
-        ))}
-
-        <button className="border px-3 py-1 rounded" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>
-          다음
-        </button>
-      </div>
     </div>
   );
 }
