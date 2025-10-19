@@ -17,6 +17,7 @@ function toBlocks(input: EditorData): EditorBlock[] {
     if (!input) return [];
     try {
         const obj = typeof input === "string" ? JSON.parse(input) : input;
+        if (Array.isArray(obj)) return obj as EditorBlock[];
         return Array.isArray((obj as any)?.blocks) ? (obj as any).blocks : [];
     } catch {
         return [];
@@ -27,6 +28,7 @@ const rich = (html?: string) =>
     React.createElement("span", { dangerouslySetInnerHTML: { __html: html ?? "" } });
 
 export function ProjectDetailViewer({ data }: { data: EditorData }) {
+    console.debug("contentBlocks shape:", data);
     const blocks = toBlocks(data);
     if (!blocks.length) {
         return React.createElement(

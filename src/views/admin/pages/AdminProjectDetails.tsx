@@ -1,17 +1,18 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, BadgeCheck, FileText, Gift, ShieldCheck, UserRound } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { endpoints, getData, postData } from "@/api/apis";
 import FundingLoader from "@/components/FundingLoader";
-import type { CreatorProjectDetailDto } from "@/types/creator";
-import { formatDate, formatPrice, toPublicUrl } from "@/utils/utils";
-import { useCreatorId } from "../../../types/useCreatorId";
-import { ProjectDetailViewer } from "../components/ProjectDetailViewer";
-import { endpoints, getData, setDevCreatorIdHeader } from "@/api/apis";
-import { ProjectStatusChip, type ProjectStatus } from "@/views/admin/components/ProjectStatusChip";
-import { BusinessDocViewer } from "../components/BusinessDocViewer";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import type { ProjectVerifyDetail } from "@/types/admin";
+import { formatDate, formatNumber, toPublicUrl } from "@/utils/utils";
+import { BusinessDocViewer } from "@/views/creator/components/BusinessDocViewer";
+import { ProjectDetailViewer } from "@/views/creator/components/ProjectDetailViewer";
+import { ArrowLeft, BadgeCheck, CheckCircle, FileText, Gift, UserRound, XCircle } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { ProjectStatusChip, type ProjectStatus } from "../components/ProjectStatusChip";
 
 const toTagNames = (list: any): string[] =>
     Array.isArray(list)
@@ -20,25 +21,19 @@ const toTagNames = (list: any): string[] =>
             .filter((s: any): s is string => typeof s === "string" && s.trim().length > 0)
         : [];
 
-/* ------------------------------- Page ------------------------------- */
-
-export default function CreatorProjectDetailsPage() {
-
-    /* --------------------------- Router helpers --------------------------- */
-
+export function AdminProjectDetails() {
     const navigate = useNavigate();
-    const { projectId } = useParams();
+    const { projectId } = useParams<{ projectId: string }>();
 
-    /* ---------------------------- Auth helper ----------------------------- */
-
-    //TODO: 임시용 id (나중에 삭제하기)
-    const { creatorId, loading: idLoading } = useCreatorId(2);
-
-    /* ------------------------------- States ------------------------------- */
-
-    const [project, setProject] = useState<CreatorProjectDetailDto | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [project, setProject] = useState<ProjectVerifyDetail | null>();
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    const [approving, setApproving] = useState(false);
+    const [rejecting, setRejecting] = useState(false);
+    const [openRejectModal, setOpenRejectModal] = useState(false);
+    const [reason, setReason] = useState("");
+    const st = project?.projectStatus as ProjectStatus;
 
     const thumbnailUrl = useMemo(() =>
         toPublicUrl(project?.thumbnail ?? null), [project?.thumbnail]
@@ -47,35 +42,65 @@ export default function CreatorProjectDetailsPage() {
         toPublicUrl(project?.businessDoc ?? null), [project?.businessDoc]
     );
 
-    const projectData = useCallback(async () => {
-        if (!projectId) return;
-        setLoading(true);
+    const projectData = async () => {
         try {
-            const res = await getData(endpoints.getCreatorProjectDetail(Number(projectId)));
-            if (res.status === 200) {
-                setProject(res.data);
+            setLoading(true);
+            setError(null);
+            const response = await getData(endpoints.getProjectVerifyDetail(Number(projectId)));
+            if (response.status === 200) {
+                setProject(response.data);
             }
         } catch (e: any) {
-            setError(e?.message || "데이터 로드 중 에러가 발생했습니다.");
+            setError(e?.message || "데이터 로드 중 오류가 발생했습니다.");
+            setProject(null);
         } finally {
             setLoading(false);
         }
+    };
+
+    useEffect(() => {
+        if (!projectId) return;
+        projectData();
     }, [projectId]);
 
-    useEffect(() => {
-        projectData();
-    }, [projectData]);
-
-    // TODO: dev id
-    useEffect(() => {
-        if (!idLoading && creatorId) {
-            setDevCreatorIdHeader(creatorId ?? null);
+    const handleApprove = async () => {
+        if (!project || !projectId) return;
+        try {
+            if (!window.confirm(`[${project.title}]\n프로젝트를 승인하시겠습니까?`)) return;
+            setApproving(true);
+            const response = await postData(endpoints.approveProject(Number(projectId)));
+            if (response.status === 200) {
+                alert(`[${project.title}] 승인되었습니다.`);
+                navigate(-1);
+            }
+        } catch (err) {
+            console.log(err);
+            alert(`[${project.title}] 승인 실패했습니다.`);
+        } finally {
+            setApproving(false);
         }
-    }, [idLoading, creatorId]);
+    };
+
+    const handleReject = async () => {
+        if (!project || !projectId) return;
+        try {
+            setRejecting(true);
+            const response = await postData(endpoints.rejectProject(Number(projectId)), { rejectedReason: reason });
+            if (response.status === 200) {
+                alert(`[${project.title}] 반려되었습니다.\n사유: ${reason}`);
+                setOpenRejectModal(false);
+                navigate(-1);
+            }
+        } catch (err) {
+            console.log(err);
+            alert(`[${project.title}] 반려 실패했습니다.`);
+        } finally {
+            setRejecting(false);
+        }
+    };
 
     /* ----------------------------------- Render ----------------------------------- */
-
-    if (loading) return <FundingLoader />;
+    if (loading || !project) return <FundingLoader />;
     if (!project) {
         return (
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -102,7 +127,6 @@ export default function CreatorProjectDetailsPage() {
                     </CardHeader>
 
                     <CardContent className="space-y-4">
-                        <KV label="작성일 / 수정일" value={`${formatDate(project.createdAt)} / ${formatDate(project.updatedAt)}`} />
                         <>
                             <div className="text-sm text-muted-foreground">대표 이미지</div>
                             <div className="mb-6 overflow-hidden rounded-xl border bg-background">
@@ -123,8 +147,7 @@ export default function CreatorProjectDetailsPage() {
                             )}
                         </div>
                         <KV label="펀딩 기간" value={`${formatDate(project.startDate)} ~ ${formatDate(project.endDate)}`} />
-                        <KV label="목표 금액" value={`${formatPrice(project.goalAmount)}원`} />
-                        <KV label="현재 금액" value={`${formatPrice(project.currAmount)}원`} />
+                        <KV label="목표 금액" value={`${formatNumber(project.goalAmount)}원`} />
                         <div className="space-y-6">
                             <section>
                                 <div className="text-sm text-muted-foreground mb-2">프로젝트 내용</div>
@@ -154,7 +177,7 @@ export default function CreatorProjectDetailsPage() {
                                 <div className="flex items-start justify-between gap-4">
                                     <div className="min-w-0">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <span className="text-lg font-semibold">{formatPrice(r.price)}원</span>
+                                            <span className="text-lg font-semibold">{formatNumber(r.price)}원</span>
                                             {r.rewardCnt ? <Badge variant="secondary">한정 {r.rewardCnt}개</Badge> : null}
                                             <Badge variant={r.isPosting === "Y" ? "default" : "outline"}>
                                                 {r.isPosting === "Y" ? "배송 필요" : "배송 불필요"}
@@ -198,44 +221,51 @@ export default function CreatorProjectDetailsPage() {
                     </Card>
                 )}
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <ShieldCheck className="h-5 w-5" /> 심사 안내
-                        </CardTitle>
-                    </CardHeader>
-
-                    <CardContent className="space-y-2 text-sm">
-                        <p>• 프로젝트 심사는 영업일 기준 3-5일 소요됩니다.</p>
-                        <p>• 심사 결과는 등록된 이메일로 안내드립니다.</p>
-                        <p>• 심사 승인 후 펀딩 시작일에 자동으로 공개됩니다.</p>
-                        <p>• 심사 반려되었을 경우에는 새로운 프로젝트를 생성하셔야 합니다.</p>
-                    </CardContent>
-                </Card>
-
                 <div className="sticky bottom-0 left-0 right-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border rounded-xl p-3 shadow-sm">
-                    <Button variant="ghost" className="leading-none min-w-0 w-auto" onClick={() => navigate(-1)}>
-                        <ArrowLeft /> 뒤로
-                    </Button>
+                    <div className="flex items-center justify-between gap-2">
+                        <Button variant="ghost" className="leading-none min-w-0 w-auto" onClick={() => navigate(-1)}>
+                            <ArrowLeft className="h-4 w-4" />뒤로
+                        </Button>
+                        {st === "VERIFYING" && (
+                            <div className="flex items-center gap-2">
+                                <Button size="sm" onClick={handleApprove} disabled={approving}>
+                                    <CheckCircle className="h-4 w-4 mr-1" />{approving ? "승인중" : "승인"}
+                                </Button>
+                                <Button variant="destructive" size="sm" onClick={() => { setReason(""); setOpenRejectModal(true); }}>
+                                    <XCircle className="h-4 w-4 mr-1" />반려
+                                </Button>
+                            </div>
+                        )}
+                    </div>
                 </div>
+
+                <Dialog open={openRejectModal} onOpenChange={setOpenRejectModal}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>프로젝트 반려</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-2">
+                            <p className="text-sm text-gray-700">[{project.title}]</p>
+                            <Input
+                                value={reason}
+                                placeholder="프로젝트 반려 사유를 입력하세요."
+                                onChange={(e) => setReason(e.target.value)}
+                            />
+                        </div>
+                        <DialogFooter>
+                            <Button variant="ghost" onClick={() => setOpenRejectModal(false)}>취소</Button>
+                            <Button variant="destructive" disabled={!reason.trim() || rejecting} onClick={handleReject}>
+                                {rejecting ? "반려중" : "확인"}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
         </div>
     );
 }
 
 /* ------------------------------- UI Bits ------------------------------- */
-
-function KV({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
-    return (
-        <div className="flex items-start gap-3">
-            <div className="w-28 shrink-0 text-sm text-muted-foreground flex items-center gap-1">
-                {icon}
-                <span>{label}</span>
-            </div>
-            <div className="min-w-0 text-sm leading-relaxed break-all [overflow-wrap:anywhere]">{value || "-"}</div>
-        </div>
-    );
-}
 
 function EmptyState({ message, onBack }: { message: string; onBack: () => void }) {
     return (
@@ -247,5 +277,17 @@ function EmptyState({ message, onBack }: { message: string; onBack: () => void }
                 </Button>
             </CardContent>
         </Card>
+    );
+}
+
+function KV({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
+    return (
+        <div className="flex items-start gap-3">
+            <div className="w-28 shrink-0 text-sm text-muted-foreground flex items-center gap-1">
+                {icon}
+                <span>{label}</span>
+            </div>
+            <div className="min-w-0 text-sm leading-relaxed break-all [overflow-wrap:anywhere]">{value || "-"}</div>
+        </div>
     );
 }
