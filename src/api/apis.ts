@@ -209,7 +209,7 @@ export const endpoints = {
   //여기까지
   backingPrepare: (userId: number, projectId: number) => `backing/${userId}/create/${projectId}`,
   addBacking: (userId: number) => `backing/create/${userId}`,
-  cancelBacking:(),
+//   cancelBacking:(),
 
   // ==================== Admin API ====================
   getAdminAnalytics: (period: string, metric: string) => `admin/analytics?period=${period}&metric=${metric}`,

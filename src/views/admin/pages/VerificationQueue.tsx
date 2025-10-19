@@ -1,6 +1,6 @@
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../../../components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
-import { Eye, CheckCircle, XCircle } from "lucide-react";
+import { Eye, CheckCircle, XCircle, ArrowLeft } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ProjectVerifyList } from "@/types/admin";
 import { endpoints, getData, postData } from "@/api/apis";
@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Input } from "@/components/ui/input";
 import FundingLoader from "@/components/FundingLoader";
 import { Pagination } from "@/views/project/ProjectsBrowsePage";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 /* ------------------------------ Common hook ------------------------------ */
 
@@ -159,10 +160,12 @@ function ProjectCard({ project, projectData }: { project: ProjectVerifyList; pro
 /* --------------------------------- Page --------------------------------- */
 
 export function VerificationQueue() {
+
+    const navigate = useNavigate();
     const [verifyList, setVerifyList] = useState<ProjectVerifyList[]>([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<unknown>(null);
+    const [error, setError] = useState<string | null>(null);
 
     const { page, size, rangeType, projectStatus, setPage, setRangeType } = useQueryState();
 
@@ -183,8 +186,8 @@ export function VerificationQueue() {
                 setVerifyList([]);
                 setTotal(0);
             }
-        } catch (err) {
-            setError(err);
+        } catch (e: any) {
+            setError(e?.message || "데이터 로드 중 오류가 발생했습니다.");
             setVerifyList([]);
             setTotal(0);
         } finally {
@@ -196,37 +199,45 @@ export function VerificationQueue() {
         projectData();
     }, [projectData]);
 
-    const RangeButton = ({ label, value }: { label: string; value: string }) => {
-        const active = rangeType === value;
-        return (
-            <Button
-                variant={active ? "default" : "outline"} size="sm"
-                onClick={() => setRangeType(active ? "" : value)}
-            >
-                {label}
-            </Button>
-        );
-    };
+    /* -------------------------------- Render --------------------------------- */
 
     if (loading) return <FundingLoader />;
-    if (error) return <p className="text-red-600">심사 목록을 불러오지 못했습니다.</p>;
+    if (!verifyList) {
+        return (
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+                <EmptyState onBack={() => navigate(-1)} message={error ?? "프로젝트를 불러오지 못했습니다."} />
+            </div>
+        );
+    }
 
     return (
         <Card>
             <CardHeader>
                 <CardTitle>프로젝트 심사</CardTitle>
-                <CardDescription>창작자가 제출한 프로젝트를 심사하고 승인/반려를 결정하세요.</CardDescription>
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="text-xs text-gray-500 mt-2 pl-1">
+                        총 {total.toLocaleString()}건
+                    </div>
 
-                <div className="flex flex-wrap items-center gap-2 mt-2">
-                    <span className="text-xs text-muted-foreground mr-1">기간</span>
-                    <RangeButton label="전체" value="" />
-                    <RangeButton label="최근 7일" value="7d" />
-                    <RangeButton label="최근 30일" value="30d" />
-                    <RangeButton label="최근 90일" value="90d" />
-                </div>
-
-                <div className="text-xs text-gray-500 mt-2 pl-1">
-                    총 {total.toLocaleString()}건
+                    <Select
+                        value={rangeType || ""}
+                        onValueChange={(v) => {
+                            setPage(1);
+                            setRangeType(v === "ALL" ? "" : v);
+                        }}
+                    >
+                        <SelectTrigger className="h-8 w-[120px] text-xs">
+                            <SelectValue placeholder="기간">
+                                {rangeType === "" ? "전체" : rangeType === "7d" ? "최근 7일" : rangeType === "30d" ? "최근 30일" : "최근 90일"}
+                            </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="ALL">전체</SelectItem>
+                            <SelectItem value="7d">최근 7일</SelectItem>
+                            <SelectItem value="30d">최근 30일</SelectItem>
+                            <SelectItem value="90d">최근 90일</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
             </CardHeader>
 
@@ -244,6 +255,21 @@ export function VerificationQueue() {
                         />
                     </div>
                 )}
+            </CardContent>
+        </Card>
+    );
+}
+
+/* ------------------------------- UI Bits ------------------------------- */
+
+function EmptyState({ message, onBack }: { message: string; onBack: () => void }) {
+    return (
+        <Card>
+            <CardContent className="p-8 text-center space-y-4">
+                <p className="text-sm text-muted-foreground">{message}</p>
+                <Button variant="outline" onClick={onBack}>
+                    <ArrowLeft className="h-4 w-4 mr-2" /> 뒤로가기
+                </Button>
             </CardContent>
         </Card>
     );

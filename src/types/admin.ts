@@ -2,6 +2,7 @@ import type { Reward } from "./reward";
 import type { Tag } from "./tag";
 import type { AdminStatus } from "@/views/admin/pages/AdminProjectEditPage";
 import type { ProjectStatus } from "@/views/admin/components/ProjectStatusChip";
+import type { ContentBlocks } from "./creator";
 
 export interface Analytics {
     kpi: {
@@ -73,18 +74,17 @@ export interface ProjectVerifyDetail {
     projectId: number;
     creatorId: number;
     title: string;
-    content: string;
-    thumbnail: string
     goalAmount: number;
     startDate: Date;
     endDate: Date;
-    projectStatus: string;
+    content: string;
+    contentBlocks: ContentBlocks; // EditorJS JSON
+    thumbnail: string
+    businessDoc?: string;
+    projectStatus: ProjectStatus;
     requestedAt: Date;
-
-    ctgrId: number;
-    ctgrName: string;
-    subctgrId: number;
     subctgrName: string;
+    ctgrName: string;
 
     creatorName: string;
     businessNum: string;
