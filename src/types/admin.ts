@@ -72,7 +72,6 @@ export interface RejectProjectDto {
 
 export interface ProjectVerifyDetail {
     projectId: number;
-    creatorId: number;
     title: string;
     goalAmount: number;
     startDate: Date;
@@ -98,16 +97,19 @@ export interface ProjectVerifyDetail {
 export interface AdminProjectList {
     projectId: number;
     title: string;
-    creatorName: string;
-    projectStatus: ProjectStatus;
-    startDate: Date;
-    endDate: Date;
     goalAmount: number;
     currAmount: number;
-    backerCnt: number;
+    startDate: Date;
+    endDate: Date;
+    createdAt: Date;
     updatedAt: Date
-    ctgrName: string;
+    projectStatus: ProjectStatus;
+    backerCnt: number;
+    likeCnt: number;
+    viewCnt: number;
     subctgrName: string;
+    ctgrName: string;
+    creatorName: string;
     percentNow: number;
 }
 
