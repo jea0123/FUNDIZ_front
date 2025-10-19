@@ -62,7 +62,7 @@ export const kyInstance = ky.create({
                         .json()
                         .catch(() => null);
                     const msg = body?.message ?? res.statusText;
-                    const reqURI = _req.url.replace(String(_opts.prefixUrl ?? ''), '2');
+                    const reqURI = _req.url.replace(String(_opts.prefixUrl ?? ''), '');
                     console.error(`${res.status} ${msg}`, reqURI);
                     // appNavigate('/error', { state: { message: msg, status: res.status } });
                 }
@@ -184,6 +184,9 @@ export const endpoints = {
     postCreatorNews: (projectId: number) => `creator/projects/${projectId}/news`,
     getFollowerCnt: (creatorId: number) => `creator/followerCnt/${creatorId}`,
 
+    getCreatorSummary: (creatorId: number) => `creator/summary/${creatorId}`,
+    getCreatorProjects: (creatorId: number, sort: string, page: number, size: number) => `creator/projectsList/${creatorId}?${toQueryString({ sort, page, size })}`,
+
     // ==================== Project API ====================
     getFeatured: 'project/featured',
     getRecentTop10: 'project/recent-top10',
@@ -197,7 +200,6 @@ export const endpoints = {
     getQnaListOfProject: (projectId: number) => `project/${projectId}/qna`,
     addQuestion: (projectId: number, userId: number) => `project/${projectId}/qna/${userId}/add`,
     getLikeCnt: (projectId: number) => `project/${projectId}/likeCnt`,
-    getCounts: (projectId: number) => `project/${projectId}/counts`,
 
     // ==================== QnaReply API ====================
     getQnaReplyList: (qnaId: number) => `qna/reply/${qnaId}`,

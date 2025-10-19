@@ -55,6 +55,7 @@ import BackingDetailTab from './views/user/tabs/BackingDetailTab';
 import ProjectsBrowsePage, { ProjectsByCategoryPage, ProjectsBySubcategoryPage, ProjectsSearchPage } from './views/project/ProjectsBrowsePage';
 import { ProjectDetailsPage } from './views/project/ProjectDetailsPage';
 import CreatorRewardAddPage from './views/creator/pages/CreatorRewardAddPage';
+import CreatorPage from './views/creator/pages/CreatorPage';
 
 // import { setDevCreatorIdHeader } from '@/api/apis';
 // setDevCreatorIdHeader(11);
@@ -97,6 +98,7 @@ export default function App() {
                 {/* <Layout /> */}
                 <Routes>
                     <Route element={<Layout />}>
+                        <Route path="/c" element={<CreatorPage />} />
                         <Route path="/" element={<MainPage />} />
 
                         <Route path="/auth">
