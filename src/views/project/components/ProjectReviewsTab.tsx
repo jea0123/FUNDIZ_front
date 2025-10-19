@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MessageCircle, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import { endpoints, getData } from "@/api/apis";
 import { getDaysBefore } from "@/utils/utils";
 import type { Cursor, CursorPage, ReviewDto } from "@/types/community";
@@ -9,10 +9,9 @@ import type { Cursor, CursorPage, ReviewDto } from "@/types/community";
 type Props = {
     projectId: number;
     active?: boolean;
-    onCountChange?: (count: number) => void;
 };
 
-export default function ProjectReviewsTab({ projectId, active = false, onCountChange }: Props) {
+export default function ProjectReviewsTab({ projectId, active = false }: Props) {
     /* ----------------------------- Refs ----------------------------- */
     const reviewSentinelRef = useRef<HTMLDivElement | null>(null);
     const reviewLoadingLockRef = useRef(false);
@@ -62,11 +61,6 @@ export default function ProjectReviewsTab({ projectId, active = false, onCountCh
         reviewData(null);
     }, [projectId, reviewData]);
 
-    // 배지 숫자 갱신
-    useEffect(() => {
-        onCountChange?.(review.length);
-    }, [review.length, onCountChange]);
-
     // 후기 무한스크롤
     useEffect(() => {
         if (!active) return; // 탭이 활성일 때만
@@ -93,18 +87,6 @@ export default function ProjectReviewsTab({ projectId, active = false, onCountCh
     /* ---------------------------- Render ---------------------------- */
     return (
         <>
-            <div className="flex items-center justify-between mt-2">
-                <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1 text-sm font-medium text-foreground rounded-md px-2 py-0.5 ring-1 ring-blue-100 bg-blue-50/40">
-                        후기
-                    </span>
-                    <span className="inline-flex items-center rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 text-xs font-semibold ring-1 ring-blue-200">
-                        <MessageCircle className="h-3 w-3 mr-1" />
-                        {review.length}
-                    </span>
-                </div>
-            </div>
-
             {review.length === 0 ? (
                 <div className="mt-4 rounded-lg border p-6 text-center">
                     <p className="text-sm text-muted-foreground">게시글이 존재하지 않습니다.</p>

@@ -3,7 +3,7 @@ import { Heart, Share2, Calendar, Users, UserMinus, Loader2 } from 'lucide-react
 import type { ProjectDetail } from '@/types/projects';
 import { deleteData, endpoints, getData, postData } from '@/api/apis';
 import { useParams } from 'react-router-dom';
-import { formatDate, formatPrice, getDaysLeft, toastSuccess } from '@/utils/utils';
+import { formatDate, formatNumber, formatPrice, getDaysLeft, toastSuccess } from '@/utils/utils';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
@@ -250,11 +250,28 @@ export function ProjectDetailsPage() {
         alert('링크가 복사되었습니다.');
     }, []);
 
+    // 탭에서 이벤트가 있을 때 총계만 보정
+    const incCommunity = useCallback((d: number) => setCommunityCnt(v => Math.max(0, v + d)), []);
+
     /* -------------------------------- Effects -------------------------------- */
 
     useEffect(() => {
         projectData();
     }, [projectId, projectData]);
+
+    // 커뮤니티/후기 총합 초기 로드
+    useEffect(() => {
+        if (!projectId) return;
+        (async () => {
+            const { status, data } = await getData(endpoints.getCounts(Number(projectId)));
+            if (status === 200) {
+                setCommunityCnt(data.community.total);
+                setReviewCnt(data.review.total);
+            } else {
+                setCommunityCnt(0); setReviewCnt(0);
+            }
+        })();
+    }, [projectId]);
 
     useEffect(() => {
         if (!projectId) return;
@@ -348,7 +365,7 @@ export function ProjectDetailsPage() {
                             <div className="flex-1">
                                 <h4 className="font-semibold">{project.creatorName}</h4>
                                 <p className="text-sm text-gray-600">
-                                    팔로워 {formatPrice(followerCnt)}명 · 프로젝트 {project.projectCnt}개
+                                    팔로워 {formatNumber(followerCnt)}명 · 프로젝트 {project.projectCnt}개
                                 </p>
                             </div>
                             {isFollowed ? (
@@ -435,7 +452,7 @@ export function ProjectDetailsPage() {
                                 projectId={Number(projectId)}
                                 active={tab === "community"}
                                 ensureLogin={ensureLogin}
-                                onCountChange={setCommunityCnt}
+                                onCreated={() => incCommunity(+1)}
                             />
                         </TabsContent>
 
@@ -444,7 +461,6 @@ export function ProjectDetailsPage() {
                             <ProjectReviewsTab
                                 projectId={Number(projectId)}
                                 active={tab === "review"}
-                                onCountChange={setReviewCnt}
                             />
                         </TabsContent>
                     </Tabs>
@@ -462,8 +478,8 @@ export function ProjectDetailsPage() {
                                             <span className="text-sm text-gray-500">달성</span>
                                         </div>
                                         <Progress value={project.percentNow} className="h-3 mb-3" />
-                                        <div className="text-xl font-bold">{formatPrice(project.currAmount)}원</div>
-                                        <div className="text-sm text-gray-500">목표 {formatPrice(project.goalAmount)}원</div>
+                                        <div className="text-xl font-bold">{formatNumber(project.currAmount)}원</div>
+                                        <div className="text-sm text-gray-500">목표 {formatNumber(project.goalAmount)}원</div>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4 py-4 border-y">
@@ -519,7 +535,7 @@ export function ProjectDetailsPage() {
                                                         <div className="min-w-0">
                                                             <div className="font-semibold truncate">{r.rewardName}</div>
                                                             <div className="text-sm text-gray-500">
-                                                                {formatPrice(r.price)}원 · {r.rewardCnt > 0 ? `잔여 ${max}개` : "무제한"}
+                                                                {formatNumber(r.price)}원 · {r.rewardCnt > 0 ? `잔여 ${max}개` : "무제한"}
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center gap-2">
@@ -579,7 +595,7 @@ export function ProjectDetailsPage() {
                                 >
                                     <CardContent className="p-4">
                                         <div className="flex justify-between items-start mb-2">
-                                            <span className="text-lg font-semibold">{formatPrice(reward.price)}원</span>
+                                            <span className="text-lg font-semibold">{formatNumber(reward.price)}원</span>
                                             {reward.rewardCnt > 0 && (
                                                 <Badge variant="secondary" className="text-xs">
                                                     {soldOut ? "품절" : `잔여 ${reward.remain}개`}
