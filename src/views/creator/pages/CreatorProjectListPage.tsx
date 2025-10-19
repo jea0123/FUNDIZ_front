@@ -5,8 +5,7 @@ import { deleteData, endpoints, getData, setDevCreatorIdHeader } from "@/api/api
 import FundingLoader from "@/components/FundingLoader";
 import type { CreatorProjectListDto } from "@/types/creator";
 import { useCreatorId } from "../../../types/useCreatorId";
-import { useNavigate } from "react-router-dom";
-import { useQueryState } from "@/views/admin/pages/VerificationQueue";
+import { useLocation, useNavigate } from "react-router-dom";
 import { formatDate, formatPrice } from "@/utils/utils";
 import CreatorProjectRowActions from "../components/CreatorProjectRowActions";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -18,9 +17,9 @@ import { ArrowLeft, Eye, Heart, Users, type LucideIcon } from "lucide-react";
 import { ProjectStatusChip, type ProjectStatus } from "@/views/admin/components/ProjectStatusChip";
 import clsx from "clsx";
 import { Pagination } from "@/views/project/ProjectsBrowsePage";
+import { useListQueryState } from "@/utils/usePagingQueryState";
 
 /* --------------------------------- Status --------------------------------- */
-
 type Stage = keyof typeof STAGE_STATUS_MAP;
 type ClosedResult = "ALL" | "SUCCESS" | "FAILED" | "CANCELED";
 
@@ -59,8 +58,11 @@ const CLOSED_RESULTS: { label: string; value: ClosedResult }[] = [
 const stageLabel = (s: Stage) => STAGES.find(x => x.key === s)?.label ?? "상태";
 
 /* ---------------------------------- Page ---------------------------------- */
-
 export default function CreatorProjectListPage() {
+
+    const navigate = useNavigate();
+    const location = useLocation();
+
     //TODO: dev id
     const { creatorId, loading: idLoading } = useCreatorId(2);
 
@@ -75,27 +77,23 @@ export default function CreatorProjectListPage() {
     const [reviewsOpen, setReviewsOpen] = useState(false);
     const [activeProject, setActiveProject] = useState<{ id: number; title: string } | null>(null);
 
-    const navigate = useNavigate();
     const goDetail = (projectId: number) => navigate(`/creator/projects/${projectId}`);
     const goEdit = (projectId: number) => navigate(`/creator/project/${projectId}`);
     const goAddReward = (projectId: number) => navigate(`/creator/projects/${projectId}/reward`)
     const goCreate = () => navigate('creator/project/new');
 
-    const { page, size, projectStatus, rangeType, setPage, setProjectStatus, setRangeType } = useQueryState();
+    const {
+        page, size, perGroup, projectStatuses, rangeType, bindPagination,
+        setPage, setProjectStatuses, setRangeType,
+    } = useListQueryState();
 
     /* ----------------------------- Stage & Result ----------------------------- */
-
     const initialStage: Stage = useMemo(() => {
-        const tokens = (projectStatus || "")
-            .split(",")
-            .map((t) => t.trim())
-            .filter(Boolean) as ProjectStatus[];
+        const tokens = (projectStatuses ?? []) as ProjectStatus[];
+        const has = (s: ProjectStatus | ProjectStatus[]) =>
+            (Array.isArray(s) ? s : [s]).some(x => tokens.includes(x));
 
         if (tokens.length === 0) return "all";
-
-        const has = (s: ProjectStatus | ProjectStatus[]) =>
-            (Array.isArray(s) ? s : [s]).some((x) => tokens.includes(x));
-
         if (has("REJECTED")) return "rejected";
         if (has("SETTLED")) return "settled";
         if (has(["SUCCESS", "FAILED", "CANCELED"])) return "closed";
@@ -103,7 +101,7 @@ export default function CreatorProjectListPage() {
         if (has("UPCOMING")) return "upcoming";
         if (has("VERIFYING")) return "verifying";
         return "draft";
-    }, [projectStatus]);
+    }, [projectStatuses]);
 
     const [stage, setStage] = useState<Stage>(initialStage);
     const [closedResult, setClosedResult] = useState<ClosedResult>("ALL");
@@ -116,53 +114,33 @@ export default function CreatorProjectListPage() {
         setRangeType("");
 
         if (next === "all") {
-            setProjectStatus("");
-            return;
+            setProjectStatuses(undefined);
+        } else if (next === "closed") {
+            setProjectStatuses(
+                nextClosedResult === "ALL" ? [...STAGE_STATUS_MAP.closed] : [nextClosedResult]
+            );
+        } else {
+            setProjectStatuses([...STAGE_STATUS_MAP[next]]);
         }
-
-        if (next === "closed") {
-            const statusCsv =
-                nextClosedResult === "ALL"
-                    ? STAGE_STATUS_MAP.closed.join(",")
-                    : nextClosedResult;
-            setProjectStatus(statusCsv);
-            return;
-        }
-
-        setProjectStatus(STAGE_STATUS_MAP[next].join(","));
     };
 
-    useEffect(() => {
-        if (!projectStatus || projectStatus.length === 0) {
-            applyStageToQuery(initialStage);
-        }
-    }, []);
-
     /* ------------------------------------ URL ------------------------------------ */
-
-    // 현재 상태 CSV
-    const currentStatusCsv = useMemo(() => {
-        if (stage === "all") return "";
+    // 현재 선택된 상태(배열)
+    const selectedStatuses: string[] = useMemo(() => {
+        if (stage === "all") return [];
         if (stage === "closed") {
             return closedResult === "ALL"
-                ? STAGE_STATUS_MAP.closed.join(",")
-                : closedResult;
+                ? STAGE_STATUS_MAP.closed.slice()
+                : [closedResult];
         }
-        return STAGE_STATUS_MAP[stage].join(",");
+        return STAGE_STATUS_MAP[stage].slice();
     }, [stage, closedResult]);
 
-    const url = useMemo(() => {
-        if (idLoading) return null;
-        if (creatorId != null) {
-            return endpoints.getCreatorProjectList({
-                page,
-                size,
-                projectStatus: currentStatusCsv || undefined,
-                rangeType: rangeType || undefined,
-            });
-        }
-        return null;
-    }, [creatorId, idLoading, page, size, currentStatusCsv, rangeType]);
+    const url = useMemo(() => endpoints.getCreatorProjectList({
+        page, size, perGroup,
+        projectStatus: selectedStatuses.length ? selectedStatuses : undefined,
+        rangeType: rangeType || undefined,
+    }), [page, size, perGroup, selectedStatuses, rangeType]);
 
     /* -------------------------------- Data fetching -------------------------------- */
 
@@ -192,6 +170,14 @@ export default function CreatorProjectListPage() {
     useEffect(() => {
         projectsData();
     }, [projectsData]);
+
+    useEffect(() => {
+        const sp = new URLSearchParams(location.search);
+        const qs = sp.getAll("projectStatus");
+        if (qs.length === 0) {
+            applyStageToQuery(initialStage);
+        }
+    }, []);
 
     // TODO: dev id
     useEffect(() => {
@@ -226,20 +212,7 @@ export default function CreatorProjectListPage() {
         setReviewsOpen(true);
     }, [projects]);
 
-    /* -------------------------------- Safe Filtering --------------------------------- */
-
-    // 서버가 콤마 분리 다중 상태를 지원하지 않을 경우를 대비한 클라이언트 필터
-    const activeStatuses = useMemo<ProjectStatus[]>(() => {
-        return currentStatusCsv.split(",").map((st) => st.trim()).filter(Boolean) as ProjectStatus[];
-    }, [currentStatusCsv]);
-
-    const visible = useMemo(() => {
-        if (!currentStatusCsv) return projects;
-        return projects.filter(p => activeStatuses.includes(p.projectStatus as ProjectStatus))
-    }, [projects, activeStatuses, currentStatusCsv]);
-
     /* ----------------------------------- Render ----------------------------------- */
-
     if (loading) return <FundingLoader />;
     if (!projects) {
         return (
@@ -324,14 +297,14 @@ export default function CreatorProjectListPage() {
             </CardHeader>
 
             <CardContent>
-                {visible.length === 0 ? (
+                {projects.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
                         <p className="text-gray-600 mb-4">새 프로젝트를 준비해보세요.</p>
                         <Button onClick={goCreate}>프로젝트 만들기</Button>
                     </div>
                 ) : (
                     <ul className="space-y-4">
-                        {visible.map((p) => {
+                        {projects.map((p) => {
                             const st = p.projectStatus as ProjectStatus;
 
                             return (
@@ -460,11 +433,10 @@ export default function CreatorProjectListPage() {
                 )}
 
                 <Pagination
-                    key={`${stage}-${closedResult || "ALL"}-${rangeType || "ALL"}-${size}`}
-                    page={page}
-                    size={size}
-                    total={total}
-                    onPage={setPage}
+                    {...bindPagination(total, {
+                        showSizeSelector: true,
+                        sizeOptions: [5, 10, 20, 30, 50],
+                    })}
                 />
             </CardContent>
 

@@ -12,6 +12,7 @@ import { ProjectDetailViewer } from "@/views/creator/components/ProjectDetailVie
 import { ArrowLeft, BadgeCheck, CheckCircle, FileText, Gift, UserRound, XCircle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { ProjectStatusChip, type ProjectStatus } from "../components/ProjectStatusChip";
 
 const toTagNames = (list: any): string[] =>
     Array.isArray(list)
@@ -20,7 +21,7 @@ const toTagNames = (list: any): string[] =>
             .filter((s: any): s is string => typeof s === "string" && s.trim().length > 0)
         : [];
 
-export function VerificationDetails() {
+export function AdminProjectDetails() {
     const navigate = useNavigate();
     const { projectId } = useParams<{ projectId: string }>();
 
@@ -32,6 +33,7 @@ export function VerificationDetails() {
     const [rejecting, setRejecting] = useState(false);
     const [openRejectModal, setOpenRejectModal] = useState(false);
     const [reason, setReason] = useState("");
+    const st = project?.projectStatus as ProjectStatus;
 
     const thumbnailUrl = useMemo(() =>
         toPublicUrl(project?.thumbnail ?? null), [project?.thumbnail]
@@ -110,7 +112,10 @@ export function VerificationDetails() {
     return (
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="mb-6">
-                <h1 className="text-2xl font-semibold truncate">프로젝트 심사</h1>
+                <h1 className="text-2xl font-semibold truncate">{project.title}</h1>
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                    <ProjectStatusChip status={project.projectStatus as ProjectStatus} />
+                </div>
             </div>
 
             <div className="space-y-6">
@@ -221,14 +226,16 @@ export function VerificationDetails() {
                         <Button variant="ghost" className="leading-none min-w-0 w-auto" onClick={() => navigate(-1)}>
                             <ArrowLeft className="h-4 w-4" />뒤로
                         </Button>
-                        <div className="flex items-center gap-2">
-                            <Button size="sm" onClick={handleApprove} disabled={approving}>
-                                <CheckCircle className="h-4 w-4 mr-1" />{approving ? "승인중" : "승인"}
-                            </Button>
-                            <Button variant="destructive" size="sm" onClick={() => { setReason(""); setOpenRejectModal(true); }}>
-                                <XCircle className="h-4 w-4 mr-1" />반려
-                            </Button>
-                        </div>
+                        {st === "VERIFYING" && (
+                            <div className="flex items-center gap-2">
+                                <Button size="sm" onClick={handleApprove} disabled={approving}>
+                                    <CheckCircle className="h-4 w-4 mr-1" />{approving ? "승인중" : "승인"}
+                                </Button>
+                                <Button variant="destructive" size="sm" onClick={() => { setReason(""); setOpenRejectModal(true); }}>
+                                    <XCircle className="h-4 w-4 mr-1" />반려
+                                </Button>
+                            </div>
+                        )}
                     </div>
                 </div>
 

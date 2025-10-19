@@ -58,11 +58,11 @@ export interface ProjectVerifyList {
     requestedAt: Date;
 }
 
-export interface SearchProjectDto {
+export interface SearchAdminProjectDto {
     page: number;
     size: number;
-
-    projectStatus?: string;
+    perGroup: number;
+    projectStatus?: string[];
     rangeType?: string;
 }
 

@@ -3,37 +3,33 @@ import { Button } from "../../../components/ui/button";
 import { ArrowLeft, Eye, Heart, Pencil, Users, XCircle, type LucideIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { endpoints, getData, postData } from "@/api/apis";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import FundingLoader from "@/components/FundingLoader";
-import { useQueryState } from "./VerificationQueue";
 import { formatDate, formatPrice } from "@/utils/utils";
 import type { AdminProjectList } from "@/types/admin";
 import { ProjectStatusChip, type ProjectStatus } from "../components/ProjectStatusChip";
-import { Pagination } from "@/views/project/ProjectsBrowsePage";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import clsx from "clsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useListQueryState } from "@/utils/usePagingQueryState";
+import { Pagination } from "@/utils/pagination";
 
 type Stage = keyof typeof STAGE_STATUS_MAP;
 type ClosedResult = "ALL" | "SUCCESS" | "FAILED" | "CANCELED";
 
 const STAGE_STATUS_MAP = {
-    all: ["VERIFYING", "UPCOMING", "OPEN", "SUCCESS", "FAILED", "CANCELED", "REJECTED", "SETTLED"],
-    verifying: ["VERIFYING"],
+    all: ["UPCOMING", "OPEN", "SUCCESS", "FAILED", "CANCELED", "SETTLED"],
     upcoming: ["UPCOMING"],
     open: ["OPEN"],
     closed: ["SUCCESS", "FAILED", "CANCELED"],
-    rejected: ["REJECTED"],
     settled: ["SETTLED"],
 } as const;
 
 const STAGES: { key: Stage; label: string }[] = [
     { key: "all", label: "전체" },
-    { key: "verifying", label: "심사중" },
     { key: "upcoming", label: "오픈예정" },
     { key: "open", label: "진행중" },
     { key: "closed", label: "종료" },
-    { key: "rejected", label: "반려" },
     { key: "settled", label: "정산" },
 ];
 
@@ -48,33 +44,31 @@ const stageLabel = (s: Stage) => STAGES.find(x => x.key === s)?.label ?? "상태
 
 /* --------------------------------- Page --------------------------------- */
 export function AdminProjectListPage() {
-    const [projects, setProjects] = useState<AdminProjectList[]>([]);
+    const navigate = useNavigate();
+    const location = useLocation();
+    const [projects, setProjects] = useState<AdminProjectList[] | null>(null);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<unknown>(null);
+    const [error, setError] = useState<string | null>(null);
 
-    const { page, size, projectStatus, rangeType, setPage, setProjectStatus, setRangeType } = useQueryState();
+    const {
+        page, size, perGroup, projectStatuses, rangeType, bindPagination,
+        setPage, setProjectStatuses, setRangeType,
+    } = useListQueryState();
 
     /* ----------------------------- Stage & Result ----------------------------- */
     const initialStage: Stage = useMemo(() => {
-        const tokens = (projectStatus || "")
-            .split(",")
-            .map((t) => t.trim())
-            .filter(Boolean) as ProjectStatus[];
+        const tokens = (projectStatuses ?? []) as ProjectStatus[];
+        const has = (s: ProjectStatus | ProjectStatus[]) =>
+            (Array.isArray(s) ? s : [s]).some(x => tokens.includes(x));
 
         if (tokens.length === 0) return "all";
-
-        const has = (s: ProjectStatus | ProjectStatus[]) =>
-            (Array.isArray(s) ? s : [s]).some((x) => tokens.includes(x));
-
-        if (has("REJECTED")) return "rejected";
         if (has("SETTLED")) return "settled";
         if (has(["SUCCESS", "FAILED", "CANCELED"])) return "closed";
         if (has("OPEN")) return "open";
         if (has("UPCOMING")) return "upcoming";
-        if (has("VERIFYING")) return "verifying";
         return "all";
-    }, [projectStatus]);
+    }, [projectStatuses]);
 
     const [stage, setStage] = useState<Stage>(initialStage);
     const [closedResult, setClosedResult] = useState<ClosedResult>("ALL");
@@ -87,43 +81,33 @@ export function AdminProjectListPage() {
         setRangeType("");
 
         if (next === "all") {
-            setProjectStatus("");
-            return;
+            setProjectStatuses(undefined);
+        } else if (next === "closed") {
+            setProjectStatuses(
+                nextClosedResult === "ALL" ? [...STAGE_STATUS_MAP.closed] : [nextClosedResult]
+            );
+        } else {
+            setProjectStatuses([...STAGE_STATUS_MAP[next]]);
         }
-
-        if (next === "closed") {
-            const statusCsv =
-                nextClosedResult === "ALL"
-                    ? STAGE_STATUS_MAP.closed.join(",")
-                    : nextClosedResult;
-            setProjectStatus(statusCsv);
-            return;
-        }
-
-        setProjectStatus(STAGE_STATUS_MAP[next].join(","));
     };
 
-    useEffect(() => {
-        if (!projectStatus || projectStatus.length === 0) {
-            applyStageToQuery(initialStage);
-        }
-    }, []);
-
     /* ------------------------------------ URL ------------------------------------ */
-    // 현재 상태 CSV
-    const currentStatusCsv = useMemo(() => {
-        if (stage === "all") return "";
+    // 현재 선택된 상태(배열)
+    const selectedStatuses: string[] = useMemo(() => {
+        if (stage === "all") return [];
         if (stage === "closed") {
             return closedResult === "ALL"
-                ? STAGE_STATUS_MAP.closed.join(",")
-                : closedResult;
+                ? STAGE_STATUS_MAP.closed.slice()
+                : [closedResult];
         }
-        return STAGE_STATUS_MAP[stage].join(",");
+        return STAGE_STATUS_MAP[stage].slice();
     }, [stage, closedResult]);
 
-    const url = useMemo(() => {
-        return endpoints.getAdminProjectList({ page, size, projectStatus: projectStatus || undefined, rangeType: rangeType || undefined });
-    }, [page, size, projectStatus, rangeType]);
+    const url = useMemo(() => endpoints.getAdminProjectList({
+        page, size, perGroup,
+        projectStatus: selectedStatuses.length ? selectedStatuses : undefined,
+        rangeType: rangeType || undefined,
+    }), [page, size, perGroup, selectedStatuses, rangeType]);
 
     /* -------------------------------- Data fetching -------------------------------- */
     const projectData = useCallback(async () => {
@@ -140,8 +124,8 @@ export function AdminProjectListPage() {
                 setProjects([]);
                 setTotal(0);
             }
-        } catch (e) {
-            setError(e);
+        } catch (e: any) {
+            setError(e?.message || "데이터 로드 중 에러가 발생했습니다.");
             setProjects([]);
             setTotal(0);
         } finally {
@@ -153,20 +137,23 @@ export function AdminProjectListPage() {
         projectData();
     }, [projectData]);
 
-    /* -------------------------------- Safe Filtering --------------------------------- */
-    // 서버가 콤마 분리 다중 상태를 지원하지 않을 경우를 대비한 클라이언트 필터
-    const activeStatuses = useMemo<ProjectStatus[]>(() => {
-        return currentStatusCsv.split(",").map((st) => st.trim()).filter(Boolean) as ProjectStatus[];
-    }, [currentStatusCsv]);
-
-    const visible = useMemo(() => {
-        if (!currentStatusCsv) return projects;
-        return projects.filter(p => activeStatuses.includes(p.projectStatus as ProjectStatus))
-    }, [projects, activeStatuses, currentStatusCsv]);
+    useEffect(() => {
+        const sp = new URLSearchParams(location.search);
+        const qs = sp.getAll("projectStatus");
+        if (qs.length === 0) {
+            applyStageToQuery(initialStage);
+        }
+    }, []);
 
     /* --------------------------- Render --------------------------- */
     if (loading) return <FundingLoader />;
-    if (error) return <p className="text-red-600">프로젝트 목록을 불러오지 못했습니다.</p>;
+    if (!projects) {
+        return (
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+                <EmptyState onBack={() => navigate(-1)} message={error ?? "프로젝트를 불러오지 못했습니다."} />
+            </div>
+        );
+    }
 
     return (
         <Card>
@@ -243,17 +230,16 @@ export function AdminProjectListPage() {
             </CardHeader>
 
             <CardContent>
-                {visible.length === 0 ? (
+                {projects.length === 0 ? (
                     <p>조건에 맞는 프로젝트가 없습니다.</p>
                 ) : (
                     <ul className="space-y-4">
                         {projects.map(p => <ProjectCard key={p.projectId} p={p} onChanged={projectData} />)}
                         <Pagination
-                            key={`${stage}-${closedResult || "ALL"}-${rangeType || "ALL"}-${size}`}
-                            page={page}
-                            size={size}
-                            total={total}
-                            onPage={setPage}
+                            {...bindPagination(total, {
+                                showSizeSelector: true,
+                                sizeOptions: [5, 10, 20, 30, 50],
+                            })}
                         />
                     </ul>
                 )}
@@ -268,15 +254,12 @@ function ProjectCard({ p, onChanged }: { p: AdminProjectList; onChanged: () => v
 
     const navigate = useNavigate();
 
-    const canVerify = p.projectStatus === "VERIFYING";
-    const canCancel = ["VERIFYING", "UPCOMING", "OPEN"].includes(p.projectStatus);
+    const canEdit = ["UPCOMING", "OPEN"].includes(p.projectStatus);
+    const canCancel = ["UPCOMING", "OPEN"].includes(p.projectStatus);
     const [cancel, setCancel] = useState(false);
 
+    const goDetail = (projectId: number) => navigate(`/admin/projects/${projectId}`);
     const goEdit = () => navigate(`/admin/project/${p.projectId}`);
-    const goVerifyDetail = () => {
-        if (!canVerify) return;
-        navigate(`/admin/verify/${p.projectId}`);
-    }
     const goCancel = async () => {
         if (!confirm(`[${p.title}]\n프로젝트를 취소하시겠습니까?`)) return;
         try {
@@ -369,68 +352,23 @@ function ProjectCard({ p, onChanged }: { p: AdminProjectList; onChanged: () => v
                 </CardContent>
 
                 <CardFooter className="justify-end gap-2">
-                    <Button variant="outline" size="sm" onClick={goEdit}>
-                        <Pencil className="h-4 w-4 mr-1" /> 수정
+                    <Button variant="outline" size="sm" onClick={() => goDetail(p.projectId)}>
+                        <Eye className="h-4 w-4 mr-1" /> 상세보기
                     </Button>
-
+                    {canEdit && (
+                        <Button variant="outline" size="sm" onClick={goEdit}>
+                            <Pencil className="h-4 w-4 mr-1" /> 수정
+                        </Button>
+                    )}
                     {canCancel && (
                         <Button variant="destructive" size="sm" onClick={goCancel} disabled={cancel}>
                             <XCircle className="h-4 w-4 mr-1" /> {cancel ? "취소중" : "취소"}
-                        </Button>
-                    )}
-
-                    {canVerify && (
-                        <Button variant="default" size="sm" onClick={goVerifyDetail}>
-                            심사
                         </Button>
                     )}
                 </CardFooter>
             </Card>
         </li>
     );
-
-    // return (
-    //     <Card className="block">
-    //         <CardHeader className="pb-2">
-    //             <CardTitle className="flex items-center gap-2 flex-wrap">
-    //                 <span className="mr-1 truncate">{p.title}</span>
-    //                 <ProjectStatusChip status={p.projectStatus as ProjectStatus} />
-    //                 {["UPCOMING", "OPEN"].includes(p.projectStatus) && (
-    //                     <span>({getDaysLeft(p.endDate)}일 남음)</span>
-    //                 )}
-    //             </CardTitle>
-    //         </CardHeader>
-
-    //         <CardContent>
-    //             <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
-    //                 <div>기간: {formatDate(p.startDate)} ~ {formatDate(p.endDate)}</div>
-    //                 <div>카테고리: {p.ctgrName} &gt; {p.subctgrName}</div>
-    //                 <div>현재/목표금액: {p.currAmount.toLocaleString()} / {p.goalAmount.toLocaleString()} ({p.percentNow}%)</div>
-    //                 <div>후원자 수: {p.backerCnt.toLocaleString()}</div>
-    //                 <div>창작자: {p.creatorName}</div>
-    //                 <div>마지막 수정일: {formatDate(p.updatedAt)}</div>
-    //             </div>
-    //         </CardContent>
-
-    //         <CardFooter className="justify-end gap-2 pt-2">
-    //             <Button variant="outline" size="sm" onClick={goEdit}>
-    //                 <Pencil className="h-4 w-4 mr-1" /> 수정
-    //             </Button>
-
-    //             {canCancel && (
-    //                 <Button variant="destructive" size="sm" onClick={goCancel} disabled={cancel}>
-    //                     <XCircle className="h-4 w-4 mr-1" /> {cancel ? "취소중" : "취소"}
-    //                 </Button>
-    //             )}
-
-    //             {canVerify && (
-    //                 <Button variant="default" size="sm" onClick={goVerifyDetail}>
-    //                     심사
-    //                 </Button>
-    //             )}
-    //         </CardFooter>
-    //     </Card>
-    // );
 }
 
 function EmptyState({ message, onBack }: { message: string; onBack: () => void }) {
