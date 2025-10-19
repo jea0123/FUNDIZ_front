@@ -3,7 +3,7 @@ import { Heart, Share2, Calendar, Users, UserMinus, Loader2 } from 'lucide-react
 import type { ProjectDetail } from '@/types/projects';
 import { deleteData, endpoints, getData, postData } from '@/api/apis';
 import { useParams } from 'react-router-dom';
-import { formatDate, formatNumber, formatPrice, getDaysLeft, toastSuccess } from '@/utils/utils';
+import { formatDate, formatNumber, formatPrice, getDaysLeft, toastSuccess, toPublicUrl } from '@/utils/utils';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,6 +17,7 @@ import FundingLoader from '@/components/FundingLoader';
 import { QnaCreateModal } from './components/QnaCreateModal';
 import ProjectCommunityTab from './components/ProjectCommunityTab';
 import ProjectReviewsTab from './components/ProjectReviewsTab';
+import { ProjectDetailViewer } from '../creator/components/ProjectDetailViewer';
 
 export function ProjectDetailsPage() {
 
@@ -74,6 +75,10 @@ export function ProjectDetailsPage() {
         }
         return { totalQty, totalAmount };
     }, [project, cart]);
+
+    const thumbnailUrl = useMemo(() =>
+        toPublicUrl(project?.thumbnail ?? null), [project?.thumbnail]
+    );
 
     /* ----------------------------- Data fetchers ----------------------------- */
     const projectData = useCallback(async () => {
@@ -322,7 +327,7 @@ export function ProjectDetailsPage() {
                 <div className="lg:col-span-2">
                     <div className="relative mb-6">
                         <ImageWithFallback
-                            src={project.thumbnail}
+                            src={thumbnailUrl}
                             alt={project.title}
                             className="w-full h-96 object-cover rounded-lg"
                         />
@@ -417,11 +422,9 @@ export function ProjectDetailsPage() {
                             </TabsTrigger>
                         </TabsList>
 
+                        {/* 프로젝트 소개 */}
                         <TabsContent value="description" className="mt-6">
-                            <div
-                                className="prose max-w-none whitespace-pre-wrap break-all [overflow-wrap:anywhere]"
-                                dangerouslySetInnerHTML={{ __html: project.content }}
-                            />
+                            <ProjectDetailViewer data={project.contentBlocks} />
                         </TabsContent>
 
                         {/* 새소식 */}

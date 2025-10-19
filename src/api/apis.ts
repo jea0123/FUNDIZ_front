@@ -200,6 +200,7 @@ export const endpoints = {
     getQnaListOfProject: (projectId: number) => `project/${projectId}/qna`,
     addQuestion: (projectId: number, userId: number) => `project/${projectId}/qna/${userId}/add`,
     getLikeCnt: (projectId: number) => `project/${projectId}/likeCnt`,
+    getCounts: (projectId: number) => `project/${projectId}/counts`,
 
     // ==================== QnaReply API ====================
     getQnaReplyList: (qnaId: number) => `qna/reply/${qnaId}`,

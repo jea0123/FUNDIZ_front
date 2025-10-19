@@ -2,6 +2,7 @@ import type { SortKey } from "@/views/project/components/ProjectsSortBar";
 import type { News } from "./news";
 import type { Reward } from "./reward";
 import type { Tag } from "./tag";
+import type { ContentBlocks } from "./creator";
 
 export interface Project {
     projectId: number;
@@ -49,6 +50,7 @@ export interface ProjectDetail {
     startDate: Date;
     endDate: Date;
     content: string;
+    contentBlocks: ContentBlocks; // EditorJS JSON
     thumbnail: string;
     projectStatus: string;
     backerCnt: number;
