@@ -172,6 +172,7 @@ export const endpoints = {
   creatorBackingList: 'creator/backingList',
   creatorShippingList: 'creator/shippingList',
   creatorShippingBackerList: (projectId: number) => `creator/shippingBackerList/${projectId}`,
+  updateCreatorShippingStatus: (projectId: number) => `creator/shippingBackerList/${projectId}`,
   postCreatorNews: (projectId: number) => `creator/projects/${projectId}/news`,
   getFollowerCnt: (creatorId: number) => `creator/followerCnt/${creatorId}`,
 
@@ -209,7 +210,7 @@ export const endpoints = {
   //여기까지
   backingPrepare: (userId: number, projectId: number) => `backing/${userId}/create/${projectId}`,
   addBacking: (userId: number) => `backing/create/${userId}`,
-  cancelBacking: (userId: number) => `backing/cancel/${userId}`,
+  cancelBacking: (userId: number, backingId: number) => `backing/${userId}/cancel/${backingId}`,
 
   // ==================== Admin API ====================
   getAdminAnalytics: (period: string, metric: string) => `admin/analytics?period=${period}&metric=${metric}`,

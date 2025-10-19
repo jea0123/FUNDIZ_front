@@ -142,7 +142,6 @@ export default function App() {
               <Route path="backings" element={<CreatorBacking />} />
               <Route path="shipping" element={<CreatorShippingList />} />
               <Route path="shipping/:projectId" element={<CreatorShippingDetail />} />
-              <Route path="settlement" element={<CreatorSettlementPage />} />
               <Route path="qna" element={<CreatorQnATab />} />
               <Route path="settlement" element={<CreatorSettlementPage />} />
             </Route>

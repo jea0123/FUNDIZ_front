@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getData, endpoints } from '@/api/apis';
+import { getData, endpoints, postData } from '@/api/apis';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -41,7 +41,7 @@ export default function BackingDetailPage() {
     FAILED: '배송 실패',
   };
 
-  //  추가 후원금 계산
+  // 추가 후원금 계산
   const totalRewardAmount = backing.rewardList?.reduce((sum, r) => sum + (r.price ?? 0) * (r.quantity ?? 0), 0) ?? 0;
 
   const extraBacking = Math.max(backing.amount - totalRewardAmount, 0);
@@ -127,7 +127,7 @@ export default function BackingDetailPage() {
         </CardContent>
       </Card>
 
-      {/*배송 정보 */}
+      {/* 배송 정보 */}
       <Card>
         <CardHeader>
           <CardTitle>📦 배송 정보</CardTitle>
@@ -170,35 +170,38 @@ export default function BackingDetailPage() {
         </CardContent>
       </Card>
 
-      {/*하단 버튼 */}
+      {/* 하단 버튼 */}
       <div className="flex justify-end gap-3">
         <Button variant="outline" onClick={() => navigate(-1)}>
           뒤로가기
         </Button>
 
-        <Button
-          variant="destructive"
-          onClick={async () => {
-            if (!backingId) return;
-            const confirmCancel = window.confirm('정말로 이 후원을 취소하시겠습니까?\n결제가 완료된 경우 환불 절차가 진행됩니다.');
-            if (!confirmCancel) return;
+        {backing.backingStatus === 'COMPLETED' && (
+          <Button
+            variant="destructive"
+            onClick={async () => {
+              if (!backingId) return;
+              const confirmCancel = window.confirm('정말로 이 후원을 취소하시겠습니까?\n결제가 완료된 경우 환불 절차가 진행됩니다.');
+              if (!confirmCancel) return;
 
-            try {
-              //const res = await getData(endpoints.cancelBacking(Number(backingId))); // endPoint 설정하기
-              if (res.status === 200) {
-                alert('후원이 성공적으로 취소되었습니다.');
-                navigate('/user'); // 마이페이지로 이동
-              } else {
-                alert('후원 취소에 실패했습니다. 잠시 후 다시 시도해주세요.');
+              try {
+                const res = await postData(endpoints.cancelBacking(1, Number(backingId))); // tempUserId: 1
+
+                if (res.status === 200) {
+                  alert('후원이 성공적으로 취소되었습니다.');
+                  navigate('/user'); // 마이페이지로 이동
+                } else {
+                  alert(res.message ?? '후원 취소에 실패했습니다. 잠시 후 다시 시도해주세요.');
+                }
+              } catch (error) {
+                console.error('후원 취소 오류:', error);
+                alert('서버 오류로 인해 후원 취소에 실패했습니다.');
               }
-            } catch (error) {
-              console.error('후원 취소 오류:', error);
-              alert('서버 오류로 인해 후원 취소에 실패했습니다.');
-            }
-          }}
-        >
-          후원 취소
-        </Button>
+            }}
+          >
+            후원 취소
+          </Button>
+        )}
       </div>
     </div>
   );
