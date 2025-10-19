@@ -1,4 +1,4 @@
-import type { SearchProjectDto } from '@/types/admin';
+import type { SearchAdminProjectDto } from '@/types/admin';
 import type { SearchCreatorProjectDto } from '@/types/creator';
 import type { SearchProjectParams } from '@/types/projects';
 import type { SearchNoticeParams } from '@/types/notice';
@@ -62,7 +62,7 @@ export const kyInstance = ky.create({
             .json()
             .catch(() => null);
           const msg = body?.message ?? res.statusText;
-          const reqURI = _req.url.replace(String(_opts.prefixUrl ?? ''), '2');
+          const reqURI = _req.url.replace(String(_opts.prefixUrl ?? ''), '');
           console.error(`${res.status} ${msg}`, reqURI);
           // appNavigate('/error', { state: { message: msg, status: res.status } });
         }
@@ -119,7 +119,15 @@ export const api = {
 const toQueryString = (params: Record<string, unknown>) => {
   const query = new URLSearchParams();
   Object.entries(params).forEach(([k, v]) => {
-    if (v !== undefined && v !== null && v !== '') query.append(k, String(v));
+    if (v === undefined || v === null || v === '' || v === 'undefined' || v === 'null') return;
+
+    if (Array.isArray(v)) {
+      v.forEach((item) => {
+        if (item !== undefined && item !== null && item !== '' && item !== 'undefined' && item !== 'null') query.append(k, String(item));
+      });
+    } else {
+      query.append(k, String(v));
+    }
   });
   return query.toString();
 };
@@ -176,6 +184,9 @@ export const endpoints = {
   postCreatorNews: (projectId: number) => `creator/projects/${projectId}/news`,
   getFollowerCnt: (creatorId: number) => `creator/followerCnt/${creatorId}`,
 
+  getCreatorSummary: (creatorId: number) => `creator/summary/${creatorId}`,
+  getCreatorProjects: (creatorId: number, sort: string, page: number, size: number) => `creator/projectsList/${creatorId}?${toQueryString({ sort, page, size })}`,
+
   // ==================== Project API ====================
   getFeatured: 'project/featured',
   getRecentTop10: 'project/recent-top10',
@@ -189,6 +200,7 @@ export const endpoints = {
   getQnaListOfProject: (projectId: number) => `project/${projectId}/qna`,
   addQuestion: (projectId: number, userId: number) => `project/${projectId}/qna/${userId}/add`,
   getLikeCnt: (projectId: number) => `project/${projectId}/likeCnt`,
+  getCounts: (projectId: number) => `project/${projectId}/counts`,
 
   // ==================== QnaReply API ====================
   getQnaReplyList: (qnaId: number) => `qna/reply/${qnaId}`,
@@ -216,11 +228,11 @@ export const endpoints = {
   getAdminAnalytics: (period: string, metric: string) => `admin/analytics?period=${period}&metric=${metric}`,
   getCategorySuccess: (ctgrId: number) => `admin/category-success?ctgrId=${ctgrId}`,
   getRewardSalesTop: (period: string, metric: string) => `admin/reward-sales-top?period=${period}&metric=${metric}`,
-  getProjectVerifyList: (p: SearchProjectDto) => `admin/verify?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
+  getProjectVerifyList: (p: SearchAdminProjectDto) => `admin/verify?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, projectStatuses: p.projectStatus && p.projectStatus.length ? p.projectStatus : undefined, rangeType: p.rangeType || undefined })}`,
   getProjectVerifyDetail: (projectId: number) => `admin/verify/${projectId}`,
   approveProject: (projectId: number) => `admin/verify/${projectId}/approve`,
   rejectProject: (projectId: number) => `admin/verify/${projectId}/reject`,
-  getAdminProjectList: (p: SearchProjectDto) => `admin/project?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
+  getAdminProjectList: (p: SearchAdminProjectDto) => `admin/project?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, projectStatuses: p.projectStatus && p.projectStatus.length ? p.projectStatus : undefined, rangeType: p.rangeType || undefined })}`,
   adminUpdateProject: (projectId: number) => `admin/project/${projectId}`,
   cancelProject: (projectId: number) => `admin/project/${projectId}/cancel`,
   getUsers: (p: SearchUserParams) => `admin/user/list?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,

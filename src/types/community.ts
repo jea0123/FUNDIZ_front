@@ -1,28 +1,22 @@
-import type { ReplyDto } from "./reply";
-
 export interface CommunityDto {
     cmId: number;
-    projectId: number;
     cmContent: string;
     createdAt: string;
     code: "CM";
-
     nickname: string;
     profileImg: string | null;
+    replyCnt: number;
 }
 
 export interface ReviewDto {
     cmId: number;
-    projectId: number;
     cmContent: string;
     createdAt: string;
     code: "RV";
     rating: number;
-
     nickname: string;
     profileImg: string | null;
-
-    replyList: ReplyDto[];
+    replyCnt: number;
 }
 
 export interface Cursor {

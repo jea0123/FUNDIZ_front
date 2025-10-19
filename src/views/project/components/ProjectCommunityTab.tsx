@@ -14,12 +14,12 @@ type Props = {
     projectId: number;
     active?: boolean;
     ensureLogin: () => boolean;
-    onCountChange?: (count: number) => void;
+    onCreated?: () => void;
 };
 
 const CM_MAX = 1000;
 
-export default function ProjectCommunityTab({ projectId, active = false, ensureLogin, onCountChange }: Props) {
+export default function ProjectCommunityTab({ projectId, active = false, ensureLogin, onCreated }: Props) {
     /* ----------------------------- Refs ----------------------------- */
     const communitySentinelRef = useRef<HTMLDivElement | null>(null);
     const replySentinelRef = useRef<Record<number, HTMLDivElement | null>>({});
@@ -47,7 +47,6 @@ export default function ProjectCommunityTab({ projectId, active = false, ensureL
     const [postingCm, setPostingCm] = useState(false);
 
     /* ---------------------------- Derived --------------------------- */
-    const getLocalReplyCnt = useCallback((cmId: number) => (reply[cmId]?.length ?? 0), [reply]);
     const replyText = useCallback((id: number) => (typeof replyInput?.[id] === "string" ? replyInput[id] : ""), [replyInput]);
 
     /* --------------------------- Fetchers --------------------------- */
@@ -164,11 +163,11 @@ export default function ProjectCommunityTab({ projectId, active = false, ensureL
             if (response.status === 200) {
                 setOpenCm(false);
                 setCmContent("");
-                // 첫 페이지부터 리로드
-                setCommunity([]);
+                setCommunity([]);   // 첫 페이지부터 리로드
                 setCommunityCursor(null);
                 await communityData(null);
                 toastSuccess("등록되었습니다.");
+                onCreated?.();
             } else {
                 alert("등록에 실패했습니다. 잠시 후 다시 시도해주세요.");
             }
@@ -210,6 +209,9 @@ export default function ProjectCommunityTab({ projectId, active = false, ensureL
                     const posted = response.data as ReplyDto;
                     if (posted) {
                         setReply((prev) => ({ ...prev, [cmId]: [posted, ...(prev[cmId] ?? [])] }));
+                        setCommunity((prev) => prev.map((item) =>
+                            item.cmId === cmId ? { ...item, replyCnt: (item.replyCnt ?? 0) + 1 } : item)
+                        );
                     } else {
                         setReplyCursor((prev) => ({ ...prev, [cmId]: null }));
                         await replyData(cmId, null);
@@ -236,11 +238,6 @@ export default function ProjectCommunityTab({ projectId, active = false, ensureL
         setCommunityCursor(null);
         communityData(null);
     }, [projectId, communityData]);
-
-    // 배지 숫자 갱신
-    useEffect(() => {
-        onCountChange?.(community.length);
-    }, [community.length, onCountChange]);
 
     // 커뮤니티 무한스크롤
     useEffect(() => {
@@ -299,21 +296,6 @@ export default function ProjectCommunityTab({ projectId, active = false, ensureL
     /* ---------------------------- Render ---------------------------- */
     return (
         <>
-            <div className="flex items-center justify-between mt-2">
-                <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1 text-sm font-medium text-foreground rounded-md px-2 py-0.5 ring-1 ring-blue-100 bg-blue-50/40">
-                        커뮤니티
-                    </span>
-                    <span className="inline-flex items-center rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 text-xs font-semibold ring-1 ring-blue-200">
-                        <MessageCircle className="h-3 w-3 mr-1" />
-                        {community.length}
-                    </span>
-                </div>
-                <Button size="sm" onClick={openCommunityModal}>
-                    글쓰기
-                </Button>
-            </div>
-
             {/* 글쓰기 모달 */}
             <Dialog open={openCm} onOpenChange={handleCommunityOpenChange}>
                 <DialogContent className="w-[min(92vw,40rem)] sm:max-w-lg">
@@ -383,11 +365,12 @@ export default function ProjectCommunityTab({ projectId, active = false, ensureL
                                                 <Button variant="ghost" size="sm" onClick={() => toggleReplies(cm.cmId)}>
                                                     <MessageCircle className="h-3 w-3 mr-1" />
                                                     댓글
-                                                    {getLocalReplyCnt(cm.cmId) > 0 && (
-                                                        <span className="ml-1 rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 ring-1 ring-blue-200">
-                                                            {getLocalReplyCnt(cm.cmId)}
-                                                        </span>
-                                                    )}
+                                                    <span className="inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1 rounded-full
+                                                                    bg-blue-50 text-blue-700 text-[10px] font-semibold ring-1 ring-blue-200
+                                                                    leading-none tabular-nums"
+                                                    >
+                                                        {cm.replyCnt ?? 0}
+                                                    </span>
                                                 </Button>
                                             </div>
 
@@ -423,11 +406,6 @@ export default function ProjectCommunityTab({ projectId, active = false, ensureL
                                                                         <div className="flex-1 min-w-0">
                                                                             <div className="flex items-center gap-2">
                                                                                 <span className="text-sm font-medium truncate">{rp.nickname}</span>
-                                                                                {rp.isSecret === "Y" && (
-                                                                                    <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-600 ring-1 ring-gray-200">
-                                                                                        🔒 비밀글
-                                                                                    </span>
-                                                                                )}
                                                                                 <span className="text-[11px] text-gray-500">{getDaysBefore(rp.createdAt)} 전</span>
                                                                             </div>
                                                                             <p className="text-sm whitespace-pre-wrap [overflow-wrap:anywhere]">{rp.content}</p>

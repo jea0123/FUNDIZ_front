@@ -10,7 +10,7 @@ import MainPage from './views/MainPage';
 import { setNavigator } from './utils/navigator';
 import { NoticeDetailPage } from './views/cs/NoticeDetail';
 import FundingLoader from './components/FundingLoader';
-import { VerificationDetails } from './views/admin/pages/VerificationDetails';
+import { AdminProjectDetails } from './views/admin/pages/AdminProjectDetails';
 import AdminProjectEditPage from './views/admin/pages/AdminProjectEditPage';
 import NotificationsPage from './components/NotificationsPage';
 import CreatorProjectListPage from './views/creator/pages/CreatorProjectListPage';
@@ -55,6 +55,7 @@ import BackingDetailTab from './views/user/tabs/BackingDetailTab';
 import ProjectsBrowsePage, { ProjectsByCategoryPage, ProjectsBySubcategoryPage, ProjectsSearchPage } from './views/project/ProjectsBrowsePage';
 import { ProjectDetailsPage } from './views/project/ProjectDetailsPage';
 import CreatorRewardAddPage from './views/creator/pages/CreatorRewardAddPage';
+import CreatorPage from './views/creator/pages/CreatorPage';
 
 // import { setDevCreatorIdHeader } from '@/api/apis';
 // setDevCreatorIdHeader(11);
@@ -97,6 +98,7 @@ export default function App() {
         {/* <Layout /> */}
         <Routes>
           <Route element={<Layout />}>
+            <Route path="/c" element={<CreatorPage />} />
             <Route path="/" element={<MainPage />} />
 
             <Route path="/auth">
@@ -150,8 +152,9 @@ export default function App() {
               <Route index element={<OverviewTab />} />
               <Route path="overview" element={<OverviewTab />} />
               <Route path="approvals" element={<VerificationQueue />} />
-              <Route path="verify/:projectId" element={<VerificationDetails />} />
+              <Route path="verify/:projectId" element={<AdminProjectDetails />} />
               <Route path="projects" element={<AdminProjectListPage />} />
+              <Route path="projects/:projectId" element={<AdminProjectDetails />} />
               <Route path="project/:projectId" element={<AdminProjectEditPage />} />
               <Route path="reports" element={<ReportsAdminTab />} />
               <Route path="users" element={<UsersTab />} />

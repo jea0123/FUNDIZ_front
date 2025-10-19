@@ -30,8 +30,8 @@ export interface CreatorProjectListDto {
 export interface SearchCreatorProjectDto {
     page: number;
     size: number;
-
-    projectStatus?: string;
+    perGroup: number;
+    projectStatus?: string[];
     rangeType?: string;
 }
 
@@ -149,7 +149,7 @@ export interface CreatorUpdateRequest {
 }
 
 export interface CreatorInfo {
-  creatorId: number;
+    creatorId: number;
     creatorName: string;
     creatorType: string;
     email: string;
