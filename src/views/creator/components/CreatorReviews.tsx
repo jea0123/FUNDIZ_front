@@ -1,120 +1,174 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { fetchCreatorProjectOptions, fetchCreatorReviews, type ReviewItem } from "@/mocks/creatorApi";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { Loader2, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { endpoints, getData } from "@/api/apis";
+import type { SearchReviewsParams } from "@/types/community";
+
+interface ReviewItem {
+    cmId: number;
+    cmContent: string;
+    createdAt: string;
+    user: { userId: number | null; nickname: string; profileImg?: string };
+    project: { projectId: number; title: string; thumbnail?: string };
+    images: string[];
+}
+
+interface ReviewCursor {
+    lastId?: number;
+    lastCreatedAt?: string;
+}
 
 type Props = { creatorId: number };
 
 export default function CreatorReviews({ creatorId }: Props) {
     const [items, setItems] = useState<ReviewItem[]>([]);
-    const [page, setPage] = useState(1);
-    const [total, setTotal] = useState(0);
+    const [totalCount, setTotalCount] = useState(0);
+    const [nextCursor, setNextCursor] = useState<ReviewCursor | null>(null);
+    const [hasNext, setHasNext] = useState(true);
     const [loading, setLoading] = useState(false);
-    const [done, setDone] = useState(false);
     const [projectOptions, setProjectOptions] = useState<Array<{ projectId: number; title: string }>>([]);
     const [selectedProject, setSelectedProject] = useState<"all" | number>("all");
     const [photoOnly, setPhotoOnly] = useState(false);
     const size = 10;
 
-    // 🔎 Lightbox state
+    const inFlightRef = useRef(false);
+    const loadingRef = useRef(false);
+    const hasNextRef = useRef(true);
+    const cursorRef = useRef<ReviewCursor | null>(null);
+    const initialReqRef = useRef(false)
+    const seenProjectsRef = useRef<Map<number, string>>(new Map());
+
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [lightboxImages, setLightboxImages] = useState<string[]>([]);
     const [lightboxIndex, setLightboxIndex] = useState(0);
 
     const openLightbox = useCallback((images: string[], idx: number) => {
-        if (!images || images.length === 0) return;
-        setLightboxImages(images);
-        setLightboxIndex(idx);
-        setLightboxOpen(true);
+        if (images?.length) {
+            setLightboxImages(images);
+            setLightboxIndex(idx);
+            setLightboxOpen(true);
+        }
     }, []);
 
     const closeLightbox = useCallback(() => setLightboxOpen(false), []);
-    const prevImg = useCallback(
-        () => setLightboxIndex((i) => (i - 1 + lightboxImages.length) % lightboxImages.length),
-        [lightboxImages.length]
-    );
-    const nextImg = useCallback(
-        () => setLightboxIndex((i) => (i + 1) % lightboxImages.length),
-        [lightboxImages.length]
-    );
 
-    // 키보드 네비게이션 (열렸을 때만)
-    useEffect(() => {
-        if (!lightboxOpen) return;
-        const onKey = (e: KeyboardEvent) => {
-            if (e.key === "ArrowLeft") prevImg();
-            if (e.key === "ArrowRight") nextImg();
-            if (e.key === "Escape") closeLightbox();
-        };
-        window.addEventListener("keydown", onKey);
-        return () => window.removeEventListener("keydown", onKey);
-    }, [lightboxOpen, prevImg, nextImg, closeLightbox]);
-
-    // 무한스크롤
     const sentinelRef = useRef<HTMLDivElement | null>(null);
 
+    useEffect(() => { hasNextRef.current = hasNext; }, [hasNext]);
+    useEffect(() => { loadingRef.current = loading; }, [loading]);
+
     useEffect(() => {
-        let mounted = true;
-        (async () => {
-            setLoading(true);
-            const pid = selectedProject === "all" ? undefined : Number(selectedProject);
-            const { items: list, total } = await fetchCreatorReviews(creatorId, page, size, pid);
-            let filtered = list;
-            if (photoOnly) filtered = list.filter(r => r.images && r.images.length > 0);
-            if (!mounted) return;
-            setItems(prev => (page === 1 ? filtered : [...prev, ...filtered]));
-            setTotal(total);
-            setDone(page >= Math.ceil(total / size));
+        setItems([]);
+        setNextCursor(null);
+        setHasNext(true);
+        cursorRef.current = null;
+        inFlightRef.current = false;
+        loadingRef.current = false;
+        initialReqRef.current = false;
+    }, [creatorId, selectedProject, photoOnly]);
+
+    const fetchReviews = useCallback(async () => {
+        if (inFlightRef.current || loadingRef.current || !hasNextRef.current) return;
+
+        inFlightRef.current = true;
+        loadingRef.current = true;
+        setLoading(true);
+
+        try {
+            const query: SearchReviewsParams = { size };
+            const c = cursorRef.current;
+            if (c?.lastId) query.lastId = c.lastId;
+            if (c?.lastCreatedAt) query.lastCreatedAt = new Date(c.lastCreatedAt);
+            if (selectedProject !== "all") query.projectId = selectedProject;
+            if (photoOnly) query.photoOnly = true;
+
+            const res = await getData(endpoints.getCreatorReviews(creatorId, query));
+
+            setItems(prev => {
+                const merged = [...prev, ...res.data.items];
+                const seen = new Set<number>();
+                return merged.filter(it => !seen.has(it.cmId) && seen.add(it.cmId));
+            });
+
+            setNextCursor(res.data.nextCursor || null);
+            setHasNext(Boolean(res.data.hasNext && res.data.nextCursor));
+            setTotalCount(res.data.totalCount || 0);
+
+            const pageItems = res.data.items as ReviewItem[];
+
+            for (const r of pageItems) {
+                const pid = r.project?.projectId;
+                const title = r.project?.title ?? "";
+                if (pid) seenProjectsRef.current.set(pid, title);
+            }
+            setProjectOptions(Array.from(seenProjectsRef.current.entries()).map(([projectId, title]) => ({ projectId, title })));
+
+            cursorRef.current = res.data.nextCursor || null;
+            hasNextRef.current = Boolean(res.data.hasNext && res.data.nextCursor);
+        } catch (e) {
+            console.error(e);
+            setHasNext(false);
+            hasNextRef.current = false;
+        } finally {
             setLoading(false);
-        })();
-        return () => { mounted = false; };
-    }, [creatorId, page, selectedProject, photoOnly]);
+            loadingRef.current = false;
+            inFlightRef.current = false;
+        }
+    }, [creatorId, selectedProject, photoOnly, size]);
+
+    useEffect(() => {
+        if (initialReqRef.current) return;
+        initialReqRef.current = true;
+        fetchReviews();
+    }, [fetchReviews]);
+
+    useEffect(() => {
+        if (items.length === 0 && hasNext && !loading) fetchReviews();
+    }, [items.length, hasNext, fetchReviews]);
 
     useEffect(() => {
         const el = sentinelRef.current;
         if (!el) return;
+
         const io = new IntersectionObserver((entries) => {
-            if (entries[0].isIntersecting && !loading && !done) setPage(p => p + 1);
+            const e = entries[0];
+            if (!e.isIntersecting) return;
+
+            if (!cursorRef.current) return;
+
+            if (!loadingRef.current && hasNextRef.current) {
+                io.unobserve(el);
+                fetchReviews().finally(() => {
+                    if (el && hasNextRef.current) io.observe(el);
+                });
+            }
         }, { rootMargin: "200px" });
+
         io.observe(el);
         return () => io.disconnect();
-    }, [loading, done]);
+    }, [fetchReviews]);
 
     useEffect(() => {
-        let mounted = true;
-        (async () => {
-            const opts = await fetchCreatorProjectOptions(creatorId);
-            if (!mounted) return;
-            setProjectOptions(opts);
-        })();
-        return () => { mounted = false; };
+        seenProjectsRef.current.clear();
+        setProjectOptions([]);
     }, [creatorId]);
 
     const onChangeProject = useCallback((value: string) => {
         setSelectedProject(value === "all" ? "all" : Number(value));
-        setPage(1);
-        setItems([]);
-        setDone(false);
     }, []);
 
     return (
         <>
             <div className="space-y-4">
-                {/* 상단 필터 바 */}
                 <div className="flex items-center justify-between">
-                    <div className="text-sm text-muted-foreground">
-                        총 {total}개
-                    </div>
+                    <div className="text-sm text-muted-foreground">총 {totalCount}개</div>
                     <div className="flex items-center gap-2">
-                        <Select
-                            value={String(selectedProject)}
-                            onValueChange={onChangeProject}
-                        >
+                        <Select value={String(selectedProject)} onValueChange={onChangeProject}>
                             <SelectTrigger className="h-9 w-[220px]">
                                 <SelectValue placeholder="프로젝트 선택" />
                             </SelectTrigger>
@@ -132,25 +186,17 @@ export default function CreatorReviews({ creatorId }: Props) {
                             <Checkbox
                                 id="photo-only"
                                 checked={photoOnly}
-                                onCheckedChange={(val) => {
-                                    setPhotoOnly(!!val);
-                                    setPage(1);
-                                    setItems([]);
-                                    setDone(false);
-                                }}
+                                onCheckedChange={(val) => setPhotoOnly(!!val)}
                             />
-                            <label
-                                htmlFor="photo-only"
-                                className="text-sm text-muted-foreground cursor-pointer select-none"
-                            >
+                            <label htmlFor="photo-only" className="text-sm text-muted-foreground cursor-pointer select-none">
                                 포토 후기만
                             </label>
                         </div>
                     </div>
                 </div>
+
                 {items.map((rv) => (
                     <Card key={rv.cmId} className="p-5">
-                        {/* 작성자 영역 */}
                         <div className="flex items-start gap-3">
                             <Avatar className="h-9 w-9">
                                 <AvatarImage src={rv.user.profileImg || ""} />
@@ -165,11 +211,9 @@ export default function CreatorReviews({ creatorId }: Props) {
                                     </div>
                                 </div>
 
-                                {/* 후기 텍스트 */}
                                 <p className="mt-3 text-[15px] leading-7 whitespace-pre-line">{rv.cmContent}</p>
 
-                                {/* 후기 이미지: 텍스트 아래 */}
-                                {rv.images && rv.images.length > 0 && (
+                                {rv.images?.length > 0 && (
                                     <div className="mt-4 grid grid-cols-7 gap-2">
                                         {rv.images.map((src, idx) => (
                                             <button
@@ -177,21 +221,18 @@ export default function CreatorReviews({ creatorId }: Props) {
                                                 type="button"
                                                 onClick={() => openLightbox(rv.images!, idx)}
                                                 className="group relative rounded-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-ring"
-                                                aria-label={`후기 이미지 ${idx + 1} 확대`}
                                             >
                                                 <img
                                                     src={src}
                                                     alt=""
-                                                    className="rounded-md object-cover w-full h-full transition-transform group-hover:scale-[1.01]"
+                                                    className="rounded-md object-cover w-full h-full transition-transform group-hover:scale-[1.02]"
                                                     loading="lazy"
                                                 />
-                                                <span className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
                                             </button>
                                         ))}
                                     </div>
                                 )}
 
-                                {/* 관련 프로젝트: 이미지 그리드 아래 */}
                                 <a
                                     href={`/project/${rv.project.projectId}`}
                                     className="mt-5 flex items-center gap-3 w-fit rounded-md border p-2 pr-3 hover:bg-muted/50 transition-colors"
@@ -214,21 +255,17 @@ export default function CreatorReviews({ creatorId }: Props) {
                         <Loader2 className="animate-spin mr-2" /> 불러오는 중…
                     </div>
                 )}
-                {done && (
-                    <div className="text-center text-xs text-muted-foreground py-4">마지막 후기예요.</div>
+                {items.length === 0 && !loading && (
+                    <div className="text-center text-sm text-muted-foreground py-6">후기가 없어요.</div>
                 )}
-            </div >
+            </div>
 
-            {/* 🖼 Lightbox */}
-            < Dialog open={lightboxOpen} onOpenChange={setLightboxOpen} >
-                <DialogContent
-                    className="bg-transparent border-0 shadow-none p-0 flex items-center justify-center max-w-[96vw] max-h-[96vh]"
-                >
+            <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+                <DialogContent className="bg-transparent border-0 shadow-none p-0 flex items-center justify-center max-w-[96vw] max-h-[96vh]">
                     <DialogHeader className="sr-only">
                         <DialogTitle>후기 이미지 미리보기</DialogTitle>
                     </DialogHeader>
 
-                    {/* 닫기 버튼 */}
                     <div className="absolute right-3 top-3 z-10">
                         <DialogClose asChild>
                             <Button
@@ -241,7 +278,6 @@ export default function CreatorReviews({ creatorId }: Props) {
                         </DialogClose>
                     </div>
 
-                    {/* 이미지 영역 */}
                     <div className="relative w-full h-full flex items-center justify-center">
                         <img
                             key={lightboxImages[lightboxIndex]}
@@ -252,8 +288,7 @@ export default function CreatorReviews({ creatorId }: Props) {
                         />
                     </div>
                 </DialogContent>
-            </Dialog >
-
+            </Dialog>
         </>
     );
 }

@@ -21,7 +21,7 @@ export default function CreatorProjects({ creatorId }: Props) {
         let mounted = true;
         (async () => {
             setLoading(true);
-            const res = await getData(endpoints.getCreatorProjects(86, sort, page, size));
+            const res = await getData(endpoints.getCreatorProjects(creatorId, sort, page, size));
             if (!mounted) return;
             if (res.status === 200) {
                 setItems(res.data as PageResult<ProjectCard>);
@@ -48,6 +48,10 @@ export default function CreatorProjects({ creatorId }: Props) {
             {loading ? (
                 <div className="flex items-center justify-center py-14 text-muted-foreground">
                     <Loader2 className="animate-spin mr-2" /> 불러오는 중…
+                </div>
+            ) : items.items.length === 0 ? (
+                <div className="flex items-center justify-center py-14 text-muted-foreground">
+                    등록된 프로젝트가 없어요.
                 </div>
             ) : (
                 <>
