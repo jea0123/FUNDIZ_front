@@ -89,7 +89,7 @@ export default function CreatorBacking() {
     };
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="space-y-6">
             {loading || idLoading ? (
                 <FundingLoader />
             ) : (

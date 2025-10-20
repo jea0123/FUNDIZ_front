@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageCircle, MessageSquarePlus, X } from "lucide-react";
+import { MessageCircle, MessageSquarePlus, Siren, X } from "lucide-react";
 import { endpoints, getData, postData } from "@/api/apis";
-import { getByteLen, getDaysBefore, toastSuccess } from "@/utils/utils";
+import { getByteLen, getDaysBefore, toastSuccess, toPublicUrl } from "@/utils/utils";
 import type { CommunityDto, Cursor, CursorPage } from "@/types/community";
 import type { ReplyDto } from "@/types/reply";
 
@@ -349,12 +349,13 @@ export default function ProjectCommunityTab({ projectId, active = false, ensureL
                                 <CardContent className="pt-6">
                                     <div className="flex items-start space-x-3">
                                         <Avatar className="w-8 h-8">
-                                            {cm.profileImg ? <AvatarImage src={cm.profileImg} /> : null}
+                                            <AvatarImage src={toPublicUrl(cm.profileImg)} />
                                             <AvatarFallback>{(cm.nickname ?? "U").slice(0, 2)}</AvatarFallback>
                                         </Avatar>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center space-x-2 mb-1">
                                                 <span className="font-medium truncate">{cm.nickname}</span>
+                                                <a href="/cs/report"><Siren className="w-4 h-4" /></a>
                                                 <span className="text-sm text-gray-500">{getDaysBefore(cm.createdAt)} 전</span>
                                             </div>
                                             <p className="text-sm w-full max-w-full whitespace-pre-wrap [overflow-wrap:anywhere]">
@@ -446,15 +447,7 @@ export default function ProjectCommunityTab({ projectId, active = false, ensureL
 
                                                         <div className="mt-2 flex items-center justify-between">
                                                             <div className="flex items-center gap-3">
-                                                                <label className="flex items-center gap-2 text-xs text-gray-600">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        checked={!!replySecret[cm.cmId]}
-                                                                        onChange={(e) => setReplySecret((prev) => ({ ...prev, [cm.cmId]: e.target.checked }))}
-                                                                    />
-                                                                    비밀글
-                                                                </label>
-                                                                <span className="text-[11px] text-gray-500">약 {replyText(cm.cmId).length}자</span>
+                                                                <span className="text-[12px] text-gray-500 ml-2">약 {replyText(cm.cmId).length}자</span>
                                                             </div>
 
                                                             <div className="flex items-center gap-3">
