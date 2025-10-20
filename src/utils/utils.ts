@@ -232,6 +232,8 @@ export const toPublicUrl = (p?: string | null): string => {
     return `http://localhost:9099/${p}`;
 };
 
+export const percent = (curr: number, goal: number) => (goal ? Math.floor((curr / goal) * 100) : 0);
+
 /** 성공(파랑 톤) */
 export const toastSuccess = (message: string) =>
     toast.success(message, {

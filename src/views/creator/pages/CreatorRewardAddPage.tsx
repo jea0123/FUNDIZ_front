@@ -20,7 +20,7 @@ import { validateReward } from "@/types/reward-validator";
 
 const numberKR = (n?: number | null) => new Intl.NumberFormat("ko-KR").format(n || 0);
 
-export default function CreatorAddReward() {
+export default function CreatorRewardAddPage() {
     // 신규 리워드 폼
     const defaultForm = (pid: number): RewardCreateRequestDto => ({
         projectId: pid,

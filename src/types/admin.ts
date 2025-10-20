@@ -1,7 +1,8 @@
-import type { Status } from "@/views/admin/tabs/ProjectsTab";
 import type { Reward } from "./reward";
 import type { Tag } from "./tag";
-import type { AdminStatus } from "@/views/admin/tabs/AdminProjectEdit";
+import type { AdminStatus } from "@/views/admin/pages/AdminProjectEditPage";
+import type { ProjectStatus } from "@/views/admin/components/ProjectStatusChip";
+import type { ContentBlocks } from "./creator";
 
 export interface Analytics {
     kpi: {
@@ -57,11 +58,11 @@ export interface ProjectVerifyList {
     requestedAt: Date;
 }
 
-export interface SearchProjectDto {
+export interface SearchAdminProjectDto {
     page: number;
     size: number;
-
-    projectStatus?: string;
+    perGroup: number;
+    projectStatus?: string[];
     rangeType?: string;
 }
 
@@ -71,20 +72,18 @@ export interface RejectProjectDto {
 
 export interface ProjectVerifyDetail {
     projectId: number;
-    creatorId: number;
     title: string;
-    content: string;
-    thumbnail: string
     goalAmount: number;
     startDate: Date;
     endDate: Date;
-    projectStatus: string;
+    content: string;
+    contentBlocks: ContentBlocks; // EditorJS JSON
+    thumbnail: string
+    businessDoc?: string;
+    projectStatus: ProjectStatus;
     requestedAt: Date;
-
-    ctgrId: number;
-    ctgrName: string;
-    subctgrId: number;
     subctgrName: string;
+    ctgrName: string;
 
     creatorName: string;
     businessNum: string;
@@ -98,16 +97,19 @@ export interface ProjectVerifyDetail {
 export interface AdminProjectList {
     projectId: number;
     title: string;
-    creatorName: string;
-    projectStatus: Status;
-    startDate: Date;
-    endDate: Date;
     goalAmount: number;
     currAmount: number;
-    backerCnt: number;
+    startDate: Date;
+    endDate: Date;
+    createdAt: Date;
     updatedAt: Date
-    ctgrName: string;
+    projectStatus: ProjectStatus;
+    backerCnt: number;
+    likeCnt: number;
+    viewCnt: number;
     subctgrName: string;
+    ctgrName: string;
+    creatorName: string;
     percentNow: number;
 }
 

@@ -3,15 +3,15 @@ import { ArrowLeft, Save, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Subcategory } from '@/types/projects';
-import { endpoints, getData, postData } from '@/api/apis';
+import { endpoints, getData, postData, setDevCreatorIdHeader } from '@/api/apis';
 import type { RewardDraft, RewardForm } from '@/types/reward';
 import type { Category } from '@/types/admin';
 import FundingLoader from '@/components/FundingLoader';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { ContentBlocks } from '@/types/creator';
 import { assertValidReward, validateReward, type RewardFieldErrors } from '@/types/reward-validator';
-import { EditProjectSteps, type CreateProjectViewModel } from '../components/EditProjectSteps';
-import { EditProjectStepper } from '../components/EditProjectStepper';
+import { CreatorProjectEditSteps, type CreateProjectViewModel } from '../components/CreatorProjectEditSteps';
+import { CreatorProjectEditStepper } from '../components/CreatorProjectEditStepper';
 import { useCreatorId } from '../../../types/useCreatorId';
 import { formatDate, toIsoDateTime, toPublicUrl } from '@/utils/utils';
 
@@ -112,7 +112,7 @@ const addDays = (date: Date, days: number) => {
     return d;
 };
 
-/* ---------------------------- Validaators / builders ---------------------------- */
+/* ---------------------------- Validators / builders ---------------------------- */
 
 const validateProject = (p: CreateProjectViewModel & {
     thumbnailPreviewUrl?: string;
@@ -257,7 +257,7 @@ const buildFormData = (
     fd.append("title", project.title ?? "");
     fd.append("goalAmount", String(project.goalAmount ?? 0));
     fd.append("startDate", toIsoDateTime(formatDate(project.startDate)));
-    fd.append("endDate", toIsoDateTime(formatDate(project.endDate)));
+    fd.append("endDate", toIsoDateTime(formatDate(project.endDate), true));
     fd.append("content", project.content ?? "");
     fd.append("contentBlocks", JSON.stringify(project.contentBlocks ?? { blocks: [] }));
 
@@ -297,12 +297,10 @@ const validateAgree = (
 
 /* -------------------------------- Page -------------------------------- */
 
-export default function EditProject() {
-
-    /* ----------------------------- State ----------------------------- */
+export default function CreatorProjectEditPage() {
 
     //TODO: dev id
-    const { creatorId, loading } = useCreatorId(2);
+    const { creatorId, loading: idLoading } = useCreatorId(2);
 
     const { projectId: projectIdParam } = useParams();
     const projectId = projectIdParam ? Number(projectIdParam) : null;
@@ -312,7 +310,7 @@ export default function EditProject() {
     const goList = () => navigate("/creator/projects", { replace: true });
 
     const [currentStep, setCurrentStep] = useState(1);
-    const [isLoading, setIsLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [projectErrors, setProjectErrors] = useState<ProjectFieldErrors>({});
     const [rewardErrors, setRewardErrors] = useState<RewardFieldErrors>({});
     const [rewardListError, setRewardListError] = useState<string | null>(null);
@@ -396,7 +394,7 @@ export default function EditProject() {
     useEffect(() => {
         let alive = true;
         (async () => {
-            setIsLoading(true);
+            setLoading(true);
             try {
                 const [catRes, subRes, infoRes] = await Promise.all([
                     getData(endpoints.getCategories),
@@ -477,7 +475,7 @@ export default function EditProject() {
                     "정보를 불러오는 중 오류가 발생했습니다.";
                 alert(msg);
             } finally {
-                if (alive) setIsLoading(false);
+                if (alive) setLoading(false);
             }
         })();
         return () => { alive = false; };
@@ -485,11 +483,10 @@ export default function EditProject() {
 
     //TODO: dev id
     useEffect(() => {
-        if (!import.meta.env.DEV) return;
-        if (!loading && creatorId) {
-            localStorage.setItem("DEV_CREATOR_ID", String(creatorId));
+        if (!idLoading && creatorId) {
+            setDevCreatorIdHeader(creatorId ?? null);
         }
-    }, [loading, creatorId])
+    }, [idLoading, creatorId]);
 
     /* ---------------------------- Handlers ---------------------------- */
 
@@ -541,9 +538,9 @@ export default function EditProject() {
 
     //저장
     const handleSaveDraft = async () => {
-        if (isLoading) return; // 중복 제출 방지
+        if (loading) return; // 중복 제출 방지
         const formData = buildFormData(project, rewardList);
-        setIsLoading(true);
+        setLoading(true);
         try {
             if (isEdit && projectId) {
                 // 기존 Draft 업데이트
@@ -567,13 +564,13 @@ export default function EditProject() {
         } catch (err: any) {
             alert(err?.message ?? "저장 중 오류가 발생했습니다.");
         } finally {
-            setIsLoading(false);
+            setLoading(false);
         }
     };
 
     //심사요청(제출)
     const handleSubmit = async () => {
-        if (isLoading) return; // 중복 제출 방지
+        if (loading) return; // 중복 제출 방지
         if (!validateAgree(agree, setAgreeError)) return;
 
         const { ok, errors } = validateProject(project);
@@ -585,7 +582,7 @@ export default function EditProject() {
         }
         setRewardListError(null);
 
-        setIsLoading(true);
+        setLoading(true);
         try {
             const formData = buildFormData(project, rewardList);
 
@@ -640,23 +637,23 @@ export default function EditProject() {
                 "요청 처리 중 오류가 발생했습니다.";
             alert(msg);
         } finally {
-            setIsLoading(false);
+            setLoading(false);
         }
     };
 
     /* --------------------------- Render --------------------------- */
 
-    if (isLoading) return <FundingLoader></FundingLoader>;
+    if (loading) return <FundingLoader></FundingLoader>;
 
     const progress = (currentStep / STEPS.length) * 100;
 
     return (
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <EditProjectStepper steps={STEPS} currentStep={currentStep} progress={progress} title={isEdit ? "프로젝트 수정" : "프로젝트 만들기"} />
+            <CreatorProjectEditStepper steps={STEPS} currentStep={currentStep} progress={progress} title={isEdit ? "프로젝트 수정" : "프로젝트 만들기"} />
 
             <Card className="mt-6">
                 <CardContent className="p-6">
-                    <EditProjectSteps
+                    <CreatorProjectEditSteps
                         key={isEdit ? `edit-${projectId}` : "new"}
                         step={currentStep}
                         project={project}
@@ -704,7 +701,7 @@ export default function EditProject() {
                             <Button variant="outline" onClick={handleSaveDraft}>
                                 <Save className="h-4 w-4 mr-2" /> 저장
                             </Button>
-                            <Button onClick={handleSubmit} disabled={!agree || isLoading || !canSubmit}>
+                            <Button onClick={handleSubmit} disabled={!agree || loading || !canSubmit}>
                                 <Send className="h-4 w-4 mr-2" /> 심사요청
                             </Button>
                         </>

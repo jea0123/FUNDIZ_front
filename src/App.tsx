@@ -5,17 +5,15 @@ import { RegisterPage } from './views/auth/user/RegisterPage';
 import { useLoginUserStore } from './store/LoginUserStore.store';
 import { useCookies } from 'react-cookie';
 import { endpoints, getData } from './api/apis';
-import { ProjectDetailPage } from './views/project/ProjectDetail';
 import ErrorPage from './views/ErrorPage';
 import MainPage from './views/MainPage';
 import { setNavigator } from './utils/navigator';
 import { NoticeDetailPage } from './views/cs/NoticeDetail';
-import ProjectsAllPage, { ProjectByCategoryPage, ProjectBySubcategoryPage, SearchProjectPage } from './views/project/ProjectAllPage';
 import FundingLoader from './components/FundingLoader';
-import { ApprovalDetail } from './views/admin/tabs/ApprovalDetail';
-import AdminProjectEdit from './views/admin/tabs/AdminProjectEdit';
+import { AdminProjectDetails } from './views/admin/pages/AdminProjectDetails';
+import AdminProjectEditPage from './views/admin/pages/AdminProjectEditPage';
 import NotificationsPage from './components/NotificationsPage';
-import CreatorProjects from './views/creator/pages/CreatorProjects';
+import CreatorProjectListPage from './views/creator/pages/CreatorProjectListPage';
 import CreatorLayout from './views/creator/CreatorLayout';
 import AdminLayout from './views/admin/AdminLayout';
 import Layout from './layout/Layout';
@@ -24,11 +22,10 @@ import { InquiryTab } from './views/cs/tabs/InquiryTab';
 import { ReportTab } from './views/cs/tabs/ReportTab';
 import CSLayout from './views/cs/CSLayout';
 import { CreatorQnATab } from './views/creator/pages/CreatorQnATab';
-import CreatorProjectDetail from './views/creator/pages/CreatorProjectDetail';
+import CreatorProjectDetailsPage from './views/creator/pages/CreatorProjectDetailsPage';
 import CreatorShippingList from './views/creator/pages/CreatorShippingList';
 import CreatorShippingDetail from './views/creator/pages/CreatorShippingDetail';
 import CreatorBacking from './views/creator/pages/CreatorBacking';
-import CreatorAddReward from './views/creator/pages/CreatorAddReward';
 import CreatorSettlementPage from './views/creator/pages/CreatorSettlementPage';
 import RegisterCreator from './views/creator/RegistCreator';
 import CreatorInfoUpdate from './views/creator/pages/CreatorInfoUpdate';
@@ -43,20 +40,27 @@ import LikedProjectTab from './views/user/tabs/LikedProjectTab';
 import { BackingPage } from './views/backing/backingPage';
 import { AdminRegisterPage } from './views/auth/admin/AdminRegisterPage';
 import { AdminLoginPage } from './views/auth/admin/AdminLoginPage';
-import { ApprovalsTab } from './views/admin/tabs/ApprovalsTab';
-import { ProjectsTab } from './views/admin/tabs/ProjectsTab';
-import { ReportsAdminTab } from './views/admin/tabs/ReportsAdminTab';
-import { UsersTab } from './views/admin/tabs/UsersTab';
-import { AnalyticsTab } from './views/admin/tabs/AnalyticsTab';
-import { InquiryAdminTab } from './views/admin/tabs/InquiryAdminTab';
-import { NoticeAdminTab } from './views/admin/tabs/NoticeAdminTab';
-import { NoticeAddTab } from './views/admin/tabs/NoticeAddTab';
-import { NoticeUpdtTab } from './views/admin/tabs/NoticeUpdtTab';
-import SettlementTab from './views/admin/tabs/SettlementTab';
-import EditProject from './views/creator/pages/EditProject';
+import { VerificationQueue } from './views/admin/pages/VerificationQueue';
+import { AdminProjectListPage } from './views/admin/pages/AdminProjectListPage';
+import { ReportsAdminTab } from './views/admin/pages/ReportsAdminTab';
+import { UsersTab } from './views/admin/pages/UsersTab';
+import { AnalyticsTab } from './views/admin/pages/AnalyticsTab';
+import { InquiryAdminTab } from './views/admin/pages/InquiryAdminTab';
+import { NoticeAdminTab } from './views/admin/pages/NoticeAdminTab';
+import { NoticeAddTab } from './views/admin/pages/NoticeAddTab';
+import { NoticeUpdtTab } from './views/admin/pages/NoticeUpdtTab';
+import SettlementTab from './views/admin/pages/SettlementTab';
+import CreatorProjectEditPage from './views/creator/pages/CreatorProjectEditPage';
 import BackingDetailTab from './views/user/tabs/BackingDetailTab';
+import ProjectsBrowsePage, { ProjectsByCategoryPage, ProjectsBySubcategoryPage, ProjectsSearchPage } from './views/project/ProjectsBrowsePage';
+import { ProjectDetailsPage } from './views/project/ProjectDetailsPage';
+import CreatorRewardAddPage from './views/creator/pages/CreatorRewardAddPage';
+import CreatorPage from './views/creator/pages/CreatorPage';
 
-const OverviewTab = lazy(() => import('./views/admin/tabs/OverviewTab').then((module) => ({ default: module.OverviewTab })));
+// import { setDevCreatorIdHeader } from '@/api/apis';
+// setDevCreatorIdHeader(11);
+
+const OverviewTab = lazy(() => import('./views/admin/pages/OverviewTab').then((module) => ({ default: module.OverviewTab })));
 const CreatorDashboard = lazy(() => import('./views/creator/pages/CreatorDashboard').then((module) => ({ default: module.default })));
 
 export default function App() {
@@ -94,6 +98,7 @@ export default function App() {
         {/* <Layout /> */}
         <Routes>
           <Route element={<Layout />}>
+            <Route path="/c" element={<CreatorPage />} />
             <Route path="/" element={<MainPage />} />
 
             <Route path="/auth">
@@ -102,11 +107,11 @@ export default function App() {
             </Route>
 
             <Route path="/project">
-              <Route index element={<ProjectsAllPage />} />
-              <Route path="search" element={<SearchProjectPage />} />
-              <Route path="category/:ctgrId" element={<ProjectByCategoryPage />} />
-              <Route path="category/:ctgrId/subcategory/:subctgrId" element={<ProjectBySubcategoryPage />} />
-              <Route path=":projectId" element={<ProjectDetailPage />} />
+              <Route index element={<ProjectsBrowsePage />} />
+              <Route path="search" element={<ProjectsSearchPage />} />
+              <Route path="category/:ctgrId" element={<ProjectsByCategoryPage />} />
+              <Route path="category/:ctgrId/subcategory/:subctgrId" element={<ProjectsBySubcategoryPage />} />
+              <Route path=":projectId" element={<ProjectDetailsPage />} />
               <Route path=":projectId/backing" element={<BackingPage />} />
             </Route>
 
@@ -115,7 +120,7 @@ export default function App() {
               <Route path="support" element={<BackingTab />} />
               <Route path="support/:backingId" element={<BackingDetailTab />} />
               {/*<Route index element={<BackingTab />} />
-              <Route path="support" element={<BackingTab />} />*/}
+                                <Route path="support" element={<BackingTab />} />*/}
               <Route path="wishlist" element={<LikedProjectTab />} />
               <Route path="settings" element={<AccountSettingTab />} />
               <Route path="notifications" element={<NotificationTab />} />
@@ -129,17 +134,16 @@ export default function App() {
               <Route index element={<CreatorDashboard />} />
               <Route path="dashboard" element={<CreatorDashboard />} />
               <Route path="settings" element={<CreatorInfoUpdate />} />
-              <Route path="project/new" element={<EditProject />} />
-              <Route path="project/:projectId" element={<EditProject />} />
+              <Route path="project/new" element={<CreatorProjectEditPage />} />
+              <Route path="project/:projectId" element={<CreatorProjectEditPage />} />
               <Route path="projects">
-                <Route index element={<CreatorProjects />} />
-                <Route path=":projectId" element={<CreatorProjectDetail />} />
-                <Route path=":projectId/reward" element={<CreatorAddReward />} />
+                <Route index element={<CreatorProjectListPage />} />
+                <Route path=":projectId" element={<CreatorProjectDetailsPage />} />
+                <Route path=":projectId/reward" element={<CreatorRewardAddPage />} />
               </Route>
               <Route path="backings" element={<CreatorBacking />} />
               <Route path="shipping" element={<CreatorShippingList />} />
               <Route path="shipping/:projectId" element={<CreatorShippingDetail />} />
-              <Route path="settlement" element={<CreatorSettlementPage />} />
               <Route path="qna" element={<CreatorQnATab />} />
               <Route path="settlement" element={<CreatorSettlementPage />} />
             </Route>
@@ -147,10 +151,11 @@ export default function App() {
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<OverviewTab />} />
               <Route path="overview" element={<OverviewTab />} />
-              <Route path="approvals" element={<ApprovalsTab />} />
-              <Route path="verify/:projectId" element={<ApprovalDetail />} />
-              <Route path="projects" element={<ProjectsTab />} />
-              <Route path="project/:projectId" element={<AdminProjectEdit />} />
+              <Route path="approvals" element={<VerificationQueue />} />
+              <Route path="verify/:projectId" element={<AdminProjectDetails />} />
+              <Route path="projects" element={<AdminProjectListPage />} />
+              <Route path="projects/:projectId" element={<AdminProjectDetails />} />
+              <Route path="project/:projectId" element={<AdminProjectEditPage />} />
               <Route path="reports" element={<ReportsAdminTab />} />
               <Route path="users" element={<UsersTab />} />
               <Route path="analytics" element={<AnalyticsTab />} />

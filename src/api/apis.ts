@@ -1,4 +1,4 @@
-import type { SearchProjectDto } from '@/types/admin';
+import type { SearchAdminProjectDto } from '@/types/admin';
 import type { SearchCreatorProjectDto } from '@/types/creator';
 import type { SearchProjectParams } from '@/types/projects';
 import type { SearchNoticeParams } from '@/types/notice';
@@ -119,7 +119,15 @@ export const api = {
 const toQueryString = (params: Record<string, unknown>) => {
   const query = new URLSearchParams();
   Object.entries(params).forEach(([k, v]) => {
-    if (v !== undefined && v !== null && v !== '') query.append(k, String(v));
+    if (v === undefined || v === null || v === '' || v === 'undefined' || v === 'null') return;
+
+    if (Array.isArray(v)) {
+      v.forEach((item) => {
+        if (item !== undefined && item !== null && item !== '' && item !== 'undefined' && item !== 'null') query.append(k, String(item));
+      });
+    } else {
+      query.append(k, String(v));
+    }
   });
   return query.toString();
 };
@@ -155,7 +163,7 @@ export const endpoints = {
   // ==================== Creator API ====================
   getCreatorProjectList: (p: SearchCreatorProjectDto) => `creator/projects?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
   registerCreator: 'creator/register',
-  getCreatorInfo:  'creator/info',
+  getCreatorInfo: 'creator/info',
   updateCreatorInfo: (creatorId: number) => `creator/update/${creatorId}`,
   getCreatorProjectDetail: (projectId: number) => `creator/projects/${projectId}`,
   getCreatorProjectSummary: (projectId: number) => `creator/projects/${projectId}/summary`,
@@ -172,8 +180,12 @@ export const endpoints = {
   creatorBackingList: 'creator/backingList',
   creatorShippingList: 'creator/shippingList',
   creatorShippingBackerList: (projectId: number) => `creator/shippingBackerList/${projectId}`,
+  updateCreatorShippingStatus: (projectId: number) => `creator/shippingBackerList/${projectId}`,
   postCreatorNews: (projectId: number) => `creator/projects/${projectId}/news`,
   getFollowerCnt: (creatorId: number) => `creator/followerCnt/${creatorId}`,
+
+  getCreatorSummary: (creatorId: number) => `creator/summary/${creatorId}`,
+  getCreatorProjects: (creatorId: number, sort: string, page: number, size: number) => `creator/projectsList/${creatorId}?${toQueryString({ sort, page, size })}`,
 
   // ==================== Project API ====================
   getFeatured: 'project/featured',
@@ -188,6 +200,7 @@ export const endpoints = {
   getQnaListOfProject: (projectId: number) => `project/${projectId}/qna`,
   addQuestion: (projectId: number, userId: number) => `project/${projectId}/qna/${userId}/add`,
   getLikeCnt: (projectId: number) => `project/${projectId}/likeCnt`,
+  getCounts: (projectId: number) => `project/${projectId}/counts`,
 
   // ==================== QnaReply API ====================
   getQnaReplyList: (qnaId: number) => `qna/reply/${qnaId}`,
@@ -209,16 +222,17 @@ export const endpoints = {
   //여기까지
   backingPrepare: (userId: number, projectId: number) => `backing/${userId}/create/${projectId}`,
   addBacking: (userId: number) => `backing/create/${userId}`,
+  cancelBacking: (userId: number, backingId: number) => `backing/${userId}/cancel/${backingId}`,
 
   // ==================== Admin API ====================
   getAdminAnalytics: (period: string, metric: string) => `admin/analytics?period=${period}&metric=${metric}`,
   getCategorySuccess: (ctgrId: number) => `admin/category-success?ctgrId=${ctgrId}`,
   getRewardSalesTop: (period: string, metric: string) => `admin/reward-sales-top?period=${period}&metric=${metric}`,
-  getProjectVerifyList: (p: SearchProjectDto) => `admin/verify?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
+  getProjectVerifyList: (p: SearchAdminProjectDto) => `admin/verify?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, projectStatuses: p.projectStatus && p.projectStatus.length ? p.projectStatus : undefined, rangeType: p.rangeType || undefined })}`,
   getProjectVerifyDetail: (projectId: number) => `admin/verify/${projectId}`,
   approveProject: (projectId: number) => `admin/verify/${projectId}/approve`,
   rejectProject: (projectId: number) => `admin/verify/${projectId}/reject`,
-  getAdminProjectList: (p: SearchProjectDto) => `admin/project?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
+  getAdminProjectList: (p: SearchAdminProjectDto) => `admin/project?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, projectStatuses: p.projectStatus && p.projectStatus.length ? p.projectStatus : undefined, rangeType: p.rangeType || undefined })}`,
   adminUpdateProject: (projectId: number) => `admin/project/${projectId}`,
   cancelProject: (projectId: number) => `admin/project/${projectId}/cancel`,
   getUsers: (p: SearchUserParams) => `admin/user/list?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,

@@ -13,9 +13,9 @@ import type { RewardDraft, RewardForm } from "@/types/reward";
 import { formatDate, formatPrice } from "@/utils/utils";
 import { Plus, Truck, X } from "lucide-react";
 import { useState } from "react";
-import { BusinessDocUploader, ThumbnailUploader } from "./FileUploader";
+import { BusinessDocUploader, ThumbnailUploader } from "./CreatorUploaders";
 import ProjectDetailEditor from "./ProjectDetailEditor";
-import type { ProjectFieldErrors } from "../pages/EditProject";
+import type { ProjectFieldErrors } from "../pages/CreatorProjectEditPage";
 import type { RewardFieldErrors } from "@/types/reward-validator";
 
 /* -------------------------------- Type -------------------------------- */
@@ -69,7 +69,7 @@ const parseLocalDate = (s: string) => {
 
 /* -------------------------------- Page -------------------------------- */
 
-export function EditProjectSteps(props: StepsProps) {
+export function CreatorProjectEditSteps(props: StepsProps) {
     const {
         step, project, setProject, categories, subcategories, rewardList, newReward,
         setNewReward, addReward, removeReward, agree = false, setAgree, agreeError,
@@ -250,22 +250,6 @@ export function EditProjectSteps(props: StepsProps) {
 
         return (
             <div className="space-y-6">
-                <div>
-                    <Label htmlFor="goalAmount">목표 금액 *</Label>
-                    <Input
-                        id="goalAmount"
-                        placeholder="목표 금액을 입력하세요"
-                        value={project.goalAmount}
-                        onChange={(e) => {
-                            setProject(prev => ({ ...prev, goalAmount: Number(e.target.value.replace(/[^0-9]/g, "")) }));
-                            clearProjectError?.("goalAmount");
-                        }}
-                    />
-                    <p className="mt-2 text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded-md inline-block">
-                        {project.goalAmount ? `${formatPrice(project.goalAmount)}원` : ""}
-                    </p>
-                    {projectErrors.goalAmount && <p className="mt-1 text-sm text-red-600">{projectErrors.goalAmount}</p>}
-                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <Label htmlFor="startDate">펀딩 시작일 *</Label>
@@ -314,10 +298,27 @@ export function EditProjectSteps(props: StepsProps) {
                             펀딩 기간은 최소 {MIN_DAYS}일, 최대 {MAX_DAYS}일까지 가능합니다.
                             {duration !== null && <span className="ml-2 font-medium">(현재: {duration}일)</span>}
                         </p>
-                    )}  
+                    )}
+                </div>
+                <div>
+                    <Label htmlFor="goalAmount">목표 금액 *</Label>
+                    <Input
+                        id="goalAmount"
+                        placeholder="목표 금액을 입력하세요"
+                        value={project.goalAmount}
+                        onChange={(e) => {
+                            setProject(prev => ({ ...prev, goalAmount: Number(e.target.value.replace(/[^0-9]/g, "")) }));
+                            clearProjectError?.("goalAmount");
+                        }}
+                    />
+                    <p className="mt-2 text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded-md inline-block">
+                        {project.goalAmount ? `${formatPrice(project.goalAmount)}원` : ""}
+                    </p>
+                    {projectErrors.goalAmount && <p className="mt-1 text-sm text-red-600">{projectErrors.goalAmount}</p>}
                 </div>
                 <FeesCard goalAmount={project.goalAmount} />
             </div>
+
         );
     }
 

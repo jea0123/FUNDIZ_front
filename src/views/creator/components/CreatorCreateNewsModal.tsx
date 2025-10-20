@@ -14,7 +14,7 @@ type Props = {
     onPosted?: () => void;
 };
 
-export default function NewsModal({ open, projectId, projectTitle, onClose, onPosted }: Props) {
+export default function CreatorCreateNewsModal({ open, projectId, projectTitle, onClose, onPosted }: Props) {
     const [content, setContent] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);

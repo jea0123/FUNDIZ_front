@@ -38,4 +38,14 @@ export interface creatorShippingBackerList {
   //프로젝트
   projectId: number;
   title: string;
+
+  backingId: number;
+}
+
+export interface creatorShippingStataus {
+  backingId: number;
+  shippingStatus: string;
+  trackingNum: string;
+  shippedAt: Date;
+  deliveredAt: Date;
 }
