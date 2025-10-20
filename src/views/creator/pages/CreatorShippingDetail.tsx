@@ -4,6 +4,8 @@ import { getData, postData, endpoints } from '@/api/apis';
 import { useCreatorId } from '../../../types/useCreatorId';
 import type { creatorShippingBackerList, creatorShippingStatus } from '@/types/shipping';
 import FundingLoader from '@/components/FundingLoader';
+import { setDevCreatorIdHeader } from '@/api/apis';
+setDevCreatorIdHeader(11);
 
 export default function CreatorShippingDetail() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -12,12 +14,13 @@ export default function CreatorShippingDetail() {
 
   const fetched = useRef(false);
   const [shippingList, setShippingList] = useState<creatorShippingBackerList[]>([]);
-  const [selectedItem, setSelectedItem] = useState<creatorShippingBackerList | null>(null);
+  const [hoveredBackingId, setHoveredBackingId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<'recent' | 'oldest' | 'status'>('recent');
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pendingStatus, setPendingStatus] = useState<Record<number, string>>({});
   const itemsPerPage = 5;
 
   // 데이터 로드
@@ -44,14 +47,14 @@ export default function CreatorShippingDetail() {
     })();
   }, [idLoading, projectId]);
 
-  // 상태 전환 허용 규칙
+  // 상태 전환 허용 규칙 (취소 확장)
   const allowedTransitions: Record<string, string[]> = {
-    PENDING: ['READY'], // 후원 완료 → 준비중
-    READY: ['SHIPPED'], // 준비중 → 배송시작
-    SHIPPED: ['DELIVERED', 'FAILED'], // 배송중 → 완료/실패
-    DELIVERED: ['CANCELED'], // 완료 → 취소
+    PENDING: ['READY', 'CANCELED'],
+    READY: ['SHIPPED', 'CANCELED'],
+    SHIPPED: ['DELIVERED', 'FAILED', 'CANCELED'],
+    DELIVERED: ['CANCELED'],
     CANCELED: [],
-    FAILED: [],
+    FAILED: ['CANCELED'],
   };
 
   const statusLabel: Record<string, string> = {
@@ -63,46 +66,54 @@ export default function CreatorShippingDetail() {
     FAILED: '배송 실패',
   };
 
-  // 배송상태 변경 함수
-  const changeStatus = async (idx: number, newStatus: string) => {
-    const item = shippingList[idx];
-    const current = item.shippingStatus;
+  // backingId 그룹 전체 상태 변경
+  const changeStatus = async (backingId: number, newStatus: string) => {
+    const groupItems = shippingList.filter((i) => i.backingId === backingId);
+    const current = groupItems[0]?.shippingStatus;
 
-    // 허용되지 않은 상태 전환 방지
     if (!allowedTransitions[current]?.includes(newStatus)) {
       alert(`현재 상태(${statusLabel[current]})에서는 '${statusLabel[newStatus]}'(으)로 변경할 수 없습니다.\n\n가능한 상태: ${allowedTransitions[current].length > 0 ? allowedTransitions[current].map((s) => statusLabel[s]).join(', ') : '없음'}`);
       return;
     }
 
-    // 운송장번호 필수 검사
-    if ((newStatus === 'SHIPPED' || newStatus === 'DELIVERED') && (!item.trackingNum || !/^[0-9]{10,14}$/.test(item.trackingNum))) {
-      alert(`${statusLabel[newStatus]} 상태로 변경하려면 10~14자리 운송장 번호가 필요합니다.`);
+    const invalidTracking = groupItems.some((i) => (newStatus === 'SHIPPED' || newStatus === 'DELIVERED') && (!i.trackingNum || !/^[0-9]{10,14}$/.test(i.trackingNum)));
+    if (invalidTracking) {
+      alert(`${statusLabel[newStatus]} 상태로 변경하려면 모든 항목에 운송장번호가 필요합니다.`);
       return;
     }
 
-    const updateDto: creatorShippingStatus = {
-      backingId: item.backingId,
-      shippingStatus: newStatus,
-      trackingNum: item.trackingNum || '',
-      shippedAt: newStatus === 'SHIPPED' ? new Date() : null,
-      deliveredAt: newStatus === 'DELIVERED' ? new Date() : null,
-    };
-
     try {
-      const res = await postData(endpoints.creatorShippingBackerList(Number(projectId)), updateDto);
-      if (res.status === 200) {
-        alert('배송 상태가 변경되었습니다.');
-        setShippingList((prev) => prev.map((it, i) => (i === idx ? { ...it, shippingStatus: newStatus } : it)));
-        if (selectedItem && item.backingId === selectedItem.backingId) {
-          setSelectedItem((prev) => (prev ? { ...prev, shippingStatus: newStatus } : prev));
-        }
-      } else {
-        alert(`배송 상태 변경 실패 (code: ${res.status})`);
+      let successCount = 0;
+
+      for (const item of groupItems) {
+        const updateDto: creatorShippingStatus = {
+          backingId: item.backingId,
+          shippingStatus: newStatus,
+          trackingNum: item.trackingNum || '',
+          shippedAt: newStatus === 'SHIPPED' ? new Date() : null,
+          deliveredAt: newStatus === 'DELIVERED' ? new Date() : null,
+        };
+        const res = await postData(endpoints.creatorShippingBackerList(Number(projectId)), updateDto);
+        if (res.status === 200) successCount++;
+      }
+
+      if (successCount > 0) {
+        alert(`${groupItems.length}개의 항목이 '${statusLabel[newStatus]}'로 변경되었습니다.`);
+
+        setShippingList((prev) => prev.map((it) => (it.backingId === backingId ? { ...it, shippingStatus: newStatus } : it)));
       }
     } catch (err) {
       console.error('배송 상태 변경 오류:', err);
       alert('배송 상태 변경 중 오류가 발생했습니다.');
     }
+  };
+
+  // select 변경 시 같은 backingId 그룹 전체 드롭다운 동기화
+  const handleSelectStatus = (backingId: number, newStatus: string) => {
+    setPendingStatus((prev) => ({
+      ...prev,
+      [backingId]: newStatus,
+    }));
   };
 
   // 검색 + 정렬
@@ -154,7 +165,6 @@ export default function CreatorShippingDetail() {
         </button>
       </div>
 
-      {/* 검색/정렬 */}
       <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
         <input
           type="text"
@@ -173,7 +183,6 @@ export default function CreatorShippingDetail() {
         </select>
       </div>
 
-      {/* 테이블 */}
       <table className="w-full border text-sm">
         <thead className="bg-gray-100">
           <tr>
@@ -188,11 +197,14 @@ export default function CreatorShippingDetail() {
           </tr>
         </thead>
         <tbody>
-          {currentList.map((item, idx) => {
+          {currentList.map((item) => {
             const current = item.shippingStatus;
-            const trackingDisabled = ['SHIPPED', 'DELIVERED', 'CANCELED', 'FAILED'].includes(current); // 🚫 운송장 수정 제한
+            const isHovered = hoveredBackingId === item.backingId;
+            const trackingDisabled = ['CANCELED'].includes(current);
+            const selectedStatus = pendingStatus[item.backingId] ?? item.shippingStatus;
+
             return (
-              <tr key={idx} onClick={() => setSelectedItem(item)} className={`border-b hover:bg-gray-50 cursor-pointer ${selectedItem?.backingId === item.backingId ? 'bg-yellow-50' : ''}`}>
+              <tr key={item.backingId + '-' + item.rewardName} onMouseEnter={() => setHoveredBackingId(item.backingId)} onMouseLeave={() => setHoveredBackingId(null)} className={`border-b cursor-pointer transition-colors duration-150 ${isHovered ? 'bg-yellow-50' : 'hover:bg-gray-50'}`}>
                 <td className="p-2">{item.nickname}</td>
                 <td className="p-2">{item.rewardName}</td>
                 <td className="p-2 text-center">{item.quantity}</td>
@@ -200,12 +212,12 @@ export default function CreatorShippingDetail() {
                   {item.roadAddr} {item.detailAddr}
                 </td>
                 <td className="p-2 text-center">
-                  <input type="text" value={item.trackingNum || ''} onChange={(e) => setShippingList((prev) => prev.map((it, i) => (i === idx ? { ...it, trackingNum: e.target.value } : it)))} placeholder="운송장번호" className="border rounded px-2 py-1 w-32 text-center" onClick={(e) => e.stopPropagation()} disabled={trackingDisabled} />
+                  <input type="text" value={item.trackingNum || ''} onChange={(e) => setShippingList((prev) => prev.map((it) => (it.backingId === item.backingId && it.rewardName === item.rewardName ? { ...it, trackingNum: e.target.value } : it)))} placeholder="운송장번호" className="border rounded px-2 py-1 w-32 text-center" onClick={(e) => e.stopPropagation()} disabled={trackingDisabled} />
                 </td>
                 <td className="p-2 text-center">{item.shippedAt ? new Date(item.shippedAt).toLocaleDateString() : '—'}</td>
                 <td className="p-2 text-center">{renderStatusBadge(item.shippingStatus)}</td>
                 <td className="p-2 text-center flex items-center justify-center gap-2">
-                  <select value={item.shippingStatus} onChange={(e) => changeStatus(idx, e.target.value)} className="border rounded px-2 py-1" onClick={(e) => e.stopPropagation()} disabled={current === 'CANCELED' || current === 'FAILED'}>
+                  <select value={selectedStatus} onChange={(e) => handleSelectStatus(item.backingId, e.target.value)} className="border rounded px-2 py-1" onClick={(e) => e.stopPropagation()} disabled={current === 'CANCELED'}>
                     {Object.keys(statusLabel).map((status) => {
                       const disabled = !allowedTransitions[current]?.includes(status) && status !== current;
                       return (
@@ -218,10 +230,11 @@ export default function CreatorShippingDetail() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      changeStatus(idx, item.shippingStatus);
+                      const newStatus = pendingStatus[item.backingId] ?? item.shippingStatus;
+                      changeStatus(item.backingId, newStatus);
                     }}
-                    className={`border rounded px-2 py-1 text-xs ${item.shippingStatus === 'DELIVERED' ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-blue-100 hover:bg-blue-200'}`}
-                    disabled={item.shippingStatus === 'DELIVERED'}
+                    className={`border rounded px-2 py-1 text-xs ${item.shippingStatus === 'CANCELED' ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-blue-100 hover:bg-blue-200'}`}
+                    disabled={item.shippingStatus === 'CANCELED'}
                   >
                     변경
                   </button>
@@ -231,80 +244,6 @@ export default function CreatorShippingDetail() {
           })}
         </tbody>
       </table>
-
-      {/* 상세보기 */}
-      {selectedItem && (
-        <div className="mt-6 p-6 border rounded-xl bg-gray-50 shadow-md space-y-6">
-          <h3 className="text-lg font-semibold mb-4">{selectedItem.recipient} 님 배송 상세정보</h3>
-
-          <section>
-            <h4 className="font-semibold text-gray-800 mb-2">👤 유저 정보</h4>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <p>
-                <strong>이메일:</strong> {selectedItem.email}
-              </p>
-              <p>
-                <strong>닉네임:</strong> {selectedItem.nickname}
-              </p>
-            </div>
-          </section>
-
-          <section>
-            <h4 className="font-semibold text-gray-800 mb-2">🎁 리워드 정보</h4>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <p>
-                <strong>리워드명:</strong> {selectedItem.rewardName}
-              </p>
-              <p>
-                <strong>수량:</strong> {selectedItem.quantity}
-              </p>
-            </div>
-          </section>
-
-          <section>
-            <h4 className="font-semibold text-gray-800 mb-2">🏠 배송지 정보</h4>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <p>
-                <strong>수령인:</strong> {selectedItem.recipient}
-              </p>
-              <p>
-                <strong>전화번호:</strong> {selectedItem.recipientPhone}
-              </p>
-              <p>
-                <strong>우편번호:</strong> {selectedItem.postalCode}
-              </p>
-              <p className="col-span-2">
-                <strong>주소:</strong> {selectedItem.roadAddr} {selectedItem.detailAddr}
-              </p>
-            </div>
-          </section>
-
-          <section>
-            <h4 className="font-semibold text-gray-800 mb-2">🚚 배송 정보</h4>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <p>
-                <strong>운송장 번호:</strong> {selectedItem.trackingNum || '—'}
-              </p>
-              <p>
-                <strong>배송 상태:</strong> {renderStatusBadge(selectedItem.shippingStatus)}
-              </p>
-              <p>
-                <strong>발송일:</strong> {selectedItem.shippedAt ? new Date(selectedItem.shippedAt).toLocaleDateString() : '—'}
-              </p>
-              <p>
-                <strong>배송 완료일:</strong> {selectedItem.deliveredAt ? new Date(selectedItem.deliveredAt).toLocaleDateString() : '—'}
-              </p>
-            </div>
-          </section>
-
-          <section>
-            <h4 className="font-semibold text-gray-800 mb-2">📦 프로젝트 정보</h4>
-            <p>
-              <strong>프로젝트명:</strong> {selectedItem.title}
-            </p>
-          </section>
-        </div>
-      )}
     </div>
   );
 }

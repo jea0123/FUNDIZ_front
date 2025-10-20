@@ -6,6 +6,8 @@ import type { CreatorDashboard } from '@/types/creator';
 import type { DailyCount, MonthCount } from '@/types/backing';
 import { useCreatorId } from '../../../types/useCreatorId';
 import { endpoints, getData } from '@/api/apis';
+import { setDevCreatorIdHeader } from '@/api/apis';
+setDevCreatorIdHeader(11);
 
 const rankColors: Record<number, string> = {
   1: '#facc15', // 🥇 노랑
