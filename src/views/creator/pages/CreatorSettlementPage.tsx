@@ -32,7 +32,7 @@ export default function CreatorSettlementPage() {
   }, [cookie.accessToken]);
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="space-y-8">
       {/* 요약 카드 */}
       <div className="grid grid-cols-3 gap-4">
         <Card>

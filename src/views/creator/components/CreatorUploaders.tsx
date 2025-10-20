@@ -5,8 +5,8 @@ import { FileText, RefreshCw, Trash2, Upload } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const MAX_SIZE = 4 * 1024 * 1024 * 1024; // 4GB
-const IMAGE_ACCEPT = ["image/*"];
-const DOC_ACCEPT = ["application/pdf", "image/*"];
+const IMAGE_ACCEPT = ["image/jpeg", "image/png"];
+const DOC_ACCEPT = ["application/pdf", "image/jpeg", "image/png"];
 
 interface Props {
     file: File | null; // 부모에서 상태 관리
@@ -21,6 +21,20 @@ function useObjectUrl(file: File | null | undefined) {
     const url = useMemo(() => (file ? URL.createObjectURL(file) : ""), [file]);
     useEffect(() => () => { if (url) URL.revokeObjectURL(url); }, [url]);
     return url;
+}
+
+async function sniffMime(file: File): Promise<"jpeg" | "png" | "webp" | "pdf" | "unknown"> {
+    const buf = await file.slice(0, 16).arrayBuffer();
+    const bytes = new Uint8Array(buf);
+
+    // JPEG: FF D8 FF
+    if (bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF) return "jpeg";
+    // PNG: 89 50 4E 47 0D 0A 1A 0A
+    if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47) return "png";
+    // PDF: 25 50 44 46 2D ("%PDF-")
+    if (bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46 && bytes[4] === 0x2D) return "pdf";
+
+    return "unknown";
 }
 
 export function ThumbnailUploader({
@@ -46,16 +60,24 @@ export function ThumbnailUploader({
         onCleared?.();
     }, [onCleared, onSelect]);
 
-    const validate = async (f: File) => {
-        if (!f.type.startsWith("image/")) throw new Error("이미지 파일만 업로드할 수 있습니다.");
-        if (f.size > MAX_SIZE) throw new Error("파일 용량은 최대 4GB까지 허용됩니다.");
+    const validateThumbnail = async (f: File) => {
+        if (!IMAGE_ACCEPT.includes(f.type)) {
+            throw new Error("JPEG 또는 PNG 이미지만 업로드할 수 있습니다.");
+        }
+        const kind = await sniffMime(f);
+        if (kind !== "jpeg" && kind !== "png") {
+            throw new Error("파일 형식이 손상되었거나 지원되지 않습니다.");
+        }
+        if (f.size <= 0 || f.size > MAX_SIZE) {
+            throw new Error("파일 용량은 최대 4GB까지 허용됩니다.");
+        }
     };
 
     const handleFiles = async (files: FileList | null) => {
         if (!files?.length) return;
         const f = files[0];
         try {
-            await validate(f);
+            await validateThumbnail(f);
             setError(null);
             onSelect(f);
             setDragOver(false);
@@ -127,6 +149,7 @@ export function ThumbnailUploader({
                         <Button type="button" variant="outline" size="sm" onClick={() => openPicker()} disabled={disabled}>
                             파일 선택
                         </Button>
+                        <p className="mt-2 text-xs text-gray-400">JPEG / PNG</p>
                     </div>
                 )}
 
@@ -169,17 +192,27 @@ export function BusinessDocUploader({
         onCleared?.();
     }, [onCleared, onSelect]);
 
-    const validate = async (f: File) => {
-        const ok = f.type === "application/pdf" || f.type.startsWith("image/");
-        if (!ok) throw new Error("PDF 또는 이미지 파일만 업로드할 수 있습니다.");
-        if (f.size > MAX_SIZE) throw new Error("파일 용량은 최대 4GB까지 허용됩니다.");
+    const validateBizDoc = async (f: File) => {
+        const isPdf = f.type === "application/pdf";
+        const isImg = IMAGE_ACCEPT.includes(f.type);
+        if (!isPdf && !isImg) {
+            throw new Error("PDF 또는 JPEG/PNG 형식만 업로드할 수 있습니다.");
+        }
+
+        const kind = await sniffMime(f);
+        if (isPdf && kind !== "pdf") {
+            throw new Error("파일 형식이 손상되었거나 지원되지 않습니다.");
+        }
+        if (isImg && kind !== "jpeg" && kind !== "png") {
+            throw new Error("파일 형식이 손상되었거나 지원되지 않습니다.");
+        }
     };
 
     const handleFiles = async (files: FileList | null) => {
         if (!files?.length) return;
         const f = files[0];
         try {
-            await validate(f);
+            await validateBizDoc(f);
             setError(null);
             setImgFailed(false);
             onSelect(f);

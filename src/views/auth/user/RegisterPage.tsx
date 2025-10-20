@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
@@ -22,8 +22,7 @@ const RegisterSchema = z
     password: z.string({ message: '비밀번호를 입력해주세요.' }).min(1, '비밀번호를 입력해주세요.').min(8, '비밀번호는 8자 이상이어야 해요.').max(20, '비밀번호는 20자 이하여야 해요.'),
     confirmPassword: z.string({ message: '비밀번호 확인을 입력해주세요.' }).min(1, '비밀번호 확인을 입력해주세요.'),
     terms: z.boolean().refine((v) => v === true, { message: '이용약관에 동의가 필요해요.' }),
-    privacy: z.boolean().refine((v) => v === true, { message: '개인정보처리방침 동의가 필요해요.' }),
-    marketing: z.boolean(),
+    privacy: z.boolean().refine((v) => v === true, { message: '개인정보처리방침 동의가 필요해요.' })
   })
   .refine((v) => v.password === v.confirmPassword, {
     path: ['confirmPassword'],
@@ -43,6 +42,7 @@ export function RegisterPage() {
     clearErrors,
     watch,
     getValues,
+    control,
   } = useForm<RegisterForm>({
     resolver: zodResolver(RegisterSchema),
     mode: 'onChange',
@@ -53,7 +53,6 @@ export function RegisterPage() {
       confirmPassword: '',
       terms: false,
       privacy: false,
-      marketing: false,
     },
   });
 
@@ -154,6 +153,8 @@ export function RegisterPage() {
     }
   }, [watch('email'), emailChecked, checkedEmailValue]);
 
+  console.log('valid', isValid);
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8" style={{ marginBottom: '200px' }}>
@@ -229,35 +230,53 @@ export function RegisterPage() {
 
               {/* Agreements */}
               <div className="space-y-3 pt-4">
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="terms" {...register('terms')} />
-                  <label htmlFor="terms" className="text-sm">
-                    <span className="text-red-500">*</span> 이용약관에 동의합니다{' '}
-                    <button type="button" className="text-blue-600 hover:underline cursor-pointer">
-                      [보기]
-                    </button>
-                  </label>
-                </div>
+                {/* terms */}
+                <Controller
+                  name="terms"
+                  control={control}
+                  render={({ field }) => (
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="terms"
+                        checked={!!field.value}
+                        onCheckedChange={(v) => field.onChange(Boolean(v))}
+                        onBlur={field.onBlur}
+                      />
+                      <label htmlFor="terms" className="text-sm">
+                        <span className="text-red-500">*</span> 이용약관에 동의합니다{' '}
+                        <button type="button" className="text-blue-600 hover:underline cursor-pointer">[보기]</button>
+                      </label>
+                    </div>
+                  )}
+                />
                 {errors.terms && <p className="mt-1 text-sm text-red-500">{errors.terms.message}</p>}
 
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="privacy" {...register('privacy')} />
-                  <label htmlFor="privacy" className="text-sm">
-                    <span className="text-red-500">*</span> 개인정보처리방침에 동의합니다{' '}
-                    <button type="button" className="text-blue-600 hover:underline cursor-pointer">
-                      [보기]
-                    </button>
-                  </label>
-                </div>
+                {/* privacy */}
+                <Controller
+                  name="privacy"
+                  control={control}
+                  render={({ field }) => (
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="privacy"
+                        checked={!!field.value}
+                        onCheckedChange={(v) => field.onChange(Boolean(v))}
+                        onBlur={field.onBlur}
+                      />
+                      <label htmlFor="privacy" className="text-sm">
+                        <span className="text-red-500">*</span> 개인정보처리방침에 동의합니다{' '}
+                        <button type="button" className="text-blue-600 hover:underline cursor-pointer">[보기]</button>
+                      </label>
+                    </div>
+                  )}
+                />
                 {errors.privacy && <p className="mt-1 text-sm text-red-500">{errors.privacy.message}</p>}
 
+                {/* optional marketing 예시: 저장 필요하면 필드 추가 */}
                 <div className="flex items-center space-x-2">
-                  <Checkbox id="marketing" {...register('marketing')} />
+                  <Checkbox id="marketing" />
                   <label htmlFor="marketing" className="text-sm">
-                    마케팅 정보 수신에 동의합니다 (선택){' '}
-                    <button type="button" className="text-blue-600 hover:underline cursor-pointer">
-                      [보기]
-                    </button>
+                    마케팅 정보 수신에 동의합니다 (선택) <button type="button" className="text-blue-600 hover:underline cursor-pointer">[보기]</button>
                   </label>
                 </div>
               </div>

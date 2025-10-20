@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Heart, ChevronRight, ChevronLeft } from "lucide-react";
+import { ChevronRight, ChevronLeft } from "lucide-react";
 import { endpoints, getData } from "@/api/apis";
 import type { Featured, RecentTop10, RecentView } from "@/types/projects";
 import { toWonPlus, getDaysLeft } from "@/utils/utils";
@@ -134,22 +134,19 @@ function PopularSidebar() {
 
                 {recentProjects.length > 0 &&
                     recentProjects.map((it, idx) => (
-                        <div
-                            key={it.projectId}
-                            className="flex gap-4 cursor-pointer py-2"
-                            onClick={() => onClickCard(it.projectId)}
-                        >
+                        <div key={it.projectId} className="flex gap-4 cursor-pointer py-2" >
                             <div className="relative w-28 h-28 shrink-0 overflow-hidden rounded-md bg-muted group">
                                 <img
                                     src={img}
                                     className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-110"
+                                    onClick={() => onClickCard(it.projectId)}
                                 />
                             </div>
 
                             <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-1 text-[13px] text-muted-foreground">
                                     <span className="font-bold text-red-600">{idx + 1}</span>
-                                    <span className="truncate text-[10px]">{it.creatorName ?? "크리에이터"}</span>
+                                    <span className="truncate text-[10px] z-100 hover:underline" onClick={() => navigate(`/creator/${it.creatorId}`)}>{it.creatorName ?? "크리에이터"}</span>
                                 </div>
 
                                 <p className="line-clamp-2 text-base text-[14px] font-normal leading-relaxed">
@@ -265,16 +262,13 @@ export function ProjectCard({ items }: { items: any; }) {
     <></>;
     {
         return (
-            <div className="overflow-hidden cursor-pointer" onClick={() => onClickCard(items.projectId)}>
-                <div className="relative aspect-[1] w-full overflow-hidden rounded-sm group">
+            <div className="overflow-hidden cursor-pointer">
+                <div className="relative aspect-[1] w-full overflow-hidden rounded-sm group" onClick={() => onClickCard(items.projectId)}>
                     {/* <img src={items.thumbnail} alt={items.title} className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-115" /> */}
                     <img src={img} alt={items.title} className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-115" />
-                    <button aria-label="찜" className="absolute right-2 top-2 bg-transparent p-2">
-                        <Heart className="h-4 w-4 text-white" />
-                    </button>
                 </div>
                 <div className="space-y-1 py-3">
-                    <p className="text-[11px] text-muted-foreground m-0">{items.creatorName}</p>
+                    <p className="text-[11px] text-muted-foreground m-0 z-100 hover:underline" onClick={() => navigate(`/creator/${items.creatorId}`)}>{items.creatorName}</p>
                     <p className="line-clamp-1 text-sm leading-snug text-ellipsis m-0">{items.title}</p>
                     <div className="flex items-center justify-between pt-1 text-xs">
                         <div className="text-[14px] font-medium text-red-600 bg-none">{items.percentNow}% 달성</div>

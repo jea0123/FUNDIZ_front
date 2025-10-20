@@ -33,6 +33,7 @@ export interface RecentTop10 {
     title: string;
     thumbnail: string;
     currAmount: number;
+    creatorId: number;
     creatorName: string;
     endDate: Date;
     percentNow: number;
@@ -76,6 +77,7 @@ export interface ProjectDetail {
 export interface Featured {
     projectId: number;
     title: string;
+    creatorId: number;
     creatorName: string;
     thumbnail: string;
     endDate: Date;

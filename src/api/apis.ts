@@ -7,6 +7,7 @@ import type { SearchQnaParams } from '@/types/qna';
 import ky from 'ky';
 import type { SearchSettlementParams } from '@/types/settlement';
 import type { SearchUserParams } from '@/types/users';
+import type { SearchReviewsParams } from '@/types/community';
 
 //TODO: 모듈 전역 오버라이드 값 (훅에서 주입)
 let _devCreatorIdOverride: string | null = null;
@@ -161,7 +162,7 @@ export const endpoints = {
   checkFollowed: (creatorId: number) => `user/checkFollow/${creatorId}`,
 
   // ==================== Creator API ====================
-  getCreatorProjectList: (p: SearchCreatorProjectDto) => `creator/projects?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
+  getCreatorProjectList: (p: SearchCreatorProjectDto) => `creator/projects?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, projectStatus: p.projectStatus && p.projectStatus.length ? p.projectStatus : undefined, rangeType: p.rangeType || undefined })}`,
   registerCreator: 'creator/register',
   getCreatorInfo: 'creator/info',
   updateCreatorInfo: (creatorId: number) => `creator/update/${creatorId}`,
@@ -184,8 +185,12 @@ export const endpoints = {
   postCreatorNews: (projectId: number) => `creator/projects/${projectId}/news`,
   getFollowerCnt: (creatorId: number) => `creator/followerCnt/${creatorId}`,
 
+  getTotalCounts: (creatorId: number) => `creator/totalCounts/${creatorId}`,
   getCreatorSummary: (creatorId: number) => `creator/summary/${creatorId}`,
   getCreatorProjects: (creatorId: number, sort: string, page: number, size: number) => `creator/projectsList/${creatorId}?${toQueryString({ sort, page, size })}`,
+  getCreatorReviews: (creatorId: number, p: SearchReviewsParams) => `creator/reviews/${creatorId}?${toQueryString({ lastId: p.lastId, lastCreatedAt: p.lastCreatedAt ? p.lastCreatedAt.toISOString() : undefined, projectId: p.projectId, photoOnly: p.photoOnly, size: p.size })}`,
+  getCreatorFollowers: (creatorId: number, page: number, size: number) => `creator/followers/${creatorId}?${toQueryString({ page, size })}`,
+  getCreatorBio: (creatorId: number) => `creator/bio/${creatorId}`,
 
   // ==================== Project API ====================
   getFeatured: 'project/featured',
@@ -228,11 +233,11 @@ export const endpoints = {
   getAdminAnalytics: (period: string, metric: string) => `admin/analytics?period=${period}&metric=${metric}`,
   getCategorySuccess: (ctgrId: number) => `admin/category-success?ctgrId=${ctgrId}`,
   getRewardSalesTop: (period: string, metric: string) => `admin/reward-sales-top?period=${period}&metric=${metric}`,
-  getProjectVerifyList: (p: SearchAdminProjectDto) => `admin/verify?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, projectStatuses: p.projectStatus && p.projectStatus.length ? p.projectStatus : undefined, rangeType: p.rangeType || undefined })}`,
+  getProjectVerifyList: (p: SearchAdminProjectDto) => `admin/verify?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, projectStatus: p.projectStatus && p.projectStatus.length ? p.projectStatus : undefined, rangeType: p.rangeType || undefined })}`,
   getProjectVerifyDetail: (projectId: number) => `admin/verify/${projectId}`,
   approveProject: (projectId: number) => `admin/verify/${projectId}/approve`,
   rejectProject: (projectId: number) => `admin/verify/${projectId}/reject`,
-  getAdminProjectList: (p: SearchAdminProjectDto) => `admin/project?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, projectStatuses: p.projectStatus && p.projectStatus.length ? p.projectStatus : undefined, rangeType: p.rangeType || undefined })}`,
+  getAdminProjectList: (p: SearchAdminProjectDto) => `admin/project?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, projectStatus: p.projectStatus && p.projectStatus.length ? p.projectStatus : undefined, rangeType: p.rangeType || undefined })}`,
   adminUpdateProject: (projectId: number) => `admin/project/${projectId}`,
   cancelProject: (projectId: number) => `admin/project/${projectId}/cancel`,
   getUsers: (p: SearchUserParams) => `admin/user/list?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
@@ -244,6 +249,7 @@ export const endpoints = {
   addNotice: 'admin/notice/add',
   updateNotice: (noticeId: number) => `admin/notice/update/${noticeId}`,
   deleteNotice: (noticeId: number) => `admin/notice/delete/${noticeId}`,
+  updateReportStatus: (reportId: number) => `admin/report/update/${reportId}`,
 
   // ==================== Category API ====================
   getCategories: 'categories',
