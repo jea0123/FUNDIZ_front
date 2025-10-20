@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { type ProjectCard } from "@/mocks/creatorApi";
 import { percent, toWon } from "@/utils/utils";
 import { endpoints, getData } from "@/api/apis";
 import type { PageResult } from "@/types/projects";
+import type { ProjectCard } from "@/types/creator";
 
 type Props = { creatorId: number };
 

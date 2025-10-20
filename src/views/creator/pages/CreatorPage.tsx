@@ -9,7 +9,8 @@ import CreatorFollowers from "../components/CreatorFollowers";
 import { deleteData, endpoints, getData, postData } from "@/api/apis";
 import { useCookies } from "react-cookie";
 import { toastError, toastSuccess } from "@/utils/utils";
-import type { CreatorSummary } from "@/mocks/creatorApi";
+import type { CreatorSummary } from "@/types/creator";
+import CreatorProfile from "../components/CreatorProfile";
 
 export default function CreatorPage() {
     const { creatorId: idParam } = useParams();
@@ -83,13 +84,7 @@ export default function CreatorPage() {
 
     return (
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-            <CreatorHeader
-                data={summary}
-                onFollow={handleFollow}
-                onUnfollow={handleUnfollow}
-                followLoading={followLoading}
-                unfollowLoading={unfollowLoading}
-            />
+            <CreatorHeader data={summary} onFollow={handleFollow} onUnfollow={handleUnfollow} followLoading={followLoading} unfollowLoading={unfollowLoading} />
 
             <Tabs defaultValue="projects" className="w-full">
                 <TabsList className="grid grid-cols-4 w-full">
@@ -112,10 +107,7 @@ export default function CreatorPage() {
                 </TabsContent>
 
                 <TabsContent value="profile" className="pt-6">
-                    <div className="prose prose-sm max-w-none">
-                        <h3>창작자 소개</h3>
-                        <p>브랜드/팀 소개, 운영 정책, AS/배송, FAQ 등 자세한 문구를 작성하세요.</p>
-                    </div>
+                    <CreatorProfile creatorId={creatorId} />
                 </TabsContent>
             </Tabs>
         </div>

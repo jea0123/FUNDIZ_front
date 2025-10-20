@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import type { CreatorSummary } from "@/types/creator";
 import { toastSuccess } from "@/utils/utils";
 import { Share2, Plus, UserMinus, Loader2 } from "lucide-react";
 import { useMemo } from "react";
@@ -12,11 +13,11 @@ type CreatorCore = {
 };
 
 type Props = {
-    data: {
+    data: CreatorSummary & {
         creator: CreatorCore;
         lastLogin?: Date | null;
         isFollowed: boolean;
-        followerCount: number;  // ← 부모가 최신값을 내려줌
+        followerCount: number;
     };
     onFollow: () => void;
     onUnfollow: () => void;
@@ -24,13 +25,7 @@ type Props = {
     unfollowLoading?: boolean;
 };
 
-export default function CreatorHeader({
-    data,
-    onFollow,
-    onUnfollow,
-    followLoading,
-    unfollowLoading
-}: Props) {
+export default function CreatorHeader({ data, onFollow, onUnfollow, followLoading, unfollowLoading }: Props) {
     const initials = useMemo(
         () => (data.creator.creatorName || "").slice(0, 2),
         [data.creator.creatorName]
@@ -46,7 +41,6 @@ export default function CreatorHeader({
     return (
         <Card className="p-6 lg:p-7">
             <div className="grid grid-cols-[104px_1fr_auto] items-start gap-6">
-                {/* 좌측: 브랜드 로고/아바타 */}
                 <div className="flex items-start">
                     <Avatar className="h-[88px] w-[88px] rounded-2xl shadow-sm ring-1 ring-border">
                         <AvatarImage src={data.creator.profileImg || ""} />
@@ -56,7 +50,6 @@ export default function CreatorHeader({
                     </Avatar>
                 </div>
 
-                {/* 중앙: 이름/로그인시간 + 통계 */}
                 <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                         <h1 className="text-2xl font-bold tracking-tight">
@@ -74,28 +67,20 @@ export default function CreatorHeader({
                         </div>
                     )}
 
-                    {/* 통계: 팔로워 / 누적 후원자 / 총 후원 금액 (필요값만 유지) */}
                     <div className="mt-5 grid grid-cols-3 gap-6 max-w-[520px]">
                         <StatBlock label="팔로워" value={String(data.followerCount)} link />
-                        {/* 필요 시 다른 지표는 그대로 */}
-                        {/* <StatBlock label="누적 후원자" value={String(data.stats.totalBackers)} info /> */}
-                        {/* <StatBlock label="총 후원 금액" value={String(data.stats.totalAmount)} info /> */}
+                        <StatBlock label="누적 후원자" value={String(data.stats.totalBackers)} info />
+                        <StatBlock label="총 후원 금액" value={String(data.stats.totalAmount)} info />
                     </div>
                 </div>
 
-                {/* 우측: 공유 / 팔로우·언팔로우 분리 버튼 */}
                 <div className="flex flex-col items-end gap-3">
                     <Button variant="outline" onClick={copyLink} className="h-10 px-4">
                         <Share2 className="h-4 w-4 mr-2" /> 공유
                     </Button>
 
                     {!data.isFollowed ? (
-                        <Button
-                            onClick={onFollow}
-                            disabled={!!followLoading}
-                            className="h-11 px-6"
-                            variant="default"
-                        >
+                        <Button onClick={onFollow} disabled={!!followLoading} className="h-11 px-6" variant="default">
                             {followLoading ? (
                                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                             ) : (
@@ -104,12 +89,7 @@ export default function CreatorHeader({
                             팔로우
                         </Button>
                     ) : (
-                        <Button
-                            onClick={onUnfollow}
-                            disabled={!!unfollowLoading}
-                            className="h-11 px-6 border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
-                            variant="outline"
-                        >
+                        <Button onClick={onUnfollow} disabled={!!unfollowLoading} className="h-11 px-6 border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-950" variant="outline">
                             {unfollowLoading ? (
                                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                             ) : (
@@ -132,17 +112,7 @@ export default function CreatorHeader({
     );
 }
 
-function StatBlock({
-    label,
-    value,
-    link,
-    info
-}: {
-    label: string;
-    value: string;
-    link?: boolean;
-    info?: boolean;
-}) {
+function StatBlock({ label, value, link, info }: { label: string; value: string; link?: boolean; info?: boolean; }) {
     return (
         <div className="select-none">
             <div className="text-sm text-muted-foreground flex items-center gap-1">
