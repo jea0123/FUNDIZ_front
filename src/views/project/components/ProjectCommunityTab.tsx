@@ -26,6 +26,7 @@ export default function ProjectCommunityTab({ projectId, active = false, ensureL
     const communityLoadingLockRef = useRef(false);
     const replyLoadingLockRef = useRef<Record<number, boolean>>({});
     const exceededAlertedRef = useRef(false);
+    const hasLoadedRef = useRef(false);
 
     /* ----------------------------- State ---------------------------- */
     const [community, setCommunity] = useState<CommunityDto[]>([]);
@@ -234,10 +235,12 @@ export default function ProjectCommunityTab({ projectId, active = false, ensureL
     /* ---------------------------- Effects --------------------------- */
     // 최초/프로젝트 변경 시 초기 로드
     useEffect(() => {
+        if (!active || hasLoadedRef.current) return;
         setCommunity([]);
         setCommunityCursor(null);
         communityData(null);
-    }, [projectId, communityData]);
+        hasLoadedRef.current = true;
+    }, [active, projectId, communityData]);
 
     // 커뮤니티 무한스크롤
     useEffect(() => {
@@ -334,7 +337,12 @@ export default function ProjectCommunityTab({ projectId, active = false, ensureL
             </Dialog>
 
             {/* 목록 */}
-            {!Array.isArray(community) || community.length === 0 ? (
+            {(loadingCommunity && (!Array.isArray(community) || community.length === 0)) ? (
+                <div className="mt-4 space-y-2">
+                    <div className="h-20 animate-pulse rounded-xl bg-gray-100" />
+                    <div className="h-20 animate-pulse rounded-xl bg-gray-100" />
+                </div>
+            ) : (!Array.isArray(community) || community.length === 0) ? (
                 <div className="mt-4 rounded-lg border p-6 text-center">
                     <p className="text-sm text-muted-foreground mb-3">게시글이 존재하지 않습니다.</p>
                     <Button size="sm" onClick={openCommunityModal}>
@@ -401,7 +409,7 @@ export default function ProjectCommunityTab({ projectId, active = false, ensureL
                                                                     <div key={rp.replyId} className="flex items-start gap-2">
                                                                         {/* TODO: 이미지 */}
                                                                         <Avatar className="w-7 h-7">
-                                                                            {rp?.profileImg ? <AvatarImage src={rp.profileImg} /> : null}
+                                                                            <AvatarImage src={toPublicUrl(rp.profileImg)} />
                                                                             <AvatarFallback>{(rp.nickname ?? "U").slice(0, 2)}</AvatarFallback>
                                                                         </Avatar>
                                                                         <div className="flex-1 min-w-0">
