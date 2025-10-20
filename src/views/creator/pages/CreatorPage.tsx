@@ -12,20 +12,29 @@ import { toastError, toastSuccess } from "@/utils/utils";
 import type { CreatorSummary } from "@/types/creator";
 import CreatorProfile from "../components/CreatorProfile";
 
+const TAB_KEY = "creatorTab";
+
 export default function CreatorPage() {
     const { creatorId: idParam } = useParams();
     const creatorId = Number(idParam || 250);
 
-    const [totalCounts, setTotalCounts] = useState<{
-        totalReviews: number;
-        totalProjects: number;
-        totalFollowers: number;
-    } | null>(null);
+    const [totalCounts, setTotalCounts] = useState<{ totalReviews: number; totalProjects: number; totalFollowers: number; } | null>(null);
     const [summary, setSummary] = useState<CreatorSummary | null>(null);
     const [loading, setLoading] = useState(true);
     const [followLoading, setFollowLoading] = useState(false);
     const [unfollowLoading, setUnfollowLoading] = useState(false);
     const [cookie] = useCookies();
+
+    const [activeTab, setActiveTab] = useState(() => localStorage.getItem(TAB_KEY) || "projects");
+
+    const handleTabChange = useCallback((val: string) => {
+        setActiveTab(val);
+        localStorage.setItem(TAB_KEY, val);
+    }, []);
+
+    useEffect(() => {
+        return () => { localStorage.removeItem(TAB_KEY); };
+    }, []);
 
     const fetchSummary = useCallback(async () => {
         setLoading(true);
@@ -99,41 +108,23 @@ export default function CreatorPage() {
         <div className="w-[1232px] mx-auto py-8 space-y-8">
             <CreatorHeader data={summary} onFollow={handleFollow} onUnfollow={handleUnfollow} followLoading={followLoading} unfollowLoading={unfollowLoading} />
 
-            <Tabs defaultValue="projects" className="w-full">
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
                 <TabsList className="grid grid-cols-4 w-full">
                     <TabsTrigger value="projects">올린 프로젝트
-                        <span className="ml-1 text-xs text-muted-foreground">
-                            {totalCounts?.totalProjects}
-                        </span>
+                        <span className="ml-1 text-xs text-muted-foreground">{totalCounts?.totalProjects}</span>
                     </TabsTrigger>
                     <TabsTrigger value="reviews">후기/커뮤니티
-                        <span className="ml-1 text-xs text-muted-foreground">
-                            {totalCounts?.totalReviews}
-                        </span>
+                        <span className="ml-1 text-xs text-muted-foreground">{totalCounts?.totalReviews}</span>
                     </TabsTrigger>
                     <TabsTrigger value="followers">팔로워
-                        <span className="ml-1 text-xs text-muted-foreground">
-                            {totalCounts?.totalFollowers}
-                        </span>
+                        <span className="ml-1 text-xs text-muted-foreground">{totalCounts?.totalFollowers}</span>
                     </TabsTrigger>
                     <TabsTrigger value="profile">프로필</TabsTrigger>
                 </TabsList>
-
-                <TabsContent value="projects" className="pt-6">
-                    <CreatorProjects creatorId={creatorId} />
-                </TabsContent>
-
-                <TabsContent value="reviews" className="pt-6">
-                    <CreatorReviews creatorId={creatorId} />
-                </TabsContent>
-
-                <TabsContent value="followers" className="pt-6">
-                    <CreatorFollowers creatorId={creatorId} />
-                </TabsContent>
-
-                <TabsContent value="profile" className="pt-6">
-                    <CreatorProfile creatorId={creatorId} />
-                </TabsContent>
+                <TabsContent value="projects" className="pt-6"><CreatorProjects creatorId={creatorId} /></TabsContent>
+                <TabsContent value="reviews" className="pt-6"><CreatorReviews creatorId={creatorId} /></TabsContent>
+                <TabsContent value="followers" className="pt-6"><CreatorFollowers creatorId={creatorId} /></TabsContent>
+                <TabsContent value="profile" className="pt-6"><CreatorProfile creatorId={creatorId} /></TabsContent>
             </Tabs>
         </div>
     );
