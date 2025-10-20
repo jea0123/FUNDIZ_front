@@ -46,13 +46,13 @@ export function VerificationQueue() {
     const [error, setError] = useState<string | null>(null);
 
     const {
-        page, size, perGroup, projectStatuses, rangeType, bindPagination,
-        setPage, setProjectStatuses, setRangeType,
+        page, size, perGroup, projectStatus, rangeType, bindPagination,
+        setPage, setProjectStatus, setRangeType,
     } = useListQueryState();
 
     /* ----------------------------- Stage & Result ----------------------------- */
     const initialStage: Stage = useMemo(() => {
-        const tokens = (projectStatuses ?? []) as ProjectStatus[];
+        const tokens = (projectStatus ?? []) as ProjectStatus[];
         const has = (s: ProjectStatus | ProjectStatus[]) =>
             (Array.isArray(s) ? s : [s]).some(x => tokens.includes(x));
 
@@ -60,7 +60,7 @@ export function VerificationQueue() {
         if (has(["UPCOMING", "REJECTED"])) return "completed";
         if (has("VERIFYING")) return "verifying";
         return "verifying";
-    }, [projectStatuses]);
+    }, [projectStatus]);
 
     const [stage, setStage] = useState<Stage>(initialStage);
     const [completedResult, setCompletedResult] = useState<CompletedResult>("ALL");
@@ -73,9 +73,9 @@ export function VerificationQueue() {
         setRangeType("");
 
         if (next === "completed") {
-            setProjectStatuses(nextCompletedResult === "ALL" ? [...STAGE_STATUS_MAP.completed] : [nextCompletedResult]);
+            setProjectStatus(nextCompletedResult === "ALL" ? [...STAGE_STATUS_MAP.completed] : [nextCompletedResult]);
         } else {
-            setProjectStatuses([...STAGE_STATUS_MAP[next]]);
+            setProjectStatus([...STAGE_STATUS_MAP[next]]);
         }
     };
 
@@ -259,7 +259,7 @@ function ProjectCard({ p, onChanged }: { p: ProjectVerifyList; onChanged: () => 
 
     const goDetail = (projectId: number) => navigate(`/admin/verify/${projectId}`);
 
-    const st = p.projectStatus as VerificationStatus;
+    const st = p.projectStatus as ProjectStatus;
 
     const handleApproveButton = async (projectId: number, title: string) => {
         try {

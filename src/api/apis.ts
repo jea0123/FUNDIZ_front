@@ -161,7 +161,7 @@ export const endpoints = {
   checkFollowed: (creatorId: number) => `user/checkFollow/${creatorId}`,
 
   // ==================== Creator API ====================
-  getCreatorProjectList: (p: SearchCreatorProjectDto) => `creator/projects?${toQueryString({ page: p.page, size: p.size, projectStatus: p.projectStatus, rangeType: p.rangeType || undefined })}`,
+  getCreatorProjectList: (p: SearchCreatorProjectDto) => `creator/projects?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, projectStatus: p.projectStatus && p.projectStatus.length ? p.projectStatus : undefined, rangeType: p.rangeType || undefined })}`,
   registerCreator: 'creator/register',
   getCreatorInfo: 'creator/info',
   updateCreatorInfo: (creatorId: number) => `creator/update/${creatorId}`,
@@ -228,11 +228,11 @@ export const endpoints = {
   getAdminAnalytics: (period: string, metric: string) => `admin/analytics?period=${period}&metric=${metric}`,
   getCategorySuccess: (ctgrId: number) => `admin/category-success?ctgrId=${ctgrId}`,
   getRewardSalesTop: (period: string, metric: string) => `admin/reward-sales-top?period=${period}&metric=${metric}`,
-  getProjectVerifyList: (p: SearchAdminProjectDto) => `admin/verify?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, projectStatuses: p.projectStatus && p.projectStatus.length ? p.projectStatus : undefined, rangeType: p.rangeType || undefined })}`,
+  getProjectVerifyList: (p: SearchAdminProjectDto) => `admin/verify?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, projectStatus: p.projectStatus && p.projectStatus.length ? p.projectStatus : undefined, rangeType: p.rangeType || undefined })}`,
   getProjectVerifyDetail: (projectId: number) => `admin/verify/${projectId}`,
   approveProject: (projectId: number) => `admin/verify/${projectId}/approve`,
   rejectProject: (projectId: number) => `admin/verify/${projectId}/reject`,
-  getAdminProjectList: (p: SearchAdminProjectDto) => `admin/project?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, projectStatuses: p.projectStatus && p.projectStatus.length ? p.projectStatus : undefined, rangeType: p.rangeType || undefined })}`,
+  getAdminProjectList: (p: SearchAdminProjectDto) => `admin/project?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, projectStatus: p.projectStatus && p.projectStatus.length ? p.projectStatus : undefined, rangeType: p.rangeType || undefined })}`,
   adminUpdateProject: (projectId: number) => `admin/project/${projectId}`,
   cancelProject: (projectId: number) => `admin/project/${projectId}/cancel`,
   getUsers: (p: SearchUserParams) => `admin/user/list?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
