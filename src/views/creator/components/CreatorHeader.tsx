@@ -1,17 +1,40 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import type { CreatorSummary } from "@/mocks/creatorApi";
 import { toastSuccess } from "@/utils/utils";
-import { Share2, Plus } from "lucide-react";
+import { Share2, Plus, UserMinus, Loader2 } from "lucide-react";
 import { useMemo } from "react";
 
-type Props = {
-    data: CreatorSummary, onToggleFollow: () => void; followLoading?: boolean;
+type CreatorCore = {
+    creatorName: string;
+    profileImg?: string | null;
+    bio?: string | null;
 };
 
-export default function CreatorHeader({ data, onToggleFollow, followLoading }: Props) {
-    const initials = useMemo(() => data.creator.creatorName.slice(0, 2), [data]);
+type Props = {
+    data: {
+        creator: CreatorCore;
+        lastLogin?: Date | null;
+        isFollowed: boolean;
+        followerCount: number;  // ← 부모가 최신값을 내려줌
+    };
+    onFollow: () => void;
+    onUnfollow: () => void;
+    followLoading?: boolean;
+    unfollowLoading?: boolean;
+};
+
+export default function CreatorHeader({
+    data,
+    onFollow,
+    onUnfollow,
+    followLoading,
+    unfollowLoading
+}: Props) {
+    const initials = useMemo(
+        () => (data.creator.creatorName || "").slice(0, 2),
+        [data.creator.creatorName]
+    );
 
     const copyLink = async () => {
         try {
@@ -27,48 +50,82 @@ export default function CreatorHeader({ data, onToggleFollow, followLoading }: P
                 <div className="flex items-start">
                     <Avatar className="h-[88px] w-[88px] rounded-2xl shadow-sm ring-1 ring-border">
                         <AvatarImage src={data.creator.profileImg || ""} />
-                        <AvatarFallback className="rounded-2xl text-lg">{initials}</AvatarFallback>
+                        <AvatarFallback className="rounded-2xl text-lg">
+                            {initials}
+                        </AvatarFallback>
                     </Avatar>
                 </div>
 
-                {/* 중앙: 이름/배지/로그인 + 통계 3칸 */}
+                {/* 중앙: 이름/로그인시간 + 통계 */}
                 <div className="min-w-0">
-                    {/* 상단: 배지 + 이름 + 부가텍스트 */}
                     <div className="flex items-center gap-2 flex-wrap">
-                        <h1 className="text-2xl font-bold tracking-tight">{data.creator.creatorName}</h1>
+                        <h1 className="text-2xl font-bold tracking-tight">
+                            {data.creator.creatorName}
+                        </h1>
+                        {data.isFollowed && (
+                            <span className="text-xs rounded-full px-2 py-[2px] bg-primary/10 text-primary">
+                                팔로잉 중
+                            </span>
+                        )}
                     </div>
                     {data.lastLogin && (
-                        <div className="mt-1 text-xs text-muted-foreground">{data.lastLogin.toLocaleString()}</div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                            {data.lastLogin.toLocaleString()}
+                        </div>
                     )}
 
-                    {/* 통계 3칸: 팔로워 / 누적 후원자 */}
+                    {/* 통계: 팔로워 / 누적 후원자 / 총 후원 금액 (필요값만 유지) */}
                     <div className="mt-5 grid grid-cols-3 gap-6 max-w-[520px]">
-                        <StatBlock label="팔로워" value={String(data.followerCount ?? 0)} link />
-                        <StatBlock label="누적 후원자" value={String(data.stats.totalBackers)} info />
-                        <StatBlock label="총 후원 금액" value={String(data.stats.totalAmount)} info />
+                        <StatBlock label="팔로워" value={String(data.followerCount)} link />
+                        {/* 필요 시 다른 지표는 그대로 */}
+                        {/* <StatBlock label="누적 후원자" value={String(data.stats.totalBackers)} info /> */}
+                        {/* <StatBlock label="총 후원 금액" value={String(data.stats.totalAmount)} info /> */}
                     </div>
                 </div>
 
-                {/* 우측: 공유 / 팔로우 버튼 스택 */}
+                {/* 우측: 공유 / 팔로우·언팔로우 분리 버튼 */}
                 <div className="flex flex-col items-end gap-3">
                     <Button variant="outline" onClick={copyLink} className="h-10 px-4">
                         <Share2 className="h-4 w-4 mr-2" /> 공유
                     </Button>
-                    <Button onClick={onToggleFollow} disabled={followLoading} className="h-11 px-6">
-                        <Plus className="h-4 w-4 mr-2" />
-                        {data.isFollowed ? "팔로잉 중" : "팔로우"}
-                    </Button>
+
+                    {!data.isFollowed ? (
+                        <Button
+                            onClick={onFollow}
+                            disabled={!!followLoading}
+                            className="h-11 px-6"
+                            variant="default"
+                        >
+                            {followLoading ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                                <Plus className="h-4 w-4 mr-2" />
+                            )}
+                            팔로우
+                        </Button>
+                    ) : (
+                        <Button
+                            onClick={onUnfollow}
+                            disabled={!!unfollowLoading}
+                            className="h-11 px-6 border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+                            variant="outline"
+                        >
+                            {unfollowLoading ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                                <UserMinus className="h-4 w-4 mr-2" />
+                            )}
+                            언팔로우
+                        </Button>
+                    )}
                 </div>
             </div>
 
-            {/* 소개문 + 외부 링크는 기존처럼 하단에 배치(텀블벅은 오른쪽 버튼과 수평) */}
-            {(data.creator.bio) && (
+            {data.creator.bio && (
                 <div className="mt-6 grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4">
-                    {data.creator.bio && (
-                        <p className="text-sm whitespace-pre-line leading-7 text-foreground/90">
-                            {data.creator.bio}
-                        </p>
-                    )}
+                    <p className="text-sm whitespace-pre-line leading-7 text-foreground/90">
+                        {data.creator.bio}
+                    </p>
                 </div>
             )}
         </Card>
@@ -79,7 +136,7 @@ function StatBlock({
     label,
     value,
     link,
-    info,
+    info
 }: {
     label: string;
     value: string;
@@ -97,7 +154,9 @@ function StatBlock({
                     </span>
                 ) : null}
             </div>
-            <div className="mt-1 text-3xl font-bold tabular-nums tracking-tight">{value}</div>
+            <div className="mt-1 text-3xl font-bold tabular-nums tracking-tight">
+                {value}
+            </div>
         </div>
     );
 }

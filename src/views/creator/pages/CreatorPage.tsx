@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { type CreatorSummary } from "@/mocks/creatorApi";
 import { Loader2 } from "lucide-react";
 import CreatorHeader from "../components/CreatorHeader";
 import CreatorProjects from "../components/CreatorProjects";
@@ -10,6 +9,7 @@ import CreatorFollowers from "../components/CreatorFollowers";
 import { deleteData, endpoints, getData, postData } from "@/api/apis";
 import { useCookies } from "react-cookie";
 import { toastError, toastSuccess } from "@/utils/utils";
+import type { CreatorSummary } from "@/mocks/creatorApi";
 
 export default function CreatorPage() {
     const { creatorId: idParam } = useParams();
@@ -18,43 +18,58 @@ export default function CreatorPage() {
     const [summary, setSummary] = useState<CreatorSummary | null>(null);
     const [loading, setLoading] = useState(true);
     const [followLoading, setFollowLoading] = useState(false);
+    const [unfollowLoading, setUnfollowLoading] = useState(false);
     const [cookie] = useCookies();
 
-    useEffect(() => {
-        let mounted = true;
-        (async () => {
-            setLoading(true);
-            const res = await getData(endpoints.getCreatorSummary(creatorId));
-            if (!mounted) return;
-            if (res.status === 200) {
-                setSummary(res.data as CreatorSummary);
-            }
-            setLoading(false);
-        })();
-        return () => { mounted = false; };
+    const fetchSummary = useCallback(async () => {
+        setLoading(true);
+        const res = await getData(endpoints.getCreatorSummary(creatorId));
+        if (res.status === 200) setSummary(res.data as CreatorSummary);
+        setLoading(false);
     }, [creatorId]);
 
-    const toggleFollow = async () => {
+    const refreshFollowerCount = useCallback(async () => {
+        const res = await getData(endpoints.getFollowerCnt(creatorId));
+        if (res.status === 200) {
+            setSummary(prev => prev ? { ...prev, followerCount: res.data } : prev);
+        }
+    }, [creatorId]);
+
+    useEffect(() => {
+        fetchSummary();
+    }, [fetchSummary]);
+
+    const handleFollow = async () => {
         if (!summary) return;
         setFollowLoading(true);
-        if (summary.isFollowed) {
-            const res = await deleteData(endpoints.unfollowCreator(creatorId), cookie.accessToken);
-            if (res.status === 200) {
-                setSummary({ ...summary, isFollowed: !summary.isFollowed });
-                toastSuccess("팔로우를 취소했어요.");
-            } else {
-                toastError("팔로우 취소에 실패했어요. 다시 시도해 주세요.");
-            }
-            setFollowLoading(false);
-        } else {
+        try {
             const res = await postData(endpoints.followCreator(creatorId), {}, cookie.accessToken);
             if (res.status === 200) {
-                setSummary({ ...summary, isFollowed: !summary.isFollowed });
+                setSummary({ ...summary, isFollowed: true });
+                await refreshFollowerCount();
                 toastSuccess("팔로우를 추가했어요.");
             } else {
                 toastError("팔로우 추가에 실패했어요. 다시 시도해 주세요.");
             }
+        } finally {
             setFollowLoading(false);
+        }
+    };
+
+    const handleUnfollow = async () => {
+        if (!summary) return;
+        setUnfollowLoading(true);
+        try {
+            const res = await deleteData(endpoints.unfollowCreator(creatorId), cookie.accessToken);
+            if (res.status === 200) {
+                setSummary({ ...summary, isFollowed: false });
+                await refreshFollowerCount();
+                toastSuccess("팔로우를 취소했어요.");
+            } else {
+                toastError("팔로우 취소에 실패했어요. 다시 시도해 주세요.");
+            }
+        } finally {
+            setUnfollowLoading(false);
         }
     };
 
@@ -68,7 +83,13 @@ export default function CreatorPage() {
 
     return (
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-            <CreatorHeader data={summary} onToggleFollow={toggleFollow} followLoading={followLoading} />
+            <CreatorHeader
+                data={summary}
+                onFollow={handleFollow}
+                onUnfollow={handleUnfollow}
+                followLoading={followLoading}
+                unfollowLoading={unfollowLoading}
+            />
 
             <Tabs defaultValue="projects" className="w-full">
                 <TabsList className="grid grid-cols-4 w-full">
@@ -91,7 +112,6 @@ export default function CreatorPage() {
                 </TabsContent>
 
                 <TabsContent value="profile" className="pt-6">
-                    {/* 필요 시 상세 소개/정책/FAQ로 확장 */}
                     <div className="prose prose-sm max-w-none">
                         <h3>창작자 소개</h3>
                         <p>브랜드/팀 소개, 운영 정책, AS/배송, FAQ 등 자세한 문구를 작성하세요.</p>
