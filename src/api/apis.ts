@@ -8,7 +8,6 @@ import ky from 'ky';
 import type { SearchSettlementParams } from '@/types/settlement';
 import type { SearchUserParams } from '@/types/users';
 import type { SearchReviewsParams } from '@/types/community';
-import type { get } from 'http';
 
 //TODO: 모듈 전역 오버라이드 값 (훅에서 주입)
 let _devCreatorIdOverride: string | null = null;
