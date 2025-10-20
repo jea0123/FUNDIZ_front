@@ -20,7 +20,6 @@ export function SavedAddressModal({ mode, onSelectAddress, triggerText = '배송
 
   // 페이지네이션
   const [currentPage, setCurrentPage] = useState(1);
-<<<<<<< HEAD
   const itemsPerPage = 3; // 한 페이지당 표시할 항목 수
   const totalPages = Math.max(1, Math.ceil(addrList.length / itemsPerPage));
 
@@ -47,9 +46,6 @@ export function SavedAddressModal({ mode, onSelectAddress, triggerText = '배송
   useEffect(() => {
     setCurrentPage(1);
   }, [addrList]);
-=======
-  const [itemsPerPage, setItemsPerPage] = useState(3); //  변경된 부분
->>>>>>> 042327801cecae8d55401593fa98c8df778ef7a1
 
   // 추가 모달
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -188,11 +184,7 @@ export function SavedAddressModal({ mode, onSelectAddress, triggerText = '배송
     }
   };
 
-<<<<<<< HEAD
   // 입력 변경
-=======
-  // 입력 변경 시 실시간 검증
->>>>>>> 042327801cecae8d55401593fa98c8df778ef7a1
   const handleAddInputChange = (field: keyof AddrAddRequest, value: string) => {
     const newData = { ...addrAdd, [field]: value };
     setAddrAdd(newData);
@@ -218,7 +210,6 @@ export function SavedAddressModal({ mode, onSelectAddress, triggerText = '배송
     const newData = { ...addrEdit, [field]: value };
     setAddrEdit(newData);
 
-<<<<<<< HEAD
     const allErrors = validateAddressInput(newData);
 
     setAddrEditErrors((prev) => {
@@ -236,8 +227,6 @@ export function SavedAddressModal({ mode, onSelectAddress, triggerText = '배송
     });
   };
   // 렌더링
-=======
->>>>>>> 042327801cecae8d55401593fa98c8df778ef7a1
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -253,31 +242,6 @@ export function SavedAddressModal({ mode, onSelectAddress, triggerText = '배송
           <DialogDescription>저장된 배송지를 관리하세요.</DialogDescription>
         </DialogHeader>
 
-<<<<<<< HEAD
-=======
-        {/*  페이지당 보기 개수 선택 */}
-        {addrList.length > 0 && (
-          <div className="flex justify-end items-center gap-2 mt-2">
-            <label htmlFor="itemsPerPage" className="text-sm text-gray-600">
-              페이지당 보기
-            </label>
-            <select
-              id="itemsPerPage"
-              value={itemsPerPage}
-              onChange={(e) => {
-                setItemsPerPage(Number(e.target.value));
-                setCurrentPage(1); // 개수 변경 시 첫 페이지로 이동
-              }}
-              className="border rounded p-1 text-sm"
-            >
-              <option value={3}>3개</option>
-              <option value={5}>5개</option>
-              <option value={10}>10개</option>
-            </select>
-          </div>
-        )}
-
->>>>>>> 042327801cecae8d55401593fa98c8df778ef7a1
         {/* 배송지 추가 */}
         <div className="mt-4">
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
@@ -301,21 +265,10 @@ export function SavedAddressModal({ mode, onSelectAddress, triggerText = '배송
                 ].map(({ label, field, placeholder }) => (
                   <div key={field}>
                     <label className="block text-sm font-medium mb-1">{label}</label>
-<<<<<<< HEAD
                     <input type="text" className={`w-full border p-2 rounded ${addrAddErrors[field as string] ? 'border-red-500' : ''}`} value={(addrAdd as any)[field]} placeholder={placeholder} onChange={(e) => handleAddInputChange(field as keyof AddrAddRequest, e.target.value)} onBlur={() => handleAddInputBlur(field as keyof AddrAddRequest)} />
 
                     {/* 에러 메시지 영역 높이 고정 */}
                     <p className={`text-xs mt-1 min-h-[1.25rem] ${addrAddErrors[field as string] ? 'text-red-600' : 'text-transparent'}`}>{addrAddErrors[field as string] || 'placeholder'}</p>
-=======
-                    <input
-                      type="text"
-                      className={`w-full border p-2 rounded ${addrAddErrors[field] ? 'border-red-500' : ''}`}
-                      value={(addrAdd as any)[field]}
-                      placeholder={placeholder}
-                      onChange={(e) => handleAddInputChange(field as keyof AddrAddRequest, e.target.value)}
-                    />
-                    {addrAddErrors[field] && <p className="text-xs text-red-600 mt-1">{addrAddErrors[field]}</p>}
->>>>>>> 042327801cecae8d55401593fa98c8df778ef7a1
                   </div>
                 ))}
               </div>
@@ -343,19 +296,12 @@ export function SavedAddressModal({ mode, onSelectAddress, triggerText = '배송
                   <p className="text-sm text-gray-500">
                     {addr.roadAddr} {addr.detailAddr}
                   </p>
-                  <Badge variant={addr.isDefault === 'Y' ? 'default' : 'secondary'}>
-                    {addr.isDefault === 'Y' ? '기본배송지' : '보조배송지'}
-                  </Badge>
+                  <Badge variant={addr.isDefault === 'Y' ? 'default' : 'secondary'}>{addr.isDefault === 'Y' ? '기본배송지' : '보조배송지'}</Badge>
                 </div>
 
                 {mode === 'mypage' ? (
                   <div className="flex flex-col gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={addr.isDefault === 'Y'}
-                      onClick={() => handleSetDefaultAddress(addr)}
-                    >
+                    <Button size="sm" variant="outline" disabled={addr.isDefault === 'Y'} onClick={() => handleSetDefaultAddress(addr)}>
                       기본 설정
                     </Button>
                     <Button
@@ -368,11 +314,7 @@ export function SavedAddressModal({ mode, onSelectAddress, triggerText = '배송
                     >
                       수정
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleDeleteAddress(addr.addrId)}
-                    >
+                    <Button size="sm" variant="destructive" onClick={() => handleDeleteAddress(addr.addrId)}>
                       삭제
                     </Button>
                   </div>
@@ -399,7 +341,6 @@ export function SavedAddressModal({ mode, onSelectAddress, triggerText = '배송
 
         {/* 페이지네이션 */}
         {addrList.length > itemsPerPage && (
-<<<<<<< HEAD
           <div className="flex justify-center items-center gap-2 mt-4">
             <Button size="sm" variant="outline" disabled={currentGroup === 0} onClick={() => setCurrentPage(groupStart - pagesPerGroup)}>
               이전
@@ -416,88 +357,6 @@ export function SavedAddressModal({ mode, onSelectAddress, triggerText = '배송
             </Button>
           </div>
         )}
-=======
-        <div className="flex justify-center items-center gap-2 mt-4">
-        {/* 이전 그룹 */}
-        <Button
-        size="sm"
-        variant="outline"
-        disabled={currentPage <= 5}
-        onClick={() => setCurrentPage(Math.max(1, currentPage - 5))}
-        >
-        이전 5
-        </Button>
-
-        {(() => {
-        const groupSize = 5; //  5개씩 보여주기
-        const currentGroup = Math.floor((currentPage - 1) / groupSize);
-        const startPage = currentGroup * groupSize + 1;
-        const endPage = Math.min(startPage + groupSize - 1, totalPages);
-
-        return Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i).map((pageNum) => (
-          <Button
-          key={pageNum}
-          size="sm"
-          variant={currentPage === pageNum ? 'default' : 'outline'}
-          onClick={() => setCurrentPage(pageNum)}
-        >
-          {pageNum}
-        </Button>
-        ));
-      })()}
-
-        {/* 다음 그룹 */}
-        <Button
-        size="sm"
-        variant="outline"
-        disabled={currentPage > totalPages - 5}
-        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 5))}
-      >
-        다음 5
-      </Button>
-    </div>
-      )}
-        {/* 배송지 수정 모달 */}
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>배송지 수정</DialogTitle>
-            </DialogHeader>
-
-            <div className="space-y-3">
-              {[
-                { label: '배송지 이름', field: 'addrName' },
-                { label: '받는 사람', field: 'recipient' },
-                { label: '연락처', field: 'recipientPhone', placeholder: '예: 010-1234-5678' },
-                { label: '우편번호', field: 'postalCode' },
-                { label: '도로명 주소', field: 'roadAddr' },
-                { label: '상세 주소', field: 'detailAddr' },
-              ].map(({ label, field, placeholder }) => (
-                <div key={field}>
-                  <label className="block text-sm font-medium mb-1">{label}</label>
-                  <input
-                    type="text"
-                    className={`w-full border p-2 rounded ${addrEditErrors[field] ? 'border-red-500' : ''}`}
-                    value={(addrEdit as any)[field]}
-                    placeholder={placeholder}
-                    onChange={(e) => handleEditInputChange(field as keyof AddrUpdateRequest, e.target.value)}
-                  />
-                  {addrEditErrors[field] && (
-                    <p className="text-xs text-red-600 mt-1">{addrEditErrors[field]}</p>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-4 flex justify-end gap-2">
-              <DialogClose asChild>
-                <Button variant="outline">취소</Button>
-              </DialogClose>
-              <Button onClick={handleEditAddress}>저장</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
->>>>>>> 042327801cecae8d55401593fa98c8df778ef7a1
       </DialogContent>
     </Dialog>
   );
