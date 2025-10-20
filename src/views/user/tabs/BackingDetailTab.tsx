@@ -33,11 +33,22 @@ export default function BackingDetailPage() {
 
   const safeDate = (date: any) => (date ? new Date(date).toISOString().split('T')[0] : '-');
 
+  // 결제 상태 라벨 (backingStatus)
+  const paymentLabel: Record<string, string> = {
+    PENDING: '결제 대기',
+    COMPLETED: '결제 완료',
+    CANCELED: '결제 취소',
+    FAILED: '결제 실패',
+    REFUNDED: '환불 완료',
+  };
+
+  // 배송 상태 라벨 (shippingStatus)
   const shippingLabel: Record<string, string> = {
+    PENDING: '후원 완료',
     READY: '상품 준비 중',
     SHIPPED: '배송 중',
     DELIVERED: '배송 완료',
-    PENDING: '후원 완료',
+    CANCELED: '배송 취소',
     FAILED: '배송 실패',
   };
 
@@ -55,7 +66,7 @@ export default function BackingDetailPage() {
           <div>
             <CardTitle className="text-lg font-semibold mb-1">{backing.title}</CardTitle>
             <p className="text-sm text-gray-500 mb-1">창작자: {backing.creatorName ?? '-'}</p>
-            <Badge variant="outline">{shippingLabel[backing.shippingStatus] ?? '알 수 없음'}</Badge>
+            <Badge variant="outline">{backing.backingStatus === 'COMPLETED' ? shippingLabel[backing.shippingStatus] ?? '배송 정보 없음' : paymentLabel[backing.backingStatus] ?? '상태 알 수 없음'}</Badge>
           </div>
         </CardHeader>
         <CardContent className="text-sm text-gray-600 grid grid-cols-2 gap-2">
@@ -64,7 +75,7 @@ export default function BackingDetailPage() {
         </CardContent>
       </Card>
 
-      {/* 리워드 정보 */}
+      {/*리워드 정보 */}
       <Card>
         <CardHeader>
           <CardTitle>🎁 후원 리워드</CardTitle>
@@ -94,7 +105,7 @@ export default function BackingDetailPage() {
         </CardContent>
       </Card>
 
-      {/* 결제 정보 */}
+      {/*결제 정보 */}
       <Card>
         <CardHeader>
           <CardTitle>💳 결제 정보</CardTitle>
@@ -122,55 +133,65 @@ export default function BackingDetailPage() {
           </div>
           <div>
             <p className="text-gray-500 text-sm">결제 상태</p>
-            <p>{backing.backingStatus === 'COMPLETED' ? '결제 완료' : backing.backingStatus === 'PENDING' ? '결제 대기' : '결제 취소'}</p>
+            <p>{paymentLabel[backing.backingStatus] ?? '-'}</p>
           </div>
+
+          {/*결제 완료 상태일 때만 배송 상태 표시 */}
+          {backing.backingStatus === 'COMPLETED' && (
+            <div>
+              <p className="text-gray-500 text-sm">배송 상태</p>
+              <p>{shippingLabel[backing.shippingStatus] ?? '-'}</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* 배송 정보 */}
-      <Card>
-        <CardHeader>
-          <CardTitle>📦 배송 정보</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <p className="text-gray-500">배송 상태</p>
-            <p>{shippingLabel[backing.shippingStatus] ?? '-'}</p>
-          </div>
-          <div>
-            <p className="text-gray-500">송장 번호</p>
-            <p>{backing.trackingNum ?? '-'}</p>
-          </div>
-          <div>
-            <p className="text-gray-500">출고일</p>
-            <p>{safeDate(backing.shippedAt)}</p>
-          </div>
-          <div>
-            <p className="text-gray-500">배송 완료일</p>
-            <p>{safeDate(backing.deliveredAt)}</p>
-          </div>
-          <div className="col-span-2 border-t pt-4 mt-2">
-            <p className="text-gray-500">수령인</p>
-            <p>{backing.recipient}</p>
-          </div>
-          <div>
-            <p className="text-gray-500">연락처</p>
-            <p>{backing.recipientPhone}</p>
-          </div>
-          <div className="col-span-2">
-            <p className="text-gray-500">주소</p>
-            <p>
-              [{backing.postalCode}] {backing.roadAddr} {backing.detailAddr}
-            </p>
-          </div>
-          <div>
-            <p className="text-gray-500">배송지명</p>
-            <p>{backing.addrName ?? '-'}</p>
-          </div>
-        </CardContent>
-      </Card>
+      {/*배송 정보 */}
+      {backing.backingStatus === 'COMPLETED' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>📦 배송 정보</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="text-gray-500">배송 상태</p>
+              <p>{shippingLabel[backing.shippingStatus] ?? '-'}</p>
+            </div>
+            <div>
+              <p className="text-gray-500">송장 번호</p>
+              <p>{backing.trackingNum ?? '-'}</p>
+            </div>
+            <div>
+              <p className="text-gray-500">출고일</p>
+              <p>{safeDate(backing.shippedAt)}</p>
+            </div>
+            <div>
+              <p className="text-gray-500">배송 완료일</p>
+              <p>{safeDate(backing.deliveredAt)}</p>
+            </div>
+            <div className="col-span-2 border-t pt-4 mt-2">
+              <p className="text-gray-500">수령인</p>
+              <p>{backing.recipient}</p>
+            </div>
+            <div>
+              <p className="text-gray-500">연락처</p>
+              <p>{backing.recipientPhone}</p>
+            </div>
+            <div className="col-span-2">
+              <p className="text-gray-500">주소</p>
+              <p>
+                [{backing.postalCode}] {backing.roadAddr} {backing.detailAddr}
+              </p>
+            </div>
+            <div>
+              <p className="text-gray-500">배송지명</p>
+              <p>{backing.addrName ?? '-'}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* 하단 버튼 */}
+      {/*하단 버튼 */}
       <div className="flex justify-end gap-3">
         <Button variant="outline" onClick={() => navigate(-1)}>
           뒤로가기
@@ -186,10 +207,9 @@ export default function BackingDetailPage() {
 
               try {
                 const res = await postData(endpoints.cancelBacking(1, Number(backingId))); // tempUserId: 1
-
                 if (res.status === 200) {
                   alert('후원이 성공적으로 취소되었습니다.');
-                  navigate('/user'); // 마이페이지로 이동
+                  navigate('/user');
                 } else {
                   alert(res.message ?? '후원 취소에 실패했습니다. 잠시 후 다시 시도해주세요.');
                 }

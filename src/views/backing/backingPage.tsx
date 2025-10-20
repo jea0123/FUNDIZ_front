@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Separator } from '../../components/ui/separator';
-import { Progress } from '../../components/ui/progress';
 import { ArrowLeft, Minus, Plus } from 'lucide-react';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { SavedAddressModal } from './SavedAddressModal';
@@ -29,19 +28,54 @@ function ColoredProgress({ value }: { value: number }) {
   );
 }
 
+function PaymentSuccessModal({ open, onClose, onGoMyPage, onGoBack }: { open: boolean; onClose: () => void; onGoMyPage: () => void; onGoBack: () => void }) {
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-sm flex flex-col items-center justify-center text-center py-10 space-y-6">
+        {/*  아이콘 */}
+        <div className="w-20 h-20 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 text-4xl shadow-inner">🎉</div>
+
+        {/* 타이틀 */}
+        <DialogHeader className="text-center">
+          <DialogTitle className="text-2xl font-bold text-blue-700">후원이 성공적으로 완료되었습니다!</DialogTitle>
+        </DialogHeader>
+
+        {/* 설명문 */}
+        <div className="text-gray-600 leading-relaxed text-[15px]">
+          <p>소중한 후원에 진심으로 감사드립니다.</p>
+          <p>창작자에게 큰 힘이 되었습니다 🙌</p>
+        </div>
+
+        {/* 안내문 */}
+        <p className="text-gray-500 text-sm">다음 이동할 페이지를 선택해주세요.</p>
+
+        {/* 버튼 */}
+        <DialogFooter className="flex justify-center gap-4 mt-4">
+          <Button variant="outline" className="px-6 py-2 rounded-lg border-gray-300 text-gray-700 hover:bg-gray-100 hover:translate-y-[1px] transition-all duration-200" onClick={onGoBack}>
+            ⬅ 이전 페이지로
+          </Button>
+          <Button className="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all duration-200" onClick={onGoMyPage}>
+            마이페이지로 이동 →
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 //결제 모달
-function PaymentModal({ open, onClose, totalAmount, paymentList, onConfirmPayment }: { open: boolean; onClose: () => void; totalAmount: number; paymentList: BackingPagePayment[]; onConfirmPayment: (method: string) => void }) {
+function PaymentModal({ open, onClose, totalAmount, paymentList, onConfirmPayment }: { open: boolean; onClose: () => void; totalAmount: number; paymentList: BackingPagePayment[]; onConfirmPayment: (payload: { method: string; cardCompany: string }) => void }) {
   const [selectedPayment, setSelectedPayment] = useState<string>(''); // 저장된 결제 선택
   const [method, setMethod] = useState(''); // 새 결제수단 선택
 
   const handleSelectSaved = (value: string) => {
     setSelectedPayment(value);
-    setMethod(''); // 새 결제 해제
+    setMethod('');
   };
 
   const handleSelectNew = (value: string) => {
     setMethod(value);
-    setSelectedPayment(''); // 저장된 결제 해제
+    setSelectedPayment('');
   };
 
   return (
@@ -54,7 +88,6 @@ function PaymentModal({ open, onClose, totalAmount, paymentList, onConfirmPaymen
         <div className="space-y-6">
           <p className="text-center text-lg font-semibold">총 금액: {totalAmount.toLocaleString()}원</p>
 
-          {/* 저장된 결제정보 */}
           {paymentList && paymentList.length > 0 && (
             <div className="border rounded-md p-3 bg-gray-50">
               <p className="font-medium text-sm mb-2">💾 저장된 결제 정보</p>
@@ -74,7 +107,6 @@ function PaymentModal({ open, onClose, totalAmount, paymentList, onConfirmPaymen
             </div>
           )}
 
-          {/*새 결제 선택 */}
           <div className="space-y-3">
             <p className="font-medium text-sm">새 결제수단 선택</p>
             <RadioGroup value={method} onValueChange={handleSelectNew} className="space-y-2">
@@ -103,7 +135,7 @@ function PaymentModal({ open, onClose, totalAmount, paymentList, onConfirmPaymen
             onClick={() => {
               const payload = {
                 method: method || 'CARD',
-                cardCompany: selectedPayment || '', // 저장된 카드사 선택
+                cardCompany: selectedPayment || '',
               };
               onConfirmPayment(payload);
               onClose();
@@ -124,6 +156,9 @@ export function BackingPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+  const [successData, setSuccessData] = useState<{ method: string; cardCompany: string; totalAmount: number } | null>(null);
 
   const itemsParam = searchParams.get('items');
   const rewardEntries = useMemo(() => {
@@ -155,7 +190,6 @@ export function BackingPage() {
 
       try {
         const response = await getData(endpoints.backingPrepare(tempUserId, Number(projectId)));
-
         if (response.status === 200 && response.data) {
           const raw = response.data;
           const data = {
@@ -279,14 +313,8 @@ export function BackingPage() {
     try {
       const res = await postData(endpoints.addBacking(tempUserId), backingData);
       if (res.status === 200) {
-        const message = `결제가 완료되었습니다!\n\n결제방식: ${method}\n카드사: ${cardCompany || '-'}\n총 금액: ${totalAmount.toLocaleString()}원
-        \n\n마이페이지로 이동하시겠습니까? (취소 시 이전 페이지로 이동합니다.)`;
-
-        if (window.confirm(message)) {
-          navigate('/user');
-        } else {
-          navigate(-1); // 이전 페이지로 이동
-        }
+        setSuccessData({ method, cardCompany, totalAmount });
+        setIsSuccessOpen(true);
       } else {
         alert('후원 저장 실패: ' + (res.message || '서버 오류'));
       }
@@ -298,6 +326,9 @@ export function BackingPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* 결제 완료 모달 */}
+      {successData && <PaymentSuccessModal open={isSuccessOpen} onClose={() => setIsSuccessOpen(false)} method={successData.method} cardCompany={successData.cardCompany} totalAmount={successData.totalAmount} onGoMyPage={() => navigate('/user')} onGoBack={() => navigate(-1)} />}
+
       <div className="max-w-5xl mx-auto px-4 py-8">
         <div className="flex items-center gap-4 mb-8">
           <Button variant="outline" size="sm" onClick={() => navigate(-1)} className="flex items-center gap-2">
@@ -308,6 +339,7 @@ export function BackingPage() {
         </div>
 
         <PaymentModal open={isPaymentOpen} onClose={() => setIsPaymentOpen(false)} totalAmount={getTotalAmount()} paymentList={paymentList} onConfirmPayment={handleConfirmPayment} />
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             {/* 프로젝트 요약 */}
@@ -401,18 +433,9 @@ export function BackingPage() {
             {/* 배송지 선택 */}
             <Card>
               <CardHeader>
-                <CardTitle>배송지 선택 / 직접 입력</CardTitle>
+                <CardTitle>배송지 선택</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex gap-2">
-                  <Button variant={addressMode === 'select' ? 'default' : 'outline'} size="sm" onClick={() => setAddressMode('select')}>
-                    배송지 관리에서 선택
-                  </Button>
-                  <Button variant={addressMode === 'manual' ? 'default' : 'outline'} size="sm" onClick={() => setAddressMode('manual')}>
-                    직접 입력
-                  </Button>
-                </div>
-
                 {addressMode === 'select' ? (
                   <>
                     <SavedAddressModal mode="backing" onSelectAddress={setShippingAddress} />
