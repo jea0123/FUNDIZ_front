@@ -154,9 +154,9 @@ export default function CreatorInfoUpdate() {
     return (
             <Card className="shadow-sm">
                 <CardHeader>
-                    <CardTitle>크리에이터 등록</CardTitle>
+                    <CardTitle>창작자 정보 수정</CardTitle>
                     <CardDescription>
-                        최초 1회만 등록합니다. 유형에 따라 필요한 정보를 정확히 입력해주세요.
+                        창작자 정보 수정 페이지입니다.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
