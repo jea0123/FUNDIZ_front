@@ -64,7 +64,8 @@ export default function CreatorProjectListPage() {
     const location = useLocation();
 
     //TODO: dev id
-    const { creatorId, loading: idLoading } = useCreatorId(2);
+    const { creatorId, loading: idLoading } = useCreatorId(
+        102);
 
     const [projects, setProjects] = useState<CreatorProjectListDto[]>([]);
     const [total, setTotal] = useState(0);
