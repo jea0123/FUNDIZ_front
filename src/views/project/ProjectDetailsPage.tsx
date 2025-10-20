@@ -80,6 +80,10 @@ export function ProjectDetailsPage() {
         toPublicUrl(project?.thumbnail ?? null), [project?.thumbnail]
     );
 
+    const profileImgUrl = useMemo(() =>
+        toPublicUrl(project?.profileImg ?? null), [project?.profileImg]
+    );
+
     /* ----------------------------- Data fetchers ----------------------------- */
     const projectData = useCallback(async () => {
         if (!projectId) return;
@@ -364,7 +368,7 @@ export function ProjectDetailsPage() {
 
                         <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
                             <Avatar>
-                                <AvatarImage src={project.profileImg} />
+                                <AvatarImage src={profileImgUrl} />
                                 <AvatarFallback>{project.creatorName}</AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
