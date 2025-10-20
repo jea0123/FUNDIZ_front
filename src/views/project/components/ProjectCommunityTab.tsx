@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageCircle, MessageSquarePlus, X } from "lucide-react";
+import { MessageCircle, MessageSquarePlus, Siren, X } from "lucide-react";
 import { endpoints, getData, postData } from "@/api/apis";
 import { getByteLen, getDaysBefore, toastSuccess } from "@/utils/utils";
 import type { CommunityDto, Cursor, CursorPage } from "@/types/community";
@@ -355,6 +355,7 @@ export default function ProjectCommunityTab({ projectId, active = false, ensureL
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center space-x-2 mb-1">
                                                 <span className="font-medium truncate">{cm.nickname}</span>
+                                                <a href="/cs/report"><Siren className="w-4 h-4"/></a>
                                                 <span className="text-sm text-gray-500">{getDaysBefore(cm.createdAt)} 전</span>
                                             </div>
                                             <p className="text-sm w-full max-w-full whitespace-pre-wrap [overflow-wrap:anywhere]">

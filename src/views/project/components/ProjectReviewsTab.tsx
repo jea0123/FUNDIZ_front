@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Star } from "lucide-react";
+import { Siren, Star } from "lucide-react";
 import { endpoints, getData } from "@/api/apis";
 import { getDaysBefore } from "@/utils/utils";
 import type { Cursor, CursorPage, ReviewDto } from "@/types/community";
@@ -105,6 +105,7 @@ export default function ProjectReviewsTab({ projectId, active = false }: Props) 
                                         <div className="flex-1">
                                             <div className="flex items-center space-x-2 mb-1">
                                                 <span className="font-medium">{rv.nickname}</span>
+                                                <a href="/cs/report"><Siren className="w-4 h-4"/></a>
                                                 <div className="flex items-center">
                                                     {Array.from({ length: rv.rating }).map((_, i) => (
                                                         <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
