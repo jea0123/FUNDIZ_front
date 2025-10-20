@@ -44,6 +44,13 @@ const useQuery = () => {
 
 export type ReportStatus = "RECEIVED" | "UNDER_REVIEW" | "COMPLETED";
 
+const statusBadge = (r: ReportStatus) => (
+    <Badge variant={r === "RECEIVED" ? "default" : (r === "UNDER_REVIEW" ? "secondary" : "third")} className="rounded-full px-3">
+        {r === "RECEIVED" ? "접수" : (r === "UNDER_REVIEW" ? "검토중" : "완료")}
+    </Badge>
+);
+
+
 function useQueryState() {
     const [searchParams, setSearchParams] = useSearchParams();
 
@@ -138,7 +145,7 @@ export function ReportsAdminTab() {
                                         <TableCell>{r.reportType}</TableCell>
                                         <TableCell>UID {r.userId}</TableCell>
                                         <TableCell>TID {r.target}</TableCell>
-                                        <TableCell>{r.reportStatus}</TableCell>
+                                        <TableCell>{statusBadge(r.reportStatus as ReportStatus)}</TableCell>
                                         <TableCell className="text-zinc-500">{formatDate(r.reportDate)}</TableCell>
                                         <TableCell>
                                             <ReportStatusEditModal reportId={r.reportId} />
