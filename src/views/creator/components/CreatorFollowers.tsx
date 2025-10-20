@@ -18,14 +18,17 @@ export default function CreatorFollowers({ creatorId }: Props) {
     const total = result?.totalElements ?? 0;
     const totalPages = useMemo(() => Math.max(1, Math.ceil(total / size)), [total, size]);
 
+    const [loading, setLoading] = useState(false);
     const [rowLoading, setRowLoading] = useState<Record<number, boolean>>({});
 
     const navigate = useNavigate();
 
     const fetchPage = useCallback(async () => {
+        setLoading(true);
         const res = await getData(endpoints.getCreatorFollowers(creatorId, page, size));
         if (res.status !== 200) return;
         setResult(res.data as PageResult<FollowerItem>);
+        setLoading(false);
     }, [creatorId, page, size]);
 
     const refreshFollowerCount = useCallback(async () => {
@@ -81,6 +84,7 @@ export default function CreatorFollowers({ creatorId }: Props) {
 
     return (
         <div className="space-y-4">
+            {loading && <div className="flex items-center justify-center py-14 text-muted-foreground">불러오는 중...</div>}
             <div className="text-sm text-muted-foreground">총 {total}명</div>
 
             <Card className="divide-y">

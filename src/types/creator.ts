@@ -177,7 +177,7 @@ export interface FollowerItem {
 
 export interface CreatorSummary {
     creator: { creatorId: number; creatorName: string; profileImg?: string | null; bio?: string };
-    stats: { projectCount: number; totalBackers: number, totalAmount?: number };
+    stats: { projectCount: number; totalBackers: number, totalAmount: number };
     isFollowed: boolean;
     followerCount: number;
     lastLogin: Date;

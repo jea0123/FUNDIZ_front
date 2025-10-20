@@ -186,6 +186,7 @@ export const endpoints = {
   postCreatorNews: (projectId: number) => `creator/projects/${projectId}/news`,
   getFollowerCnt: (creatorId: number) => `creator/followerCnt/${creatorId}`,
 
+  getTotalCounts: (creatorId: number) => `creator/totalCounts/${creatorId}`,
   getCreatorSummary: (creatorId: number) => `creator/summary/${creatorId}`,
   getCreatorProjects: (creatorId: number, sort: string, page: number, size: number) => `creator/projectsList/${creatorId}?${toQueryString({ sort, page, size })}`,
   getCreatorReviews: (creatorId: number, p: SearchReviewsParams) => `creator/reviews/${creatorId}?${toQueryString({ lastId: p.lastId, lastCreatedAt: p.lastCreatedAt ? p.lastCreatedAt.toISOString() : undefined, projectId: p.projectId, photoOnly: p.photoOnly, size: p.size })}`,

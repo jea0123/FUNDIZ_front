@@ -150,6 +150,14 @@ export default function CreatorReviews({ creatorId }: Props) {
 
     return (
         <>
+            {loading && (
+                <div className="flex items-center justify-center py-6 text-muted-foreground">
+                    <Loader2 className="animate-spin mr-2" /> 불러오는 중…
+                </div>
+            )}
+            {items.length === 0 && !loading && (
+                <div className="text-center text-sm text-muted-foreground py-6">후기가 없어요.</div>
+            )}
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <div className="text-sm text-muted-foreground">총 {totalCount}개</div>
@@ -196,9 +204,7 @@ export default function CreatorReviews({ creatorId }: Props) {
                                         {new Date(rv.createdAt).toLocaleDateString()}
                                     </div>
                                 </div>
-
                                 <p className="mt-3 text-[15px] leading-7 whitespace-pre-line">{rv.cmContent}</p>
-
                                 {rv.images?.length > 0 && (
                                     <div className="mt-4 grid grid-cols-7 gap-2">
                                         {rv.images.map((src, idx) => (
@@ -218,7 +224,6 @@ export default function CreatorReviews({ creatorId }: Props) {
                                         ))}
                                     </div>
                                 )}
-
                                 <a
                                     href={`/project/${rv.project.projectId}`}
                                     className="mt-5 flex items-center gap-3 w-fit rounded-md border p-2 pr-3 hover:bg-muted/50 transition-colors"
@@ -234,16 +239,7 @@ export default function CreatorReviews({ creatorId }: Props) {
                         </div>
                     </Card>
                 ))}
-
                 <div ref={sentinelRef} />
-                {loading && (
-                    <div className="flex items-center justify-center py-6 text-muted-foreground">
-                        <Loader2 className="animate-spin mr-2" /> 불러오는 중…
-                    </div>
-                )}
-                {items.length === 0 && !loading && (
-                    <div className="text-center text-sm text-muted-foreground py-6">후기가 없어요.</div>
-                )}
             </div>
 
             <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
@@ -263,7 +259,6 @@ export default function CreatorReviews({ creatorId }: Props) {
                             </Button>
                         </DialogClose>
                     </div>
-
                     <div className="relative w-full h-full flex items-center justify-center">
                         <img
                             key={lightboxImages[lightboxIndex]}

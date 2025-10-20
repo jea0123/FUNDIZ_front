@@ -16,6 +16,11 @@ export default function CreatorPage() {
     const { creatorId: idParam } = useParams();
     const creatorId = Number(idParam || 250);
 
+    const [totalCounts, setTotalCounts] = useState<{
+        totalReviews: number;
+        totalProjects: number;
+        totalFollowers: number;
+    } | null>(null);
     const [summary, setSummary] = useState<CreatorSummary | null>(null);
     const [loading, setLoading] = useState(true);
     const [followLoading, setFollowLoading] = useState(false);
@@ -36,8 +41,16 @@ export default function CreatorPage() {
         }
     }, [creatorId]);
 
+    const fetchTotalCounts = useCallback(async () => {
+        const res = await getData(endpoints.getTotalCounts(creatorId));
+        if (res.status === 200) {
+            setTotalCounts(res.data);
+        }
+    }, [creatorId]);
+
     useEffect(() => {
         fetchSummary();
+        fetchTotalCounts();
     }, [fetchSummary]);
 
     const handleFollow = async () => {
@@ -83,14 +96,26 @@ export default function CreatorPage() {
     }
 
     return (
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        <div className="w-[1232px] mx-auto py-8 space-y-8">
             <CreatorHeader data={summary} onFollow={handleFollow} onUnfollow={handleUnfollow} followLoading={followLoading} unfollowLoading={unfollowLoading} />
 
             <Tabs defaultValue="projects" className="w-full">
                 <TabsList className="grid grid-cols-4 w-full">
-                    <TabsTrigger value="projects">올린 프로젝트</TabsTrigger>
-                    <TabsTrigger value="reviews">후기/커뮤니티</TabsTrigger>
-                    <TabsTrigger value="followers">팔로워</TabsTrigger>
+                    <TabsTrigger value="projects">올린 프로젝트
+                        <span className="ml-1 text-xs text-muted-foreground">
+                            {totalCounts?.totalProjects}
+                        </span>
+                    </TabsTrigger>
+                    <TabsTrigger value="reviews">후기/커뮤니티
+                        <span className="ml-1 text-xs text-muted-foreground">
+                            {totalCounts?.totalReviews}
+                        </span>
+                    </TabsTrigger>
+                    <TabsTrigger value="followers">팔로워
+                        <span className="ml-1 text-xs text-muted-foreground">
+                            {totalCounts?.totalFollowers}
+                        </span>
+                    </TabsTrigger>
                     <TabsTrigger value="profile">프로필</TabsTrigger>
                 </TabsList>
 

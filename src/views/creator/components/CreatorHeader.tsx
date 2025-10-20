@@ -2,7 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { CreatorSummary } from "@/types/creator";
-import { toastSuccess } from "@/utils/utils";
+import { formatNumber, toastSuccess } from "@/utils/utils";
 import { Share2, Plus, UserMinus, Loader2 } from "lucide-react";
 import { useMemo } from "react";
 
@@ -68,9 +68,9 @@ export default function CreatorHeader({ data, onFollow, onUnfollow, followLoadin
                     )}
 
                     <div className="mt-5 grid grid-cols-3 gap-6 max-w-[520px]">
-                        <StatBlock label="팔로워" value={String(data.followerCount)} link />
-                        <StatBlock label="누적 후원자" value={String(data.stats.totalBackers)} info />
-                        <StatBlock label="총 후원 금액" value={String(data.stats.totalAmount)} info />
+                        <StatBlock label="팔로워" value={formatNumber(data.followerCount)} link />
+                        <StatBlock label="누적 후원자" value={formatNumber(data.stats.totalBackers)} info />
+                        <StatBlock label="총 후원 금액" value={formatNumber(data.stats.totalAmount)} info />
                     </div>
                 </div>
 
