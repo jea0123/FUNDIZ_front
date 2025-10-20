@@ -135,7 +135,7 @@ export default function CreatorDashboard() {
   ];
 
   return (
-    <div className="max-w-[1750px] mx-auto px-2">
+    <div className="max-w-[1750px] mx-auto">
       <Card className="p-4 shadow-xl border border-gray-200 rounded-2xl bg-white">
         <CardHeader>
           <CardTitle className="text-3xl font-bold mb-4 text-gray-800">창작자 대시보드</CardTitle>
