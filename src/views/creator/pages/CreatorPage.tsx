@@ -25,7 +25,7 @@ export default function CreatorPage() {
     const [unfollowLoading, setUnfollowLoading] = useState(false);
     const [cookie] = useCookies();
 
-    const [activeTab, setActiveTab] = useState(() => localStorage.getItem(TAB_KEY) || "projects");
+    const [activeTab, setActiveTab] = useState(() => localStorage.getItem(TAB_KEY) || "profile");
 
     const handleTabChange = useCallback((val: string) => {
         setActiveTab(val);
@@ -110,6 +110,7 @@ export default function CreatorPage() {
 
             <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
                 <TabsList className="grid grid-cols-4 w-full">
+                    <TabsTrigger value="profile">프로필</TabsTrigger>
                     <TabsTrigger value="projects">올린 프로젝트
                         <span className="ml-1 text-xs text-muted-foreground">{totalCounts?.totalProjects}</span>
                     </TabsTrigger>
@@ -119,7 +120,6 @@ export default function CreatorPage() {
                     <TabsTrigger value="followers">팔로워
                         <span className="ml-1 text-xs text-muted-foreground">{totalCounts?.totalFollowers}</span>
                     </TabsTrigger>
-                    <TabsTrigger value="profile">프로필</TabsTrigger>
                 </TabsList>
                 <TabsContent value="projects" className="pt-6"><CreatorProjects creatorId={creatorId} /></TabsContent>
                 <TabsContent value="reviews" className="pt-6"><CreatorReviews creatorId={creatorId} /></TabsContent>

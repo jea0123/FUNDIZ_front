@@ -88,6 +88,8 @@ export default function App() {
 
     if (cookie.accessToken) {
       getData(endpoints.getLoginUser, cookie.accessToken).then(getLoginUserResponse);
+    } else {
+      resetLoginUser();
     }
   }, [cookie.accessToken]);
 
@@ -98,7 +100,6 @@ export default function App() {
         {/* <Layout /> */}
         <Routes>
           <Route element={<Layout />}>
-            <Route path="/c" element={<CreatorPage />} />
             <Route path="/" element={<MainPage />} />
 
             <Route path="/auth">
@@ -130,6 +131,7 @@ export default function App() {
             </Route>
 
             <Route path="/creator/register" element={<RegisterCreator />} />
+            <Route path="/creator/:creatorId" element={<CreatorPage />} />
             <Route path="/creator" element={<CreatorLayout />}>
               <Route index element={<CreatorDashboard />} />
               <Route path="dashboard" element={<CreatorDashboard />} />
