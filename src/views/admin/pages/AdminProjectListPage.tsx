@@ -52,13 +52,13 @@ export function AdminProjectListPage() {
     const [error, setError] = useState<string | null>(null);
 
     const {
-        page, size, perGroup, projectStatuses, rangeType, bindPagination,
-        setPage, setProjectStatuses, setRangeType,
+        page, size, perGroup, projectStatus, rangeType, bindPagination,
+        setPage, setProjectStatus, setRangeType,
     } = useListQueryState();
 
     /* ----------------------------- Stage & Result ----------------------------- */
     const initialStage: Stage = useMemo(() => {
-        const tokens = (projectStatuses ?? []) as ProjectStatus[];
+        const tokens = (projectStatus ?? []) as ProjectStatus[];
         const has = (s: ProjectStatus | ProjectStatus[]) =>
             (Array.isArray(s) ? s : [s]).some(x => tokens.includes(x));
 
@@ -68,7 +68,7 @@ export function AdminProjectListPage() {
         if (has("OPEN")) return "open";
         if (has("UPCOMING")) return "upcoming";
         return "all";
-    }, [projectStatuses]);
+    }, [projectStatus]);
 
     const [stage, setStage] = useState<Stage>(initialStage);
     const [closedResult, setClosedResult] = useState<ClosedResult>("ALL");
@@ -81,24 +81,24 @@ export function AdminProjectListPage() {
         setRangeType("");
 
         if (next === "all") {
-            setProjectStatuses(undefined);
+            setProjectStatus(undefined);
         } else if (next === "closed") {
-            setProjectStatuses(
+            setProjectStatus(
                 nextClosedResult === "ALL" ? [...STAGE_STATUS_MAP.closed] : [nextClosedResult]
             );
         } else {
-            setProjectStatuses([...STAGE_STATUS_MAP[next]]);
+            setProjectStatus([...STAGE_STATUS_MAP[next]]);
         }
     };
 
     /* ------------------------------------ URL ------------------------------------ */
     // 현재 선택된 상태(배열)
-    const selectedStatuses: string[] = useMemo(() => {
+    const selectedStatuses: ProjectStatus[] = useMemo(() => {
         if (stage === "all") return [];
         if (stage === "closed") {
             return closedResult === "ALL"
                 ? STAGE_STATUS_MAP.closed.slice()
-                : [closedResult];
+                : [closedResult as ProjectStatus];
         }
         return STAGE_STATUS_MAP[stage].slice();
     }, [stage, closedResult]);

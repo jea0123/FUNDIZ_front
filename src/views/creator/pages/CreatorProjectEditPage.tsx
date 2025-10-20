@@ -53,9 +53,9 @@ const PROJECT_RULES = {
     MAX_DAYS: 60,
     MIN_START_LEAD_DAYS: 7,
     MAX_THUMBNAIL_LEN: 500,
-    MAX_TAGS: 10,
+    MAX_TAGS: 3,
     MIN_TAG_LEN: 2,
-    MAX_TAG_LEN: 20,
+    MAX_TAG_LEN: 15,
 } as const;
 
 const DAY = 1000 * 60 * 60 * 24;
@@ -140,6 +140,7 @@ const validateProject = (p: CreateProjectViewModel & {
     const tags = cleanTags(p.tagList);
     if (tags.length > R.MAX_TAGS) errors.tagList = `태그는 최대 ${R.MAX_TAGS}개까지 가능합니다.`;
     if (tags.some(t => t.trim().length < R.MIN_TAG_LEN)) errors.tagList = `태그는 최소 ${R.MIN_TAG_LEN}자 이상이어야 합니다.`;
+    if (tags.some(t => t.trim().length > R.MAX_TAG_LEN)) errors.tagList = `태그는 최대 ${R.MAX_TAG_LEN}자 이하이어야 합니다.`;
 
     // 2단계
     if (!p.goalAmount || p.goalAmount < R.MIN_GOAL_AMOUNT) {

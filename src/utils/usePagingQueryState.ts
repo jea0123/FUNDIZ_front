@@ -85,7 +85,7 @@ export function useListQueryState() {
     const { searchParams: sp, setSearchParams: setSP } = base;
 
     const rangeType = sp.get("rangeType") || "";
-    const projectStatuses = sp.getAll("projectStatus").filter(Boolean);
+    const projectStatus = sp.getAll("projectStatus").filter(Boolean);
 
     const setParam = (k: string, v?: string) => {
         const next = new URLSearchParams(sp);
@@ -95,7 +95,7 @@ export function useListQueryState() {
         setSP(next, { replace: true });
     };
     const setRangeType = (v?: string) => setParam("rangeType", v);
-    const setProjectStatuses = (arr?: string[]) => {
+    const setProjectStatus = (arr?: string[]) => {
         const next = new URLSearchParams(sp);
         next.delete("projectStatus"); // 기존 값 모두 제거
         if (arr && arr.length) {
@@ -110,8 +110,8 @@ export function useListQueryState() {
     return {
         ...base,
         rangeType,
-        projectStatuses,
+        projectStatus,
         setRangeType,
-        setProjectStatuses,
+        setProjectStatus,
     };
 }
