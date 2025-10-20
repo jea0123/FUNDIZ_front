@@ -11,6 +11,7 @@ import { endpoints, postData } from "@/api/apis";
 import { toastError, toastSuccess } from "@/utils/utils";
 import { useCookies } from "react-cookie";
 import { useNavigate } from "react-router-dom";
+import { Textarea } from "@/components/ui/textarea";
 
 export type CreatorType = "GENERAL" | "INDIVIDUAL" | "CORPORATION";
 
@@ -34,10 +35,11 @@ const schema = z.object({
         .optional()
         .transform((v) => (v ?? "").trim()),
     profileImg: z.any().optional(),
+    bio: z.string().max(500, "소개글은 최대 500자입니다")
+        .optional(),
 })
     .refine(
         (values) => {
-            // 사업자 유형이면 사업자번호 필수
             if ((values.creatorType === "INDIVIDUAL" || values.creatorType === "CORPORATION") && !values.businessNum) {
                 return false;
             }
@@ -67,6 +69,8 @@ export default function RegisterCreator() {
             bank: "",
             account: "",
             businessNum: "",
+            profileImg: undefined,
+            bio: "",
         },
         mode: "onBlur",
     });
@@ -92,6 +96,7 @@ export default function RegisterCreator() {
             fd.append("bank", values.bank);
             fd.append("account", values.account);
             if (values.businessNum) fd.append("businessNum", values.businessNum);
+            if (values.bio) fd.append("bio", values.bio);
 
             const file: File | undefined = (values as any).profileImg?.[0];
             if (file) fd.append("profileImg", file);
@@ -340,6 +345,28 @@ export default function RegisterCreator() {
                                     )}
                                 />
                             </div>
+
+                            {/* 소개글 */}
+                            <FormField
+                                control={form.control}
+                                name="bio"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>소개글</FormLabel>
+                                        <FormControl>
+                                            <Textarea
+                                                placeholder="최대 500자"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <div className={hintCls}>
+                                            {form.formState.errors.bio
+                                                ? <FormMessage />
+                                                : <FormDescription className="text-muted-foreground"></FormDescription>}
+                                        </div>
+                                    </FormItem>
+                                )}
+                            />
 
                             <div className="flex items-center justify-end gap-3 pt-2">
                                 <Button type="button" variant="outline" onClick={resetAll} >
