@@ -44,3 +44,9 @@ export interface PageResult<T> {
     groupStart: number;
     groupEnd: number;
 };
+
+export interface ReportStatusUpdateRequest{
+    reportId : number;
+    reason : string;
+    reportStatus : string;
+}

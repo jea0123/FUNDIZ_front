@@ -113,7 +113,6 @@ export function NoticeAdminTab() {
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead className="w-20">번호</TableHead>
                                             <TableHead>제목</TableHead>
                                             <TableHead className="w-30">조회수</TableHead>
                                             <TableHead className="w-45">작성일</TableHead>
@@ -123,7 +122,6 @@ export function NoticeAdminTab() {
                                     <TableBody>
                                         {items.map(n => (
                                             <TableRow key={n.noticeId}>
-                                                <TableCell className="font-medium">{n.noticeId}</TableCell>
                                                 <TableCell className="font-medium">
                                                     <a href={`/cs/notice/${n.noticeId}`}
                                                     target="_blank"

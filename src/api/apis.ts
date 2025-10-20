@@ -230,6 +230,7 @@ export const endpoints = {
   addNotice: 'admin/notice/add',
   updateNotice: (noticeId: number) => `admin/notice/update/${noticeId}`,
   deleteNotice: (noticeId: number) => `admin/notice/delete/${noticeId}`,
+  updateReportStatus: (reportId: number) => `admin/report/update/${reportId}`,
 
   // ==================== Category API ====================
   getCategories: 'categories',

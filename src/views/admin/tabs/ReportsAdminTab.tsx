@@ -23,6 +23,7 @@ import {
     TableBody,
     TableCell
 } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogClose } from '@/components/ui/dialog';
 import { Badge } from "@/components/ui/badge";
 import {
     Select,
@@ -32,16 +33,16 @@ import {
     SelectValue
 } from "@/components/ui/select";
 import { endpoints, getData, postData } from "@/api/apis";
-import type { Report, SearchRptParams } from "@/types/report";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import type { Report, ReportStatusUpdateRequest, SearchRptParams } from "@/types/report";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { formatDate } from '@/utils/utils';
 
-// ========= 공용 타입 (DB 스키마 기반) =========
 
-
-export type ReportStatus = {
-    reportStatus: 'RECEIVED' | 'PROCESSING' | 'DONE';
+const useQuery = () => {
+    return new URLSearchParams(useLocation().search);
 };
+
+export type ReportStatus = "RECEIVED" | "UNDER_REVIEW" | "COMPLETED";
 
 function useQueryState() {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -107,58 +108,130 @@ export function ReportsAdminTab() {
 
     const { page, size, perGroup, keyword, setPage } = useQueryState();
     const { items, total, setItems } = useReport({ page, size, perGroup, keyword });
-
+    
     return (
         <div>
             <div>
-                        <Card>
-                            <CardHeader className="flex items-center justify-between">
-                                <CardTitle>신고 내역</CardTitle>
-                                <div className="flex items-center gap-2">
-                                </div>
-                            </CardHeader>
-                            <CardContent>
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>사유</TableHead>
-                                            <TableHead className="w-36">유형</TableHead>
-                                            <TableHead className="w-28">신고자</TableHead>
-                                            <TableHead className="w-28">대상</TableHead>
-                                            <TableHead className="w-40">상태</TableHead>
-                                            <TableHead className="w-32">신고일</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {items.map(r => (
-                                            <TableRow key={r.reportId}>
-                                                <TableCell className="font-medium">{r.reason}</TableCell>
-                                                <TableCell>{r.reportType}</TableCell>
-                                                <TableCell>UID {r.userId}</TableCell>
-                                                <TableCell>TID {r.target}</TableCell>
-                                                <TableCell>
-                                                    <Select value={r.reportStatus} onValueChange={(v) => updateReportStatus(r.reportId, v as ReportStatus['reportStatus'])}>
-                                                        <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-                                                        <SelectContent>
-                                                            <SelectItem value="RECEIVED">접수</SelectItem>
-                                                            <SelectItem value="UNDER_REVIEW">검토중</SelectItem>
-                                                            <SelectItem value="COMPLETED">완료</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                </TableCell>
-                                                <TableCell className="text-zinc-500">{formatDate(r.reportDate)}</TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                                <div className="mt-4 flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <Pagination page={page} size={size} perGroup={perGroup} total={total} onPage={setPage} />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                <Card>
+                    <CardHeader className="flex items-center justify-between">
+                        <CardTitle>신고 내역</CardTitle>
+                        <div className="flex items-center gap-2">
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>사유</TableHead>
+                                    <TableHead className="w-36">유형</TableHead>
+                                    <TableHead className="w-28">신고자</TableHead>
+                                    <TableHead className="w-28">대상</TableHead>
+                                    <TableHead className="w-40">상태</TableHead>
+                                    <TableHead className="w-32">신고일</TableHead>
+                                    <TableHead>수정</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {items.map(r => (
+                                    <TableRow key={r.reportId}>
+                                        <TableCell className="font-medium">{r.reason}</TableCell>
+                                        <TableCell>{r.reportType}</TableCell>
+                                        <TableCell>UID {r.userId}</TableCell>
+                                        <TableCell>TID {r.target}</TableCell>
+                                        <TableCell>{r.reportStatus}</TableCell>
+                                        <TableCell className="text-zinc-500">{formatDate(r.reportDate)}</TableCell>
+                                        <TableCell>
+                                            <ReportStatusEditModal reportId={r.reportId} />
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                        <div className="mt-4 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Pagination page={page} size={size} perGroup={perGroup} total={total} onPage={setPage} />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
+        </div>
+    );
+}
+
+interface ReportStatusEditModalProps {
+    reportId: number;
+}
+
+export function ReportStatusEditModal({ reportId }: ReportStatusEditModalProps) {
+    
+    const [isOpen, setIsOpen] = useState(false);
+    const [rptStatusUpdt, setRptStatusUpdt] = useState<ReportStatusUpdateRequest>({
+            reportId: Number(reportId),
+            reason: "",
+            reportStatus: "", 
+    });
+    
+    const fetchRptStatus = async () => {
+        const response = await getData(endpoints.getReportDetail(Number(reportId)));
+        if (response.status === 200) {
+            setRptStatusUpdt(response.data);
+        }
+        console.log(response.data);
+    };
+    
+    useEffect(() => {
+        fetchRptStatus();
+    }, [reportId]);
+
+    const handleRptUpdt = async () => {
+        const url = endpoints.updateReportStatus(Number(reportId));
+        const response = await postData(url, rptStatusUpdt);
+        if (response.status === 200) {
+            alert("신고 내역 상태가 수정되었습니다.");
+            setIsOpen(false);
+            window.location.reload();
+        } else {
+            alert("신고 내역 상태 수정 실패");
+            return false;
+    }
+    };
+
+
+    return (
+        <div>
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+                <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">수정</Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>신고내역 페이지</DialogTitle>
+                    </DialogHeader>
+                    <DialogDescription>
+                        관리자용 신고내역 내용 & 상태 변경 페이지입니다.
+                    </DialogDescription>
+                    <div className="space-y-3">
+                        <Label className="mb-1 block">내용</Label>
+                        <div>{rptStatusUpdt.reason}</div>
+                        <Label className="mb-1 block">접수 상태</Label>
+                        <Select value={rptStatusUpdt.reportStatus} onValueChange={e => setRptStatusUpdt({ ...rptStatusUpdt, reportStatus: e })}>
+                                <SelectTrigger><SelectValue placeholder="분류 선택" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="RECEIVED">접수</SelectItem>
+                                    <SelectItem value="UNDER_REVIEW">검토중</SelectItem>
+                                    <SelectItem value="COMPLETED">완료</SelectItem>
+                                </SelectContent>
+                            </Select>
+                    </div>
+                    <div className="mt-4 flex justify-end gap-2">
+                        <DialogClose asChild>
+                            <Button variant="outline">취소</Button>
+                        </DialogClose>
+                        <Button onClick={handleRptUpdt}>수정</Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
