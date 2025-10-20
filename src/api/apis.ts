@@ -190,6 +190,7 @@ export const endpoints = {
   getCreatorProjects: (creatorId: number, sort: string, page: number, size: number) => `creator/projectsList/${creatorId}?${toQueryString({ sort, page, size })}`,
   getCreatorReviews: (creatorId: number, p: SearchReviewsParams) => `creator/reviews/${creatorId}?${toQueryString({ lastId: p.lastId, lastCreatedAt: p.lastCreatedAt ? p.lastCreatedAt.toISOString() : undefined, projectId: p.projectId, photoOnly: p.photoOnly, size: p.size })}`,
   getCreatorFollowers: (creatorId: number, page: number, size: number) => `creator/followers/${creatorId}?${toQueryString({ page, size })}`,
+  getCreatorBio: (creatorId: number) => `creator/bio/${creatorId}`,
 
   // ==================== Project API ====================
   getFeatured: 'project/featured',

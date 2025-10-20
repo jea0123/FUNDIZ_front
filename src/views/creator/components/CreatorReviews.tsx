@@ -7,21 +7,7 @@ import { Loader2, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { endpoints, getData } from "@/api/apis";
-import type { SearchReviewsParams } from "@/types/community";
-
-interface ReviewItem {
-    cmId: number;
-    cmContent: string;
-    createdAt: string;
-    user: { userId: number | null; nickname: string; profileImg?: string };
-    project: { projectId: number; title: string; thumbnail?: string };
-    images: string[];
-}
-
-interface ReviewCursor {
-    lastId?: number;
-    lastCreatedAt?: string;
-}
+import type { ReviewCursor, ReviewItem, SearchReviewsParams } from "@/types/community";
 
 type Props = { creatorId: number };
 

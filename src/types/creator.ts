@@ -159,3 +159,38 @@ export interface CreatorInfo {
     businessNum: string;
     profileImg: string;
 }
+
+export interface FollowerItem {
+    userId: number;
+    nickname: string;
+    userProfileImg?: string | null;
+    followDate: string;
+
+    creatorId?: number | null;
+    creatorName?: string | null;
+    creatorProfileImg?: string | null;
+
+    canFollow: boolean;
+    creator: boolean;
+    following: boolean;
+};
+
+export interface CreatorSummary {
+    creator: { creatorId: number; creatorName: string; profileImg?: string | null; bio?: string };
+    stats: { projectCount: number; totalBackers: number, totalAmount?: number };
+    isFollowed: boolean;
+    followerCount: number;
+    lastLogin: Date;
+};
+
+export interface ProjectCard {
+    projectId: number;
+    title: string;
+    thumbnail: string;
+    currAmount: number;
+    goalAmount: number;
+    backerCnt: number;
+    projectStatus: "OPEN" | "SUCCESS" | "FAILED" | "SETTLED" | "CLOSED";
+    createdAt: string;
+    isSuccess?: boolean;
+};

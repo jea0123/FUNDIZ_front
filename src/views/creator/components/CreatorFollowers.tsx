@@ -6,21 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { PageResult } from "@/types/projects";
 import { deleteData, endpoints, getData, postData } from "@/api/apis";
 import { toastSuccess } from "@/utils/utils";
-
-export type FollowerItem = {
-    userId: number;
-    nickname: string;
-    userProfileImg?: string | null;
-    followDate: string;
-
-    creatorId?: number | null;
-    creatorName?: string | null;
-    creatorProfileImg?: string | null;
-
-    canFollow: boolean;
-    creator: boolean;
-    following: boolean;
-};
+import type { FollowerItem } from "@/types/creator";
 
 type Props = { creatorId: number };
 
@@ -30,10 +16,7 @@ export default function CreatorFollowers({ creatorId }: Props) {
     const size = 20;
 
     const total = result?.totalElements ?? 0;
-    const totalPages = useMemo(
-        () => Math.max(1, Math.ceil(total / size)),
-        [total, size]
-    );
+    const totalPages = useMemo(() => Math.max(1, Math.ceil(total / size)), [total, size]);
 
     const [rowLoading, setRowLoading] = useState<Record<number, boolean>>({});
 
@@ -65,9 +48,7 @@ export default function CreatorFollowers({ creatorId }: Props) {
             if (res.status === 200) {
                 setResult(prev => {
                     if (!prev) return prev;
-                    const updated = prev.items.map(it =>
-                        it.userId === item.userId ? { ...it, following: true } : it
-                    );
+                    const updated = prev.items.map(it => it.userId === item.userId ? { ...it, following: true } : it);
                     return { ...prev, items: updated };
                 });
                 toastSuccess("팔로우를 추가했어요.");
@@ -87,9 +68,7 @@ export default function CreatorFollowers({ creatorId }: Props) {
             if (res.status === 200) {
                 setResult(prev => {
                     if (!prev) return prev;
-                    const updated = prev.items.map(it =>
-                        it.userId === item.userId ? { ...it, following: false } : it
-                    );
+                    const updated = prev.items.map(it => it.userId === item.userId ? { ...it, following: false } : it);
                     return { ...prev, items: updated };
                 });
                 toastSuccess("팔로우를 취소했어요.");
@@ -172,23 +151,11 @@ export default function CreatorFollowers({ creatorId }: Props) {
             </Card>
 
             <div className="flex items-center justify-center gap-2">
-                <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={page === 1}
-                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                >
+                <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>
                     이전
                 </Button>
-                <span className="text-xs text-muted-foreground">
-                    페이지 {page} / {totalPages}
-                </span>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage(p => p + 1)}
-                >
+                <span className="text-xs text-muted-foreground">페이지 {page} / {totalPages}</span>
+                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
                     다음
                 </Button>
             </div>
