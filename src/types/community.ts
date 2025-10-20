@@ -28,3 +28,25 @@ export interface CursorPage<T> {
     items: T[];
     nextCursor: Cursor | null;
 }
+
+export interface SearchReviewsParams {
+    lastId?: number | null;
+    lastCreatedAt?: Date | null;
+    projectId?: number | null;
+    photoOnly?: boolean;
+    size: number;
+}
+
+export interface ReviewItem {
+    cmId: number;
+    cmContent: string;
+    createdAt: string;
+    user: { userId: number | null; nickname: string; profileImg?: string };
+    project: { projectId: number; title: string; thumbnail?: string };
+    images: string[];
+}
+
+export interface ReviewCursor {
+    lastId?: number;
+    lastCreatedAt?: string;
+}
