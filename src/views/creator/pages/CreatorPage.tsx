@@ -13,7 +13,7 @@ import { toastError, toastSuccess } from "@/utils/utils";
 
 export default function CreatorPage() {
     const { creatorId: idParam } = useParams();
-    const creatorId = Number(idParam || 1);
+    const creatorId = Number(idParam || 250);
 
     const [summary, setSummary] = useState<CreatorSummary | null>(null);
     const [loading, setLoading] = useState(true);

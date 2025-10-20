@@ -7,6 +7,7 @@ import type { SearchQnaParams } from '@/types/qna';
 import ky from 'ky';
 import type { SearchSettlementParams } from '@/types/settlement';
 import type { SearchUserParams } from '@/types/users';
+import type { SearchReviewsParams } from '@/types/community';
 
 //TODO: 모듈 전역 오버라이드 값 (훅에서 주입)
 let _devCreatorIdOverride: string | null = null;
@@ -186,6 +187,7 @@ export const endpoints = {
 
   getCreatorSummary: (creatorId: number) => `creator/summary/${creatorId}`,
   getCreatorProjects: (creatorId: number, sort: string, page: number, size: number) => `creator/projectsList/${creatorId}?${toQueryString({ sort, page, size })}`,
+  getCreatorReviews: (creatorId: number, p: SearchReviewsParams) => `creator/reviews/${creatorId}?${toQueryString({ lastId: p.lastId, lastCreatedAt: p.lastCreatedAt ? p.lastCreatedAt.toISOString() : undefined, projectId: p.projectId, photoOnly: p.photoOnly, size: p.size })}`,
 
   // ==================== Project API ====================
   getFeatured: 'project/featured',

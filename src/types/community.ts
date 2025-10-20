@@ -28,3 +28,11 @@ export interface CursorPage<T> {
     items: T[];
     nextCursor: Cursor | null;
 }
+
+export interface SearchReviewsParams {
+    lastId?: number | null;
+    lastCreatedAt?: Date | null;
+    projectId?: number | null;
+    photoOnly?: boolean;
+    size: number;
+}
