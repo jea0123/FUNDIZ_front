@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Siren, Star } from "lucide-react";
 import { endpoints, getData } from "@/api/apis";
-import { getDaysBefore } from "@/utils/utils";
+import { getDaysBefore, toPublicUrl } from "@/utils/utils";
 import type { Cursor, CursorPage, ReviewDto } from "@/types/community";
 
 type Props = {
@@ -15,6 +15,7 @@ export default function ProjectReviewsTab({ projectId, active = false }: Props) 
     /* ----------------------------- Refs ----------------------------- */
     const reviewSentinelRef = useRef<HTMLDivElement | null>(null);
     const reviewLoadingLockRef = useRef(false);
+    const hasLoadedRef = useRef(false);
 
     /* ----------------------------- State ---------------------------- */
     const [review, setReview] = useState<ReviewDto[]>([]);
@@ -56,10 +57,12 @@ export default function ProjectReviewsTab({ projectId, active = false }: Props) 
     /* ---------------------------- Effects --------------------------- */
     // 최초/프로젝트 변경 시 초기 로드
     useEffect(() => {
+        if (!active || hasLoadedRef.current) return;
         setReview([]);
         setReviewCursor(null);
         reviewData(null);
-    }, [projectId, reviewData]);
+        hasLoadedRef.current = true;
+    }, [active, projectId, reviewData]);
 
     // 후기 무한스크롤
     useEffect(() => {
@@ -87,7 +90,12 @@ export default function ProjectReviewsTab({ projectId, active = false }: Props) 
     /* ---------------------------- Render ---------------------------- */
     return (
         <>
-            {review.length === 0 ? (
+            {(loadingReview && (!Array.isArray(review) || review.length === 0)) ? (
+                <div className="mt-4 space-y-2">
+                    <div className="h-20 animate-pulse rounded-xl bg-gray-100" />
+                    <div className="h-20 animate-pulse rounded-xl bg-gray-100" />
+                </div>
+            ) : (!Array.isArray(review) || review.length === 0) ? (
                 <div className="mt-4 rounded-lg border p-6 text-center">
                     <p className="text-sm text-muted-foreground">게시글이 존재하지 않습니다.</p>
                 </div>
@@ -99,13 +107,13 @@ export default function ProjectReviewsTab({ projectId, active = false }: Props) 
                                 <CardContent className="pt-6">
                                     <div className="flex items-start space-x-3">
                                         <Avatar className="w-8 h-8">
-                                            {rv.profileImg ? <AvatarImage src={rv.profileImg} /> : null}
+                                            <AvatarImage src={toPublicUrl(rv.profileImg)} />
                                             <AvatarFallback>{(rv.nickname ?? "U").slice(0, 2)}</AvatarFallback>
                                         </Avatar>
                                         <div className="flex-1">
                                             <div className="flex items-center space-x-2 mb-1">
                                                 <span className="font-medium">{rv.nickname}</span>
-                                                <a href="/cs/report"><Siren className="w-4 h-4"/></a>
+                                                <a href="/cs/report"><Siren className="w-4 h-4" /></a>
                                                 <div className="flex items-center">
                                                     {Array.from({ length: rv.rating }).map((_, i) => (
                                                         <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
