@@ -28,7 +28,7 @@ export function NoticeDetailPage() {
         }, []);
 
     return (
-        <div className="min-h-screen bg-zinc-50">
+        <div className="min-h-screen bg-white-50">
             <Card>
                 <CardContent>
                     <div className="text-2xl font-bold">{noticeDetail?.title}</div>

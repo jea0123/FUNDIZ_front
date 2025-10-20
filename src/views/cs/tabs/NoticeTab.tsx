@@ -91,9 +91,8 @@ export function NoticeTab() {
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead className="w-24">번호</TableHead>
                                             <TableHead>제목</TableHead>
-                                            <TableHead className="w-24">조회수</TableHead>
+                                            <TableHead className="w-40">조회수</TableHead>
                                             <TableHead className="w-40">등록일</TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -105,7 +104,6 @@ export function NoticeTab() {
                                         ) : (<>
                                         {items.map((ntc) => (
                                             <TableRow key={ntc.noticeId}>
-                                                <TableCell>{ntc.noticeId}</TableCell>
                                                 <TableCell><a href={`/cs/notice/${ntc.noticeId}`}>{ntc.title}</a></TableCell>
                                                 <TableCell>{ntc.viewCnt}</TableCell>
                                                 <TableCell className="text-zinc-500">{formatDate(ntc.createdAt)}</TableCell>
