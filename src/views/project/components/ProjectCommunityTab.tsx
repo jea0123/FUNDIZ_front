@@ -49,9 +49,6 @@ export default function ProjectCommunityTab({ projectId, active = false, ensureL
     /* ---------------------------- Derived --------------------------- */
     const replyText = useCallback((id: number) => (typeof replyInput?.[id] === "string" ? replyInput[id] : ""), [replyInput]);
 
-    const profileImgUrl = useMemo(() =>
-        community.map((cm) => toPublicUrl(cm.profileImg)).filter((img): img is string => !!img), [community]);
-
     /* --------------------------- Fetchers --------------------------- */
     const communityData = useCallback(
         async (cursor: Cursor | null) => {
@@ -352,7 +349,7 @@ export default function ProjectCommunityTab({ projectId, active = false, ensureL
                                 <CardContent className="pt-6">
                                     <div className="flex items-start space-x-3">
                                         <Avatar className="w-8 h-8">
-                                            <AvatarImage src={cm.profileImg ?? undefined} />
+                                            <AvatarImage src={toPublicUrl(cm.profileImg)} />
                                             <AvatarFallback>{(cm.nickname ?? "U").slice(0, 2)}</AvatarFallback>
                                         </Avatar>
                                         <div className="flex-1 min-w-0">
