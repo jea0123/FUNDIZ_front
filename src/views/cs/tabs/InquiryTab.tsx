@@ -9,83 +9,79 @@ import { Label } from "@/components/ui/label";
 import { endpoints, postData } from "@/api/apis";
 import type { IqrAddRequest } from "@/types/inquiry";
 import { useNavigate } from "react-router-dom";
-
-
-    
+import { useCookies } from "react-cookie";
 
 export function InquiryTab() {
 
+    const [cookie] = useCookies();
     const navigate = useNavigate();
 
-    const tempUserId = 4;
-
     const [inqAdd, setInqAdd] = useState<IqrAddRequest>({
-        userId: tempUserId,
-        title : "",
-        content : "",
-        createdAt : new Date(Date.now()),
-        isCanceled : "N",
-        ctgr : "",
-        isAnswer : "N"
+        title: "",
+        content: "",
+        createdAt: new Date(Date.now()),
+        isCanceled: "N",
+        ctgr: "",
+        isAnswer: "N"
     });
 
     const handleInqAdd = async () => {
-            const response = await postData(endpoints.addInquiry(tempUserId), inqAdd);
-            if (response.status === 200) {
-              alert("문의사항이 등록되었습니다.");
-            } else {
-              alert("문의사항 등록 실패");
-              return false;
-            }
+        const response = await postData(endpoints.addInquiry, inqAdd, cookie.accessToken);
+        if (response.status === 200) {
+            alert("문의사항이 등록되었습니다.");
+        } else {
+            alert("문의사항 등록 실패");
+            return false;
+        }
 
-            navigate('/user/myinquiry');
-          };
+        navigate('/user/myinquiry');
+    };
 
     return (
-            <Card className="lg:col-span-2">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-2xl"><MessagesSquare className="w-6 h-6" /> 1:1 문의</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-                        <div>
-                            <Label className="mb-1 block">유형</Label>
-                            <Select value={inqAdd.ctgr} onValueChange={e => setInqAdd({ ...inqAdd, ctgr: e })}>
-                                <SelectTrigger><SelectValue placeholder="분류 선택" /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="GENERAL">일반</SelectItem>
-                                    <SelectItem value="ACCOUNT">회원/계정</SelectItem>
-                                    <SelectItem value="PAYMENT/REFUNDS">결제/환불</SelectItem>
-                                    <SelectItem value="SHIPPING/DELIVERY">배송/수령</SelectItem>
-                                    <SelectItem value="BACKING">후원</SelectItem>
-                                    <SelectItem value="PROJECT/REWARDS">프로젝트/리워드</SelectItem>
-                                    <SelectItem value="OTHER">기타</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div>
-                            <Label className="mb-1 block">제목</Label>
-                            <Input
-                                type="text"
-                                value={inqAdd.title}
-                                onChange={e => setInqAdd({ ...inqAdd, title: e.target.value })}
-                                placeholder="제목을 입력하세요"
-                            />
-                        </div>
-                        <div>
-                            <Label className="mb-1 block">내용</Label>
-                            <Textarea
-                                value={inqAdd.content}
-                                onChange={e => setInqAdd({ ...inqAdd, content: e.target.value })}
-                                rows={20}
-                                placeholder="문의 사항을 입력하세요" />
-                        </div>
-                        <div className="flex justify-content-end">
-                            <Button onClick={handleInqAdd} className="flex items-center gap-2"><Send className="w-4 h-4" /> 제출</Button>
-                        </div>
+        <Card className="lg:col-span-2">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-2xl"><MessagesSquare className="w-6 h-6" /> 1:1 문의</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                    <div>
+                        <Label className="mb-1 block">유형</Label>
+                        <Select value={inqAdd.ctgr} onValueChange={e => setInqAdd({ ...inqAdd, ctgr: e })}>
+                            <SelectTrigger><SelectValue placeholder="분류 선택" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="GENERAL">일반</SelectItem>
+                                <SelectItem value="ACCOUNT">회원/계정</SelectItem>
+                                <SelectItem value="PAYMENT/REFUNDS">결제/환불</SelectItem>
+                                <SelectItem value="SHIPPING/DELIVERY">배송/수령</SelectItem>
+                                <SelectItem value="BACKING">후원</SelectItem>
+                                <SelectItem value="PROJECT/REWARDS">프로젝트/리워드</SelectItem>
+                                <SelectItem value="OTHER">기타</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
-                </CardContent>
-            </Card>
+                    <div>
+                        <Label className="mb-1 block">제목</Label>
+                        <Input
+                            type="text"
+                            value={inqAdd.title}
+                            onChange={e => setInqAdd({ ...inqAdd, title: e.target.value })}
+                            placeholder="제목을 입력하세요"
+                        />
+                    </div>
+                    <div>
+                        <Label className="mb-1 block">내용</Label>
+                        <Textarea
+                            value={inqAdd.content}
+                            onChange={e => setInqAdd({ ...inqAdd, content: e.target.value })}
+                            rows={20}
+                            placeholder="문의 사항을 입력하세요" />
+                    </div>
+                    <div className="flex justify-content-end">
+                        <Button onClick={handleInqAdd} className="flex items-center gap-2"><Send className="w-4 h-4" /> 제출</Button>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
     );
 }
 

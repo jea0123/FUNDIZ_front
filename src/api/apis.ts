@@ -145,12 +145,10 @@ export const endpoints = {
 
   // ==================== User API ====================
   getLoginUser: 'user/loginUser',
-  getMypage: (userId: number) => `user/userPage/${userId}`,
-  getLikedList: (userId: number) => `user/likedList/${userId}`,
-  getQnAListOfUser: (userId: number, p: SearchQnaParams) => `user/qna/${userId}?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup })}`,
+  getLikedList: 'user/likedList',
+  getQnAListOfUser: (p: SearchQnaParams) => `user/qna?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup })}`,
   addRecentView: (projectId: number) => `user/recentView/${projectId}`,
   getRecentView: (limit?: number) => `user/recentViewProjects?${toQueryString({ limit })}`,
-  getQnAListDetail: (userId: number, projectId: number) => `user/QnAListDetail/${userId}/project/${projectId}`,
   updateNickname: 'user/nickname',
   updateProfileImg: 'user/profileImg',
   changePassword: 'user/password',
@@ -166,7 +164,7 @@ export const endpoints = {
   getCreatorProjectList: (p: SearchCreatorProjectDto) => `creator/projects?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, projectStatus: p.projectStatus && p.projectStatus.length ? p.projectStatus : undefined, rangeType: p.rangeType || undefined })}`,
   registerCreator: 'creator/register',
   getCreatorInfo: 'creator/info',
-  updateCreatorInfo: (creatorId: number) => `creator/update/${creatorId}`,
+  updateCreatorInfo: 'creator/update',
   getCreatorProjectDetail: (projectId: number) => `creator/projects/${projectId}`,
   getCreatorProjectSummary: (projectId: number) => `creator/projects/${projectId}/summary`,
   createProject: 'creator/project/new',
@@ -203,7 +201,7 @@ export const endpoints = {
   getReplyList: (cmId: number) => `project/community/${cmId}/reply`,
   postReply: (cmId: number) => `project/community/${cmId}/reply`,
   getQnaListOfProject: (projectId: number) => `project/${projectId}/qna`,
-  addQuestion: (projectId: number, userId: number) => `project/${projectId}/qna/${userId}/add`,
+  addQuestion: (projectId: number) => `project/${projectId}/qna/add`,
   getLikeCnt: (projectId: number) => `project/${projectId}/likeCnt`,
   getCounts: (projectId: number) => `project/${projectId}/counts`,
 
@@ -212,22 +210,20 @@ export const endpoints = {
   addQnaReply: (qnaId: number) => `qna/reply/${qnaId}`,
 
   // ==================== Shipping API ====================
-  getAddressList: (userId: number) => `shipping/${userId}/list`,
-  updateAddress: (userId: number, addrId: number) => `shipping/${userId}/update/${addrId}`,
-  createAddress: (userId: number) => `shipping/${userId}/add`,
-  deleteAddress: (userId: number, addrId: number) => `shipping/${userId}/delete/${addrId}`,
-  setAddressDefault: (userId: number, addrId: number) => `shipping/${userId}/defaultAddr/${addrId}`,
+  getAddressList: 'shipping/list',
+  updateAddress: (addrId: number) => `shipping/update/${addrId}`,
+  createAddress: 'shipping/add',
+  deleteAddress: (addrId: number) => `shipping/delete/${addrId}`,
+  setAddressDefault: (addrId: number) => `shipping/defaultAddr/${addrId}`,
 
   // ==================== Backing API ====================
-  getBackingList: (userId: number) => `backing/page/${userId}`,
-  getBackingDetail: (userId: number, projectId: number, rewardId: number, backingId: number) => `backing/page/${userId}/project/${projectId}/reward/${rewardId}/backing/${backingId}`,
-  //교체후보
-  getMypageBackingList: (userId: number) => `backing/myPageBackingList/${userId}`,
+  getBackingList: 'backing/page',
+  getMypageBackingList: 'backing/myPageBackingList',
   getMypageBackingDetail: (backingId: number) => `backing/myPageBackingDetail/${backingId}`,
   //여기까지
-  backingPrepare: (userId: number, projectId: number) => `backing/${userId}/create/${projectId}`,
-  addBacking: (userId: number) => `backing/create/${userId}`,
-  cancelBacking: (userId: number, backingId: number) => `backing/${userId}/cancel/${backingId}`,
+  backingPrepare: (projectId: number) => `backing/prepare/${projectId}`,
+  addBacking: 'backing/create',
+  cancelBacking: (backingId: number) => `backing/cancel/${backingId}`,
 
   // ==================== Admin API ====================
   getAdminAnalytics: (period: string, metric: string) => `admin/analytics?period=${period}&metric=${metric}`,
@@ -250,24 +246,24 @@ export const endpoints = {
   updateNotice: (noticeId: number) => `admin/notice/update/${noticeId}`,
   deleteNotice: (noticeId: number) => `admin/notice/delete/${noticeId}`,
   updateReportStatus: (reportId: number) => `admin/report/update/${reportId}`,
+  createCategory: 'admin/categories/create',
+  createSubcategory: 'admin/subcategories/create',
 
   // ==================== Category API ====================
   getCategories: 'categories',
   getSubcategories: 'categories/subcategories',
-  createCategory: 'categories/create',
-  createSubcategory: 'categories/subcategories/create',
 
   // ==================== Customer Service API ====================
   getNotices: (p: SearchNoticeParams) => `cs/notice/list?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
   getNoticeDetail: (noticeId: number) => `cs/notice/${noticeId}`,
   getInquiries: (p: SearchIqrParams) => `cs/inquiry/list?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
-  getMyInquiries: (userId: number, p: SearchIqrParams) => `cs/inquiry/mylist/${userId}?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
+  getMyInquiries: (p: SearchIqrParams) => `cs/inquiry/mylist?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
   getInqDetail: (inqId: number) => `cs/inquiry/${inqId}`,
-  addInquiry: (userId: number) => `cs/inquiry/${userId}/add`,
+  addInquiry: 'cs/inquiry/add',
   getReports: (p: SearchIqrParams) => `cs/report/list?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
-  getMyReports: (userId: number, p: SearchIqrParams) => `cs/report/mylist/${userId}?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
+  getMyReports: (p: SearchIqrParams) => `cs/report/mylist?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
   getReportDetail: (reportId: number) => `cs/report/${reportId}`,
-  addReport: (userId: number) => `cs/report/${userId}/add`,
+  addReport: 'cs/report/add',
   getInquiryReplyList: (inqId: number) => `cs/inquiry/reply/${inqId}`,
   addInquiryReply: (inqId: number) => `cs/inquiry/reply/${inqId}`,
 

@@ -131,7 +131,7 @@ export default function CreatorInfoUpdate() {
                 fd.append("profileImg", fileRef.current.files[0]);
             }
 
-            const res = await postData(endpoints.updateCreatorInfo(Number(creatorId)), fd, cookie.accessToken);
+            const res = await postData(endpoints.updateCreatorInfo, fd, cookie.accessToken);
             if (res.status === 200) {
                 toastSuccess("정보가 수정되었습니다");
             } else {

@@ -68,14 +68,15 @@ function useUsers(params: SearchUserParams) {
         return endpoints.getUsers(params);
     }, [page, size, perGroup, keyword]);
 
-    useEffect(() => {( async () => {
-                const {status, data} = await getData(url);
-                if (status === 200) {
-                    setItems(data.items);
-                    setTotal(data.totalElements);
-                }
-            })();
-        }, [url]);
+    useEffect(() => {
+        (async () => {
+            const { status, data } = await getData(url);
+            if (status === 200) {
+                setItems(data.items);
+                setTotal(data.totalElements);
+            }
+        })();
+    }, [url]);
 
     console.log(items);
 
@@ -87,9 +88,9 @@ export function Pagination({ page, size, perGroup, total, onPage }: { page: numb
 
     return (
         <div className="flex items-center justify-center gap-2 mt-6">
-        <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onPage(page - 1)}>이전</Button>
-        <span className="text-sm text-gray-600">{page} / {lastPage}</span>
-        <Button variant="outline" size="sm" disabled={page >= lastPage} onClick={() => onPage(page + 1)}>다음</Button>
+            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onPage(page - 1)}>이전</Button>
+            <span className="text-sm text-gray-600">{page} / {lastPage}</span>
+            <Button variant="outline" size="sm" disabled={page >= lastPage} onClick={() => onPage(page + 1)}>다음</Button>
         </div>
     );
 }
@@ -168,15 +169,15 @@ interface UserEditModalProps {
 }
 
 export function UserEditModal({ userId }: UserEditModalProps) {
-    
+
     const [isOpen, setIsOpen] = useState(false);
     const [userUpdt, setUserUpdt] = useState<UsersUpdateRequest>({
         userId: Number(userId),
         nickname: "",
         isSuspended: "",
-        reason: "", 
+        reason: "",
     });
-    
+
     const fetchUser = async () => {
         const response = await getData(endpoints.getUserInfo(Number(userId)));
         if (response.status === 200) {
@@ -184,11 +185,11 @@ export function UserEditModal({ userId }: UserEditModalProps) {
         }
         console.log(response.data);
     };
-    
+
     useEffect(() => {
         fetchUser();
     }, [userId]);
-    
+
     const handleUserUpdt = async () => {
         const response = await postData(endpoints.updateUser(Number(userId)), userUpdt);
         if (response.status === 200) {
@@ -198,7 +199,7 @@ export function UserEditModal({ userId }: UserEditModalProps) {
         } else {
             alert("회원 정보 수정 실패");
             return false;
-    }
+        }
     };
 
 
@@ -220,12 +221,12 @@ export function UserEditModal({ userId }: UserEditModalProps) {
                         <div>{userUpdt.nickname}</div>
                         <Label className="mb-1 block">정지 여부</Label>
                         <Select value={userUpdt.isSuspended} onValueChange={e => setUserUpdt({ ...userUpdt, isSuspended: e })}>
-                                <SelectTrigger><SelectValue placeholder="분류 선택" /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="N">활성화</SelectItem>
-                                    <SelectItem value="Y">정지</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <SelectTrigger><SelectValue placeholder="분류 선택" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="N">활성화</SelectItem>
+                                <SelectItem value="Y">정지</SelectItem>
+                            </SelectContent>
+                        </Select>
                         <Label className="mb-1 block">정지 사유</Label>
                         <Textarea
                             className="w-full border p-2 rounded"

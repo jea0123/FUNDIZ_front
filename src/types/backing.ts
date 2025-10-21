@@ -225,4 +225,8 @@ export interface MyPgaeBackingList {
   backingStatus: string;
   shippingStatus: string;
   creatorName: string;
+
+  mpBackingList?: {
+    rewardName: string;
+  }[];
 }

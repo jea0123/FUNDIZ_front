@@ -4,13 +4,13 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, Di
 import { Textarea } from "@/components/ui/textarea";
 import type { QnaAddRequest } from "@/types/qna";
 import { useMemo, useState } from "react";
+import { useCookies } from "react-cookie";
 import { useNavigate, useParams } from "react-router-dom";
 
 export function QnaCreateModal() {
     const navigate = useNavigate();
 
-    const tempUserId = 24;
-
+    const [cookie] = useCookies();
     const { projectId: projectIdParam } = useParams<{ projectId: string }>();
     const projectId = useMemo<number | null>(() => {
         const num = Number(projectIdParam);
@@ -20,16 +20,13 @@ export function QnaCreateModal() {
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [qnaAdd, setQnaAdd] = useState<QnaAddRequest>({
         projectId: Number(projectId),
-        userId: tempUserId,
         content: "",
         createdAt: new Date(Date.now())
     });
 
     const handleAddQna = async () => {
-        const url = endpoints.addQuestion(Number(projectId), tempUserId);
-        console.log(url);
-        const response = await postData(url, qnaAdd);
-        console.log(qnaAdd);
+        const url = endpoints.addQuestion(Number(projectId));
+        const response = await postData(url, qnaAdd, cookie.accessToken);
         if (response.status === 200) {
             alert("문의사항이 등록되었습니다.");
             setIsAddDialogOpen(false);
