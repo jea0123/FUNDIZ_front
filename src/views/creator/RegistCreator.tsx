@@ -12,6 +12,7 @@ import { toastError, toastSuccess } from "@/utils/utils";
 import { useCookies } from "react-cookie";
 import { useNavigate } from "react-router-dom";
 import { Textarea } from "@/components/ui/textarea";
+import { useLoginUserStore } from "@/store/LoginUserStore.store";
 
 export type CreatorType = "GENERAL" | "INDIVIDUAL" | "CORPORATION";
 
@@ -55,6 +56,7 @@ export type RegisterCreatorForm = z.input<typeof schema>;
 
 export default function RegisterCreator() {
     const fileRef = useRef<HTMLInputElement>(null);
+    const { loginUser, setLoginUser } = useLoginUserStore();
     const [preview, setPreview] = useState<string | null>(null);
     const [cookie] = useCookies();
     const navigate = useNavigate();
@@ -87,6 +89,7 @@ export default function RegisterCreator() {
     };
 
     const onSubmit = async (values: RegisterCreatorForm) => {
+        if(!cookie.accessToken || !loginUser) return;
         try {
             const fd = new FormData();
             fd.append("creatorName", values.creatorName);
@@ -103,6 +106,8 @@ export default function RegisterCreator() {
 
             const res = await postData(endpoints.registerCreator, fd, cookie.accessToken);
             if (res.status === 200) {
+                const updatedUser = { ...loginUser, creatorId: res.data };
+                setLoginUser(updatedUser);
                 toastSuccess("크리에이터로 등록되었습니다");
                 navigate("/creator");
             } else {
@@ -301,25 +306,25 @@ export default function RegisterCreator() {
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent id="banklist">
-                                                <SelectItem value="KB">국민(KB)</SelectItem>
-                                                <SelectItem value="SHINHAN">신한</SelectItem>
-                                                <SelectItem value="WOORI">우리</SelectItem>
-                                                <SelectItem value="HANA">하나</SelectItem>
-                                                <SelectItem value="NH">농협(NH)</SelectItem>
-                                                <SelectItem value="SH">수협</SelectItem>
-                                                <SelectItem value="IBK">기업</SelectItem>
-                                                <SelectItem value="SC">SC제일</SelectItem>
-                                                <SelectItem value="CITI">씨티</SelectItem>
-                                                <SelectItem value="IM">iM뱅크</SelectItem>
-                                                <SelectItem value="BNK">부산</SelectItem>
-                                                <SelectItem value="KJ">광주</SelectItem>
-                                                <SelectItem value="JEJU">제주</SelectItem>
-                                                <SelectItem value="JB">전북</SelectItem>
-                                                <SelectItem value="KBANK">케이뱅크</SelectItem>
-                                                <SelectItem value="KAKAO">카카오뱅크</SelectItem>
-                                                <SelectItem value="TOSS">토스뱅크</SelectItem>
-                                                <SelectItem value="selboxDirect">직접 입력</SelectItem>
-                                            </SelectContent>
+                                                    <SelectItem value="KB">국민(KB)</SelectItem>
+                                                    <SelectItem value="SHINHAN">신한</SelectItem>
+                                                    <SelectItem value="WOORI">우리</SelectItem>
+                                                    <SelectItem value="HANA">하나</SelectItem>
+                                                    <SelectItem value="NH">농협(NH)</SelectItem>
+                                                    <SelectItem value="SH">수협</SelectItem>
+                                                    <SelectItem value="IBK">기업</SelectItem>
+                                                    <SelectItem value="SC">SC제일</SelectItem>
+                                                    <SelectItem value="CITI">씨티</SelectItem>
+                                                    <SelectItem value="IM">iM뱅크</SelectItem>
+                                                    <SelectItem value="BNK">부산</SelectItem>
+                                                    <SelectItem value="KJ">광주</SelectItem>
+                                                    <SelectItem value="JEJU">제주</SelectItem>
+                                                    <SelectItem value="JB">전북</SelectItem>
+                                                    <SelectItem value="KBANK">케이뱅크</SelectItem>
+                                                    <SelectItem value="KAKAO">카카오뱅크</SelectItem>
+                                                    <SelectItem value="TOSS">토스뱅크</SelectItem>
+                                                    <SelectItem value="selboxDirect">직접 입력</SelectItem>
+                                                </SelectContent>
                                             </Select>
                                             <div className={hintCls}>
                                                 {form.formState.errors.bank
