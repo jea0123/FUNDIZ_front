@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Send } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,8 @@ const useQuery = () => {
 
 export function NoticeUpdtTab() {
 
+    const fileRef = useRef<HTMLInputElement>(null);
+    const [preview, setPreview] = useState<string | null>(null);
     const navigate = useNavigate();
 
     const query = useQuery();
@@ -26,6 +28,15 @@ export function NoticeUpdtTab() {
         title: "",
         content: ""
     });
+
+    const onFileChange = (file?: File) => {
+        if (!file) {
+            setPreview(null);
+            return;
+        }
+        const url = URL.createObjectURL(file);
+        setPreview(url);
+    };
 
     const fetchNotice = async () => {
         const response = await getData(endpoints.getNoticeDetail(Number(noticeId)));
@@ -75,6 +86,19 @@ export function NoticeUpdtTab() {
                             rows={20}
                             placeholder="내용을 입력하세요" />
                     </div>
+                    <div>
+                            <Label className="mb-1 block">파일 첨부</Label>
+                            <Input
+                                ref={fileRef}
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                onFileChange(file);
+                                field.onChange(e.target.files);
+                                }}
+                            />
+                        </div>
                     <div className="flex justify-content-end">
                         <Button onClick={handleNoticeUpdt} className="flex items-center gap-2"><Send className="w-4 h-4" /> 등록</Button>
                     </div>
