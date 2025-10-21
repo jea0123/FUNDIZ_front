@@ -156,10 +156,7 @@ export default function CreatorInfoUpdate() {
     return (
         <Card className="shadow-sm">
             <CardHeader>
-                <CardTitle>창작자 정보 수정</CardTitle>
-                <CardDescription>
-                    창작자 정보 수정 페이지입니다.
-                </CardDescription>
+                <CardTitle className="text-2xl">창작자 정보 수정</CardTitle>
             </CardHeader>
             <CardContent>
                 <Form {...form}>

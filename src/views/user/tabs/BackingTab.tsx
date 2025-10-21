@@ -117,8 +117,8 @@ export default function BackingTab() {
 
   return (
     <Card>
-      <CardHeader className="flex justify-between items-center flex-wrap gap-2">
-        <CardTitle>후원한 프로젝트 ({backingProjects?.length ?? 0}개)</CardTitle>
+      <CardHeader className="flex justify-between items-center flex-wrap gap-2 text-2xl">
+        <CardTitle className="flex items-center">후원한 프로젝트 ({backingProjects?.length ?? 0}개)</CardTitle>
 
         <div className="flex items-center gap-2">
           {/* 상태 필터 */}

@@ -215,8 +215,12 @@ export function AnalyticsTab() {
 
     return (
         <div className="space-y-6">
+            
             {/* 상단 오른쪽 기간 선택 */}
-            <div className="flex items-center justify-end">
+            <div className="flex items-center justify-between w-full">
+                <div className="text-2xl font-bold ml-1">
+                    통계 분석
+                </div>
                 <Select value={selectedPeriod} onValueChange={(v) => setSelectedPeriod(v as any)}>
                     <SelectTrigger className="w-40">
                         <SelectValue placeholder="기간 선택" />

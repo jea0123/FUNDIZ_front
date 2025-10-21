@@ -90,7 +90,7 @@ export function UsersTab() {
             <div>
                 <Card>
                     <CardHeader className="flex items-center justify-between">
-                        <CardTitle>회원 관리</CardTitle>
+                        <CardTitle className="text-2xl">회원 관리</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="mb-4 flex space-x-2">
