@@ -10,6 +10,7 @@ import { getData, endpoints } from '@/api/apis';
 import FundingLoader from '@/components/FundingLoader';
 import type { CreaotrShippingProjectList } from '@/types/shipping';
 import { setDevCreatorIdHeader } from '@/api/apis';
+
 setDevCreatorIdHeader(2);
 
 export default function CreatorShippingList() {

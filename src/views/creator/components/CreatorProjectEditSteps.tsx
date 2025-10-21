@@ -10,13 +10,12 @@ import type { Category } from "@/types/admin";
 import type { ProjectCreateRequestDto } from "@/types/creator";
 import type { Subcategory } from "@/types/projects";
 import type { RewardDraft, RewardForm } from "@/types/reward";
-import { formatDate, formatPrice } from "@/utils/utils";
+import { formatDate, formatPrice, toKRWCompact } from "@/utils/utils";
 import { Plus, Truck, X } from "lucide-react";
-import { useState } from "react";
 import { BusinessDocUploader, ThumbnailUploader } from "./CreatorUploaders";
 import ProjectDetailEditor from "./ProjectDetailEditor";
-import type { ProjectFieldErrors } from "../pages/CreatorProjectEditPage";
-import type { RewardFieldErrors } from "@/types/reward-validator";
+import { PROJECT_RULES, TagEditor, type ProjectFieldErrors } from "../pages/CreatorProjectEditPage";
+import { REWARD_RULES, type RewardFieldErrors } from "@/types/reward-validator";
 
 /* -------------------------------- Type -------------------------------- */
 
@@ -77,12 +76,16 @@ export function CreatorProjectEditSteps(props: StepsProps) {
         clearProjectError, clearRewardError, addDays
     } = props;
 
+    const P = PROJECT_RULES;
+    const R = REWARD_RULES;
+
     if (step === 1) {
         return (
             <div className="space-y-6">
+                <RequiredLegend />
                 <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-x-2 gap-y-2">
                     <div className="min-w-0">
-                        <Label htmlFor="category">카테고리 *</Label>
+                        <LabelRequired htmlFor="category">카테고리</LabelRequired>
                         <Select
                             value={project.ctgrId ? String(project.ctgrId) : undefined}
                             onValueChange={(value) => {
@@ -99,11 +102,11 @@ export function CreatorProjectEditSteps(props: StepsProps) {
                                 )}
                             </SelectContent>
                         </Select>
-                        {projectErrors?.ctgrId && <p className="mt-1 text-sm text-red-600">{projectErrors.ctgrId}</p>}
+                        {projectErrors?.ctgrId && <p className="mt-1 text-xs text-red-600">{projectErrors.ctgrId}</p>}
                     </div>
 
                     <div className="min-w-0">
-                        <Label htmlFor="subcategory">세부카테고리 *</Label>
+                        <LabelRequired htmlFor="subcategory">세부카테고리</LabelRequired>
                         <Select
                             value={project.subctgrId ? String(project.subctgrId) : undefined}
                             onValueChange={(value) => {
@@ -127,75 +130,71 @@ export function CreatorProjectEditSteps(props: StepsProps) {
                                 )}
                             </SelectContent>
                         </Select>
-                        {projectErrors?.subctgrId && <p className="mt-1 text-sm text-red-600">{projectErrors.subctgrId}</p>}
+                        {projectErrors?.subctgrId && <p className="mt-1 text-xs text-red-600">{projectErrors.subctgrId}</p>}
                     </div>
                 </div>
 
                 <div>
-                    <Label htmlFor="title">프로젝트 제목 *</Label>
+                    <LabelRequired htmlFor="title">프로젝트 제목</LabelRequired>
                     <Input
                         id="title"
-                        placeholder="프로젝트 제목을 입력하세요"
+                        placeholder={`제목은 ${P.MIN_TITLE_LEN}~ ${P.MAX_TITLE_LEN}자 이내로 입력해주세요.`}
                         value={project.title}
                         onChange={(e) => {
                             setProject(prev => ({ ...prev, title: e.target.value }));
                             clearProjectError?.("title");
                         }}
                         maxLength={50}
+                        required
                     />
-                    {projectErrors.title && <p className="mt-1 text-sm text-red-600">{projectErrors.title}</p>}
+                    {projectErrors.title && <p className="mt-1 text-xs text-red-600">{projectErrors.title}</p>}
                 </div>
 
                 <div>
+                    <LabelRequired htmlFor="thumbnail">대표 이미지</LabelRequired>
                     <ThumbnailUploader
+                        id="thumbnail"
                         file={project.thumbnail}
                         previewUrl={project.thumbnailPreviewUrl}
                         onSelect={(f) => {
-                            setProject((prev) => ({ ...prev, thumbnail: f, thumbnailPreviewUrl: f ? undefined : prev.thumbnailPreviewUrl }));
+                            setProject(prev => ({
+                                ...prev,
+                                thumbnail: f,
+                                thumbnailPreviewUrl: f ? undefined : prev.thumbnailPreviewUrl,
+                            }));
                             clearProjectError?.("thumbnail");
                         }}
-                        onCleared={() => setProject((prev) => ({ ...prev, thumbnail: null, thumbnailPreviewUrl: undefined }))}
+                        onCleared={() => setProject(prev => ({ ...prev, thumbnail: null, thumbnailPreviewUrl: undefined }))}
+                        required
                     />
-                    {projectErrors.thumbnail && <p className="mt-1 text-sm text-red-600">{projectErrors.thumbnail}</p>}
+                    {projectErrors.thumbnail && (
+                        <p id="thumbnail-field-error" className="mt-1 text-xs text-red-600">
+                            {projectErrors.thumbnail}
+                        </p>
+                    )}
                 </div>
 
                 <TagEditor
                     tags={project.tagList}
-                    onAdd={(tag) => setProject(prev => {
-                        const trimmed = tag.trim();
-                        if (!trimmed) return prev;
-
-                        const exists = (prev.tagList || []).some(
-                            (tag) => normalizeName(tag) === normalizeName(trimmed)
-                        );
-                        if (exists) return prev;
-
-                        const next = [...(prev.tagList || []), trimmed];
-                        if (next.length > 10) return prev;
-                        return { ...prev, tagList: next };
-                    })}
+                    onAdd={(tag) => setProject(prev => ({
+                        ...prev,
+                        tagList: [...(prev.tagList || []), tag.trim()],
+                    }))}
                     onRemove={(tag) => setProject(prev => ({
                         ...prev,
-                        tagList: (prev.tagList || []).filter(
-                            (t) => normalizeName(t) !== normalizeName(tag)
-                        )
+                        tagList: (prev.tagList || []).filter(t => t !== tag),
                     }))}
                 />
+                {projectErrors.tagList && (
+                    <p className="mt-1 text-xs text-red-600">{projectErrors.tagList}</p>
+                )}
             </div>
         );
     }
 
     if (step === 2) {
-        const MIN_DAYS = 7;
-        const MAX_DAYS = 60;
-        const END_MIN_OFFSET = MIN_DAYS - 1;
-        const END_MAX_OFFSET = MAX_DAYS - 1;
-        const MIN_START_LEAD_DAYS = 7;
-
-        const hasStart = project.startDate instanceof Date && !isNaN(project.startDate.getTime());
-        const hasEnd = project.endDate instanceof Date && !isNaN(project.endDate.getTime());
-        const showLeadHint = hasStart;
-        const showDurationHint = hasStart && hasEnd;
+        const END_MIN_OFFSET = P.MIN_DAYS - 1;
+        const END_MAX_OFFSET = P.MAX_DAYS - 1;
 
         const isEditMode = !!project.projectId && Number(project.projectId) > 0;
 
@@ -211,10 +210,10 @@ export function CreatorProjectEditSteps(props: StepsProps) {
         };
 
         const duration = daysInclusive(project.startDate, project.endDate);
-        const isDurationInvalid = duration !== null && (duration < MIN_DAYS || duration > MAX_DAYS);
+        const isDurationInvalid = duration !== null && (duration < P.MIN_DAYS || duration > P.MAX_DAYS);
 
         const minStartLeadDate = new Date(today);
-        minStartLeadDate.setDate(minStartLeadDate.getDate() + MIN_START_LEAD_DAYS);
+        minStartLeadDate.setDate(minStartLeadDate.getDate() + P.MIN_START_LEAD_DAYS);
         const minStartLeadStr = formatDate(minStartLeadDate);
 
         const startDateStripped = project.startDate ? strip(project.startDate) : undefined;
@@ -250,6 +249,7 @@ export function CreatorProjectEditSteps(props: StepsProps) {
 
         return (
             <div className="space-y-6">
+                <RequiredLegend />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <Label htmlFor="startDate">펀딩 시작일 *</Label>
@@ -260,10 +260,10 @@ export function CreatorProjectEditSteps(props: StepsProps) {
                             value={project.startDate ? formatDate(project.startDate) : ""}
                             onChange={handleStartDateChange}
                         />
-                        {projectErrors.startDate && <p className="mt-1 text-sm text-red-600">{projectErrors.startDate}</p>}
+                        {projectErrors.startDate && <p className="mt-1 text-xs text-red-600">{projectErrors.startDate}</p>}
 
                         {!projectErrors.startDate && isEditMode && isStartPast && (
-                            <p className="mt-1 text-sm text-red-600">
+                            <p className="mt-1 text-xs text-red-600">
                                 시작일이 이미 지났습니다. 일정을 조정하세요.
                             </p>
                         )}
@@ -278,32 +278,22 @@ export function CreatorProjectEditSteps(props: StepsProps) {
                             value={project.endDate ? formatDate(project.endDate) : ""}
                             onChange={handleEndDateChange}
                         />
-                        {projectErrors.endDate && <p className="mt-1 text-sm text-red-600">{projectErrors.endDate}</p>}
+                        {projectErrors.endDate && <p className="mt-1 text-xs text-red-600">{projectErrors.endDate}</p>}
                     </div>
                 </div>
 
                 {/* 기간 가이드 + 현재 선택한 기간 */}
                 <div className="mt-1 space-y-1">
-                    {showLeadHint && (
-                        <p className="text-sm text-muted-foreground">
-                            시작일은 오늘로부터 최소 {MIN_START_LEAD_DAYS}일 이후여야 합니다.
-                        </p>
-                    )}
-
-                    {showDurationHint && (
-                        <p
-                            id="funding-period-hint"
-                            className={`text-sm ${isDurationInvalid ? "text-red-600" : "text-muted-foreground"}`}
-                        >
-                            펀딩 기간은 최소 {MIN_DAYS}일, 최대 {MAX_DAYS}일까지 가능합니다.
-                            {duration !== null && <span className="ml-2 font-medium">(현재: {duration}일)</span>}
-                        </p>
-                    )}
+                    <p className={`text-xs ${isDurationInvalid ? "text-red-600" : "text-muted-foreground"}`}>
+                        시작일은 오늘 기준 {P.MIN_START_LEAD_DAYS}일 이후로 설정하고,
+                        전체 기간은 {P.MIN_DAYS}–{P.MAX_DAYS}일 범위에서 선택해주세요.
+                        {duration !== null && <> <span className="ml-2 font-medium text-green-600">(현재 {duration}일)</span></>}
+                    </p>
                 </div>
+
                 <div>
                     <Label htmlFor="goalAmount">목표 금액 *</Label>
                     <Input
-                        id="goalAmount"
                         placeholder="목표 금액을 입력하세요"
                         value={project.goalAmount}
                         onChange={(e) => {
@@ -314,7 +304,9 @@ export function CreatorProjectEditSteps(props: StepsProps) {
                     <p className="mt-2 text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded-md inline-block">
                         {project.goalAmount ? `${formatPrice(project.goalAmount)}원` : ""}
                     </p>
-                    {projectErrors.goalAmount && <p className="mt-1 text-sm text-red-600">{projectErrors.goalAmount}</p>}
+                    <p className={`mt-1 text-xs ${projectErrors.goalAmount ? "text-red-600" : "text-muted-foreground"}`}>
+                        최소 {toKRWCompact(P.MIN_GOAL_AMOUNT)}원 · 최대 {toKRWCompact(P.MAX_GOAL_AMOUNT)}원
+                    </p>
                 </div>
                 <FeesCard goalAmount={project.goalAmount} />
             </div>
@@ -323,25 +315,23 @@ export function CreatorProjectEditSteps(props: StepsProps) {
     }
 
     if (step === 3) {
-        const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-            const next = e.target.value;
-            setProject(prev => ({ ...prev, content: next }));
-            clearProjectError?.("content");
-        };
-
         return (
             <div className="space-y-6">
+                <RequiredLegend />
                 <div>
-                    <Label htmlFor="projectContent">프로젝트 내용 *</Label>
+                    <Label htmlFor="projectContent">프로젝트 설명 *</Label>
                     <Textarea
-                        id="projectContent"
-                        placeholder={`프로젝트의 스토리, 제작 배경, 리워드 상세 설명, 일정 등을 충분히 써주세요.\n(예: 왜 이 프로젝트를 시작했는지, 목표 금액의 사용 계획, 제작/배송 일정, 유의사항 등)`}
+                        placeholder={`프로젝트 스토리, 제작 배경, 리워드 구성/혜택, 제작·배송 일정, 유의사항을 적어주세요.\n예) 왜 시작했는지 / 사용 계획 / 일정 / 환불·AS 안내`}
                         rows={12}
                         value={project.content ?? ""}
-                        onChange={handleContentChange}
-                        className="mt-1 min-h-[100px]"
+                        maxLength={P.MAX_CONTENT_LEN}
+                        onChange={e => setProject(p => ({ ...p, content: e.target.value.slice(0, P.MAX_CONTENT_LEN) }))}
+                        className="mt-1 min-h-[100px] placeholder:text-xs placeholder:leading-5 placeholder:text-muted-foreground/80"
                     />
-                    {projectErrors.content && <p className="mt-1 text-sm text-red-600">{projectErrors.content}</p>}
+                    {projectErrors.content && <p className="mt-1 text-xs text-red-600">{projectErrors.content}</p>}
+                    <span className={"text-xs text-muted-foreground"}>
+                        {project.content.length} / {P.MAX_CONTENT_LEN}자
+                    </span>
                 </div>
 
                 <div className="space-y-4">
@@ -350,7 +340,6 @@ export function CreatorProjectEditSteps(props: StepsProps) {
                         쇼핑몰 상세 페이지처럼 이미지를 추가하고 소개글을 작성하세요.
                     </p>
                     <ProjectDetailEditor
-                        key={`${project.projectId}:${project.contentBlocks?.blocks?.length ?? 0}`}
                         initialData={project.contentBlocks}
                         uploadUrl={"http://localhost:9099/api/v1/attach/image"}
                         onChange={(data) => {
@@ -358,7 +347,7 @@ export function CreatorProjectEditSteps(props: StepsProps) {
                             clearProjectError?.("contentBlocks");
                         }}
                     />
-                    {projectErrors.contentBlocks && <p className="mt-1 text-sm text-red-600">{projectErrors.contentBlocks}</p>}
+                    {projectErrors.contentBlocks && <p className="mt-1 text-xs text-red-600">{projectErrors.contentBlocks}</p>}
                 </div>
             </div>
         );
@@ -367,6 +356,7 @@ export function CreatorProjectEditSteps(props: StepsProps) {
     if (step === 4) {
         return (
             <div className="space-y-6">
+                <RequiredLegend />
                 <div>
                     <h3 className="text-lg font-semibold mb-4">리워드 추가</h3>
                     <Card>
@@ -375,16 +365,20 @@ export function CreatorProjectEditSteps(props: StepsProps) {
                                 <div>
                                     <Label htmlFor="price">리워드 가격 *</Label>
                                     <Input
-                                        id="price"
                                         value={newReward.price ?? ""}
                                         onChange={(e) => {
                                             setNewReward({ ...newReward, price: Number(e.target.value.replace(/[^0-9]/g, "")) })
                                             clearRewardError?.("price");
                                         }}
                                     />
+
                                     {newReward.price ? (
                                         <p className="mt-1 text-xs text-muted-foreground">{formatPrice(newReward.price)}원</p>
-                                    ) : null}
+                                    ) : (
+                                        <p className="mt-1 text-xs text-muted-foreground">
+                                            최소 {toKRWCompact(R.MIN_REWARD_PRICE)} 원 · 최대 {toKRWCompact(R.MAX_REWARD_PRICE)} 원
+                                        </p>
+                                    )}
                                     {rewardErrors.price && <p className="mt-1 text-xs text-red-500">{rewardErrors.price}</p>}
                                 </div>
 
@@ -436,15 +430,25 @@ export function CreatorProjectEditSteps(props: StepsProps) {
                             <div>
                                 <Label htmlFor="deliveryDate">{newReward.isPosting === "Y" ? "배송 예정일 *" : "제공 예정일 *"}</Label>
                                 <Input
-                                    id="deliveryDate"
                                     type="date"
                                     value={formatDate(newReward.deliveryDate)}
                                     onChange={(e) => {
-                                        setNewReward({ ...newReward, deliveryDate: parseLocalDate(e.target.value) })
+                                        setNewReward({ ...newReward, deliveryDate: parseLocalDate(e.target.value) });
                                         clearRewardError?.("deliveryDate");
                                     }}
+                                    className={((newReward as any)._submittedOnce && rewardErrors.deliveryDate)
+                                        ? "border-red-500 focus-visible:ring-red-500"
+                                        : undefined}
                                 />
-                                {rewardErrors.deliveryDate && <p className="mt-1 text-xs text-red-500">{rewardErrors.deliveryDate}</p>}
+                                {((newReward as any)._submittedOnce && rewardErrors.deliveryDate) ? (
+                                    <p className="mt-1 text-xs text-red-500">{rewardErrors.deliveryDate}</p>
+                                ) : (
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                        펀딩 종료일 다음날(
+                                        {project.endDate ? formatDate(addDays(project.endDate, 1)) : "종료일 미설정"}
+                                        ) 이후로 설정하세요.
+                                    </p>
+                                )}
                             </div>
 
                             <div>
@@ -464,12 +468,19 @@ export function CreatorProjectEditSteps(props: StepsProps) {
                                 </Select>
                             </div>
 
-                            <Button onClick={addReward} className="w-full">
-                                <Plus className="h-4 w-4 mr-2" />리워드 추가
+                            <Button
+                                onClick={() => {
+                                    setNewReward(prev => ({ ...prev, _submittedOnce: true } as any));
+                                    addReward();
+                                }}
+                                className="w-full"
+                            >
+                                <Plus className="h-4 w-4 mr-2" />
+                                리워드 추가
                             </Button>
                         </CardContent>
                     </Card>
-                    {rewardListError && <p className="mt-3 text-sm text-red-600">{rewardListError}</p>}
+                    {rewardListError && <p className="mt-3 text-xs text-red-600">{rewardListError}</p>}
                 </div>
 
                 <div>
@@ -521,6 +532,7 @@ export function CreatorProjectEditSteps(props: StepsProps) {
 
         return (
             <div className="space-y-6">
+                <RequiredLegend />
                 <Card>
                     <CardHeader>
                         <CardTitle>창작자 정보</CardTitle>
@@ -546,19 +558,19 @@ export function CreatorProjectEditSteps(props: StepsProps) {
                                     setProject(prev => ({ ...prev, businessDoc: null, businessDocPreviewUrl: undefined, }))}
                             />
                             {projectErrors.businessDoc && (
-                                <p className="mt-1 text-sm text-red-600" role="alert">
+                                <p className="mt-1 text-xs text-red-600" role="alert">
                                     {projectErrors.businessDoc}
                                 </p>
                             )}
 
                             {!projectErrors.businessDoc && hasBizNum && !hasBizDoc && (
-                                <p className="mt-1 text-sm text-red-600" role="alert">
+                                <p className="mt-1 text-xs text-red-600" role="alert">
                                     사업자등록증 사본을 첨부해주세요.
                                 </p>
                             )}
 
                             {!hasBizNum && (
-                                <p className="mt-1 text-sm text-muted-foreground">
+                                <p className="mt-1 text-xs text-muted-foreground">
                                     일반 창작자는 사업자등록증 첨부가 필요 없습니다.
                                 </p>
                             )}
@@ -584,6 +596,7 @@ export function CreatorProjectEditSteps(props: StepsProps) {
     if (step === 6) {
         return (
             <div className="space-y-6">
+                <RequiredLegend />
                 <Card>
                     <CardHeader><CardTitle>프로젝트 요약</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
@@ -630,7 +643,7 @@ export function CreatorProjectEditSteps(props: StepsProps) {
                 <Card>
                     <CardHeader><CardTitle>심사 안내</CardTitle></CardHeader>
                     <CardContent>
-                        <div className="space-y-2 text-sm">
+                        <div className="space-y-2 text-xs">
                             <p>• 프로젝트 심사는 영업일 기준 3-5일 소요됩니다.</p>
                             <p>• 심사 결과는 등록된 이메일로 안내드립니다.</p>
                             <p>• 심사 승인 후 펀딩 시작일에 자동으로 공개됩니다.</p>
@@ -646,50 +659,12 @@ export function CreatorProjectEditSteps(props: StepsProps) {
                         onCheckedChange={(v) => { const val = Boolean(v); setAgree?.(val); }}
                         aria-invalid={!!agreeError}
                     />
-                    <label htmlFor="agree" className="text-sm">프로젝트 등록 약관 및 정책에 동의합니다. *</label>
+                    <label htmlFor="agree" className="text-xs">프로젝트 등록 약관 및 정책에 동의합니다. *</label>
                 </div>
                 {agreeError && (<p className="text-xs text-red-500 mt-1">{agreeError}</p>)}
             </div>
         );
     }
-}
-
-function TagEditor({
-    tags, onAdd, onRemove
-}: { tags: string[]; onAdd: (tag: string) => void; onRemove: (tag: string) => void }) {
-    const [value, setValue] = useState("");
-    const add = () => { const v = value.trim(); if (v) { onAdd(v); setValue(""); } };
-
-    return (
-        <div>
-            <Label>검색 태그 (최대 10개)</Label>
-            <div className="flex space-x-2 mb-2 mt-1">
-                <Input
-                    placeholder="태그 입력"
-                    value={value}
-                    onChange={(e) => setValue(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }}
-                />
-                <Button type="button" variant="outline" onClick={add}>추가</Button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-                {tags.map(tag => (
-                    <Badge key={tag} variant="secondary" className="inline-flex items-center gap-1 pr-1">
-                        {tag}
-                        <button
-                            type="button"
-                            aria-label={`${tag} 삭제`}
-                            onClick={() => onRemove(tag)}
-                            onMouseDown={(e) => e.preventDefault()}
-                            className="ml-0.5 rounded-full p-0.5 hover:bg-foreground/10 pointer-events-auto"
-                        >
-                            <X className="h-3 w-3 ml-1" />
-                        </button>
-                    </Badge>
-                ))}
-            </div>
-        </div>
-    );
 }
 
 function FeesCard({ goalAmount }: { goalAmount: number }) {
@@ -713,5 +688,27 @@ function FeesCard({ goalAmount }: { goalAmount: number }) {
                 </div>
             </CardContent>
         </Card>
+    );
+}
+
+function RequiredLegend() {
+    return (
+        <p className="text-sm text-muted-foreground -mt-1 mb-2">
+            <span className="text-red-600 font-semibold" aria-hidden="true">*</span>{" "}
+            표시는 필수 입력 항목입니다.
+        </p>
+    );
+}
+
+function LabelRequired({
+    children,
+    ...rest
+}: React.ComponentProps<typeof Label>) {
+    return (
+        <Label {...rest}>
+            {children}
+            <span className="text-red-600 ml-0.5" aria-hidden="true">*</span>
+            <span className="sr-only"> (필수)</span>
+        </Label>
     );
 }

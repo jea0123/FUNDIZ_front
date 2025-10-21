@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Save, Send } from 'lucide-react';
+import { ArrowLeft, Save, Send, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Subcategory } from '@/types/projects';
@@ -14,6 +14,9 @@ import { CreatorProjectEditSteps, type CreateProjectViewModel } from '../compone
 import { CreatorProjectEditStepper } from '../components/CreatorProjectEditStepper';
 import { useCreatorId } from '../../../types/useCreatorId';
 import { formatDate, toIsoDateTime, toPublicUrl } from '@/utils/utils';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 
 /* -------------------------------- Type -------------------------------- */
 
@@ -42,11 +45,10 @@ const STEPS = [
     { id: 6, title: "검토 및 제출", description: "프로젝트 요약 및 심사 안내" },
 ];
 
-const PROJECT_RULES = {
+export const PROJECT_RULES = {
     MIN_TITLE_LEN: 2,
-    MAX_TITLE_LEN: 255,
-    MIN_CONTENT_LEN: 30,
-    MAX_CONTENT_LEN: 3000,
+    MAX_TITLE_LEN: 50,
+    MAX_CONTENT_LEN: 500,
     MIN_GOAL_AMOUNT: 10_000,
     MAX_GOAL_AMOUNT: 2_000_000_000,
     MIN_DAYS: 7,
@@ -55,7 +57,7 @@ const PROJECT_RULES = {
     MAX_THUMBNAIL_LEN: 500,
     MAX_TAGS: 3,
     MIN_TAG_LEN: 2,
-    MAX_TAG_LEN: 15,
+    MAX_TAG_LEN: 5,
 } as const;
 
 const DAY = 1000 * 60 * 60 * 24;
@@ -129,7 +131,7 @@ const validateProject = (p: CreateProjectViewModel & {
 
     const title = (p.title ?? "").trim();
     if (title.length < R.MIN_TITLE_LEN || title.length > R.MAX_TITLE_LEN) {
-        errors.title = `제목은 ${R.MIN_TITLE_LEN}~${R.MAX_TITLE_LEN}자여야 합니다.`;
+        errors.title = `제목은 ${R.MIN_TITLE_LEN}~ ${R.MAX_TITLE_LEN}자 이내로 입력해주세요.`;
     }
 
     const hasThumbnail = (p.thumbnail instanceof File) || !!p.thumbnailPreviewUrl;
@@ -187,16 +189,15 @@ const validateProject = (p: CreateProjectViewModel & {
     }
 
     // 3단계
-    const content = (p.content ?? "").trim();
-    if (content.length < R.MIN_CONTENT_LEN || content.length > R.MAX_CONTENT_LEN) {
-        errors.content = `내용은 최소 ${R.MIN_CONTENT_LEN}자, 최대 ${R.MAX_CONTENT_LEN}자까지 가능합니다.`;
+    if (!p.content || p.content.trim().length === 0) {
+        errors.content = "프로젝트 설명을 입력해주세요.";
     }
 
     const blocks = Array.isArray((p as any)?.contentBlocks?.blocks)
         ? (p as any).contentBlocks.blocks
         : [];
     if (blocks.length === 0) {
-        errors.contentBlocks = "프로젝트 소개를 추가해주세요. (이미지 또는 텍스트 1개 이상)";
+        errors.contentBlocks = "프로젝트 소개를 입력해주세요.";
     }
 
     // 5단계
@@ -226,6 +227,7 @@ const validateByStep = (
         if (all.subctgrId) stepErrors.subctgrId = all.subctgrId;
         if (all.title) stepErrors.title = all.title;
         if (all.thumbnail) stepErrors.thumbnail = all.thumbnail;
+        if (all.tagList) stepErrors.tagList = all.tagList;
     } else if (step === 2) {
         if (all.goalAmount) stepErrors.goalAmount = all.goalAmount;
         if (all.startDate) stepErrors.startDate = all.startDate;
@@ -709,6 +711,89 @@ export default function CreatorProjectEditPage() {
                     )}
                 </div>
             </div>
+        </div>
+    );
+}
+
+export function TagEditor({
+    tags, onAdd, onRemove
+}: { tags: string[]; onAdd: (tag: string) => void; onRemove: (tag: string) => void }) {
+    const [value, setValue] = useState("");
+    const [error, setError] = useState<string | null>(null);
+
+    const { MAX_TAGS, MIN_TAG_LEN, MAX_TAG_LEN } = PROJECT_RULES
+
+    const validateTag = (raw: string): string | null => {
+        const v = raw.trim();
+        if (!v) return "태그를 입력하세요.";
+        if (v.length < MIN_TAG_LEN || v.length > MAX_TAG_LEN)
+            return `태그는 ${MIN_TAG_LEN}~ ${MAX_TAG_LEN}자 이내로 입력해주세요.`;
+        if (tags.length >= MAX_TAGS)
+            return `태그는 최대 ${MAX_TAGS}개까지 가능합니다.`;
+        const exists = tags.some((t) => normalizeName(t) === normalizeName(v));
+        if (exists) return "이미 추가된 태그입니다.";
+        return null;
+    };
+
+    const add = () => {
+        const err = validateTag(value);
+        if (err) {
+            setError(err);
+            return;
+        }
+        onAdd(value.trim());
+        setValue("");
+        setError(null);
+    };
+
+    const limitReached = tags.length >= MAX_TAGS;
+    const inputId = "tag-input";
+    const errId = "tag-error";
+
+    return (
+        <div>
+            <Label htmlFor={inputId}>검색 태그 (최대 {MAX_TAGS}개)</Label>
+            <div className="flex space-x-2 mb-2 mt-1">
+                <Input
+                    id={inputId}
+                    placeholder={`태그는 ${MIN_TAG_LEN}~ ${MAX_TAG_LEN}자 이내로 입력해주세요.`}
+                    value={value}
+                    onChange={(e) => {
+                        setValue(e.target.value);
+                        if (error) setError(null);
+                    }}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                            e.preventDefault();
+                            add();
+                        }
+                    }}
+                    disabled={limitReached}
+                />
+                <Button type="button" variant="outline" onClick={add} disabled={limitReached}>추가</Button>
+            </div>
+
+            {error && (<p id={errId} className="mt-1 text-xs text-red-600">{error}</p>)}
+
+            <div className="flex flex-wrap gap-2">
+                {tags.map((tag) => (
+                    <Badge key={tag} variant="secondary" className="inline-flex items-center gap-1 pr-1">
+                        {tag}
+                        <button
+                            type="button"
+                            onClick={() => onRemove(tag)}
+                            onMouseDown={(e) => e.preventDefault()}
+                            className="ml-0.5 rounded-full p-0.5 hover:bg-foreground/10 pointer-events-auto"
+                        >
+                            <X className="h-3 w-3 ml-1" />
+                        </button>
+                    </Badge>
+                ))}
+            </div>
+
+            {limitReached && (
+                <p className="mt-1 text-xs text-red-600">최대 {MAX_TAGS}개까지 가능합니다.</p>
+            )}
         </div>
     );
 }
