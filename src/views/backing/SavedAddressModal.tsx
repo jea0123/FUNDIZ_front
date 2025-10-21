@@ -230,7 +230,7 @@ export function SavedAddressModal({ mode, onSelectAddress, triggerText = '배송
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" className="w-full justify-start">
+        <Button variant="ghost" className="w-full justify-start text-base hover:bg-[rgba(79,137,250,0.2)] font-semibold">
           <MapPin className="mr-2 h-4 w-4" />
           {triggerText}
         </Button>
