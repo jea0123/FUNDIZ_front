@@ -59,7 +59,7 @@ const typeBadge = (t: ReportType) => (
 );
 
 const statusBadge = (r: ReportStatus) => (
-    <Badge variant={r === "RECEIVED" ? "default" : (r === "UNDER_REVIEW" ? "secondary" : "third")} className="rounded-full px-3">
+    <Badge variant={r === "RECEIVED" ? "default" : (r === "UNDER_REVIEW" ? "secondary" : "outline")} className="rounded-full px-3">
         {r === "RECEIVED" ? "접수" : (r === "UNDER_REVIEW" ? "검토중" : "완료")}
     </Badge>
 );
