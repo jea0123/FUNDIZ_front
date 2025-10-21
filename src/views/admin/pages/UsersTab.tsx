@@ -16,8 +16,15 @@ import { endpoints, getData, postData } from "@/api/apis";
 import type { Users, UsersUpdateRequest, SearchUserParams } from '@/types/users';
 import { formatDate } from '@/utils/utils';
 import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
 
+export type IsSuspended = "N" | "Y";
 
+const statusBadge = (s: IsSuspended) => (
+    <Badge variant={s === "N" ? "secondary" : "default"} className="rounded-full px-3">
+        {s === "N" ? "활성화" : "정지"}
+    </Badge>
+);
 
 
 function useQueryState() {
@@ -127,7 +134,7 @@ export function UsersTab() {
                                         <TableCell className="font-medium">{u.role}</TableCell>
                                         <TableCell className="text-zinc-500">{formatDate(u.joinedAt)}</TableCell>
                                         <TableCell className="text-zinc-500">{formatDate(u.lastLoginAt)}</TableCell>
-                                        <TableCell className="font-medium">{u.isSuspended}</TableCell>
+                                        <TableCell className="font-medium">{statusBadge(u.isSuspended as IsSuspended)}</TableCell>
                                         <TableCell>
                                             <div className="flex gap-2">
                                                 <UserEditModal userId={u.userId} />

@@ -50,7 +50,6 @@ const statusBadge = (r: ReportStatus) => (
     </Badge>
 );
 
-
 function useQueryState() {
     const [searchParams, setSearchParams] = useSearchParams();
 
