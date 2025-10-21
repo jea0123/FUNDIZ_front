@@ -12,6 +12,7 @@ import { endpoints, getData, postData } from '@/api/apis';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import type { BackingPrepare, BackingPagePayment } from '@/types/backing';
+import { useCookies } from 'react-cookie';
 
 const getProgressColor = (rate: number) => {
   if (rate < 34) return 'bg-red-500'; // 0~33%
@@ -152,7 +153,7 @@ function PaymentModal({ open, onClose, totalAmount, paymentList, onConfirmPaymen
 
 //BackingPage 본문
 export function BackingPage() {
-  const tempUserId = 1;
+  const [cookie] = useCookies();
   const { projectId } = useParams<{ projectId: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -189,7 +190,7 @@ export function BackingPage() {
       if (!projectId) return;
 
       try {
-        const response = await getData(endpoints.backingPrepare(tempUserId, Number(projectId)));
+        const response = await getData(endpoints.backingPrepare(Number(projectId)), cookie.accessToken);
         if (response.status === 200 && response.data) {
           const raw = response.data;
           const data = {
@@ -273,7 +274,6 @@ export function BackingPage() {
       backingId: 0,
       backing: {
         backingId: 0,
-        userId: tempUserId,
         amount: totalAmount,
         createdAt: now,
         backingStatus: 'COMPLETED',
@@ -290,7 +290,6 @@ export function BackingPage() {
       },
       address: {
         addrId: shippingAddress.addrId,
-        userId: tempUserId,
         addrName: shippingAddress.addrName || '',
         recipient: shippingAddress.recipient || '',
         postalCode: shippingAddress.postalCode || '',
@@ -311,7 +310,7 @@ export function BackingPage() {
     console.log('📤 서버로 보낼 backingData', JSON.stringify(backingData, null, 2));
 
     try {
-      const res = await postData(endpoints.addBacking(tempUserId), backingData);
+      const res = await postData(endpoints.addBacking, backingData, cookie.accessToken);
       if (res.status === 200) {
         setSuccessData({ method, cardCompany, totalAmount });
         setIsSuccessOpen(true);

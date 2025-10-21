@@ -6,6 +6,7 @@ import { MapPin } from 'lucide-react';
 import { endpoints, getData, postData, deleteData } from '@/api/apis';
 import type { AddrAddRequest, AddrUpdateRequest, AddressResponse, resetDefaultAddr } from '@/types/address';
 import { validateAddressInput } from '@/utils/validator';
+import { useCookies } from 'react-cookie';
 
 interface SavedAddressModalProps {
   mode: 'mypage' | 'backing';
@@ -14,7 +15,8 @@ interface SavedAddressModalProps {
 }
 
 export function SavedAddressModal({ mode, onSelectAddress, triggerText = '배송지 관리' }: SavedAddressModalProps) {
-  const tempUserId = 1;
+  // const tempUserId = 1;
+  const [cookie] = useCookies();
   const [addrList, setAddrList] = useState<AddressResponse[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -35,7 +37,6 @@ export function SavedAddressModal({ mode, onSelectAddress, triggerText = '배송
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [addrEdit, setAddrEdit] = useState<AddrUpdateRequest>({
     addrId: 0,
-    userId: tempUserId,
     addrName: '',
     recipient: '',
     postalCode: '',
@@ -47,7 +48,7 @@ export function SavedAddressModal({ mode, onSelectAddress, triggerText = '배송
 
   // 주소 목록 불러오기
   const fetchAddressList = async () => {
-    const response = await getData(endpoints.getAddressList(tempUserId));
+    const response = await getData(endpoints.getAddressList, cookie.accessToken);
     if (response.status === 200) setAddrList(response.data);
   };
 
@@ -62,7 +63,7 @@ export function SavedAddressModal({ mode, onSelectAddress, triggerText = '배송
       setAddrAddErrors(errors);
       return;
     }
-    const response = await postData(endpoints.createAddress(tempUserId), addrAdd);
+    const response = await postData(endpoints.createAddress, addrAdd, cookie.accessToken);
     if (response.status === 200) {
       alert('배송지가 추가되었습니다.');
       await fetchAddressList();
@@ -77,7 +78,7 @@ export function SavedAddressModal({ mode, onSelectAddress, triggerText = '배송
       setAddrEditErrors(errors);
       return;
     }
-    const response = await postData(endpoints.updateAddress(tempUserId, addrEdit.addrId), addrEdit);
+    const response = await postData(endpoints.updateAddress(addrEdit.addrId), addrEdit, cookie.accessToken);
     if (response.status === 200) {
       alert('배송지가 수정되었습니다.');
       await fetchAddressList();
@@ -88,7 +89,7 @@ export function SavedAddressModal({ mode, onSelectAddress, triggerText = '배송
   // 기본 배송지 설정
   const handleSetDefaultAddress = async (addr: AddressResponse) => {
     try {
-      const response = await postData(endpoints.setAddressDefault(addr.userId, addr.addrId), { ...addr, isDefault: 'Y' });
+      const response = await postData(endpoints.setAddressDefault(addr.addrId), { ...addr, isDefault: 'Y' }, cookie.accessToken);
       if (response.status === 200) {
         alert('기본 배송지가 변경되었습니다.');
         await fetchAddressList();
@@ -101,7 +102,7 @@ export function SavedAddressModal({ mode, onSelectAddress, triggerText = '배송
 
   // 삭제
   const handleDeleteAddress = async (addrId: number) => {
-    const res = await deleteData(endpoints.deleteAddress(tempUserId, addrId));
+    const res = await deleteData(endpoints.deleteAddress(addrId), cookie.accessToken);
     if (res.status === 200) {
       alert('배송지가 삭제되었습니다.');
       setAddrList((prev) => prev.filter((a) => a.addrId !== addrId));

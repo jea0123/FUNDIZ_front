@@ -12,7 +12,6 @@ export interface Qna{
 
 export interface QnaAddRequest{
     projectId : number;
-    userId : number;
     content : string;
     createdAt : Date;
 }

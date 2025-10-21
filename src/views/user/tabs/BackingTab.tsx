@@ -6,11 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { MyPageBackingDetail, MyPgaeBackingList } from '@/types/backing';
 import { formatNumber } from '@/utils/utils';
 import React, { useEffect, useState } from 'react';
+import { useCookies } from 'react-cookie';
 import { useNavigate } from 'react-router-dom';
 
-const tempUserId = 1;
-
-// 안전한 날짜 변환 함수
 const safeDate = (value: any): string => {
   if (!value) return '-';
   const parsed = new Date(value);
@@ -35,6 +33,8 @@ export default function BackingTab() {
     FAILED: '배송 실패',
   };
 
+  const [cookie] = useCookies();
+
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [sortOption, setSortOption] = useState<string>('RECENT');
 
@@ -44,13 +44,10 @@ export default function BackingTab() {
   const itemsPerPage = 5;
   const [backingSearch, setBackingSearch] = useState('');
 
-  const [isBackingDetailOpen, setIsBackingDetailOpen] = useState(false);
-  const [selectedBacking, setSelectedBacking] = useState<MyPageBackingDetail | null>(null);
-
   // 마이페이지 후원 리스트 호출
   const MypageBackingList = async () => {
     try {
-      const response = await getData(endpoints.getMypageBackingList(tempUserId));
+      const response = await getData(endpoints.getMypageBackingList, cookie.accessToken);
       if (response.status === 200 && Array.isArray(response.data)) {
         const safeData = response.data.map((b) => ({
           ...b,
@@ -70,28 +67,6 @@ export default function BackingTab() {
   useEffect(() => {
     MypageBackingList();
   }, []);
-
-  const fetchBackingdetail = async (userId: number) => {
-    try {
-      const response = await getData(endpoints.getMypageBackingDetail(userId));
-      if (response.status === 200 && response.data) {
-        const safeDetail = {
-          ...response.data,
-          mpBackingList: Array.isArray(response.data.mpBackingList) ? response.data.mpBackingList : [],
-        };
-        setSelectedBacking(safeDetail);
-        setIsBackingDetailOpen(true);
-      }
-    } catch (err) {
-      console.error('❌ 후원 상세 불러오기 실패:', err);
-    }
-  };
-
-  const openBackingById = (backingId: number) => {
-    const target = backingProjects.find((b) => Number(b.backingId) === Number(backingId));
-    if (!target) return;
-    fetchBackingdetail(tempUserId);
-  };
 
   //  검색 시 mpBackingList 사용
   const filteredBackings = backingProjects

@@ -9,12 +9,7 @@ import type { QnaReplyDto } from "@/types/reply";
 import type { Cursor, CursorPage } from "@/types/community";
 import { useSearchParams } from "react-router-dom";
 import { MessageCircle, SquareArrowOutUpRight, X } from "lucide-react";
-
-// ========= 공용 타입 (DB 스키마 기반) =========
-
-//TODO: 임시용 폴백 id (나중에 삭제하기)
-const tempUserId = 24;
-
+import { useCookies } from "react-cookie";
 
 function useQueryState() {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -43,14 +38,15 @@ function useQna(params: SearchQnaParams) {
     const { page, size, perGroup } = params;
     const [items, setItems] = useState<Qna[]>([]);
     const [total, setTotal] = useState(0);
+    const [cookie] = useCookies();
 
     const url = useMemo(() => {
-        return endpoints.getQnAListOfUser(tempUserId, params);
+        return endpoints.getQnAListOfUser(params);
     }, [page, size, perGroup]);
 
     useEffect(() => {
         (async () => {
-            const { status, data } = await getData(url);
+            const { status, data } = await getData(url, cookie.accessToken);
             if (status === 200) {
                 setItems(data.items);
                 setTotal(data.totalElements);

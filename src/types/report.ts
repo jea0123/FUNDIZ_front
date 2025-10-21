@@ -11,7 +11,6 @@ export interface Report{
 }
 
 export interface ReportAddRequest{
-    userId : number;
     target : number;
     reason : string;
     reportDate : Date;

@@ -1,6 +1,5 @@
 export interface AddrUpdateRequest {
   addrId: number;
-  userId: number;
   addrName: string;
   recipient: string;
   postalCode: string;

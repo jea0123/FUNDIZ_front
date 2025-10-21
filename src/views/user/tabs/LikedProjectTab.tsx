@@ -4,12 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { LikedDetail } from '@/types/liked';
 import { useEffect, useState } from 'react';
+import { useCookies } from 'react-cookie';
 import { useNavigate } from 'react-router-dom';
-
-const tempUserId = 1;
 
 export default function LikedProjectTab() {
   const navigate = useNavigate();
+  const [cookie] = useCookies();
   const [likedProjects, setLikedProjects] = useState<LikedDetail[]>([]);
   const [likedPage, setLikedPage] = useState(1);
   const [sortOption, setSortOption] = useState<string>('RECENT');
@@ -20,7 +20,7 @@ export default function LikedProjectTab() {
   const [likedSearch, setLikedSearch] = useState('');
 
   const MypageLikedList = async () => {
-    const response = await getData(endpoints.getLikedList(tempUserId));
+    const response = await getData(endpoints.getLikedList, cookie.accessToken);
     console.log('찜 목록 응답:', response);
     if (response.status === 200) {
       setLikedProjects(response.data);

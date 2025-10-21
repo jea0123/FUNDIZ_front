@@ -7,36 +7,38 @@ import { Button } from '@/components/ui/button';
 import { formatNumber } from '@/utils/utils';
 import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
 import type { MyPageBackingDetail } from '@/types/backing';
+import { useCookies } from 'react-cookie';
 
 export default function BackingDetailPage() {
   const { backingId } = useParams();
   const navigate = useNavigate();
   const [backing, setBacking] = useState<MyPageBackingDetail>();
+  const [cookie] = useCookies();
 
- useEffect(() => {
-  const fetchData = async () => {
-    if (!backingId) return;
-    try {
-      const res = await getData(endpoints.getMypageBackingDetail(Number(backingId)));
-      console.log("📦 상세 응답:", res.data);
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!backingId) return;
+      try {
+        const res = await getData(endpoints.getMypageBackingDetail(Number(backingId)));
+        console.log("📦 상세 응답:", res.data);
 
-      //  단일 객체 형태로 응답될 때 처리
-      if (res.status === 200 && res.data) {
-        const data = res.data;
-        setBacking({
-          ...data,
-          rewardList: data.rewards ?? data.rewardList ?? [],
-        });
-      } else {
-        console.error("❌ 잘못된 응답 구조:", res);
+        //  단일 객체 형태로 응답될 때 처리
+        if (res.status === 200 && res.data) {
+          const data = res.data;
+          setBacking({
+            ...data,
+            rewardList: data.rewards ?? data.rewardList ?? [],
+          });
+        } else {
+          console.error("❌ 잘못된 응답 구조:", res);
+        }
+      } catch (err) {
+        console.error("❌ 후원 상세 불러오기 실패:", err);
       }
-    } catch (err) {
-      console.error("❌ 후원 상세 불러오기 실패:", err);
-    }
-  };
+    };
 
-  fetchData();
-}, [backingId]);
+    fetchData();
+  }, [backingId]);
 
   if (!backing) return <div className="p-6">로딩 중...</div>;
 
@@ -65,6 +67,25 @@ export default function BackingDetailPage() {
   const totalRewardAmount = backing.rewardList?.reduce((sum, r) => sum + (r.price ?? 0) * (r.quantity ?? 0), 0) ?? 0;
 
   const extraBacking = Math.max(backing.amount - totalRewardAmount, 0);
+
+  const cancelBacking = async () => {
+    if (!backingId) return;
+    const confirmCancel = window.confirm('정말로 이 후원을 취소하시겠습니까?\n결제가 완료된 경우 환불 절차가 진행됩니다.');
+    if (!confirmCancel) return;
+
+    try {
+      const res = await postData(endpoints.cancelBacking(Number(backingId)), cookie.accessToken);
+      if (res.status === 200) {
+        alert('후원이 성공적으로 취소되었습니다.');
+        navigate('/user');
+      } else {
+        alert(res.message ?? '후원 취소에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      }
+    } catch (error) {
+      console.error('후원 취소 오류:', error);
+      alert('서버 오류로 인해 후원 취소에 실패했습니다.');
+    }
+  }
 
   return (
     <div className="p-6 space-y-8 max-w-5xl mx-auto">
@@ -209,24 +230,7 @@ export default function BackingDetailPage() {
         {backing.backingStatus === 'COMPLETED' && (
           <Button
             variant="destructive"
-            onClick={async () => {
-              if (!backingId) return;
-              const confirmCancel = window.confirm('정말로 이 후원을 취소하시겠습니까?\n결제가 완료된 경우 환불 절차가 진행됩니다.');
-              if (!confirmCancel) return;
-
-              try {
-                const res = await postData(endpoints.cancelBacking(1, Number(backingId))); // tempUserId: 1
-                if (res.status === 200) {
-                  alert('후원이 성공적으로 취소되었습니다.');
-                  navigate('/user');
-                } else {
-                  alert(res.message ?? '후원 취소에 실패했습니다. 잠시 후 다시 시도해주세요.');
-                }
-              } catch (error) {
-                console.error('후원 취소 오류:', error);
-                alert('서버 오류로 인해 후원 취소에 실패했습니다.');
-              }
-            }}
+            onClick={cancelBacking}
           >
             후원 취소
           </Button>

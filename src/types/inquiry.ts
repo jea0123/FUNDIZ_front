@@ -13,7 +13,6 @@ export interface Inquiry{
 }
 
 export interface IqrAddRequest{
-    userId : number;
     title : string;
     content : string;
     createdAt : Date;

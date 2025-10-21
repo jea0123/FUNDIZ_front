@@ -1,59 +1,19 @@
 import React, { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import {
-    Tabs,
-    TabsList,
-    TabsTrigger,
-    TabsContent
-} from "@/components/ui/tabs";
-import {
-    Card,
-    CardHeader,
-    CardTitle,
-    CardContent
-} from "@/components/ui/card";
-import {
-    Table,
-    TableHeader,
-    TableRow,
-    TableHead,
-    TableBody,
-    TableCell
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import {
-    Select,
-    SelectTrigger,
-    SelectContent,
-    SelectItem,
-    SelectValue
-} from "@/components/ui/select";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter
-} from "@/components/ui/dialog";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { endpoints, getData, postData, setDevCreatorIdHeader } from "@/api/apis";
+import { endpoints, getData, postData } from "@/api/apis";
 import { formatDate } from '@/utils/utils';
 import type { Qna, SearchQnaParams } from "@/types/qna";
 import type { QnaReplyDto } from "@/types/reply";
 import type { Cursor, CursorPage } from '@/types/community';
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { useCreatorId } from "../../../types/useCreatorId";
 import { MessageCircle, SquareArrowOutUpRight, X } from "lucide-react";
 import { useCookies } from "react-cookie";
-
-// ========= 공용 타입 (DB 스키마 기반) =========
-
-//TODO: 임시용 폴백 id (나중에 삭제하기)
-
 
 export type Reply = {
     replyId: number;
@@ -65,8 +25,6 @@ export type Reply = {
     isDeleted: 'Y' | 'N';
     deletedAt?: string | null;
 };
-
-
 
 const getByteLen = (s: string) => new TextEncoder().encode(s).length;
 
@@ -264,8 +222,8 @@ export function CreatorQnATab() {
                                             <div className="col-span-3 font-medium truncate">
                                                 {q.title}</div>
                                             <div className="col-span-1"><a href={`/project/${q.projectId}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"><SquareArrowOutUpRight className="w-4 h-4"/></a></div>
+                                                target="_blank"
+                                                rel="noopener noreferrer"><SquareArrowOutUpRight className="w-4 h-4" /></a></div>
                                             <div className="col-span-4 font-medium truncate">{q.content}</div>
                                             <div className="col-span-2 font-medium truncate">{q.userId}</div>
                                             <div className="col-span-2 text-xs text-zinc-500">{formatDate(q.createdAt)}</div>
@@ -307,7 +265,7 @@ export function CreatorQnATab() {
                                                                             <span className="text-sm font-medium truncate">{rp.creatorId}</span>
                                                                             <span className="text-[11px] text-gray-500">{formatDate(rp.createdAt)}</span>
                                                                         </div>
-                                                                        <p className="text-sm whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+                                                                        <p className="text-sm whitespace-pre-wrap break-words">
                                                                             {rp.content}
                                                                         </p>
                                                                     </div>
@@ -387,24 +345,6 @@ export function CreatorQnATab() {
                         </div>
                     </CardContent>
                 </Card>
-            </div>
-        </div>
-    );
-}
-
-function ReplyComposer({ onSubmit }: { onSubmit: (payload: { userId?: number; content: string; isSecret: 'Y' | 'N' }) => void }) {
-    const [content, setContent] = useState("");
-    const [secret, setSecret] = useState<'Y' | 'N'>('N');
-    return (
-        <div className="mt-3 border-t pt-3">
-            <Label className="mb-1 block">댓글 작성</Label>
-            <Textarea value={content} onChange={e => setContent(e.target.value)} rows={4} placeholder="댓글 내용을 입력" />
-            <div className="mt-2 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm">
-                    <Checkbox id="isSecret" checked={secret === 'Y'} onCheckedChange={(v) => setSecret(v ? 'Y' : 'N')} />
-                    <Label htmlFor="isSecret">비밀댓글</Label>
-                </div>
-                <Button size="sm" onClick={() => { if (!content.trim()) return; onSubmit({ userId: 1, content, isSecret: secret }); setContent(""); }}>등록</Button>
             </div>
         </div>
     );
