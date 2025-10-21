@@ -226,6 +226,9 @@ export default function CreatorDashboard() {
                 <CardTitle className="text-lg font-semibold mb-2">내 프로젝트 성공률</CardTitle>
               </CardHeader>
               <CardContent>
+                {successRate === 0 && failRate === 0 ?(
+                  <div className="text-center text=gray-500 py-10">데이터가 없습니다.</div>
+                ) : (
                 <ResponsiveContainer width="100%" height={220}>
                   <PieChart>
                     <Pie data={successData} cx="50%" cy="50%" outerRadius={70} dataKey="value" label={({ name, value }) => `${name} ${value.toFixed(1)}%`} labelLine={false}>
@@ -237,6 +240,7 @@ export default function CreatorDashboard() {
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
+                )}
               </CardContent>
             </Card>
           </div>
