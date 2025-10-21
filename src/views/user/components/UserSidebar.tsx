@@ -1,4 +1,4 @@
-import { Bell, ChartColumnBig, Heart, LayoutList, Megaphone, MessagesSquare, Package, SearchCheck, Settings, Siren, Users } from "lucide-react";
+import { Bell, CreditCard, Heart, LayoutDashboard, MessagesSquare, Package, Settings, Siren } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { SavedAddressModal } from '../../backing/SavedAddressModal';
 
@@ -15,7 +15,7 @@ export function UserSidebar() {
     return (
         <nav className="w-56 shrink-0 pr-2 mt-6 space-y-2">
             <NavLink to="/user/main" className={({ isActive }) => linkCls(isActive)}>
-                <Package className="mr-2 h-4 w-4" />메인
+                <LayoutDashboard className="mr-2 h-4 w-4" />메인
             </NavLink>
             <NavLink to="/user/support" className={({ isActive }) => linkCls(isActive)}>
                 <Package className="mr-2 h-4 w-4" />후원한 프로젝트
@@ -30,6 +30,9 @@ export function UserSidebar() {
                     console.log('선택된 주소 : ', address);
                 }}
             />
+            <NavLink to="/user/payment" className={({ isActive }) => linkCls(isActive)}>
+                <CreditCard className="mr-2 h-4 w-4" />결제 수단 관리
+            </NavLink>
             <NavLink to="/user/settings" className={({ isActive }) => linkCls(isActive)}>
                 <Settings className="mr-2 h-4 w-4" />계정 설정
             </NavLink>
