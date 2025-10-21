@@ -254,6 +254,8 @@ export const endpoints = {
   // ==================== Category API ====================
   getCategories: 'categories',
   getSubcategories: 'categories/subcategories',
+  createCategory: 'categories/create',
+  createSubcategory: 'categories/subcategories/create',
 
   // ==================== Customer Service API ====================
   getNotices: (p: SearchNoticeParams) => `cs/notice/list?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,

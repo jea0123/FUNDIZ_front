@@ -57,6 +57,7 @@ import { ProjectDetailsPage } from './views/project/ProjectDetailsPage';
 import CreatorRewardAddPage from './views/creator/pages/CreatorRewardAddPage';
 import CreatorPage from './views/creator/pages/CreatorPage';
 import UserHomeTab from './views/user/UserHomeTab';
+import CreateCategory from './views/CreateCategory';
 
 // import { setDevCreatorIdHeader } from '@/api/apis';
 // setDevCreatorIdHeader(11);
@@ -186,6 +187,7 @@ export default function App() {
             <Route path="/error" element={<ErrorPage />} />
             <Route path="*" element={<ErrorPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
+            <Route path="/category" element={<CreateCategory />} />
           </Route>
         </Routes>
       </div>
