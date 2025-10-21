@@ -143,11 +143,11 @@ export function ReportsAdminTab() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-10">사유</TableHead>
+                                    <TableHead className="w-20">상태</TableHead>
+                                    <TableHead className="w-20">사유</TableHead>
                                     <TableHead className="w-36">유형</TableHead>
                                     <TableHead className="w-28">신고자</TableHead>
                                     <TableHead className="w-28">대상</TableHead>
-                                    <TableHead className="w-40">상태</TableHead>
                                     <TableHead className="w-32">신고일</TableHead>
                                     <TableHead>수정</TableHead>
                                 </TableRow>
@@ -155,11 +155,11 @@ export function ReportsAdminTab() {
                             <TableBody>
                                 {items.map(r => (
                                     <TableRow key={r.reportId}>
+                                        <TableCell>{statusBadge(r.reportStatus as ReportStatus)}</TableCell>
                                         <TableCell className="font-medium truncate">{r.reason}</TableCell>
                                         <TableCell>{typeBadge(r.reportType as ReportType)}</TableCell>
                                         <TableCell>UID {r.userId}</TableCell>
                                         <TableCell>TID {r.target}</TableCell>
-                                        <TableCell>{statusBadge(r.reportStatus as ReportStatus)}</TableCell>
                                         <TableCell className="text-zinc-500">{formatDate(r.reportDate)}</TableCell>
                                         <TableCell>
                                             {r.reportStatus === "COMPLETED" ? <Button variant="outline" size="sm" disabled className="text-gray-950 bg-gray-100">완료</Button> : <ReportStatusEditModal reportId={r.reportId} />}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Send } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,8 @@ import type { NoticeAddRequest } from "@/types/notice";
 import { useNavigate } from "react-router-dom";
 
 export function NoticeAddTab() {
-
+    const fileRef = useRef<HTMLInputElement>(null);
+    const [preview, setPreview] = useState<string | null>(null);
     const navigate = useNavigate();
 
     const [noticeAdd, setNoticeAdd] = useState<NoticeAddRequest>({
@@ -19,6 +20,15 @@ export function NoticeAddTab() {
         viewCnt : 0,
         createdAt : new Date(Date.now())
     });
+
+    const onFileChange = (file?: File) => {
+        if (!file) {
+            setPreview(null);
+            return;
+        }
+        const url = URL.createObjectURL(file);
+        setPreview(url);
+    };
 
     const handleNoticeAdd = async () => {
             const response = await postData(endpoints.addNotice, noticeAdd);
@@ -55,6 +65,19 @@ export function NoticeAddTab() {
                                 onChange={e => setNoticeAdd({ ...noticeAdd, content: e.target.value })}
                                 rows={20}
                                 placeholder="내용을 입력하세요" />
+                        </div>
+                        <div>
+                            <Label className="mb-1 block">파일 첨부</Label>
+                            <Input
+                                ref={fileRef}
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                onFileChange(file);
+                                field.onChange(e.target.files);
+                                }}
+                            />
                         </div>
                         <div className="flex justify-content-end">
                             <Button onClick={handleNoticeAdd} className="flex items-center gap-2"><Send className="w-4 h-4" /> 제출</Button>
