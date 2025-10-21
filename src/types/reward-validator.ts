@@ -76,14 +76,16 @@ export function validateReward(
     if (!name) {
         errors.rewardName = "리워드명은 필수입니다.";
     } else if (name.length < 1 || name.length > MAX_REWARD_NAME_LEN) {
-        errors.rewardName = `리워드명 길이는 1~${MAX_REWARD_NAME_LEN}자여야 합니다.`;
+        errors.rewardName = `리워드명은 1~ ${MAX_REWARD_NAME_LEN}자 이내로 입력해주세요.`;
     }
 
     // 리워드 가격
     const price = input.price == null ? null : Number(input.price);
-    if (price == null || isNaN(price) || price < MIN_REWARD_PRICE) {
+    if (price == null) {
+        errors.price = "리워드 가격은 필수입니다.";
+    } else if (isNaN(price) || price < MIN_REWARD_PRICE) {
         errors.price = `리워드 가격은 최소 ${MIN_REWARD_PRICE.toLocaleString()}원 이상이어야 합니다.`;
-    } else if (price == null || isNaN(price) || price > MAX_REWARD_PRICE) {
+    } else if (isNaN(price) || price > MAX_REWARD_PRICE) {
         errors.price= `리워드 가격은 최대 ${MAX_REWARD_PRICE.toLocaleString()}원 이하이어야 합니다.`;
     }
 
@@ -92,7 +94,7 @@ export function validateReward(
     if (!content) {
         errors.rewardContent = "리워드 내용은 필수입니다.";
     } else if (content.length < 1 || content.length > MAX_REWARD_CONTENT_LEN) {
-        errors.rewardContent = `리워드 내용 길이는 1~${MAX_REWARD_CONTENT_LEN}자여야 합니다.`;
+        errors.rewardContent = `리워드 내용은 1~${MAX_REWARD_CONTENT_LEN}자여야 합니다.`;
     }
 
     // 배송 필요 여부
@@ -106,7 +108,7 @@ export function validateReward(
     const del = toDate(input.deliveryDate);
     const end = toDate(opts?.fundingEndDate);
     if (!del) {
-        errors.deliveryDate = `리워드 ${label}은 필수입니다.`;
+        errors.deliveryDate = `${label}은 필수입니다.`;
     } else if (!end){
         errors.deliveryDate = "펀딩 종료일을 먼저 설정하세요.";
     } else {
