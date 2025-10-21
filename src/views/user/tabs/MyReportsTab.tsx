@@ -142,21 +142,21 @@ export function MyReportsTab() {
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>사유</TableHead>
+                                            <TableHead className="w-20">상태</TableHead>
+                                            <TableHead className="w-20">사유</TableHead>
                                             <TableHead className="w-36">유형</TableHead>
                                             <TableHead className="w-28">대상</TableHead>
-                                            <TableHead className="w-40">상태</TableHead>
                                             <TableHead className="w-32">신고일</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {items.map(r => (
                                             <TableRow key={r.reportId}>
-                                                <TableCell className="font-medium">{r.reason}</TableCell>
-                                                <TableCell>{typeBadge(r.reportType as ReportType)}</TableCell>
-                                                <TableCell>TID {r.target}</TableCell>
-                                                <TableCell>{statusBadge(r.reportStatus as ReportStatus)}</TableCell>
-                                                <TableCell className="text-zinc-500">{formatDate(r.reportDate)}</TableCell>
+                                                <TableCell className="py-3">{statusBadge(r.reportStatus as ReportStatus)}</TableCell>
+                                                <TableCell className="py-3 font-medium">{r.reason}</TableCell>
+                                                <TableCell className="py-3">{typeBadge(r.reportType as ReportType)}</TableCell>
+                                                <TableCell className="py-3">TID {r.target}</TableCell>
+                                                <TableCell className="py-3 text-zinc-500">{formatDate(r.reportDate)}</TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>
