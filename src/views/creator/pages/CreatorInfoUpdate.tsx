@@ -156,10 +156,7 @@ export default function CreatorInfoUpdate() {
     return (
         <Card className="shadow-sm">
             <CardHeader>
-                <CardTitle>창작자 정보 수정</CardTitle>
-                <CardDescription>
-                    창작자 정보 수정 페이지입니다.
-                </CardDescription>
+                <CardTitle className="text-2xl">창작자 정보 수정</CardTitle>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
@@ -328,19 +325,29 @@ export default function CreatorInfoUpdate() {
                                                     <SelectValue placeholder="선택" />
                                                 </SelectTrigger>
                                             </FormControl>
-                                            <SelectContent>
+                                            <SelectContent id="banklist">
                                                 <SelectItem value="KB">국민(KB)</SelectItem>
                                                 <SelectItem value="SHINHAN">신한</SelectItem>
                                                 <SelectItem value="WOORI">우리</SelectItem>
                                                 <SelectItem value="HANA">하나</SelectItem>
                                                 <SelectItem value="NH">농협(NH)</SelectItem>
-                                                <SelectItem value="KAKAO">카카오뱅크</SelectItem>
-                                                <SelectItem value="TOSS">토스뱅크</SelectItem>
+                                                <SelectItem value="SH">수협</SelectItem>
                                                 <SelectItem value="IBK">기업</SelectItem>
                                                 <SelectItem value="SC">SC제일</SelectItem>
-                                                <SelectItem value="OTHERS">기타</SelectItem>
+                                                <SelectItem value="CITI">씨티</SelectItem>
+                                                <SelectItem value="IM">iM뱅크</SelectItem>
+                                                <SelectItem value="BNK">부산</SelectItem>
+                                                <SelectItem value="KJ">광주</SelectItem>
+                                                <SelectItem value="JEJU">제주</SelectItem>
+                                                <SelectItem value="JB">전북</SelectItem>
+                                                <SelectItem value="KBANK">케이뱅크</SelectItem>
+                                                <SelectItem value="KAKAO">카카오뱅크</SelectItem>
+                                                <SelectItem value="TOSS">토스뱅크</SelectItem>
+                                                <SelectItem value="selboxDirect">직접 입력</SelectItem>
                                             </SelectContent>
                                         </Select>
+                                        
+                                        <input type="text" id="selboxDirect" name="selboxDirect"/>
                                         <div className={hintCls}>
                                             {form.formState.errors.bank
                                                 ? <FormMessage />

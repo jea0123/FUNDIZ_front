@@ -438,19 +438,19 @@ export function BackingPage() {
               <CardContent className="space-y-4">
                 {addressMode === 'select' ? (
                   <>
-                    <SavedAddressModal mode="backing" onSelectAddress={setShippingAddress} />
+                    <SavedAddressModal mode="backing" onSelectAddress={setShippingAddress} triggerText='배송지를 선택해주세요'/>
                     {shippingAddress ? (
                       <div className="text-sm p-3 border rounded-lg">
                         <p>{shippingAddress.addrName}</p>
                         <p>
-                          {shippingAddress.roadAddr} {shippingAddress.detailAddr}
+                          {shippingAddress.roadAddr} {shippingAddress.detailAddr} ({shippingAddress.postalCode})
                         </p>
                         <p>
                           {shippingAddress.recipient} ({shippingAddress.recipientPhone})
                         </p>
                       </div>
                     ) : (
-                      <p className="text-sm text-gray-500">배송지를 선택해주세요.</p>
+                      <p></p>
                     )}
                   </>
                 ) : (

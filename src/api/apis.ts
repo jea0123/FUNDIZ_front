@@ -149,7 +149,7 @@ export const endpoints = {
   getLikedList: (userId: number) => `user/likedList/${userId}`,
   getQnAListOfUser: (userId: number, p: SearchQnaParams) => `user/qna/${userId}?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup })}`,
   addRecentView: (projectId: number) => `user/recentView/${projectId}`,
-  getRecentView: `user/recentViewProjects`,
+  getRecentView: (limit?: number) => `user/recentViewProjects?${toQueryString({ limit })}`,
   getQnAListDetail: (userId: number, projectId: number) => `user/QnAListDetail/${userId}/project/${projectId}`,
   updateNickname: 'user/nickname',
   updateProfileImg: 'user/profileImg',
@@ -160,6 +160,7 @@ export const endpoints = {
   followCreator: (creatorId: number) => `user/follow/${creatorId}`,
   unfollowCreator: (creatorId: number) => `user/unfollow/${creatorId}`,
   checkFollowed: (creatorId: number) => `user/checkFollow/${creatorId}`,
+  getUserSummary: 'user/summary',
 
   // ==================== Creator API ====================
   getCreatorProjectList: (p: SearchCreatorProjectDto) => `creator/projects?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, projectStatus: p.projectStatus && p.projectStatus.length ? p.projectStatus : undefined, rangeType: p.rangeType || undefined })}`,
@@ -184,7 +185,6 @@ export const endpoints = {
   updateCreatorShippingStatus: (projectId: number) => `creator/shippingBackerList/${projectId}`,
   postCreatorNews: (projectId: number) => `creator/projects/${projectId}/news`,
   getFollowerCnt: (creatorId: number) => `creator/followerCnt/${creatorId}`,
-
   getTotalCounts: (creatorId: number) => `creator/totalCounts/${creatorId}`,
   getCreatorSummary: (creatorId: number) => `creator/summary/${creatorId}`,
   getCreatorProjects: (creatorId: number, sort: string, page: number, size: number) => `creator/projectsList/${creatorId}?${toQueryString({ sort, page, size })}`,
@@ -223,7 +223,7 @@ export const endpoints = {
   getBackingDetail: (userId: number, projectId: number, rewardId: number, backingId: number) => `backing/page/${userId}/project/${projectId}/reward/${rewardId}/backing/${backingId}`,
   //교체후보
   getMypageBackingList: (userId: number) => `backing/myPageBackingList/${userId}`,
-  getMypageBackingDetail: (userId: number) => `backing/myPageBackingDetail/${userId}`,
+  getMypageBackingDetail: (backingId: number) => `backing/myPageBackingDetail/${backingId}`,
   //여기까지
   backingPrepare: (userId: number, projectId: number) => `backing/${userId}/create/${projectId}`,
   addBacking: (userId: number) => `backing/create/${userId}`,

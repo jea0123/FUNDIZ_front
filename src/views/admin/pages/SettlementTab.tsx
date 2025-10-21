@@ -85,6 +85,9 @@ const SettlementTab: React.FC = () => {
 
     return (
         <div className="space-y-6">
+            <div className="text-2xl ml-1 mt-2 font-bold">
+                정산 관리
+            </div>
             <div className="flex flex-wrap items-end gap-3">
                 <div className="relative w-full max-w-xl">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-60" />

@@ -18,8 +18,11 @@ export function LoginPage() {
     const navigate = useNavigate();
 
     const handleSubmit = async () => {
+        if (isLoading) return;
+        setIsLoading(true);
         if (!email || !password) {
             alert('이메일과 비밀번호를 모두 입력해주세요.');
+            setIsLoading(false);
             return;
         }
         const requestBody: SignInRequestDto = { email, password };
@@ -29,7 +32,6 @@ export function LoginPage() {
         } finally {
             setIsLoading(false);
         }
-
     };
 
     const signInResponse = (response: any) => {
@@ -78,7 +80,7 @@ export function LoginPage() {
                     </CardHeader>
 
                     <CardContent>
-                        <div onSubmit={handleSubmit} className="space-y-4">
+                        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-4">
                             <div>
                                 <Label htmlFor="email">이메일</Label>
                                 <div className="relative" style={{ marginTop: '10px' }}>
@@ -140,11 +142,10 @@ export function LoginPage() {
                                     </button>
                                 </div>
                             </div>
-
-                            <Button type="submit" className="w-full" disabled={isLoading} onClick={handleSubmit}>
+                            <Button type="submit" className="w-full" disabled={isLoading}>
                                 {isLoading ? '로그인 중...' : '로그인'}
                             </Button>
-                        </div>
+                        </form>
                     </CardContent>
                 </Card>
             </div>

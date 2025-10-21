@@ -84,7 +84,7 @@ export function NoticeTab() {
         <div>
                         <Card>
                             <CardHeader className="flex items-center justify-between">
-                                <CardTitle className="flex items-center gap-2 text-xl"><Megaphone className="w-5 h-5" /> 공지사항</CardTitle>
+                                <CardTitle className="flex items-center gap-2 text-2xl"><Megaphone className="w-6 h-6" /> 공지사항</CardTitle>
                                 <span className="text-sm text-zinc-500">총 {total}건</span>
                             </CardHeader>
                             <CardContent>

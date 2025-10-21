@@ -41,8 +41,8 @@ export default function LikedProjectTab() {
 
   return (
     <Card>
-      <CardHeader className="flex justify-between items-center flex-wrap gap-2">
-        <CardTitle>찜한 프로젝트 ({likedProjects?.length}개)</CardTitle>
+      <CardHeader className="flex justify-between items-center flex-wrap gap-2 text-2xl">
+        <CardTitle className="flex items-center">찜한 프로젝트 ({likedProjects?.length}개)</CardTitle>
 
         <div className="flex items-center gap-2">
           {/* 정렬 옵션 */}

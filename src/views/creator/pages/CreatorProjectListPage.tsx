@@ -226,7 +226,7 @@ export default function CreatorProjectListPage() {
         <Card>
             <CardHeader className="gap-6">
                 <div className="flex items-center justify-between">
-                    <CardTitle>프로젝트 목록</CardTitle>
+                    <CardTitle className="text-2xl">프로젝트 목록</CardTitle>
                 </div>
 
                 <div className="flex items-center justify-between gap-2 flex-wrap">
