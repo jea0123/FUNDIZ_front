@@ -157,9 +157,9 @@ export default function CreatorShippingDetail() {
     );
 
   return (
-    <div className="p-6">
+    <div>
       <div className="flex justify-between mb-4">
-        <h2 className="text-xl font-bold">프로젝트 {projectId} 배송 내역</h2>
+        <h2 className="text-2xl font-bold">프로젝트 {projectId} 배송 내역</h2>
         <button onClick={() => navigate(-1)} className="border px-3 py-1 rounded bg-gray-100">
           ← 목록으로
         </button>
