@@ -37,7 +37,7 @@ export function ReportTab() {
     return (
             <Card className="lg:col-span-2">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-xl"><Siren className="w-5 h-5" /> 신고하기</CardTitle>
+                    <CardTitle className="flex items-center gap-2 text-2xl"><Siren className="w-6 h-6" /> 신고하기</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-1 gap-4">

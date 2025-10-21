@@ -244,6 +244,9 @@ export function CreatorQnATab() {
         <div>
             <div>
                 <Card>
+                    <CardHeader>
+                        <CardTitle className="text-2xl">창작자 Q&A 목록</CardTitle>
+                    </CardHeader>
                     <CardContent>
                         <Accordion type="single" collapsible value={openQna} onValueChange={setOpenQna}>
                             <div className="grid grid-cols-12 gap-2 w-full items-center">

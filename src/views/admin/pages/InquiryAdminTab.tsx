@@ -229,7 +229,9 @@ export function InquiryAdminTab() {
         <div>
             <div>
                         <Card>
-                            <CardHeader><CardTitle>문의 내역</CardTitle></CardHeader>
+                            <CardHeader>
+                                <CardTitle className="text-2xl">문의 내역</CardTitle>
+                            </CardHeader>
                             <CardContent>
                                 <Accordion type="single" collapsible value={openInquiry} onValueChange={setOpenInquiry}>
                                     <div className="grid grid-cols-12 gap-2 w-full items-center">

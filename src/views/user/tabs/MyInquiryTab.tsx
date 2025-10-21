@@ -158,7 +158,11 @@ export function MyInquiryTab() {
         <div>
             <div>
                 <Card>
-                    <CardHeader><CardTitle>내 문의 내역</CardTitle></CardHeader>
+                    <CardHeader>
+                        <CardTitle className="flex items-center text-2xl">
+                            내 문의 내역
+                        </CardTitle>
+                    </CardHeader>
                     <CardContent>
                         <Accordion type="single" collapsible value={openInquiry} onValueChange={setOpenInquiry}>
                             <div className="grid grid-cols-12 gap-2 w-full items-center">
