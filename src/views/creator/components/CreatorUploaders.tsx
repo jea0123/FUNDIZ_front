@@ -15,6 +15,8 @@ interface Props {
     onSelect: (file: File | null) => void; // 선택/교체 시 부모에 전달
     onCleared?: () => void; // 제거 시 콜백
     disabled?: boolean;
+    id?: string;
+    required?: boolean;
 }
 
 function useObjectUrl(file: File | null | undefined) {
@@ -44,6 +46,8 @@ export function ThumbnailUploader({
     onSelect,
     onCleared,
     disabled,
+    id = "thumbnail",
+    required = false,
 }: Props) {
     const inputRef = useRef<HTMLInputElement | null>(null);
     const [dragOver, setDragOver] = useState(false);
@@ -112,8 +116,6 @@ export function ThumbnailUploader({
 
     return (
         <div>
-            <Label className="mb-2 block">{label}</Label>
-
             <div
                 className={clsx(
                     "relative rounded-lg border-2 border-dashed p-6 text-center transition-colors",
@@ -128,7 +130,7 @@ export function ThumbnailUploader({
                     <div className="relative">
                         <img
                             src={preview}
-                            alt="대표 이미지 미리보기"
+                            alt="선택한 대표 이미지 미리보기"
                             className="mx-auto max-h-80 w-auto rounded-md object-contain"
                             onError={() => setError("이미지를 불러올 수 없습니다.")}
                         />
@@ -155,10 +157,13 @@ export function ThumbnailUploader({
 
                 <input
                     ref={inputRef}
+                    id={id}
                     type="file"
                     accept={IMAGE_ACCEPT.join(",")}
-                    className="hidden"
+                    className="sr-only"
                     onChange={(e) => handleFiles(e.target.files)}
+                    disabled={disabled}
+                    required={required}
                 />
             </div>
             {error && <p className="mt-2 text-sm text-red-600">{error}</p>}

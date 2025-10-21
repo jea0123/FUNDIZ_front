@@ -183,7 +183,7 @@ export function RecentView({ title, perRow = 5, }: { title?: string; perRow?: nu
      * getRecentViewProjects();
      */
     const getRecentViewProjects = async () => {
-        const response = await getData(endpoints.getRecentView, cookie.accessToken);
+        const response = await getData(endpoints.getRecentView(), cookie.accessToken);
         if (response.status === 200) {
             setRecentView(response.data);
         }
@@ -268,14 +268,14 @@ export function ProjectCard({ items }: { items: any; }) {
                     <img src={img} alt={items.title} className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-115" />
                 </div>
                 <div className="space-y-1 py-3">
-                    <p className="text-[11px] text-muted-foreground m-0 z-100 hover:underline" onClick={() => navigate(`/creator/${items.creatorId}`)}>{items.creatorName}</p>
+                    <p className="text-[11px] text-muted-foreground m-0 z-100 hover:underline" onClick={(e) => { e.stopPropagation(); navigate(`/creator/${items.creatorId}`); }}>{items.creatorName}</p>
                     <p className="line-clamp-1 text-sm leading-snug text-ellipsis m-0">{items.title}</p>
                     <div className="flex items-center justify-between pt-1 text-xs">
                         <div className="text-[14px] font-medium text-red-600 bg-none">{items.percentNow}% 달성</div>
                     </div>
                     <div className="mt-1 flex flex-wrap gap-2 text-[10px] font-bold whitespace-nowrap h-[18px]">
-                        {items.endDate && <span className="text-muted-foreground px-1 bg-[#f0f0f0]">{getDaysLeft(items.endDate)}일 남음</span>}
-                        {items.currAmount && <span className="text-muted-foreground px-1 bg-[#f0f0f0]">{toWonPlus(items.currAmount)}</span>}
+                        <span className="text-muted-foreground px-1 bg-[#f0f0f0]">{getDaysLeft(items.endDate)}일 남음</span>
+                        <span className="text-muted-foreground px-1 bg-[#f0f0f0]">{toWonPlus(items.currAmount)}</span>
                     </div>
                 </div>
             </div>
@@ -289,7 +289,7 @@ export function ProjectCard({ items }: { items: any; }) {
  * @param {number} size 청크 크기
  * @returns {T[][]} 청크 배열
  */
-function chunk<T>(arr: T[], size: number): T[][] {
+export function chunk<T>(arr: T[], size: number): T[][] {
     const out: T[][] = [];
     for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
     return out;
