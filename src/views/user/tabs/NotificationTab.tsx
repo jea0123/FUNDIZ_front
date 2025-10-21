@@ -57,10 +57,7 @@ export default function NotificationTab() {
     };
 
     const deleteOne = async (id: number) => {
-        const res = await deleteData(
-            endpoints.deleteNotification(id),
-            cookie.accessToken
-        );
+        const res = await deleteData(endpoints.deleteNotification(id), cookie.accessToken);
         if (res?.status === 200) {
             deleteLocal(id);
             toastSuccess("알림을 삭제했습니다");

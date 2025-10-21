@@ -18,6 +18,7 @@ import { QnaCreateModal } from './components/QnaCreateModal';
 import ProjectCommunityTab from './components/ProjectCommunityTab';
 import ProjectReviewsTab from './components/ProjectReviewsTab';
 import { ProjectDetailViewer } from '../creator/components/ProjectDetailViewer';
+import { useCookies } from 'react-cookie';
 
 export function ProjectDetailsPage() {
 
@@ -38,6 +39,7 @@ export function ProjectDetailsPage() {
 
     /* --------------------------------- States --------------------------------- */
 
+    const [cookie] = useCookies();
     const [project, setProject] = useState<ProjectDetail>();
     const [loadingProject, setLoadingProject] = useState(false);
 
@@ -55,11 +57,11 @@ export function ProjectDetailsPage() {
     const [cartPing, setCartPing] = useState(false);
     const [qtyByReward, setQtyByReward] = useState<Record<number, number>>({});
 
-    const [loadingLike, setLoadingLike] = useState(false);      // 좋아요 상태/카운트 조회중
-    const [mutatingLike, setMutatingLike] = useState(false);    // 좋아요/취소 토글중
+    const [loadingLike, setLoadingLike] = useState(false);
+    const [mutatingLike, setMutatingLike] = useState(false);
 
-    const [loadingFollow, setLoadingFollow] = useState(false);  // 팔로우 상태/카운트 조회중
-    const [mutatingFollow, setMutatingFollow] = useState(false);// 팔로우/언팔 토글중
+    const [loadingFollow, setLoadingFollow] = useState(false);
+    const [mutatingFollow, setMutatingFollow] = useState(false);
 
     /* ------------------------------- Derived ---------------------------------- */
 
@@ -102,7 +104,7 @@ export function ProjectDetailsPage() {
         if (!projectId || !ensureLogin()) return;
         setMutatingLike(true);
         try {
-            const res = await postData(endpoints.likeProject(projectId));
+            const res = await postData(endpoints.likeProject(projectId), {}, cookie.accessToken);
             if (res.status === 200) {
                 setIsLiked(true);
                 await getLikeCnt(projectId);
@@ -117,7 +119,7 @@ export function ProjectDetailsPage() {
         if (!projectId || !ensureLogin()) return;
         setMutatingLike(true);
         try {
-            const res = await deleteData(endpoints.dislikeProject(projectId));
+            const res = await deleteData(endpoints.dislikeProject(projectId), cookie.accessToken);
             if (res.status === 200) {
                 setIsLiked(false);
                 await getLikeCnt(projectId);
@@ -131,7 +133,7 @@ export function ProjectDetailsPage() {
     const checkLiked = async (projectId: number) => {
         if (!projectId) return;
         if (!ensureLogin()) return;
-        const response = await getData(endpoints.checkLiked(projectId));
+        const response = await getData(endpoints.checkLiked(projectId), cookie.accessToken);
         if (response.status === 200) {
             setIsLiked(response.data);
         }
@@ -149,7 +151,7 @@ export function ProjectDetailsPage() {
         if (!creatorId || !ensureLogin()) return;
         setMutatingFollow(true);
         try {
-            const res = await postData(endpoints.followCreator(creatorId));
+            const res = await postData(endpoints.followCreator(creatorId), {}, cookie.accessToken);
             if (res.status === 200) {
                 setIsFollowed(true);
                 await getFollowerCnt(creatorId);
@@ -164,7 +166,7 @@ export function ProjectDetailsPage() {
         if (!creatorId || !ensureLogin()) return;
         setMutatingFollow(true);
         try {
-            const res = await deleteData(endpoints.unfollowCreator(creatorId));
+            const res = await deleteData(endpoints.unfollowCreator(creatorId), cookie.accessToken);
             if (res.status === 200) {
                 setIsFollowed(false);
                 await getFollowerCnt(creatorId);
@@ -178,7 +180,7 @@ export function ProjectDetailsPage() {
     const checkFollowed = async (creatorId: number) => {
         if (!creatorId) return;
         if (!ensureLogin()) return;
-        const response = await getData(endpoints.checkFollowed(creatorId));
+        const response = await getData(endpoints.checkFollowed(creatorId), cookie.accessToken);
         if (response.status === 200) {
             setIsFollowed(response.data);
         }
@@ -314,7 +316,7 @@ export function ProjectDetailsPage() {
     useEffect(() => {
         if (!projectId) return;
         const recentView = async () => {
-            await postData(endpoints.addRecentView(Number(projectId)));
+            await postData(endpoints.addRecentView(Number(projectId)), {}, cookie.accessToken);
         }
         recentView();
     }, [projectId]);

@@ -48,7 +48,7 @@ import type { Cursor, CursorPage } from '@/types/community';
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useCreatorId } from "../../../types/useCreatorId";
 import { MessageCircle, SquareArrowOutUpRight, X } from "lucide-react";
-setDevCreatorIdHeader(179);
+import { useCookies } from "react-cookie";
 
 // ========= 공용 타입 (DB 스키마 기반) =========
 
@@ -147,6 +147,7 @@ export function CreatorQnATab() {
     const { page, size, perGroup, setPage } = useQueryState();
     const { items, total } = useQna({ page, size, perGroup });
 
+    const [cookie] = useCookies();
     const [openQna, setOpenQna] = useState<string | undefined>(undefined);
 
     // 댓글 무한스크롤
@@ -218,7 +219,7 @@ export function CreatorQnATab() {
         setPostingReply(prev => ({ ...prev, [qnaId]: true }));
         try {
             const body = { content };
-            const response = await postData(endpoints.addQnaReply(qnaId), body);
+            const response = await postData(endpoints.addQnaReply(qnaId), body, cookie.accessToken);
             if (response.status === 200) {
                 const posted = response.data as QnaReplyDto;
 
