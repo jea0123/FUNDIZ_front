@@ -19,6 +19,19 @@ import { MessageCircle, X } from "lucide-react";
 
 const tempUserId = 4;
 
+export type InquiryCategory = "GENERAL" | "ACCOUNT" | "PAYMENT/REFUNDS" | "SHIPPING/DELIVERY" | "BACKING" | "PROJECT/REWARDS" | "OTHER";
+
+const categoryBadge = (t: InquiryCategory) => (
+    <Badge variant="outline" className="rounded-full px-3">
+        {t === "GENERAL" ? "일반"
+        : (t === "ACCOUNT" ? "회원/계정"
+        : (t === "PAYMENT/REFUNDS" ? "결제/환불"
+        : (t === "SHIPPING/DELIVERY" ? "배송/수령"
+        : (t === "BACKING" ? "후원"
+        : (t === "PROJECT/REWARDS" ? "프로젝트/리워드" : "기타")))))}
+    </Badge>
+);
+
 function useQueryState() {
     const [searchParams, setSearchParams] = useSearchParams();
 
@@ -164,7 +177,7 @@ export function MyInquiryTab() {
                                     <AccordionTrigger>
                                         <div className="grid grid-cols-12 gap-2 w-full items-center">
                                             <div className="col-span-5 font-medium truncate">{inq.title}</div>
-                                            <div className="col-span-3"><Badge variant="secondary">{inq.ctgr}</Badge></div>
+                                            <div className="col-span-3">{categoryBadge (inq.ctgr as InquiryCategory)}</div>
                                             <div className="col-span-2 text-xs text-zinc-500">{formatDate(inq.createdAt)}</div>
                                         </div>
                                     </AccordionTrigger>
