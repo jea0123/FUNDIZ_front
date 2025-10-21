@@ -153,8 +153,6 @@ export function RegisterPage() {
     }
   }, [watch('email'), emailChecked, checkedEmailValue]);
 
-  console.log('valid', isValid);
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8" style={{ marginBottom: '200px' }}>
@@ -175,8 +173,12 @@ export function RegisterPage() {
           </CardHeader>
 
           <CardContent>
-            <form className="space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
-              {/* Email */}
+            <form className="space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSubmit(onSubmit)();
+              }}
+              noValidate>
               <div>
                 <Label htmlFor="email">이메일 *</Label>
                 <div className="relative mt-2">
@@ -189,7 +191,6 @@ export function RegisterPage() {
                 {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>}
               </div>
 
-              {/* Nickname */}
               <div>
                 <Label htmlFor="nickname">닉네임 *</Label>
                 <div className="relative mt-2">
@@ -202,7 +203,6 @@ export function RegisterPage() {
                 {errors.nickname && <p className="mt-1 text-sm text-red-500">{errors.nickname.message}</p>}
               </div>
 
-              {/* Password */}
               <div>
                 <Label htmlFor="password">비밀번호 *</Label>
                 <div className="relative mt-2">
@@ -215,7 +215,6 @@ export function RegisterPage() {
                 {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password.message}</p>}
               </div>
 
-              {/* Confirm Password */}
               <div>
                 <Label htmlFor="confirmPassword">비밀번호 확인 *</Label>
                 <div className="relative mt-2">
@@ -228,9 +227,7 @@ export function RegisterPage() {
                 {errors.confirmPassword && <p className="mt-1 text-sm text-red-500">{errors.confirmPassword.message}</p>}
               </div>
 
-              {/* Agreements */}
               <div className="space-y-3 pt-4">
-                {/* terms */}
                 <Controller
                   name="terms"
                   control={control}
@@ -251,7 +248,6 @@ export function RegisterPage() {
                 />
                 {errors.terms && <p className="mt-1 text-sm text-red-500">{errors.terms.message}</p>}
 
-                {/* privacy */}
                 <Controller
                   name="privacy"
                   control={control}
@@ -272,7 +268,6 @@ export function RegisterPage() {
                 />
                 {errors.privacy && <p className="mt-1 text-sm text-red-500">{errors.privacy.message}</p>}
 
-                {/* optional marketing 예시: 저장 필요하면 필드 추가 */}
                 <div className="flex items-center space-x-2">
                   <Checkbox id="marketing" />
                   <label htmlFor="marketing" className="text-sm">
@@ -281,7 +276,6 @@ export function RegisterPage() {
                 </div>
               </div>
 
-              {/* Root(server) error */}
               {errors.root?.message && <p className="text-sm text-red-600 mt-2">{errors.root.message}</p>}
 
               <Button type="submit" className="w-full cursor-pointer" disabled={!isValid || isSubmitting}>

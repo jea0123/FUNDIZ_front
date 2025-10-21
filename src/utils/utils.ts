@@ -29,7 +29,7 @@ export const getElapsedTime = (createdAt: Date): string => dayjs(createdAt).from
  * toWonPlus() // "-"
  */
 export const toWonPlus = (amount?: number): string => {
-    if (amount === undefined) return "-";
+    if (amount === undefined || amount === null) return "-";
     if (amount >= 100_000_000) return `${Math.round(amount / 100_000_000)}억 원+`;
     if (amount >= 10_000) return `${Math.round(amount / 10_000)}만 원+`;
     return `${amount.toLocaleString()} 원`;
