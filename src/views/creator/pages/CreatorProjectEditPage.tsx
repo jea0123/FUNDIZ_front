@@ -3,7 +3,7 @@ import { ArrowLeft, Save, Send, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Subcategory } from '@/types/projects';
-import { endpoints, getData, postData, setDevCreatorIdHeader } from '@/api/apis';
+import { endpoints, getData, postData } from '@/api/apis';
 import type { RewardDraft, RewardForm } from '@/types/reward';
 import type { Category } from '@/types/admin';
 import FundingLoader from '@/components/FundingLoader';
@@ -12,11 +12,11 @@ import type { ContentBlocks } from '@/types/creator';
 import { assertValidReward, validateReward, type RewardFieldErrors } from '@/types/reward-validator';
 import { CreatorProjectEditSteps, type CreateProjectViewModel } from '../components/CreatorProjectEditSteps';
 import { CreatorProjectEditStepper } from '../components/CreatorProjectEditStepper';
-import { useCreatorId } from '../../../types/useCreatorId';
 import { formatDate, toIsoDateTime, toPublicUrl } from '@/utils/utils';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { useCookies } from 'react-cookie';
 
 /* -------------------------------- Type -------------------------------- */
 
@@ -302,9 +302,7 @@ const validateAgree = (
 
 export default function CreatorProjectEditPage() {
 
-    //TODO: dev id
-    const { creatorId, loading: idLoading } = useCreatorId(2);
-
+    const [cookie] = useCookies();
     const { projectId: projectIdParam } = useParams();
     const projectId = projectIdParam ? Number(projectIdParam) : null;
     const isEdit = !!projectId; // 편집 모드 여부
@@ -402,7 +400,7 @@ export default function CreatorProjectEditPage() {
                 const [catRes, subRes, infoRes] = await Promise.all([
                     getData(endpoints.getCategories),
                     getData(endpoints.getSubcategories),
-                    getData(endpoints.getCreatorProfileSummary),
+                    getData(endpoints.getCreatorProfileSummary, cookie.accessToken),
                 ]);
                 if (!alive) return;
 
@@ -421,7 +419,7 @@ export default function CreatorProjectEditPage() {
                 }
 
                 if (isEdit && projectId) {
-                    const response = await getData(endpoints.getCreatorProjectDetail(projectId));
+                    const response = await getData(endpoints.getCreatorProjectDetail(projectId), cookie.accessToken);
                     if (!alive) return;
 
                     const draft = response?.data ?? {};
@@ -482,14 +480,7 @@ export default function CreatorProjectEditPage() {
             }
         })();
         return () => { alive = false; };
-    }, [isEdit, projectId]);
-
-    //TODO: dev id
-    useEffect(() => {
-        if (!idLoading && creatorId) {
-            setDevCreatorIdHeader(creatorId ?? null);
-        }
-    }, [idLoading, creatorId]);
+    }, [isEdit, projectId])
 
     /* ---------------------------- Handlers ---------------------------- */
 
@@ -616,7 +607,7 @@ export default function CreatorProjectEditPage() {
                 return null;
             }
 
-            const form = await postData(endpoints.createProject, formData);
+            const form = await postData(endpoints.createProject, formData, cookie.accessToken);
             const newId = extractProjectId(form);
 
             if (newId == null) {

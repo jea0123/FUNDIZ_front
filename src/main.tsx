@@ -4,6 +4,7 @@ import App from './App.tsx'
 import { BrowserRouter } from 'react-router-dom';
 import { CookiesProvider } from 'react-cookie';
 import { Toaster } from 'sonner';
+import "katex/dist/katex.min.css";
 
 const rootElement = document.getElementById('root');
 

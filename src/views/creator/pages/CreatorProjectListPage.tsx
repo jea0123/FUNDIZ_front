@@ -18,6 +18,7 @@ import { ProjectStatusChip, type ProjectStatus } from "@/views/admin/components/
 import clsx from "clsx";
 import { Pagination } from "@/views/project/ProjectsBrowsePage";
 import { useListQueryState } from "@/utils/usePagingQueryState";
+import { useCookies } from "react-cookie";
 
 /* --------------------------------- Status --------------------------------- */
 type Stage = keyof typeof STAGE_STATUS_MAP;
@@ -63,9 +64,7 @@ export default function CreatorProjectListPage() {
     const navigate = useNavigate();
     const location = useLocation();
 
-    //TODO: dev id
-    const { creatorId, loading: idLoading } = useCreatorId(2);
-
+    const [cookie] = useCookies();
     const [projects, setProjects] = useState<CreatorProjectListDto[]>([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(false);
@@ -149,7 +148,7 @@ export default function CreatorProjectListPage() {
         setLoading(true);
         setError(null);
         try {
-            const res = await getData(url);
+            const res = await getData(url, cookie.accessToken);
             if (res.status === 200 && res.data) {
                 const { items, totalElements } = res.data;
                 setProjects(items ?? []);
@@ -178,11 +177,6 @@ export default function CreatorProjectListPage() {
             applyStageToQuery(initialStage);
         }
     }, []);
-
-    // TODO: dev id
-    useEffect(() => {
-        setDevCreatorIdHeader(creatorId ?? null);
-    }, [creatorId]);
 
     /* -------------------------------- Handler --------------------------------- */
 
