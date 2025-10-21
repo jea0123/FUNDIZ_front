@@ -4,8 +4,9 @@ import { getData, postData, endpoints } from '@/api/apis';
 import { useCreatorId } from '../../../types/useCreatorId';
 import type { creatorShippingBackerList, creatorShippingStatus } from '@/types/shipping';
 import FundingLoader from '@/components/FundingLoader';
+
 import { setDevCreatorIdHeader } from '@/api/apis';
-setDevCreatorIdHeader(11);
+setDevCreatorIdHeader(2);
 
 export default function CreatorShippingDetail() {
   const { projectId } = useParams<{ projectId: string }>();

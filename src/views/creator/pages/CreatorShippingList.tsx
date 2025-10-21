@@ -10,11 +10,11 @@ import { getData, endpoints } from '@/api/apis';
 import FundingLoader from '@/components/FundingLoader';
 import type { CreaotrShippingProjectList } from '@/types/shipping';
 import { setDevCreatorIdHeader } from '@/api/apis';
-setDevCreatorIdHeader(11);
+setDevCreatorIdHeader(2);
 
 export default function CreatorShippingList() {
   const navigate = useNavigate();
-  const { creatorId, loading: idLoading } = useCreatorId(1);
+  const { creatorId, loading: idLoading } = useCreatorId(2);
   const [projects, setProjects] = useState<CreaotrShippingProjectList[]>([]);
   const [loading, setLoading] = useState(true);
   const fetched = useRef(false);
