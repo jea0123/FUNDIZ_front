@@ -32,6 +32,7 @@ const formatCurrency = (amount: number) =>
 export function OverviewTab() {
     return (
         <div>
+            <div className="text-2xl font-bold mt-2 mb-6 ml-1">대시보드</div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

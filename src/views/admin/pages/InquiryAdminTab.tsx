@@ -50,19 +50,20 @@ import { MessageCircle, X } from "lucide-react";
 
 // ========= 공용 타입 (DB 스키마 기반) =========
 
-
-export type Reply = {
-    replyId: number;
-    userId?: number;
-    content: string;
-    isSecret: 'Y' | 'N';
-    createdAt: string;
-    updatedAt?: string | null;
-    isDeleted: 'Y' | 'N';
-    deletedAt?: string | null;
-};
-
 const getByteLen = (s: string) => new TextEncoder().encode(s).length;
+
+export type InquiryCategory = "GENERAL" | "ACCOUNT" | "PAYMENT/REFUNDS" | "SHIPPING/DELIVERY" | "BACKING" | "PROJECT/REWARDS" | "OTHER";
+
+const categoryBadge = (t: InquiryCategory) => (
+    <Badge variant="outline" className="rounded-full px-3">
+        {t === "GENERAL" ? "일반"
+        : (t === "ACCOUNT" ? "회원/계정"
+        : (t === "PAYMENT/REFUNDS" ? "결제/환불"
+        : (t === "SHIPPING/DELIVERY" ? "배송/수령"
+        : (t === "BACKING" ? "후원"
+        : (t === "PROJECT/REWARDS" ? "프로젝트/리워드" : "기타")))))}
+    </Badge>
+);
 
 
 function useQueryState() {
@@ -229,7 +230,9 @@ export function InquiryAdminTab() {
         <div>
             <div>
                         <Card>
-                            <CardHeader><CardTitle>문의 내역</CardTitle></CardHeader>
+                            <CardHeader>
+                                <CardTitle className="text-2xl">문의 내역</CardTitle>
+                            </CardHeader>
                             <CardContent>
                                 <Accordion type="single" collapsible value={openInquiry} onValueChange={setOpenInquiry}>
                                     <div className="grid grid-cols-12 gap-2 w-full items-center">
@@ -244,7 +247,7 @@ export function InquiryAdminTab() {
                                                 <div className="grid grid-cols-12 gap-2 w-full items-center">
                                                     <div className="col-span-5 font-medium truncate">{inq.title}</div>
                                                     <div className="col-span-2 font-medium truncate">{inq.userId}</div>
-                                                    <div className="col-span-3"><Badge variant="secondary">{inq.ctgr}</Badge></div>
+                                                    <div className="col-span-3">{categoryBadge (inq.ctgr as InquiryCategory)}</div>
                                                     <div className="col-span-2 text-xs text-zinc-500">{formatDate(inq.createdAt)}</div>
                                                 </div>
                                             </AccordionTrigger>
@@ -364,24 +367,6 @@ export function InquiryAdminTab() {
                                 </div>
                             </CardContent>
                         </Card>
-            </div>
-        </div>
-    );
-}
-
-function ReplyComposer({ onSubmit }: { onSubmit: (payload: { userId?: number; content: string; isSecret: 'Y' | 'N' }) => void }) {
-    const [content, setContent] = useState("");
-    const [secret, setSecret] = useState<'Y' | 'N'>('N');
-    return (
-        <div className="mt-3 border-t pt-3">
-            <Label className="mb-1 block">댓글 작성</Label>
-            <Textarea value={content} onChange={e => setContent(e.target.value)} rows={4} placeholder="댓글 내용을 입력" />
-            <div className="mt-2 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm">
-                    <Checkbox id="isSecret" checked={secret === 'Y'} onCheckedChange={(v) => setSecret(v ? 'Y' : 'N')} />
-                    <Label htmlFor="isSecret">비밀댓글</Label>
-                </div>
-                <Button size="sm" onClick={() => { if (!content.trim()) return; onSubmit({ userId: 1, content, isSecret: secret }); setContent(""); }}>등록</Button>
             </div>
         </div>
     );

@@ -128,7 +128,7 @@ export default function RegisterCreator() {
         <div className="mx-auto max-w-5xl p-4">
             <Card className="shadow-sm">
                 <CardHeader>
-                    <CardTitle>크리에이터 등록</CardTitle>
+                    <CardTitle className="text-2xl">크리에이터 등록</CardTitle>
                     <CardDescription>
                         최초 1회만 등록합니다. 유형에 따라 필요한 정보를 정확히 입력해주세요.
                     </CardDescription>
@@ -206,9 +206,9 @@ export default function RegisterCreator() {
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
-                                                    <SelectItem value="GENERAL">GENERAL · 일반</SelectItem>
-                                                    <SelectItem value="INDIVIDUAL">INDIVIDUAL · 개인사업자</SelectItem>
-                                                    <SelectItem value="CORPORATION">CORPORATION · 법인사업자</SelectItem>
+                                                    <SelectItem value="GENERAL">일반</SelectItem>
+                                                    <SelectItem value="INDIVIDUAL">개인사업자</SelectItem>
+                                                    <SelectItem value="CORPORATION">법인사업자</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <div className={hintCls}>
@@ -300,23 +300,26 @@ export default function RegisterCreator() {
                                                         <SelectValue placeholder="선택" />
                                                     </SelectTrigger>
                                                 </FormControl>
-                                                <SelectContent>
-                                                    {[
-                                                        "국민(KB)",
-                                                        "신한",
-                                                        "우리",
-                                                        "하나",
-                                                        "농협(NH)",
-                                                        "카카오뱅크",
-                                                        "토스뱅크",
-                                                        "기업(IBK)",
-                                                        "SC제일",
-                                                    ].map((b) => (
-                                                        <SelectItem key={b} value={b}>
-                                                            {b}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
+                                                <SelectContent id="banklist">
+                                                <SelectItem value="KB">국민(KB)</SelectItem>
+                                                <SelectItem value="SHINHAN">신한</SelectItem>
+                                                <SelectItem value="WOORI">우리</SelectItem>
+                                                <SelectItem value="HANA">하나</SelectItem>
+                                                <SelectItem value="NH">농협(NH)</SelectItem>
+                                                <SelectItem value="SH">수협</SelectItem>
+                                                <SelectItem value="IBK">기업</SelectItem>
+                                                <SelectItem value="SC">SC제일</SelectItem>
+                                                <SelectItem value="CITI">씨티</SelectItem>
+                                                <SelectItem value="IM">iM뱅크</SelectItem>
+                                                <SelectItem value="BNK">부산</SelectItem>
+                                                <SelectItem value="KJ">광주</SelectItem>
+                                                <SelectItem value="JEJU">제주</SelectItem>
+                                                <SelectItem value="JB">전북</SelectItem>
+                                                <SelectItem value="KBANK">케이뱅크</SelectItem>
+                                                <SelectItem value="KAKAO">카카오뱅크</SelectItem>
+                                                <SelectItem value="TOSS">토스뱅크</SelectItem>
+                                                <SelectItem value="selboxDirect">직접 입력</SelectItem>
+                                            </SelectContent>
                                             </Select>
                                             <div className={hintCls}>
                                                 {form.formState.errors.bank
@@ -381,9 +384,9 @@ export default function RegisterCreator() {
                     <div className="mt-6 rounded-xl border bg-muted/30 p-4 text-sm">
                         <p className="font-medium">유형 안내</p>
                         <ul className="mt-2 list-disc pl-5 space-y-1">
-                            <li><span className="font-semibold">GENERAL</span> : 일반 · 취미 기반 개인</li>
-                            <li><span className="font-semibold">INDIVIDUAL</span> : 개인사업자 (사업자번호 필수)</li>
-                            <li><span className="font-semibold">CORPORATION</span> : 법인사업자 (사업자번호 필수)</li>
+                            <li><span className="font-semibold">일반</span> : 일반 · 취미 기반 개인</li>
+                            <li><span className="font-semibold">개인사업자</span> : 개인사업자 (사업자번호 필수)</li>
+                            <li><span className="font-semibold">법인사업자</span> : 법인사업자 (사업자번호 필수)</li>
                         </ul>
                     </div>
                 </CardContent>

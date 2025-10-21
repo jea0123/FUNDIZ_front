@@ -223,7 +223,7 @@ export const endpoints = {
   getBackingDetail: (userId: number, projectId: number, rewardId: number, backingId: number) => `backing/page/${userId}/project/${projectId}/reward/${rewardId}/backing/${backingId}`,
   //교체후보
   getMypageBackingList: (userId: number) => `backing/myPageBackingList/${userId}`,
-  getMypageBackingDetail: (userId: number) => `backing/myPageBackingDetail/${userId}`,
+  getMypageBackingDetail: (backingId: number) => `backing/myPageBackingDetail/${backingId}`,
   //여기까지
   backingPrepare: (userId: number, projectId: number) => `backing/${userId}/create/${projectId}`,
   addBacking: (userId: number) => `backing/create/${userId}`,

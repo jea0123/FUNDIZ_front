@@ -86,7 +86,7 @@ export default function NotificationTab() {
         <div className="w-full">
             <Card>
                 <CardHeader>
-                    <CardTitle>알림 설정</CardTitle>
+                    <CardTitle className="flex items-center text-2xl">알림 설정</CardTitle>
                 </CardHeader>
 
                 <div className="max-w-4xl p-6">

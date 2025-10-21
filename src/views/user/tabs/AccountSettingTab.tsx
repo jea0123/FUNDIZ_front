@@ -196,7 +196,7 @@ const AccountSettingTab: React.FC = () => {
 
     return (
         <div className="w-full max-w-3xl px-4 py-6">
-            <h2 className="text-xl font-semibold mb-3">내 정보 수정</h2>
+            <h2 className="text-2xl font-semibold mb-3 flex items-center">내 정보 수정</h2>
             <p className="text-sm text-muted-foreground mb-6">이메일은 로그인 ID로 사용되며 수정할 수 없습니다. 닉네임과 프로필 이미지를 변경할 수 있어요.</p>
 
             {/* 프로필 섹션 */}
