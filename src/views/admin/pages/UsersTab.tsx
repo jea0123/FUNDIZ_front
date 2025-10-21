@@ -18,7 +18,14 @@ import { formatDate } from '@/utils/utils';
 import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 
+export type Role = "USER" | "CREATOR";
 export type IsSuspended = "N" | "Y";
+
+const roleBadge = (r: Role) => (
+    <Badge variant="outline" className="rounded-full px-3">
+        {r === "USER" ? "후원자" : "창작자"}
+    </Badge>
+);
 
 const statusBadge = (s: IsSuspended) => (
     <Badge variant={s === "N" ? "secondary" : "default"} className="rounded-full px-3">
@@ -131,7 +138,7 @@ export function UsersTab() {
                                         <TableCell className="font-medium">{u.userId}</TableCell>
                                         <TableCell className="font-medium">{u.email}</TableCell>
                                         <TableCell className="font-medium">{u.nickname}</TableCell>
-                                        <TableCell className="font-medium">{u.role}</TableCell>
+                                        <TableCell className="font-medium">{roleBadge(u.role as Role)}</TableCell>
                                         <TableCell className="text-zinc-500">{formatDate(u.joinedAt)}</TableCell>
                                         <TableCell className="text-zinc-500">{formatDate(u.lastLoginAt)}</TableCell>
                                         <TableCell className="font-medium">{statusBadge(u.isSuspended as IsSuspended)}</TableCell>

@@ -41,9 +41,28 @@ import { formatDate } from '@/utils/utils';
 
 const tempUserId = 4;
 
-export type ReportStatus = {
-    reportStatus: 'RECEIVED' | 'PROCESSING' | 'DONE';
-};
+export type ReportType = "FRAUD" | "COPYRIGHT" | "ILLEGAL" | "OBSCENE" | "PRIVACY" | "DUPLICATE" | "UNCONTACTABLE" | "POLICY" | "OTHER";
+
+export type ReportStatus = "RECEIVED" | "UNDER_REVIEW" | "COMPLETED";
+
+const typeBadge = (t: ReportType) => (
+    <Badge variant="outline" className="rounded-full px-3">
+        {t === "FRAUD" ? "사기/허위정보"
+        : (t === "COPYRIGHT" ? "지식재산권 침해"
+        : (t === "ILLEGAL" ? "불법/금지된 상품"
+        : (t === "OBSCENE" ? "음란/선정적/폭력적 컨텐츠"
+        : (t === "PRIVACY" ? "개인정보 침해"
+        : (t === "DUPLICATE" ? "타 플랫폼 동시 판매"
+        : (t === "UNCONTACTABLE" ? "연락 두절"
+        : (t === "POLICY" ? "정책 위반" : "기타")))))))}
+    </Badge>
+);
+
+const statusBadge = (r: ReportStatus) => (
+    <Badge variant={r === "RECEIVED" ? "default" : (r === "UNDER_REVIEW" ? "secondary" : "third")} className="rounded-full px-3">
+        {r === "RECEIVED" ? "접수" : (r === "UNDER_REVIEW" ? "검토중" : "완료")}
+    </Badge>
+);
 
 function useQueryState() {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -134,9 +153,9 @@ export function MyReportsTab() {
                                         {items.map(r => (
                                             <TableRow key={r.reportId}>
                                                 <TableCell className="font-medium">{r.reason}</TableCell>
-                                                <TableCell>{r.reportType}</TableCell>
+                                                <TableCell>{typeBadge(r.reportType as ReportType)}</TableCell>
                                                 <TableCell>TID {r.target}</TableCell>
-                                                <TableCell>{r.reportStatus}</TableCell>
+                                                <TableCell>{statusBadge(r.reportStatus as ReportStatus)}</TableCell>
                                                 <TableCell className="text-zinc-500">{formatDate(r.reportDate)}</TableCell>
                                             </TableRow>
                                         ))}
