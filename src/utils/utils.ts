@@ -235,6 +235,8 @@ export function toKRWCompact(n: number): string {
 // 문자길이 byte로
 export const getByteLen = (s: string) => new TextEncoder().encode(s).length;
 
+export const formatBytes = (n: number) => (n < 1024 ? `${n} B` : n < 1048576 ? `${(n/1024).toFixed(1)} KB` : `${(n/1048576).toFixed(1)} MB`);
+
 /**
  * @description 파일 경로를 공개 URL로 변환
  * @param p {string | null | undefined} p 파일 경로

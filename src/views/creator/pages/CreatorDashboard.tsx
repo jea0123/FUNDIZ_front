@@ -7,6 +7,7 @@ import type { DailyCount, MonthCount } from '@/types/backing';
 import { useCreatorId } from '../../../types/useCreatorId';
 import { endpoints, getData } from '@/api/apis';
 import { setDevCreatorIdHeader } from '@/api/apis';
+import { useCookies } from 'react-cookie';
 setDevCreatorIdHeader(2);
 
 const rankColors: Record<number, string> = {
@@ -39,7 +40,7 @@ const defaultCreatorDashboard: CreatorDashboard = {
 };
 
 export default function CreatorDashboard() {
-  const { creatorId, loading: idLoading } = useCreatorId(4);
+  const [cookie] = useCookies();
   const [data, setData] = useState<CreatorDashboard>(defaultCreatorDashboard);
   const [successRate, setSuccessRate] = useState(0);
   const [failRate, setFailRate] = useState(0);
@@ -48,12 +49,12 @@ export default function CreatorDashboard() {
   const [monthlyData, setMonthlyData] = useState<MonthCount[]>([]);
 
   useEffect(() => {
-    if (idLoading || !creatorId) return;
+    if (!cookie.accessToken) return;
 
     (async () => {
       try {
         //  하나의 API만 호출
-        const dashRes = await getData(endpoints.creatorDashboard);
+        const dashRes = await getData(endpoints.creatorDashboard, cookie.accessToken);
 
         if (dashRes.status === 200 && dashRes.data) {
           const dash = dashRes.data as CreatorDashboard;
@@ -69,7 +70,7 @@ export default function CreatorDashboard() {
         console.error('대시보드 로드 실패:', err);
       }
     })();
-  }, [idLoading, creatorId]);
+  }, [cookie.accessToken]);
 
   //  일간/월간 데이터 포맷팅
   const formattedDaily = dailyData.map((d) => ({
