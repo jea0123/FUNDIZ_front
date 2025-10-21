@@ -7,10 +7,12 @@ import type { PageResult } from "@/types/projects";
 import { deleteData, endpoints, getData, postData } from "@/api/apis";
 import { toastSuccess } from "@/utils/utils";
 import type { FollowerItem } from "@/types/creator";
+import { useCookies } from "react-cookie";
 
 type Props = { creatorId: number };
 
 export default function CreatorFollowers({ creatorId }: Props) {
+    const [cookie] = useCookies();
     const [result, setResult] = useState<PageResult<FollowerItem> | null>(null);
     const [page, setPage] = useState(1);
     const size = 20;
@@ -25,7 +27,7 @@ export default function CreatorFollowers({ creatorId }: Props) {
 
     const fetchPage = useCallback(async () => {
         setLoading(true);
-        const res = await getData(endpoints.getCreatorFollowers(creatorId, page, size));
+        const res = await getData(endpoints.getCreatorFollowers(creatorId, page, size), cookie.accessToken);
         if (res.status !== 200) return;
         setResult(res.data as PageResult<FollowerItem>);
         setLoading(false);
@@ -47,7 +49,7 @@ export default function CreatorFollowers({ creatorId }: Props) {
 
         setRowLoading(prev => ({ ...prev, [item.userId]: true }));
         try {
-            const res = await postData(endpoints.followCreator(item.creatorId), {});
+            const res = await postData(endpoints.followCreator(item.creatorId), {}, cookie.accessToken);
             if (res.status === 200) {
                 setResult(prev => {
                     if (!prev) return prev;
@@ -67,7 +69,7 @@ export default function CreatorFollowers({ creatorId }: Props) {
 
         setRowLoading(prev => ({ ...prev, [item.userId]: true }));
         try {
-            const res = await deleteData(endpoints.unfollowCreator(item.creatorId));
+            const res = await deleteData(endpoints.unfollowCreator(item.creatorId), cookie.accessToken);
             if (res.status === 200) {
                 setResult(prev => {
                     if (!prev) return prev;

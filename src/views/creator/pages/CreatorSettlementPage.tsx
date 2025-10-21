@@ -19,7 +19,7 @@ export default function CreatorSettlementPage() {
   const [cookie] = useCookies();
 
   const getSettlements = async () => {
-    const res = await getData(endpoints.getCreatorSettlement);
+    const res = await getData(endpoints.getCreatorSettlement, cookie.accessToken);
     if (res.status === 200) {
       setSettlements(res.data);
       setBank(res.data.settlementSummary.bank);
