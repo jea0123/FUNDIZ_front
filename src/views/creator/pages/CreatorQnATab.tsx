@@ -40,14 +40,15 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { endpoints, getData, postData } from "@/api/apis";
+import { endpoints, getData, postData, setDevCreatorIdHeader } from "@/api/apis";
 import { formatDate } from '@/utils/utils';
 import type { Qna, SearchQnaParams } from "@/types/qna";
 import type { QnaReplyDto } from "@/types/reply";
 import type { Cursor, CursorPage } from '@/types/community';
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useCreatorId } from "../../../types/useCreatorId";
-import { MessageCircle, X } from "lucide-react";
+import { MessageCircle, SquareArrowOutUpRight, X } from "lucide-react";
+setDevCreatorIdHeader(179);
 
 // ========= 공용 타입 (DB 스키마 기반) =========
 
@@ -95,7 +96,7 @@ function useQueryState() {
 function useQna(params: SearchQnaParams) {
 
     const { creatorId, loading: idLoading } = useCreatorId(179);
-
+    console.log(creatorId);
     const { page, size, perGroup } = params;
     const [items, setItems] = useState<Qna[]>([]);
     const [total, setTotal] = useState(0);
@@ -259,10 +260,11 @@ export function CreatorQnATab() {
                                 <AccordionItem key={q.qnaId} value={String(q.qnaId)}>
                                     <AccordionTrigger>
                                         <div className="grid grid-cols-12 gap-2 w-full items-center">
-                                            <div className="col-span-4 font-medium truncate">
-                                                <a href={`/project/${q.projectId}`}
+                                            <div className="col-span-3 font-medium truncate">
+                                                {q.title}</div>
+                                            <div className="col-span-1"><a href={`/project/${q.projectId}`}
                                                     target="_blank"
-                                                    rel="noopener noreferrer">{q.title}</a></div>
+                                                    rel="noopener noreferrer"><SquareArrowOutUpRight className="w-4 h-4"/></a></div>
                                             <div className="col-span-4 font-medium truncate">{q.content}</div>
                                             <div className="col-span-2 font-medium truncate">{q.userId}</div>
                                             <div className="col-span-2 text-xs text-zinc-500">{formatDate(q.createdAt)}</div>
