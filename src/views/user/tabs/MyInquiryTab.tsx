@@ -19,17 +19,6 @@ import { MessageCircle, X } from "lucide-react";
 
 const tempUserId = 4;
 
-export type Reply = {
-    replyId: number;
-    userId?: number;
-    content: string;
-    isSecret: 'Y' | 'N';
-    createdAt: string;
-    updatedAt?: string | null;
-    isDeleted: 'Y' | 'N';
-    deletedAt?: string | null;
-};
-
 function useQueryState() {
     const [searchParams, setSearchParams] = useSearchParams();
 
@@ -158,7 +147,11 @@ export function MyInquiryTab() {
         <div>
             <div>
                 <Card>
-                    <CardHeader><CardTitle>내 문의 내역</CardTitle></CardHeader>
+                    <CardHeader>
+                        <CardTitle className="flex items-center text-2xl">
+                            내 문의 내역
+                        </CardTitle>
+                    </CardHeader>
                     <CardContent>
                         <Accordion type="single" collapsible value={openInquiry} onValueChange={setOpenInquiry}>
                             <div className="grid grid-cols-12 gap-2 w-full items-center">
@@ -251,24 +244,6 @@ export function MyInquiryTab() {
                         </div>
                     </CardContent>
                 </Card>
-            </div>
-        </div>
-    );
-}
-
-function ReplyComposer({ onSubmit }: { onSubmit: (payload: { userId?: number; content: string; isSecret: 'Y' | 'N' }) => void }) {
-    const [content, setContent] = useState("");
-    const [secret, setSecret] = useState<'Y' | 'N'>('N');
-    return (
-        <div className="mt-3 border-t pt-3">
-            <Label className="mb-1 block">댓글 작성</Label>
-            <Textarea value={content} onChange={e => setContent(e.target.value)} rows={4} placeholder="댓글 내용을 입력" />
-            <div className="mt-2 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm">
-                    <Checkbox id="isSecret" checked={secret === 'Y'} onCheckedChange={(v) => setSecret(v ? 'Y' : 'N')} />
-                    <Label htmlFor="isSecret">비밀댓글</Label>
-                </div>
-                <Button size="sm" onClick={() => { if (!content.trim()) return; onSubmit({ userId: 1, content, isSecret: secret }); setContent(""); }}>등록</Button>
             </div>
         </div>
     );

@@ -115,7 +115,9 @@ export function MyReportsTab() {
             <div>
                         <Card>
                             <CardHeader className="flex items-center justify-between">
-                                <CardTitle>내 신고 내역</CardTitle>
+                                <CardTitle className="flex items-center text-2xl">
+                                    내 신고 내역
+                                </CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <Table>

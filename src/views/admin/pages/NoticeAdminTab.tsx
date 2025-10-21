@@ -107,7 +107,7 @@ export function NoticeAdminTab() {
             <div>
                         <Card>
                             <CardHeader className="flex items-center justify-between">
-                                <CardTitle>공지사항 관리</CardTitle>
+                                <CardTitle className="text-2xl">공지사항 관리</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <Table>

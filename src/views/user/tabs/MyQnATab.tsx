@@ -8,7 +8,7 @@ import type { Qna, SearchQnaParams } from "@/types/qna";
 import type { QnaReplyDto } from "@/types/reply";
 import type { Cursor, CursorPage } from "@/types/community";
 import { useSearchParams } from "react-router-dom";
-import { MessageCircle, X } from "lucide-react";
+import { MessageCircle, SquareArrowOutUpRight, X } from "lucide-react";
 
 // ========= 공용 타입 (DB 스키마 기반) =========
 
@@ -140,23 +140,29 @@ export function MyQnATab() {
         <div>
             <div>
                 <Card>
-                    <CardHeader><CardTitle>내 Q&A 내역</CardTitle></CardHeader>
+                    <CardHeader>
+                        <CardTitle className="flex items-center text-2xl">
+                            내 Q&A 내역
+                        </CardTitle>
+                    </CardHeader>
                     <CardContent>
                         <Accordion type="single" collapsible value={openQna} onValueChange={setOpenQna}>
                             <div className="grid grid-cols-12 gap-2 w-full items-center">
-                                <div className="col-span-4">프로젝트명</div>
-                                <div className="col-span-6">내용</div>
+                                <div className="col-span-5">프로젝트명</div>
+                                <div className="col-span-5">내용</div>
                                 <div className="col-span-2">등록일</div>
+
                             </div>
                             {items.map(q => (
                                 <AccordionItem key={q.qnaId} value={String(q.qnaId)}>
                                     <AccordionTrigger>
                                         <div className="grid grid-cols-12 gap-2 w-full items-center">
                                             <div className="col-span-4 font-medium truncate">
-                                                <a href={`/project/${q.projectId}`}
+                                                {q.title}</div>
+                                            <div className="col-span-1"><a href={`/project/${q.projectId}`}
                                                     target="_blank"
-                                                    rel="noopener noreferrer">{q.title}</a></div>
-                                            <div className="col-span-6 font-medium truncate">{q.content}</div>
+                                                    rel="noopener noreferrer"><SquareArrowOutUpRight className="w-4 h-4"/></a></div>
+                                            <div className="col-span-5 font-medium truncate">{q.content}</div>
                                             <div className="col-span-2 text-xs text-zinc-500">{formatDate(q.createdAt)}</div>
                                         </div>
                                     </AccordionTrigger>

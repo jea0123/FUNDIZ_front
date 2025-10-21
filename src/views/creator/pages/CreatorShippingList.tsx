@@ -102,10 +102,10 @@ export default function CreatorShippingList() {
 
   // UI 동일 유지
   return (
-    <div className="p-6">
+    <div>
       <Card className="shadow-md">
         <CardHeader>
-          <CardTitle className="text-lg font-bold">📦 프로젝트별 배송 관리</CardTitle>
+          <CardTitle className="text-2xl font-bold">📦 프로젝트별 배송 관리</CardTitle>
         </CardHeader>
         <CardContent>
           {/* 검색 & 정렬 */}

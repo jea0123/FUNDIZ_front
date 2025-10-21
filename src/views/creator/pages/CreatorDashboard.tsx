@@ -138,9 +138,9 @@ export default function CreatorDashboard() {
 
   return (
     <div className="max-w-[1750px] mx-auto">
-      <Card className="p-4 shadow-xl border border-gray-200 rounded-2xl bg-white">
+      <Card className="p-4 border border-gray-200 rounded-2xl bg-white">
         <CardHeader>
-          <CardTitle className="text-3xl font-bold mb-4 text-gray-800">창작자 대시보드</CardTitle>
+          <CardTitle className="text-2xl font-bold mb-4 text-gray-800">창작자 대시보드</CardTitle>
         </CardHeader>
 
         <CardContent>
@@ -154,7 +154,7 @@ export default function CreatorDashboard() {
             ].map(([label, value], i) => (
               <div key={i} className="bg-gray-50 rounded-xl p-3 text-center shadow-sm">
                 <h3 className="text-gray-600 mb-1">{label}</h3>
-                <p className="text-2xl font-bold text-gray-900">{value ?? '-'}</p>
+                <p className="text-xl font-bold text-gray-900">{value ?? '-'}</p>
               </div>
             ))}
           </div>

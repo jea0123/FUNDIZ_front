@@ -34,6 +34,9 @@ export default function CreatorSettlementPage() {
   return (
     <div className="space-y-8">
       {/* 요약 카드 */}
+      <div className="text-2xl ml-1 mt-1 font-bold">
+        정산 내역
+      </div>
       <div className="grid grid-cols-3 gap-4">
         <Card>
           <CardHeader>
