@@ -15,7 +15,7 @@ const paginate = <T,>(arr: T[], page: number, perPage: number): T[] => {
 };
 
 export default function CreatorBacking() {
-    const { creatorId, loading: idLoading } = useCreatorId();
+    const { creatorId, loading: idLoading } = useCreatorId(2);
     const [projects, setProjects] = useState<BackingCreatorProjectList[]>([]);
     const [loading, setLoading] = useState(true);
 

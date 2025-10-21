@@ -212,6 +212,26 @@ export const formatPrice = (price: number): string => {
     return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(price);
 }
 
+// 가격을 1억,1만,1천 (그 외 1000) 형태로 포맷팅
+export function toKRWCompact(n: number): string {
+    if (n % 100_000_000 === 0) return `${n / 100_000_000}억`;
+    if (n >= 10_000 && n % 10_000 === 0) {
+        const m = n / 10_000;
+        const thousands = Math.floor(m / 1000) % 10;
+        const hundreds = Math.floor(m / 100) % 10;
+        const tens = Math.floor(m / 10) % 10;
+        const ones = m % 10;
+        let s = "";
+        if (thousands) s += `${thousands}천`;
+        if (hundreds) s += `${hundreds}백`;
+        if (tens) s += `${tens}십`;
+        if (ones) s += `${ones}`;
+        return s + "만";
+    }
+    if (n < 10_000 && n % 1_000 === 0) return `${n / 1_000}천`;
+    return `${n.toLocaleString()}`;
+}
+
 // 문자길이 byte로
 export const getByteLen = (s: string) => new TextEncoder().encode(s).length;
 
