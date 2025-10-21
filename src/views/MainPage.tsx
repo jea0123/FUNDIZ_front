@@ -32,8 +32,6 @@ export default function Main() {
         getFeaturedProjects();
     }, []);
 
-    console.log("featuredProjects:", featuredProjects);
-
     return (
         <div className="mx-auto max-w-[1232px] py-6 space-y-5">
             <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1fr_320px] lg:items-start">
