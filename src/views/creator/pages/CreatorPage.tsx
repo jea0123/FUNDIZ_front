@@ -38,7 +38,7 @@ export default function CreatorPage() {
 
     const fetchSummary = useCallback(async () => {
         setLoading(true);
-        const res = await getData(endpoints.getCreatorSummary(creatorId));
+        const res = await getData(endpoints.getCreatorSummary(creatorId), cookie.accessToken);
         if (res.status === 200) setSummary(res.data as CreatorSummary);
         setLoading(false);
     }, [creatorId]);

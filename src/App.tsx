@@ -119,6 +119,7 @@ export default function App() {
 
             <Route path="/user" element={<MyPageLayout />}>
               <Route index element={<UserHomeTab />} />
+              <Route path='main' element={<UserHomeTab />} />
               <Route path="support" element={<BackingTab />} />
               <Route path="support/:backingId" element={<BackingDetailTab />} />
               {/*<Route index element={<BackingTab />} />

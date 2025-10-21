@@ -7,5 +7,5 @@ export type LoginUser = {
     followCnt: number;
     isCreator: string;
     creatorId: number | null;
-    role: 'user' | 'creator' | 'admin';
+    role: string;
 };
