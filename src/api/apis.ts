@@ -250,12 +250,12 @@ export const endpoints = {
   updateNotice: (noticeId: number) => `admin/notice/update/${noticeId}`,
   deleteNotice: (noticeId: number) => `admin/notice/delete/${noticeId}`,
   updateReportStatus: (reportId: number) => `admin/report/update/${reportId}`,
+  createCategory: 'admin/categories/create',
+  createSubcategory: 'admin/subcategories/create',
 
   // ==================== Category API ====================
   getCategories: 'categories',
   getSubcategories: 'categories/subcategories',
-  createCategory: 'categories/create',
-  createSubcategory: 'categories/subcategories/create',
 
   // ==================== Customer Service API ====================
   getNotices: (p: SearchNoticeParams) => `cs/notice/list?${toQueryString({ page: p.page, size: p.size, perGroup: p.perGroup, keyword: p.keyword })}`,
