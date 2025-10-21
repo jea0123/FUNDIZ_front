@@ -162,7 +162,7 @@ export function ReportsAdminTab() {
                                         <TableCell>{statusBadge(r.reportStatus as ReportStatus)}</TableCell>
                                         <TableCell className="text-zinc-500">{formatDate(r.reportDate)}</TableCell>
                                         <TableCell>
-                                            <ReportStatusEditModal reportId={r.reportId} />
+                                            {r.reportStatus === "COMPLETED" ? <Button variant="outline" size="sm" disabled className="text-gray-950 bg-gray-100">완료</Button> : <ReportStatusEditModal reportId={r.reportId} />}
                                         </TableCell>
                                     </TableRow>
                                 ))}
