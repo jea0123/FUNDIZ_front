@@ -13,21 +13,30 @@ export default function BackingDetailPage() {
   const navigate = useNavigate();
   const [backing, setBacking] = useState<MyPageBackingDetail>();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const res = await getData(endpoints.getMypageBackingDetail(1)); // tempUserId
-      if (res.status === 200 && Array.isArray(res.data)) {
-        const found = res.data.find((b: MyPageBackingDetail) => b.backingId === Number(backingId));
-        if (found) {
-          setBacking({
-            ...found,
-            rewardList: found.rewards ?? found.rewardList ?? [],
-          });
-        }
+ useEffect(() => {
+  const fetchData = async () => {
+    if (!backingId) return;
+    try {
+      const res = await getData(endpoints.getMypageBackingDetail(Number(backingId)));
+      console.log("📦 상세 응답:", res.data);
+
+      //  단일 객체 형태로 응답될 때 처리
+      if (res.status === 200 && res.data) {
+        const data = res.data;
+        setBacking({
+          ...data,
+          rewardList: data.rewards ?? data.rewardList ?? [],
+        });
+      } else {
+        console.error("❌ 잘못된 응답 구조:", res);
       }
-    };
-    fetchData();
-  }, [backingId]);
+    } catch (err) {
+      console.error("❌ 후원 상세 불러오기 실패:", err);
+    }
+  };
+
+  fetchData();
+}, [backingId]);
 
   if (!backing) return <div className="p-6">로딩 중...</div>;
 
