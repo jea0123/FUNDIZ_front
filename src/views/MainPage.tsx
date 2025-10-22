@@ -9,8 +9,6 @@ import { toWonPlus, getDaysLeft } from "@/utils/utils";
 import { useCookies } from "react-cookie";
 import { useNavigate } from "react-router-dom";
 
-export const img = "https://gongu.copyright.or.kr/gongu/wrt/cmmn/wrtFileImageView.do?wrtSn=9046601&filePath=L2Rpc2sxL25ld2RhdGEvMjAxNC8yMS9DTFM2L2FzYWRhbFBob3RvXzI0MTRfMjAxNDA0MTY=&thumbAt=Y&thumbSe=b_tbumb&wrtTy=10004";
-
 export default function Main() {
     const [cookie] = useCookies();
     const [featuredProjects, setFeaturedProjects] = useState<Featured[]>([]);
@@ -65,7 +63,6 @@ export default function Main() {
     );
 }
 
-/* -------------------------------- Hero ----------------------------------- */
 function Hero() {
     return (
         <div className="rounded-sm border bg-card text-card-foreground shadow-sm h-[450px]">
@@ -85,7 +82,6 @@ function Hero() {
     );
 }
 
-/* ------------------------------ Popular Sidebar -------------------------- */
 function PopularSidebar() {
     const navigate = useNavigate();
 
@@ -137,7 +133,7 @@ function PopularSidebar() {
                         <div key={it.projectId} className="flex gap-4 cursor-pointer py-2" >
                             <div className="relative w-28 h-28 shrink-0 overflow-hidden rounded-md bg-muted group">
                                 <img
-                                    src={img}
+                                    src={it.thumbnail}
                                     className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-110"
                                     onClick={() => onClickCard(it.projectId)}
                                 />
@@ -169,7 +165,6 @@ function PopularSidebar() {
     );
 }
 
-/* ------------------------------- Recent View ---------------------------- */
 export function RecentView({ title, perRow = 5, }: { title?: string; perRow?: number; }) {
     const [recentView, setRecentView] = useState<RecentView[]>([]);
 
@@ -251,7 +246,6 @@ export function RecentView({ title, perRow = 5, }: { title?: string; perRow?: nu
     );
 }
 
-/* ------------------------------- Project Card ---------------------------- */
 export function ProjectCard({ items }: { items: any; }) {
     const navigate = useNavigate();
 
@@ -264,8 +258,7 @@ export function ProjectCard({ items }: { items: any; }) {
         return (
             <div className="overflow-hidden cursor-pointer">
                 <div className="relative aspect-[1] w-full overflow-hidden rounded-sm group" onClick={() => onClickCard(items.projectId)}>
-                    {/* <img src={items.thumbnail} alt={items.title} className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-115" /> */}
-                    <img src={img} alt={items.title} className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-115" />
+                    <img src={items.thumbnail} alt={items.title} className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-115" />
                 </div>
                 <div className="space-y-1 py-3">
                     <p className="text-[11px] text-muted-foreground m-0 z-100 hover:underline" onClick={(e) => { e.stopPropagation(); navigate(`/creator/${items.creatorId}`); }}>{items.creatorName}</p>

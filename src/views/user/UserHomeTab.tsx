@@ -11,8 +11,8 @@ import { useCookies } from "react-cookie";
 type Stat = { label: string; value: number | string; icon: ReactNode };
 
 export default function UserHomeTab() {
-    const { loginUser } = useLoginUserStore();
-    const [cookie] = useCookies();
+    const { loginUser, resetLoginUser } = useLoginUserStore();
+    const [cookie, setCookie] = useCookies();
 
     const [loading, setLoading] = useState(true);
     const [userName, setUserName] = useState("user");
@@ -57,6 +57,12 @@ export default function UserHomeTab() {
     }, [rvPrev, rvNext, recPrev, recNext]);
 
     useEffect(() => {
+        if (loginUser == null || !cookie.accessToken) {
+            alert('로그인이 필요합니다.');
+            resetLoginUser();
+            setCookie('accessToken', '', { path: '/' });
+            location.href = '/auth/login';
+        }
         let mounted = true;
         (async () => {
             try {
