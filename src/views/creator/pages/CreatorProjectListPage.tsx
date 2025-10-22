@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { deleteData, endpoints, getData, setDevCreatorIdHeader } from "@/api/apis";
+import { deleteData, endpoints, getData } from "@/api/apis";
 import FundingLoader from "@/components/FundingLoader";
 import type { CreatorProjectListDto } from "@/types/creator";
-import { useCreatorId } from "../../../types/useCreatorId";
 import { useLocation, useNavigate } from "react-router-dom";
 import { formatDate, formatPrice } from "@/utils/utils";
 import CreatorProjectRowActions from "../components/CreatorProjectRowActions";

@@ -13,13 +13,12 @@ import type { ReplyDto } from "@/types/reply";
 type Props = {
     projectId: number;
     active?: boolean;
-    ensureLogin: () => boolean;
     onCreated?: () => void;
 };
 
 const CM_MAX = 1000;
 
-export default function ProjectCommunityTab({ projectId, active = false, ensureLogin, onCreated }: Props) {
+export default function ProjectCommunityTab({ projectId, active = false, onCreated }: Props) {
     /* ----------------------------- Refs ----------------------------- */
     const communitySentinelRef = useRef<HTMLDivElement | null>(null);
     const replySentinelRef = useRef<Record<number, HTMLDivElement | null>>({});
@@ -113,9 +112,8 @@ export default function ProjectCommunityTab({ projectId, active = false, ensureL
     /* --------------------------- Handlers --------------------------- */
     const openCommunityModal = useCallback(() => {
         if (!projectId) return;
-        if (!ensureLogin()) return;
         setOpenCm(true);
-    }, [projectId, ensureLogin]);
+    }, [projectId]);
 
     const handleCommunityOpenChange = useCallback((open: boolean) => {
         setOpenCm(open);
@@ -145,7 +143,6 @@ export default function ProjectCommunityTab({ projectId, active = false, ensureL
 
     const handleSubmitCommunity = useCallback(async () => {
         if (!projectId) return;
-        if (!ensureLogin()) return;
 
         const content = cmContent.trim();
         if (content.length === 0) {
@@ -179,7 +176,7 @@ export default function ProjectCommunityTab({ projectId, active = false, ensureL
         } finally {
             setPostingCm(false);
         }
-    }, [projectId, ensureLogin, cmContent, communityData]);
+    }, [projectId, cmContent, communityData]);
 
     const toggleReplies = useCallback(
         (cmId: number) => {
@@ -195,7 +192,6 @@ export default function ProjectCommunityTab({ projectId, active = false, ensureL
 
     const submitReply = useCallback(
         async (cmId: number) => {
-            if (!ensureLogin()) return;
             const content = (replyInput[cmId] ?? "").trim();
             if (content.length === 0) return;
             if (getByteLen(content) > CM_MAX) {
@@ -230,7 +226,7 @@ export default function ProjectCommunityTab({ projectId, active = false, ensureL
                 setPostingReply((prev) => ({ ...prev, [cmId]: false }));
             }
         },
-        [ensureLogin, replyInput, replySecret, replyData]
+        [replyInput, replySecret, replyData]
     );
 
     /* ---------------------------- Effects --------------------------- */
