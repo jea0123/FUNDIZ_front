@@ -7,9 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import FundingLoader from "@/components/FundingLoader";
 import type { CreatorProjectDetailDto } from "@/types/creator";
 import { formatDate, formatPrice, toPublicUrl } from "@/utils/utils";
-import { useCreatorId } from "../../../types/useCreatorId";
 import { ProjectDetailViewer } from "../components/ProjectDetailViewer";
-import { endpoints, getData, setDevCreatorIdHeader } from "@/api/apis";
+import { endpoints, getData } from "@/api/apis";
 import { ProjectStatusChip, type ProjectStatus } from "@/views/admin/components/ProjectStatusChip";
 import { BusinessDocViewer } from "../components/BusinessDocViewer";
 
@@ -28,11 +27,6 @@ export default function CreatorProjectDetailsPage() {
 
     const navigate = useNavigate();
     const { projectId } = useParams();
-
-    /* ---------------------------- Auth helper ----------------------------- */
-
-    //TODO: 임시용 id (나중에 삭제하기)
-    const { creatorId, loading: idLoading } = useCreatorId(2);
 
     /* ------------------------------- States ------------------------------- */
 
@@ -65,13 +59,6 @@ export default function CreatorProjectDetailsPage() {
     useEffect(() => {
         projectData();
     }, [projectData]);
-
-    // TODO: dev id
-    useEffect(() => {
-        if (!idLoading && creatorId) {
-            setDevCreatorIdHeader(creatorId ?? null);
-        }
-    }, [idLoading, creatorId]);
 
     /* ----------------------------------- Render ----------------------------------- */
 

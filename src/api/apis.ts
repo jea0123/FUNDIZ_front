@@ -206,7 +206,6 @@ export const endpoints = {
   getCounts: (projectId: number) => `project/${projectId}/counts`,
 
   // ==================== QnaReply API ====================
-  getQnaReplyList: (qnaId: number) => `qna/reply/${qnaId}`,
   addQnaReply: (qnaId: number) => `qna/reply/${qnaId}`,
 
   // ==================== Shipping API ====================
