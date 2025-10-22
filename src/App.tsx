@@ -59,9 +59,6 @@ import CreatorPage from './views/creator/pages/CreatorPage';
 import UserHomeTab from './views/user/UserHomeTab';
 import CreateCategory from './views/CreateCategory';
 
-// import { setDevCreatorIdHeader } from '@/api/apis';
-// setDevCreatorIdHeader(11);
-
 const OverviewTab = lazy(() => import('./views/admin/pages/OverviewTab').then((module) => ({ default: module.OverviewTab })));
 const CreatorDashboard = lazy(() => import('./views/creator/pages/CreatorDashboard').then((module) => ({ default: module.default })));
 

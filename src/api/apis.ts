@@ -206,7 +206,6 @@ export const endpoints = {
   getCounts: (projectId: number) => `project/${projectId}/counts`,
 
   // ==================== QnaReply API ====================
-  getQnaReplyList: (qnaId: number) => `qna/reply/${qnaId}`,
   addQnaReply: (qnaId: number) => `qna/reply/${qnaId}`,
 
   // ==================== Shipping API ====================
@@ -220,7 +219,6 @@ export const endpoints = {
   getBackingList: 'backing/page',
   getMypageBackingList: 'backing/myPageBackingList',
   getMypageBackingDetail: (backingId: number) => `backing/myPageBackingDetail/${backingId}`,
-  //여기까지
   backingPrepare: (projectId: number) => `backing/prepare/${projectId}`,
   addBacking: 'backing/create',
   cancelBacking: (backingId: number) => `backing/cancel/${backingId}`,

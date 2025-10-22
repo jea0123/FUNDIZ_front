@@ -26,13 +26,6 @@ export function ProjectDetailsPage() {
     const navigate = useNavigate();
     const { projectId } = useParams();
 
-    /* --------------------------------- Auth helper ---------------------------------- */
-
-    //TODO: login 체크
-    const ensureLogin = useCallback(() => {
-        return true;
-    }, [/* navigate, location.pathname, location.search */])
-
     /* --------------------------------- Refs ---------------------------------- */
 
     const cartRef = useRef<HTMLDivElement>(null);
@@ -101,7 +94,7 @@ export function ProjectDetailsPage() {
     }, [projectId]);
 
     const likeProject = useCallback(async (projectId: number) => {
-        if (!projectId || !ensureLogin()) return;
+        if (!projectId) return;
         setMutatingLike(true);
         try {
             const res = await postData(endpoints.likeProject(projectId), {}, cookie.accessToken);
@@ -113,10 +106,10 @@ export function ProjectDetailsPage() {
         } finally {
             setMutatingLike(false);
         }
-    }, [ensureLogin]);
+    }, []);
 
     const dislikeProject = useCallback(async (projectId: number) => {
-        if (!projectId || !ensureLogin()) return;
+        if (!projectId) return;
         setMutatingLike(true);
         try {
             const res = await deleteData(endpoints.dislikeProject(projectId), cookie.accessToken);
@@ -128,11 +121,10 @@ export function ProjectDetailsPage() {
         } finally {
             setMutatingLike(false);
         }
-    }, [ensureLogin]);
+    }, []);
 
     const checkLiked = async (projectId: number) => {
         if (!projectId) return;
-        if (!ensureLogin()) return;
         const response = await getData(endpoints.checkLiked(projectId), cookie.accessToken);
         if (response.status === 200) {
             setIsLiked(response.data);
@@ -148,7 +140,7 @@ export function ProjectDetailsPage() {
     };
 
     const followCreator = useCallback(async (creatorId: number) => {
-        if (!creatorId || !ensureLogin()) return;
+        if (!creatorId) return;
         setMutatingFollow(true);
         try {
             const res = await postData(endpoints.followCreator(creatorId), {}, cookie.accessToken);
@@ -160,10 +152,10 @@ export function ProjectDetailsPage() {
         } finally {
             setMutatingFollow(false);
         }
-    }, [ensureLogin]);
+    }, []);
 
     const unfollowCreator = useCallback(async (creatorId: number) => {
-        if (!creatorId || !ensureLogin()) return;
+        if (!creatorId) return;
         setMutatingFollow(true);
         try {
             const res = await deleteData(endpoints.unfollowCreator(creatorId), cookie.accessToken);
@@ -175,11 +167,10 @@ export function ProjectDetailsPage() {
         } finally {
             setMutatingFollow(false);
         }
-    }, [ensureLogin]);
+    }, []);
 
     const checkFollowed = async (creatorId: number) => {
         if (!creatorId) return;
-        if (!ensureLogin()) return;
         const response = await getData(endpoints.checkFollowed(creatorId), cookie.accessToken);
         if (response.status === 200) {
             setIsFollowed(response.data);
@@ -245,8 +236,13 @@ export function ProjectDetailsPage() {
     /* END 리워드 카트 */
 
     // 후원하기
-    const handleCheckout = useCallback(() => {
+    const backThisProject = useCallback(() => {
         if (!projectId) return;
+        if (!cookie.accessToken) {
+            const isLogin = confirm('로그인 후 사용해주세요.');
+            if (isLogin) navigate('/auth/login');
+            return false;
+        }
         const entries = Object.entries(cart).filter(([_, q]) => q > 0);
         if (entries.length === 0) return;
         const items = entries.map(([rid, q]) => `${rid}x${q}`).join(",");
@@ -460,7 +456,6 @@ export function ProjectDetailsPage() {
                             <ProjectCommunityTab
                                 projectId={Number(projectId)}
                                 active={tab === "community"}
-                                ensureLogin={ensureLogin}
                                 onCreated={() => incCommunity(+1)}
                             />
                         </TabsContent>
@@ -582,10 +577,10 @@ export function ProjectDetailsPage() {
                                         <Button
                                             className="w-full"
                                             size="lg"
-                                            onClick={handleCheckout}
+                                            onClick={backThisProject}
                                             disabled={cartSummary.totalQty === 0}
                                         >
-                                            {formatPrice(cartSummary.totalAmount)}원 결제하기
+                                            {formatPrice(cartSummary.totalAmount)}원 후원하기
                                         </Button>
                                     </>
                                 )}
@@ -652,7 +647,7 @@ export function ProjectDetailsPage() {
                             <Button
                                 className="w-full"
                                 size="lg"
-                                onClick={handleCheckout}
+                                onClick={backThisProject}
                                 disabled={cartSummary.totalQty === 0}
                             >
                                 {cartSummary.totalQty > 0 ? `${formatPrice(cartSummary.totalAmount)}원 후원하기` : '리워드를 선택하세요'}
