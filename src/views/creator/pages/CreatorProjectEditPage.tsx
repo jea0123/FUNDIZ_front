@@ -324,7 +324,6 @@ export default function CreatorProjectEditPage() {
         projectId: 0,
         ctgrId: 0,
         subctgrId: 0,
-        creatorId: 0,
         title: "",
         goalAmount: 0,
         startDate: null,
@@ -423,19 +422,16 @@ export default function CreatorProjectEditPage() {
                     if (!alive) return;
 
                     const draft = response?.data ?? {};
-                    console.log("[EditProject] raw draft.contentBlocks =", draft.contentBlocks);
-                    console.log("[EditProject] typeof draft.contentBlocks =", typeof draft.contentBlocks);
 
                     setProject((prev) => {
                         const parsed = parseBlocks(draft.contentBlocks);
-                        console.log("[EditProject] parsed.blocks.length =", parsed.blocks?.length ?? 0);
-
+                        
                         return {
                             ...prev,
                             projectId: draft.projectId,
                             creatorId: draft.creatorId,
-                            ctgrId: draft.ctgrId,
-                            subctgrId: draft.subctgrId,
+                            ctgrId: Number(draft.ctgrId),
+                            subctgrId: Number(draft.subctgrId),
                             title: draft.title,
                             goalAmount: draft.goalAmount,
                             startDate: new Date(draft.startDate),
@@ -538,7 +534,7 @@ export default function CreatorProjectEditPage() {
         try {
             if (isEdit && projectId) {
                 // 기존 Draft 업데이트
-                const response = await postData(endpoints.updateProject(projectId), formData);
+                const response = await postData(endpoints.updateProject(projectId), formData, cookie.accessToken);
                 if (response.status === 200) {
                     alert("저장이 완료되었습니다.");
                     goList();
@@ -547,7 +543,7 @@ export default function CreatorProjectEditPage() {
                 }
             } else {
                 // 신규 Draft 생성
-                const response = await postData(endpoints.createProject, formData);
+                const response = await postData(endpoints.createProject, formData, cookie.accessToken);
                 if (response.status === 200) {
                     alert("저장이 완료되었습니다.");
                     goList();
@@ -582,10 +578,10 @@ export default function CreatorProjectEditPage() {
 
             if (isEdit && projectId) {
                 // 기존 Draft 업데이트
-                await postData(endpoints.updateProject(projectId), formData);
+                await postData(endpoints.updateProject(projectId), formData, cookie.accessToken);
 
                 // 편집 중인 Draft 심사요청
-                const response = await postData(endpoints.submitProject(projectId), {});
+                const response = await postData(endpoints.submitProject(projectId), {}, cookie.accessToken);
                 if (response.status === 200) {
                     alert("심사요청이 완료되었습니다.");
                     return goList();
@@ -614,7 +610,7 @@ export default function CreatorProjectEditPage() {
                 throw new Error("생성은 되었지만 projectId를 확인할 수 없습니다. 서버 응답을 점검해 주세요.");
             }
 
-            const response = await postData(endpoints.submitProject(newId), {});
+            const response = await postData(endpoints.submitProject(newId), {}, cookie.accessToken);
             if (response.status === 200) {
                 alert("심사요청이 완료되었습니다.");
                 goList();
