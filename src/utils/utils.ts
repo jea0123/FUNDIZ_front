@@ -55,7 +55,7 @@ export const toWon = (amount?: number): string => {
 /**
  * @description 특정 날짜까지 남은 일수를 계산하여 문자열로 반환
  * @param {string | Date} date 날짜 문자열 또는 Date 객체
- * @return {string} 남은 일수를 나타내는 문자열 (예: "5"), 이미 지난 날짜인 경우 "0", 잘못된 날짜 포맷인 경우 "-"
+ * @return {string} 남은 일수를 나타내는 문자열 (예: "5"), 이미 지난 날짜인 경우 "0", 잘못된 날짜 포맷인 경우 "-", 오늘 마감인 경우 "오늘 마감"
  * @example
  * getDaysLeft("2023-10-10") // "5" (오늘이 2023-10-05인 경우)
  */
@@ -63,7 +63,7 @@ export function getDaysLeft(date: string | Date): string {
     const end = new Date(date);
     const diffMs = end.getTime() - Date.now();
 
-    if (diffMs <= 0) return "0";
+    if (diffMs < 0) return "0";
 
     const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
@@ -71,6 +71,8 @@ export function getDaysLeft(date: string | Date): string {
         console.error("잘못된 날짜 포맷");
         return "-";
     }
+
+    if(diffDays == 0) return "오늘 마감";
 
     return `${diffDays}`;
 }
