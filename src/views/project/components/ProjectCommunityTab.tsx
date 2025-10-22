@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -6,7 +6,7 @@ import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogT
 import { Textarea } from "@/components/ui/textarea";
 import { MessageCircle, MessageSquarePlus, Siren, X } from "lucide-react";
 import { endpoints, getData, postData } from "@/api/apis";
-import { getByteLen, getDaysBefore, toastSuccess, toPublicUrl } from "@/utils/utils";
+import { getByteLen, getDaysBefore, getElapsedTime, toastSuccess, toPublicUrl } from "@/utils/utils";
 import type { CommunityDto, Cursor, CursorPage } from "@/types/community";
 import type { ReplyDto } from "@/types/reply";
 
@@ -62,12 +62,13 @@ export default function ProjectCommunityTab({ projectId, active = false, ensureL
                     if (cursor.lastId != null) params.set("lastId", String(cursor.lastId));
                 }
                 params.set("size", "10");
+                params.set("_", String(Date.now()));
 
                 const url = `${endpoints.getCommunityList(projectId)}?${params.toString()}`;
                 const { status, data } = await getData(url);
 
                 if (status !== 200 || !data) {
-                    if (!cursor) setCommunity([]); // 첫 로드 실패면 초기화
+                    if (!cursor) setCommunity([]);
                     setCommunityCursor(null);
                     return;
                 }
@@ -351,6 +352,13 @@ export default function ProjectCommunityTab({ projectId, active = false, ensureL
                 </div>
             ) : (
                 <>
+                    <div className="mt-4 flex justify-end">
+                        <Button size="sm" onClick={openCommunityModal} className="ml-auto">
+                            <MessageSquarePlus className="h-4 w-4 mr-1" />
+                            글쓰기
+                        </Button>
+                    </div>
+
                     {community.map((cm) => (
                         <div key={cm.cmId} className="space-y-4 mt-6">
                             <Card>
@@ -364,7 +372,7 @@ export default function ProjectCommunityTab({ projectId, active = false, ensureL
                                             <div className="flex items-center space-x-2 mb-1">
                                                 <span className="font-medium truncate">{cm.nickname}</span>
                                                 <a href="/cs/report"><Siren className="w-4 h-4" /></a>
-                                                <span className="text-sm text-gray-500">{getDaysBefore(cm.createdAt)} 전</span>
+                                                <span className="text-sm text-gray-500">{getElapsedTime(cm.createdAt)}</span>
                                             </div>
                                             <p className="text-sm w-full max-w-full whitespace-pre-wrap [overflow-wrap:anywhere]">
                                                 {cm.cmContent}
@@ -407,7 +415,6 @@ export default function ProjectCommunityTab({ projectId, active = false, ensureL
                                                                 .filter(Boolean)
                                                                 .map((rp) => (
                                                                     <div key={rp.replyId} className="flex items-start gap-2">
-                                                                        {/* TODO: 이미지 */}
                                                                         <Avatar className="w-7 h-7">
                                                                             <AvatarImage src={toPublicUrl(rp.profileImg)} />
                                                                             <AvatarFallback>{(rp.nickname ?? "U").slice(0, 2)}</AvatarFallback>
