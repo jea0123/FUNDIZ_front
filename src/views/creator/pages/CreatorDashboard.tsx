@@ -1,13 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, XAxis, YAxis, CartesianGrid, Legend, BarChart, Bar, LabelList, Area, AreaChart } from 'recharts';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import type { CreatorDashboard } from '@/types/creator';
 import type { DailyCount, MonthCount } from '@/types/backing';
-import { useCreatorId } from '../../../types/useCreatorId';
 import { endpoints, getData } from '@/api/apis';
 import { setDevCreatorIdHeader } from '@/api/apis';
 import { useCookies } from 'react-cookie';
+import { useLoginUserStore } from '@/store/LoginUserStore.store';
 setDevCreatorIdHeader(2);
 
 const rankColors: Record<number, string> = {
@@ -48,8 +48,14 @@ export default function CreatorDashboard() {
   const [dailyData, setDailyData] = useState<DailyCount[]>([]);
   const [monthlyData, setMonthlyData] = useState<MonthCount[]>([]);
 
+  const { loginUser } = useLoginUserStore();
+
   useEffect(() => {
-    if (!cookie.accessToken) return;
+    if (!cookie.accessToken || loginUser?.creatorId == null) {
+      alert('창작자 대시보드는 창작자 계정으로 로그인해야 접근할 수 있습니다.');
+      history.back();
+      return;
+    }
 
     (async () => {
       try {

@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { PageResult } from "@/types/projects";
 import { deleteData, endpoints, getData, postData } from "@/api/apis";
-import { toastSuccess } from "@/utils/utils";
+import { toastError, toastSuccess } from "@/utils/utils";
 import type { FollowerItem } from "@/types/creator";
 import { useCookies } from "react-cookie";
+import defaultProfile from '@/lib/default-profile.png'
 
 type Props = { creatorId: number };
 
@@ -46,7 +47,10 @@ export default function CreatorFollowers({ creatorId }: Props) {
 
     const follow = useCallback(async (item: FollowerItem) => {
         if (!item.canFollow || !item.creatorId) return;
-
+        if (!cookie.accessToken) {
+            toastError("로그인 후 이용해 주세요.");
+            return;
+        }
         setRowLoading(prev => ({ ...prev, [item.userId]: true }));
         try {
             const res = await postData(endpoints.followCreator(item.creatorId), {}, cookie.accessToken);
@@ -66,7 +70,10 @@ export default function CreatorFollowers({ creatorId }: Props) {
 
     const unfollow = useCallback(async (item: FollowerItem) => {
         if (!item.canFollow || !item.creatorId) return;
-
+        if (!cookie.accessToken) {
+            toastError("로그인 후 이용해 주세요.");
+            return;
+        }
         setRowLoading(prev => ({ ...prev, [item.userId]: true }));
         try {
             const res = await deleteData(endpoints.unfollowCreator(item.creatorId), cookie.accessToken);
@@ -94,7 +101,7 @@ export default function CreatorFollowers({ creatorId }: Props) {
                     result.items.map((u) => {
                         const isCreator = u.creator === true;
                         const displayName = isCreator ? (u.creatorName ?? u.nickname) : u.nickname;
-                        const img = isCreator ? (u.creatorProfileImg ?? "") : (u.userProfileImg ?? "");
+                        const img = isCreator ? (u.creatorProfileImg ?? defaultProfile) : (u.userProfileImg ?? defaultProfile);
                         const initials = (displayName || "").slice(0, 2);
                         const loading = !!rowLoading[u.userId];
 
