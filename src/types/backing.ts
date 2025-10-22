@@ -1,5 +1,5 @@
 import type { Address, AddressResponse } from './address';
-import type { BackingPagePayment, Payment } from './payment';
+import type { BackingPagePayment, Payment, PaymentInfo } from './payment';
 
 export interface MyPageBacking {
   backingId: number;
@@ -60,7 +60,7 @@ export interface BackingPrepare {
 
   rewardList: BackingRewardList[];
 
-  paymentList: BackingPagePayment[];
+  paymentList: PaymentInfo[];
 }
 
 export interface BackingCreatorBackerList {

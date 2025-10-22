@@ -19,7 +19,7 @@ export default function BackingDetailPage() {
     const fetchData = async () => {
       if (!backingId) return;
       try {
-        const res = await getData(endpoints.getMypageBackingDetail(Number(backingId)),cookie.accessToken);
+        const res = await getData(endpoints.getMypageBackingDetail(Number(backingId)), cookie.accessToken);
         //console.log("📦 상세 응답:", res.data);
 
         //  단일 객체 형태로 응답될 때 처리
@@ -30,10 +30,10 @@ export default function BackingDetailPage() {
             rewardList: data.rewards ?? data.rewardList ?? [],
           });
         } else {
-          console.error("❌ 잘못된 응답 구조:", res);
+          console.error('❌ 잘못된 응답 구조:', res);
         }
       } catch (err) {
-        console.error("❌ 후원 상세 불러오기 실패:", err);
+        console.error('❌ 후원 상세 불러오기 실패:', err);
       }
     };
 
@@ -63,7 +63,6 @@ export default function BackingDetailPage() {
     FAILED: '배송 실패',
   };
 
-   
   const methodMap: Record<string, string> = {
     BANK_TRANSFER: '계좌이체 / 무통장입금',
     CARD: '신용카드',
@@ -71,15 +70,14 @@ export default function BackingDetailPage() {
     ETC: '기타 결제 수단',
   };
 
-  /*
   const cardCompanyMap: Record<string, string> = {
-    Lotte: '롯데카드',
+    LOTTE: '롯데카드',
     KB: '국민카드',
-    Samsung: '삼성카드',
-    Shinhan: '신한카드',
+    SAMSUNG: '삼성카드',
+    SHINHAN: '신한카드',
     NH: '농협카드',
-    Hyundai: '현대카드',
-  };*/
+    HYUNDAI: '현대카드',
+  };
 
   // 추가 후원금 계산
   const totalRewardAmount = backing.rewardList?.reduce((sum, r) => sum + (r.price ?? 0) * (r.quantity ?? 0), 0) ?? 0;
@@ -103,44 +101,54 @@ export default function BackingDetailPage() {
       console.error('후원 취소 오류:', error);
       alert('서버 오류로 인해 후원 취소에 실패했습니다.');
     }
-  }
+  };
 
   return (
-    <div className="p-6 space-y-8 max-w-5xl mx-auto">
+    <div className="p-6 space-y-10 max-w-5xl mx-auto">
       {/* 프로젝트 정보 */}
-      <Card>
-        <CardHeader className="flex items-center gap-5">
-          <ImageWithFallback src={backing.thumbnail} alt={backing.title} className="w-28 h-28 rounded-xl object-cover" />
+      <Card className="bg-white/95 rounded-xl shadow-md hover:shadow-lg transition">
+        <CardHeader className="flex items-center gap-6">
+          <ImageWithFallback src={backing.thumbnail} alt={backing.title} className="w-32 h-32 rounded-xl object-cover shadow-sm border border-gray-200" />
           <div>
-            <CardTitle className="text-lg font-semibold mb-1">{backing.title}</CardTitle>
-            <p className="text-sm text-gray-500 mb-1">창작자: {backing.creatorName ?? '-'}</p>
-            <Badge variant="outline">{backing.backingStatus === 'COMPLETED' ? shippingLabel[backing.shippingStatus] ?? '배송 정보 없음' : paymentLabel[backing.backingStatus] ?? '상태 알 수 없음'}</Badge>
+            <CardTitle className="text-xl font-bold text-blue-700 mb-2">{backing.title}</CardTitle>
+            <p className="text-base text-gray-600 mb-1">
+              <span className="font-medium text-gray-700">창작자:</span> {backing.creatorName ?? '-'}
+            </p>
+            <Badge variant="outline" className="text-sm px-3 py-1 font-medium border-blue-200 text-blue-700 bg-blue-50">
+              {backing.backingStatus === 'COMPLETED' ? shippingLabel[backing.shippingStatus] ?? '배송 정보 없음' : paymentLabel[backing.backingStatus] ?? '상태 알 수 없음'}
+            </Badge>
           </div>
         </CardHeader>
-        <CardContent className="text-sm text-gray-600 grid grid-cols-2 gap-2">
-          <p>후원일: {safeDate(backing.createdAt)}</p>
-          <p>후원 금액: {formatNumber(backing.amount)}원</p>
+        <CardContent className="text-base text-gray-700 grid grid-cols-2 gap-3">
+          <p>
+            <span className="font-medium text-gray-800">후원일:</span> {safeDate(backing.createdAt)}
+          </p>
+          <p>
+            <span className="font-medium text-gray-800">후원 금액:</span> {formatNumber(backing.amount)}원
+          </p>
         </CardContent>
       </Card>
 
-      {/*리워드 정보 */}
-      <Card>
+      {/* 리워드 정보 */}
+      <Card className="bg-white/95 rounded-xl shadow-md hover:shadow-lg transition">
         <CardHeader>
-          <CardTitle>🎁 후원 리워드</CardTitle>
+          <CardTitle className="text-lg font-semibold text-gray-800">🎁 후원 리워드</CardTitle>
         </CardHeader>
         <CardContent>
           {backing.rewardList?.length ? (
             <div className="divide-y">
               {backing.rewardList.map((r, idx) => (
-                <div key={idx} className="flex justify-between py-3 text-sm">
+                <div key={idx} className="flex justify-between py-4 text-base text-gray-700">
                   <div>
-                    <p className="font-semibold">{r.rewardName}</p>
+                    <p className="font-semibold text-gray-800">{r.rewardName}</p>
                     <p className="text-gray-500">
                       수량: {r.quantity}개 / 배송 예정일: {safeDate(r.deliveryDate)}
                     </p>
                   </div>
-                  <p className="font-semibold text-gray-800 text-right">
-                    {formatNumber(r.price)}원 × {r.quantity}개
+                  <p className="font-semibold text-right">
+                    <span className="text-gray-800">
+                      {formatNumber(r.price)}원 × {r.quantity}개
+                    </span>
                     <br />
                     <span className="text-gray-500 text-sm">= {formatNumber(r.price * r.quantity)}원</span>
                   </p>
@@ -153,50 +161,49 @@ export default function BackingDetailPage() {
         </CardContent>
       </Card>
 
-      {/*결제 정보 */}
-      <Card>
+      {/* 결제 정보 */}
+      <Card className="bg-white/95 rounded-xl shadow-md hover:shadow-lg transition">
         <CardHeader>
-          <CardTitle>💳 결제 정보</CardTitle>
+          <CardTitle className="text-lg font-semibold text-gray-800">💳 결제 정보</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-2 gap-4 text-sm text-gray-700">
+        <CardContent className="grid grid-cols-2 gap-4 text-base text-gray-700">
           <div>
-            <p className="text-gray-500 text-sm">결제 수단</p>
+            <p className="text-gray-500">결제 수단</p>
             <p>{methodMap[backing.method] ?? '-'}</p>
           </div>
-          {/*
           <div>
-            <p className="text-gray-500 text-sm">카드사</p>
-            <p>{backing.cardCompany ?? '-'}</p>
-          </div> */}
+            <p className="text-gray-500">카드사</p>
+            <p>{cardCompanyMap[backing.cardCompany] ?? '-'}</p>
+          </div>
           <div>
-            <p className="text-gray-500 text-sm">리워드 총 금액</p>
+            <p className="text-gray-500">리워드 총 금액</p>
             <p>{formatNumber(totalRewardAmount)}원</p>
           </div>
           <div>
-            <p className="text-gray-500 text-sm">추가 후원금</p>
-            <p className="font-medium text-blue-600">+{formatNumber(extraBacking)}원</p>
+            <p className="text-gray-500">추가 후원금</p>
+            <p className="font-semibold text-emerald-600">+{formatNumber(extraBacking)}원</p>
           </div>
-          <div className="col-span-2 border-t pt-2 mt-1">
-            <p className="text-gray-500 text-sm">총 결제 금액</p>
-            <p className="font-semibold text-lg">{formatNumber(backing.amount)}원</p>
+          <div className="col-span-2 border-t pt-3 mt-1">
+            <p className="text-gray-500">총 결제 금액</p>
+            <p className="font-bold text-xl text-blue-600">{formatNumber(backing.amount)}원</p>
           </div>
           <div>
-            <p className="text-gray-500 text-sm">결제 상태</p>
+            <p className="text-gray-500">결제 상태</p>
             <p>{paymentLabel[backing.backingStatus] ?? '-'}</p>
           </div>
         </CardContent>
       </Card>
 
-      {/*배송 정보 */}
+      {/* 배송 정보 */}
       {backing.backingStatus === 'COMPLETED' && (
-        <Card>
+        <Card className="bg-white/95 rounded-xl shadow-md hover:shadow-lg transition">
           <CardHeader>
-            <CardTitle>📦 배송 정보</CardTitle>
+            <CardTitle className="text-lg font-semibold text-gray-800">📦 배송 정보</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-2 gap-4 text-sm">
+          <CardContent className="grid grid-cols-2 gap-4 text-base text-gray-700">
             <div>
               <p className="text-gray-500">배송 상태</p>
-              <p>{shippingLabel[backing.shippingStatus] ?? '-'}</p>
+              <p className={`font-medium ${backing.shippingStatus === 'DELIVERED' ? 'text-green-600' : backing.shippingStatus === 'SHIPPED' ? 'text-blue-600' : backing.shippingStatus === 'READY' ? 'text-amber-600' : 'text-gray-600'}`}>{shippingLabel[backing.shippingStatus] ?? '-'}</p>
             </div>
             <div>
               <p className="text-gray-500">송장 번호</p>
@@ -210,7 +217,7 @@ export default function BackingDetailPage() {
               <p className="text-gray-500">배송 완료일</p>
               <p>{safeDate(backing.deliveredAt)}</p>
             </div>
-            <div className="col-span-2 border-t pt-4 mt-2">
+            <div className="col-span-2 border-t pt-4 mt-2 space-y-1">
               <p className="text-gray-500">수령인</p>
               <p>{backing.recipient}</p>
             </div>
@@ -218,7 +225,7 @@ export default function BackingDetailPage() {
               <p className="text-gray-500">연락처</p>
               <p>{backing.recipientPhone}</p>
             </div>
-            <div className="col-span-2">
+            <div className="col-span-2 space-y-1">
               <p className="text-gray-500">주소</p>
               <p>
                 [{backing.postalCode}] {backing.roadAddr} {backing.detailAddr}
@@ -232,17 +239,13 @@ export default function BackingDetailPage() {
         </Card>
       )}
 
-      {/*하단 버튼 */}
-      <div className="flex justify-end gap-3">
+      {/* 하단 버튼 */}
+      <div className="flex justify-end gap-4">
         <Button variant="outline" onClick={() => navigate(-1)}>
           뒤로가기
         </Button>
-
         {backing.backingStatus === 'COMPLETED' && (
-          <Button
-            variant="destructive"
-            onClick={cancelBacking}
-          >
+          <Button variant="destructive" className="hover:bg-red-600 hover:text-white transition" onClick={cancelBacking}>
             후원 취소
           </Button>
         )}
