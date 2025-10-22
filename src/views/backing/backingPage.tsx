@@ -65,6 +65,7 @@ function PaymentSuccessModal({ open, onClose, onGoMyPage, onGoBack }: { open: bo
 }
 
 //결제 모달
+/*
 function PaymentModal({ open, onClose, totalAmount, paymentList, onConfirmPayment }: { open: boolean; onClose: () => void; totalAmount: number; paymentList: BackingPagePayment[]; onConfirmPayment: (payload: { method: string; cardCompany: string }) => void }) {
   const [selectedPayment, setSelectedPayment] = useState<string>(''); // 저장된 결제 선택
   const [method, setMethod] = useState(''); // 새 결제수단 선택
@@ -149,7 +150,7 @@ function PaymentModal({ open, onClose, totalAmount, paymentList, onConfirmPaymen
       </DialogContent>
     </Dialog>
   );
-}
+}*/
 
 //BackingPage 본문
 export function BackingPage() {
@@ -183,7 +184,7 @@ export function BackingPage() {
   });
   const [addressMode, setAddressMode] = useState<'select' | 'manual'>('select');
   const [loading, setLoading] = useState(true);
-  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  //const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
   useEffect(() => {
     const fetchPrepareData = async () => {
@@ -249,14 +250,28 @@ export function BackingPage() {
     const additional = customAmount ? parseInt(customAmount) : 0;
     return rewardsTotal + additional;
   };
-
+  //모달 페이지에서 체이지넘어가는 부분
+  /*
   const handleOpenPayment = () => {
     if (rewardList.length === 0) {
       alert('리워드를 선택해주세요.');
       return;
     }
     setIsPaymentOpen(true);
+  };*/
+
+  //모달없이 바로 결제
+   const handleOpenPayment = async () => {
+    if (rewardList.length === 0) {
+      alert('리워드를 선택해주세요.');
+      return;
+    }
+
+    // 임시 동작: 모달 대신 바로 결제 로직 실행
+    const dummyPayment = { method: 'CARD', cardCompany: '임시결제' };
+    await handleConfirmPayment(dummyPayment);
   };
+
 
   const handleConfirmPayment = async ({ method, cardCompany }: { method: string; cardCompany: string }) => {
     const rewardsTotal = rewardList.reduce((sum, r) => sum + (rewardQuantities[r.rewardId] ?? 1) * r.price, 0);
@@ -336,8 +351,10 @@ export function BackingPage() {
           </Button>
           <h1 className="text-3xl font-bold">프로젝트 후원하기</h1>
         </div>
-
+  
+        {/*}
         <PaymentModal open={isPaymentOpen} onClose={() => setIsPaymentOpen(false)} totalAmount={getTotalAmount()} paymentList={paymentList} onConfirmPayment={handleConfirmPayment} />
+        */}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
