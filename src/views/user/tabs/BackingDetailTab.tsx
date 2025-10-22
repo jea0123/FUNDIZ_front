@@ -63,15 +63,15 @@ export default function BackingDetailPage() {
     FAILED: '배송 실패',
   };
 
-   /*
+   
   const methodMap: Record<string, string> = {
     BANK_TRANSFER: '계좌이체 / 무통장입금',
     CARD: '신용카드',
-    EASY_PAY: '간편결제',
-    ETC: '기타 결제수단',
+    EASY_PAY: '간편결제(카카오페이 / 네이버페이)',
+    ETC: '기타 결제 수단',
   };
 
-  //
+  /*
   const cardCompanyMap: Record<string, string> = {
     Lotte: '롯데카드',
     KB: '국민카드',
@@ -159,10 +159,11 @@ export default function BackingDetailPage() {
           <CardTitle>💳 결제 정보</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-4 text-sm text-gray-700">
-          {/* <div>
+          <div>
             <p className="text-gray-500 text-sm">결제 수단</p>
-            <p>{backing.method ?? '-'}</p>
+            <p>{methodMap[backing.method] ?? '-'}</p>
           </div>
+          {/*
           <div>
             <p className="text-gray-500 text-sm">카드사</p>
             <p>{backing.cardCompany ?? '-'}</p>
