@@ -11,6 +11,7 @@ import { ProjectDetailViewer } from "../components/ProjectDetailViewer";
 import { endpoints, getData } from "@/api/apis";
 import { ProjectStatusChip, type ProjectStatus } from "@/views/admin/components/ProjectStatusChip";
 import { BusinessDocViewer } from "../components/BusinessDocViewer";
+import { useCookies } from "react-cookie";
 
 const toTagNames = (list: any): string[] =>
     Array.isArray(list)
@@ -30,6 +31,7 @@ export default function CreatorProjectDetailsPage() {
 
     /* ------------------------------- States ------------------------------- */
 
+    const [cookie] = useCookies();
     const [project, setProject] = useState<CreatorProjectDetailDto | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -45,7 +47,7 @@ export default function CreatorProjectDetailsPage() {
         if (!projectId) return;
         setLoading(true);
         try {
-            const res = await getData(endpoints.getCreatorProjectDetail(Number(projectId)));
+            const res = await getData(endpoints.getCreatorProjectDetail(Number(projectId)), cookie.accessToken);
             if (res.status === 200) {
                 setProject(res.data);
             }

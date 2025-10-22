@@ -68,7 +68,9 @@ export interface CreatorProjectDetailDto {
     contentBlocks: ContentBlocks; // EditorJS JSON
     thumbnail: string;
     businessDoc?: string;
+    subctgrId: number;
     subctgrName: string;
+    ctgrId: number;
     ctgrName: string;
 
     creatorName: string;
@@ -82,7 +84,6 @@ export interface CreatorProjectDetailDto {
 
 export interface ProjectCreateRequestDto {
     projectId: number;
-    creatorId: number;
     ctgrId: number; //프론트에서만 사용
     subctgrId: number;
 
