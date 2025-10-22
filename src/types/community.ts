@@ -1,7 +1,7 @@
 export interface CommunityDto {
     cmId: number;
     cmContent: string;
-    createdAt: string;
+    createdAt: Date;
     code: "CM";
     nickname: string;
     profileImg: string | null;
@@ -11,7 +11,7 @@ export interface CommunityDto {
 export interface ReviewDto {
     cmId: number;
     cmContent: string;
-    createdAt: string;
+    createdAt: Date;
     code: "RV";
     rating: number;
     nickname: string;
