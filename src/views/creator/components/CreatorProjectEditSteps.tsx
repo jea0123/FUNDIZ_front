@@ -58,9 +58,6 @@ type StepsProps = {
 }
 
 /* -------------------------------- Utils -------------------------------- */
-
-const normalizeName = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
-
 const parseLocalDate = (s: string) => {
     const [y, m, d] = s.split("-").map(Number);
     return new Date(y, (m ?? 1) - 1, d ?? 1);
