@@ -19,8 +19,8 @@ export default function BackingDetailPage() {
     const fetchData = async () => {
       if (!backingId) return;
       try {
-        const res = await getData(endpoints.getMypageBackingDetail(Number(backingId)));
-        console.log("📦 상세 응답:", res.data);
+        const res = await getData(endpoints.getMypageBackingDetail(Number(backingId)),cookie.accessToken);
+        //console.log("📦 상세 응답:", res.data);
 
         //  단일 객체 형태로 응답될 때 처리
         if (res.status === 200 && res.data) {
@@ -62,6 +62,24 @@ export default function BackingDetailPage() {
     CANCELED: '배송 취소',
     FAILED: '배송 실패',
   };
+
+   /*
+  const methodMap: Record<string, string> = {
+    BANK_TRANSFER: '계좌이체 / 무통장입금',
+    CARD: '신용카드',
+    EASY_PAY: '간편결제',
+    ETC: '기타 결제수단',
+  };
+
+  //
+  const cardCompanyMap: Record<string, string> = {
+    Lotte: '롯데카드',
+    KB: '국민카드',
+    Samsung: '삼성카드',
+    Shinhan: '신한카드',
+    NH: '농협카드',
+    Hyundai: '현대카드',
+  };*/
 
   // 추가 후원금 계산
   const totalRewardAmount = backing.rewardList?.reduce((sum, r) => sum + (r.price ?? 0) * (r.quantity ?? 0), 0) ?? 0;
@@ -141,14 +159,14 @@ export default function BackingDetailPage() {
           <CardTitle>💳 결제 정보</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-4 text-sm text-gray-700">
-          <div>
+          {/* <div>
             <p className="text-gray-500 text-sm">결제 수단</p>
             <p>{backing.method ?? '-'}</p>
           </div>
           <div>
             <p className="text-gray-500 text-sm">카드사</p>
             <p>{backing.cardCompany ?? '-'}</p>
-          </div>
+          </div> */}
           <div>
             <p className="text-gray-500 text-sm">리워드 총 금액</p>
             <p>{formatNumber(totalRewardAmount)}원</p>
@@ -165,14 +183,6 @@ export default function BackingDetailPage() {
             <p className="text-gray-500 text-sm">결제 상태</p>
             <p>{paymentLabel[backing.backingStatus] ?? '-'}</p>
           </div>
-
-          {/*결제 완료 상태일 때만 배송 상태 표시 */}
-          {backing.backingStatus === 'COMPLETED' && (
-            <div>
-              <p className="text-gray-500 text-sm">배송 상태</p>
-              <p>{shippingLabel[backing.shippingStatus] ?? '-'}</p>
-            </div>
-          )}
         </CardContent>
       </Card>
 
