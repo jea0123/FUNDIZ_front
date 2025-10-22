@@ -5,6 +5,7 @@ import type { CreatorSummary } from "@/types/creator";
 import { formatNumber, toastSuccess } from "@/utils/utils";
 import { Share2, Plus, UserMinus, Loader2 } from "lucide-react";
 import { useMemo } from "react";
+import defaultProfile from '@/lib/default-profile.png'
 
 type CreatorCore = {
     creatorName: string;
@@ -43,7 +44,7 @@ export default function CreatorHeader({ data, onFollow, onUnfollow, followLoadin
             <div className="grid grid-cols-[104px_1fr_auto] items-start gap-6">
                 <div className="flex items-start">
                     <Avatar className="h-[88px] w-[88px] rounded-2xl shadow-sm ring-1 ring-border">
-                        <AvatarImage src={data.creator.profileImg || ""} />
+                        <AvatarImage src={data.creator.profileImg || defaultProfile} />
                         <AvatarFallback className="rounded-2xl text-lg">
                             {initials}
                         </AvatarFallback>

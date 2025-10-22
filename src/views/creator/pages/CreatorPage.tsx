@@ -64,6 +64,10 @@ export default function CreatorPage() {
 
     const handleFollow = async () => {
         if (!summary) return;
+        if (!cookie.accessToken) {
+            toastError("로그인 후 이용해 주세요.");
+            return;
+        }
         setFollowLoading(true);
         try {
             const res = await postData(endpoints.followCreator(creatorId), {}, cookie.accessToken);
@@ -81,6 +85,10 @@ export default function CreatorPage() {
 
     const handleUnfollow = async () => {
         if (!summary) return;
+        if (!cookie.accessToken) {
+            toastError("로그인 후 이용해 주세요.");
+            return;
+        }
         setUnfollowLoading(true);
         try {
             const res = await deleteData(endpoints.unfollowCreator(creatorId), cookie.accessToken);
