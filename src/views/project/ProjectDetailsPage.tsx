@@ -3,7 +3,7 @@ import { Heart, Share2, Calendar, Users, UserMinus, Loader2 } from 'lucide-react
 import type { ProjectDetail } from '@/types/projects';
 import { deleteData, endpoints, getData, postData } from '@/api/apis';
 import { useParams } from 'react-router-dom';
-import { formatDate, formatNumber, formatPrice, getDaysLeft, toastSuccess, toPublicUrl } from '@/utils/utils';
+import { formatDate, formatNumber, formatPrice, getDaysLeft, toastError, toastSuccess, toPublicUrl } from '@/utils/utils';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
@@ -19,6 +19,8 @@ import ProjectCommunityTab from './components/ProjectCommunityTab';
 import ProjectReviewsTab from './components/ProjectReviewsTab';
 import { ProjectDetailViewer } from '../creator/components/ProjectDetailViewer';
 import { useCookies } from 'react-cookie';
+import { useLoginUserStore } from '@/store/LoginUserStore.store';
+import { log } from 'console';
 
 export function ProjectDetailsPage() {
 
@@ -55,6 +57,8 @@ export function ProjectDetailsPage() {
 
     const [loadingFollow, setLoadingFollow] = useState(false);
     const [mutatingFollow, setMutatingFollow] = useState(false);
+
+    const { loginUser } = useLoginUserStore();
 
     /* ------------------------------- Derived ---------------------------------- */
 
@@ -141,6 +145,10 @@ export function ProjectDetailsPage() {
 
     const followCreator = useCallback(async (creatorId: number) => {
         if (!creatorId) return;
+        if (creatorId === loginUser?.creatorId) {
+            toastError('본인 크리에이터는 팔로우할 수 없습니다.');
+            return;
+        }
         setMutatingFollow(true);
         try {
             const res = await postData(endpoints.followCreator(creatorId), {}, cookie.accessToken);
@@ -156,6 +164,10 @@ export function ProjectDetailsPage() {
 
     const unfollowCreator = useCallback(async (creatorId: number) => {
         if (!creatorId) return;
+        if (creatorId !== loginUser?.creatorId) {
+            toastError('본인 크리에이터는 언팔로우할 수 없습니다.');
+            return;
+        }
         setMutatingFollow(true);
         try {
             const res = await deleteData(endpoints.unfollowCreator(creatorId), cookie.accessToken);
@@ -322,7 +334,7 @@ export function ProjectDetailsPage() {
     if (!projectId || !project || loadingProject) {
         return <FundingLoader />;
     }
-    
+
     console.log(getDaysLeft(project.endDate))
 
     return (
@@ -377,22 +389,34 @@ export function ProjectDetailsPage() {
                                     팔로워 {formatNumber(followerCnt)}명 · 프로젝트 {project.projectCnt}개
                                 </p>
                             </div>
-                            {isFollowed ? (
-                                <Button variant="outline" size="sm" disabled={loadingFollow || mutatingFollow}
-                                    onClick={() => unfollowCreator(project.creatorId)}
-                                    className="border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
-                                >
-                                    {(loadingFollow || mutatingFollow) ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserMinus className="h-4 w-4" />}
-                                    <span className="ml-1">언팔로우</span>
-                                </Button>
-                            ) : (
-                                <Button variant="outline" size="sm" disabled={loadingFollow || mutatingFollow}
-                                    onClick={() => followCreator(project.creatorId)}
-                                    className="border-blue-500 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950"
-                                >
-                                    {(loadingFollow || mutatingFollow) ? <Loader2 className="h-4 w-4 animate-spin" /> : <Users className="h-4 w-4" />}
-                                    <span className="ml-1">팔로우</span>
-                                </Button>
+                            {loginUser?.creatorId === project.creatorId ? null : (
+                                isFollowed ? (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={loadingFollow || mutatingFollow}
+                                        onClick={() => unfollowCreator(project.creatorId)}
+                                        className="border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
+                                    >
+                                        {(loadingFollow || mutatingFollow)
+                                            ? <Loader2 className="h-4 w-4 animate-spin" />
+                                            : <UserMinus className="h-4 w-4" />}
+                                        <span className="ml-1">언팔로우</span>
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={loadingFollow || mutatingFollow}
+                                        onClick={() => followCreator(project.creatorId)}
+                                        className="border-blue-500 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950"
+                                    >
+                                        {(loadingFollow || mutatingFollow)
+                                            ? <Loader2 className="h-4 w-4 animate-spin" />
+                                            : <Users className="h-4 w-4" />}
+                                        <span className="ml-1">팔로우</span>
+                                    </Button>
+                                )
                             )}
                             <QnaCreateModal />
                         </div>
@@ -658,6 +682,6 @@ export function ProjectDetailsPage() {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
