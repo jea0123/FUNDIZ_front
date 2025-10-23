@@ -10,6 +10,7 @@ import { useCookies } from 'react-cookie';
 import { useLoginUserStore } from '@/store/LoginUserStore.store';
 //setDevCreatorIdHeader(2);
 
+
 const rankColors: Record<number, string> = {
   1: '#facc15', // 🥇 노랑
   2: '#9ca3af', // 🥈 회색
