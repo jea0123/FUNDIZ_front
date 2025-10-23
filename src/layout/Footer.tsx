@@ -29,11 +29,11 @@ const nav = {
         { label: "창작자 페이지", href: "/creator" },
         { label: "관리자 페이지", href: "/admin" },
     ],
-    policy: [
-        { label: "이용약관", href: "/terms" },
-        { label: "개인정보처리방침", href: "/privacy" },
-        { label: "청소년보호정책", href: "/youth" },
-        { label: "저작권 안내", href: "/copyright" },
+    guide: [
+        { label: "프로젝트 시작하기", href: "/creator/start" },
+        { label: "가이드라인", href: "/creator/guide" },
+        { label: "수수료 안내", href: "/creator/fees" },
+        { label: "성공 사례", href: "/creator/success" },
     ],
 };
 
@@ -89,7 +89,7 @@ export default function SiteFooter() {
                     <FooterColumn title="고객지원" items={nav.support} />
                     <FooterColumn title="탐색하기" items={nav.explore} />
                     <FooterColumn title="관리(임시)" items={nav.management} />
-                    {/* <FooterColumn title="정책 및 보안" items={nav.policy} /> */}
+                    {/* <FooterColumn title="창작 가이드" items={nav.guide} /> */}
                 </div>
 
                 <Separator className="my-8 bg-neutral-200" />
