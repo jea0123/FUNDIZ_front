@@ -5,10 +5,8 @@ import { use, useEffect, useState } from 'react';
 import type { CreatorDashboard } from '@/types/creator';
 import type { DailyCount, MonthCount } from '@/types/backing';
 import { endpoints, getData } from '@/api/apis';
-import { setDevCreatorIdHeader } from '@/api/apis';
 import { useCookies } from 'react-cookie';
 import { useLoginUserStore } from '@/store/LoginUserStore.store';
-setDevCreatorIdHeader(2);
 
 const rankColors: Record<number, string> = {
   1: '#facc15', // 🥇 노랑
