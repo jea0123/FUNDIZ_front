@@ -90,7 +90,7 @@ export default function BackingDetailPage() {
     if (!confirmCancel) return;
 
     try {
-      const res = await postData(endpoints.cancelBacking(Number(backingId)), cookie.accessToken);
+      const res = await postData(endpoints.cancelBacking(Number(backingId)),null, cookie.accessToken);
       if (res.status === 200) {
         alert('후원이 성공적으로 취소되었습니다.');
         navigate('/user');
@@ -104,7 +104,7 @@ export default function BackingDetailPage() {
   };
 
   return (
-    <div className="p-6 space-y-10 max-w-5xl mx-auto">
+    <div className="space-y-10 max-w-5xl mx-auto">
       {/* 프로젝트 정보 */}
       <Card className="bg-white/95 rounded-xl shadow-md hover:shadow-lg transition">
         <CardHeader className="flex items-center gap-6">
@@ -241,15 +241,31 @@ export default function BackingDetailPage() {
 
       {/* 하단 버튼 */}
       <div className="flex justify-end gap-4">
-        <Button variant="outline" onClick={() => navigate(-1)}>
-          뒤로가기
-        </Button>
-        {backing.backingStatus === 'COMPLETED' && (
-          <Button variant="destructive" className="hover:bg-red-600 hover:text-white transition" onClick={cancelBacking}>
-            후원 취소
-          </Button>
-        )}
-      </div>
+  <Button variant="outline" onClick={() => navigate(-1)}>
+    뒤로가기
+  </Button>
+
+  {/* PENDING일 때 → 후원 취소 / COMPLETED일 때 → 환불하기 */}
+  {backing.backingStatus === 'PENDING' && (
+    <Button
+      variant="destructive"
+      className="hover:bg-red-600 hover:text-white transition"
+      onClick={cancelBacking}
+    >
+      후원 취소
+    </Button>
+  )}
+
+  {backing.backingStatus === 'COMPLETED' && (
+    <Button
+      variant="destructive"
+      className="hover:bg-orange-600 hover:text-white transition"
+      onClick={cancelBacking}
+    >
+      환불하기
+    </Button>
+  )}
+</div>
     </div>
   );
 }
