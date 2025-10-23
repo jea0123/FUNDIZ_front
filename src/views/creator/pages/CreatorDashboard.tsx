@@ -5,6 +5,8 @@ import { use, useEffect, useState } from 'react';
 import type { CreatorDashboard } from '@/types/creator';
 import type { DailyCount, MonthCount } from '@/types/backing';
 import { endpoints, getData } from '@/api/apis';
+import { TrendingUp, Wallet, Users, Clock } from 'lucide-react';
+
 //import { setDevCreatorIdHeader } from '@/api/apis';
 import { useCookies } from 'react-cookie';
 import { useLoginUserStore } from '@/store/LoginUserStore.store';
@@ -144,6 +146,14 @@ export default function CreatorDashboard() {
     { name: '실패', value: failRate },
   ];
 
+    const stats = [
+    { label: '총 프로젝트', value: data.projectTotal, icon: <TrendingUp className="w-5 h-5 text-blue-500" /> },
+    { label: '총 수익', value: `₩${data.totalAmount?.toLocaleString()}`, icon: <Wallet className="w-5 h-5 text-green-500" /> },
+    { label: '총 후원 수', value: data.totalBackingCnt?.toLocaleString(), icon: <Users className="w-5 h-5 text-purple-500" /> },
+    { label: '승인 대기', value: data.totalVerifyingCnt, icon: <Clock className="w-5 h-5 text-amber-500" /> },
+  ];
+
+
   return (
     <div className="max-w-[1750px] mx-auto">
       <Card className="p-4 border border-gray-200 rounded-2xl bg-white">
@@ -153,16 +163,15 @@ export default function CreatorDashboard() {
 
         <CardContent>
           {/* 상단 요약 */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            {[
-              ['총 프로젝트', data.projectTotal],
-              ['총 수익', `₩${data.totalAmount?.toLocaleString()}`],
-              ['총 후원 수', data.totalBackingCnt?.toLocaleString()],
-              ['승인 대기', data.totalVerifyingCnt],
-            ].map(([label, value], i) => (
-              <div key={i} className="bg-gray-50 rounded-xl p-3 text-center shadow-sm">
-                <h3 className="text-gray-600 mb-1">{label}</h3>
-                <p className="text-xl font-bold text-gray-900">{value ?? '-'}</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
+            {stats.map((item, i) => (
+              <div
+                key={i}
+                className="bg-white hover:shadow-md rounded-2xl p-4 text-center transition-transform duration-200 hover:scale-[1.02] border border-gray-100"
+              >
+                <div className="flex justify-center mb-2">{item.icon}</div>
+                <h3 className="text-gray-600 mb-1 text-sm">{item.label}</h3>
+                <p className="text-xl font-bold text-gray-900">{item.value ?? '-'}</p>
               </div>
             ))}
           </div>
