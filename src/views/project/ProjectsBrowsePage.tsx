@@ -1,19 +1,19 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import type { Category } from "@/types/admin";
 import type { Featured, SearchProjectParams, Subcategory } from "@/types/projects";
 import { endpoints, getData } from "@/api/apis";
-import type { SortKey } from "./components/ProjectsSortBar";
 import { ProjectCard } from "../MainPage";
 import ProjectsCrumbs from "./components/ProjectsCrumbs";
 import ProjectsCategoryChips from "./components/ProjectsCategoryChips";
 import ProjectsSortBar from "./components/ProjectsSortBar";
 import ProjectsSubcategoryTabs from "./components/ProjectsSubcategoryTabs";
 import FundingLoader from "@/components/FundingLoader";
+import { Pagination } from "@/utils/pagination";
+import { useBrowseQueryState } from "@/utils/usePagingQueryState";
 
 /* ------------------------------ Common hook ------------------------------ */
-
 function useCatalogData() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
@@ -46,33 +46,6 @@ function useCatalogData() {
     }, []);
 
     return { categories, subcategories };
-}
-
-function useQueryState() {
-    const [searchParams, setSearchParams] = useSearchParams();
-
-    //URL -> 상태 동기화
-    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-    const size = Math.max(1, parseInt(searchParams.get("size") || "20", 10));
-    const keyword = searchParams.get("keyword") || "";
-    const sort = (searchParams.get("sort") as SortKey) || "recent";
-
-    //상태 -> URL 동기화
-    const setParam = (patch: Record<string, string | undefined>) => {
-        const next = new URLSearchParams(searchParams);
-        Object.entries(patch).forEach(([k, v]) => {
-            if (v && v.length) next.set(k, v);
-            else next.delete(k);
-        });
-        setSearchParams(next, { replace: true });
-    };
-
-    const setPage = (p: number) => setParam({ page: String(p) });
-    const setSize = (s: number) => setParam({ size: String(s) });
-    const setKeyword = (k: string) => { setParam({ keyword: k || undefined, page: "1" }); };
-    const setSort = (s: SortKey) => { setParam({ sort: s, page: "1" }); };
-
-    return { page, size, keyword, sort, setPage, setSize, setKeyword, setSort };
 }
 
 function useProject(params: SearchProjectParams) {
@@ -115,19 +88,6 @@ function useProject(params: SearchProjectParams) {
 }
 
 /* ------------------------------ UI component ------------------------------ */
-
-export function Pagination({ page, size, total, onPage }: { page: number; size: number; total: number; onPage: (p: number) => void }) {
-    const lastPage = Math.max(1, Math.ceil(total / size));
-
-    return (
-        <div className="flex items-center justify-center gap-2 mt-6">
-            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onPage(page - 1)}>이전</Button>
-            <span className="text-sm text-gray-600">{page} / {lastPage}</span>
-            <Button variant="outline" size="sm" disabled={page >= lastPage} onClick={() => onPage(page + 1)}>다음</Button>
-        </div>
-    );
-}
-
 function ProjectGrid({ items }: { items: Featured[] }) {
     if (!items.length) {
         return (
@@ -147,7 +107,7 @@ function ProjectGrid({ items }: { items: Featured[] }) {
 
 export default function ProjectsBrowsePage() {
     const { categories, subcategories } = useCatalogData();
-    const { sort, page, size, keyword, setSort, setPage } = useQueryState();
+    const { sort, page, size, keyword, setSort, bindUserPagination } = useBrowseQueryState();
     const { items, total, loading, error } = useProject({ page, size, keyword, sort });
 
     return (
@@ -160,13 +120,13 @@ export default function ProjectsBrowsePage() {
             {error && <p className="text-red-600">목록을 불러오지 못했습니다.</p>}
             {!loading && !error && <ProjectGrid items={items} />}
 
-            <Pagination page={page} size={size} total={total} onPage={setPage} />
+            <Pagination {...bindUserPagination(total)} />
         </div>
     );
 }
 
 export function ProjectsSearchPage() {
-    const { sort, page, size, keyword, setSort, setPage, setKeyword } = useQueryState();
+    const { sort, page, size, keyword, setSort, setKeyword, bindUserPagination } = useBrowseQueryState();
     const { items, total, loading, error } = useProject({ page, size, keyword, sort });
 
     const navigate = useNavigate();
@@ -188,7 +148,7 @@ export function ProjectsSearchPage() {
             {error && <p className="text-red-600">목록을 불러오지 못했습니다.</p>}
             {!loading && !error && <ProjectGrid items={items} />}
 
-            <Pagination page={page} size={size} total={total} onPage={setPage} />
+            <Pagination {...bindUserPagination(total)} />
         </div>
     );
 }
@@ -198,7 +158,7 @@ export function ProjectsByCategoryPage() {
     const ctgrId = catParam ? Number(catParam) : undefined;
 
     const { categories, subcategories } = useCatalogData();
-    const { sort, page, size, keyword, setSort, setPage } = useQueryState();
+    const { sort, page, size, keyword, setSort, bindUserPagination } = useBrowseQueryState();
     const { items, total, loading, error } = useProject({ page, size, keyword, sort, ctgrId });
 
     if (!ctgrId) return null;
@@ -214,7 +174,7 @@ export function ProjectsByCategoryPage() {
             {error && <p className="text-red-600">목록을 불러오지 못했습니다.</p>}
             {!loading && !error && <ProjectGrid items={items} />}
 
-            <Pagination page={page} size={size} total={total} onPage={setPage} />
+            <Pagination {...bindUserPagination(total)} />
         </div>
     );
 }
@@ -225,7 +185,7 @@ export function ProjectsBySubcategoryPage() {
     const subctgrId = subParam ? Number(subParam) : undefined;
 
     const { categories, subcategories } = useCatalogData();
-    const { sort, page, size, keyword, setSort, setPage } = useQueryState();
+    const { sort, page, size, keyword, setSort, bindUserPagination } = useBrowseQueryState();
     const { items, total, loading, error } = useProject({ page, size, keyword, sort, ctgrId, subctgrId });
 
     if (!ctgrId || !subctgrId) return null;
@@ -241,7 +201,7 @@ export function ProjectsBySubcategoryPage() {
             {error && <p className="text-red-600">목록을 불러오지 못했습니다.</p>}
             {!loading && !error && <ProjectGrid items={items} />}
 
-            <Pagination page={page} size={size} total={total} onPage={setPage} />
+            <Pagination {...bindUserPagination(total)} />
         </div>
     );
 }
