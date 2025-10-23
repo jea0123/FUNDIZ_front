@@ -9,8 +9,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
-import { Progress } from '@/components/ui/progress';
 import type { Reward } from '@/types/reward';
 import FundingLoader from '@/components/FundingLoader';
 import { QnaCreateModal } from './components/QnaCreateModal';
@@ -240,33 +238,38 @@ export function ProjectDetails() {
     return (
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
             {/* ===== 헤더: 좌 썸네일 / 우 정보 ===== */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div ref={thumbWrapRef} className="lg:col-span-2">
+            <div className="flex flex-col lg:flex-row gap-y-8 lg:gap-y-8 lg:gap-x-16">
+                <div ref={thumbWrapRef} className="lg:basis-[62%] lg:min-w-0">
                     <ProjectThumb
                         src={thumbnailUrl}
                         alt={project.title}
-                        className="aspect-square w-full max-w-lg object-cover rounded-lg mx-auto"
+                        className="aspect-square w-full max-w-xl object-cover rounded-lg mx-auto"
                     />
                 </div>
 
-                <div className="lg:col-span-1">
+                <div className="lg:basis-[38%] lg:min-w-0">
                     {/* 카테고리 > 세부카테고리 + 태그 */}
-                    <div className="text-sm text-gray-500 mb-2">
-                        <span className="hover:underline cursor-default">{project.ctgrName}</span>
-                        <span className="mx-1">›</span>
-                        <span className="hover:underline cursor-default">{project.subctgrName}</span>
+                    <div className="text-[15px] text-gray-500 flex flex-wrap items-center gap-1 pb-3 border-b border-gray-200 mt-2">
+                        <span className="leading-none">{project.ctgrName}</span>
+                        <span className="px-1 text-gray-300 leading-none">›</span>
+                        <span className="leading-none">{project.subctgrName}</span>
+
                         {project.tagList?.length ? (
-                            <span className="ml-2 inline-flex flex-wrap gap-1 align-middle">
+                            <span className="ml-2 flex flex-wrap items-center gap-1">
                                 {project.tagList.map((t) => (
-                                    <span key={t.tagId} className="inline-flex items-center gap-0.5 text-gray-600">
-                                        <Hash className="h-3 w-3" /> {t.tagName}
+                                    <span
+                                        key={t.tagId}
+                                        className="inline-flex items-center gap-1 text-gray-600 leading-none"
+                                    >
+                                        <Hash className="h-3 w-3 shrink-0 relative top-[1px]" />
+                                        <span className="leading-none">{t.tagName}</span>
                                     </span>
                                 ))}
                             </span>
                         ) : null}
                     </div>
 
-                    <h1 className="text-2xl font-semibold leading-tight">{project.title}</h1>
+                    <h1 className="text-2xl font-semibold leading-tight mt-6">{project.title}</h1>
 
                     {/* 금액/달성률 */}
                     <div className="mt-5 flex items-baseline gap-3 whitespace-nowrap">
@@ -279,26 +282,26 @@ export function ProjectDetails() {
 
                     {/* 메트릭 */}
                     <div className="mt-1">
-                        <div className="text-sm text-gray-500">목표 금액 {formatNumber(project.goalAmount)}원</div>
+                        <div className="text-sm text-gray-500 mb-6">목표 금액 {formatNumber(project.goalAmount)}원</div>
 
                         <div className="grid grid-cols-2 gap-4 py-4 border-y mt-3">
                             <div className="text-center">
                                 <div className="flex items-center justify-center mb-1">
-                                    <Users className="h-4 w-4 mr-1" />
+                                    <Users className="h-4 w-4 mr-2" />
                                     <span className="font-semibold">{project.backerCnt}</span>
                                 </div>
-                                <div className="text-xs text-gray-500">후원자</div>
+                                <div className="text-sm text-gray-500">후원자</div>
                             </div>
                             <div className="text-center">
                                 <div className="flex items-center justify-center mb-1">
-                                    <Calendar className="h-4 w-4 mr-1" />
+                                    <Calendar className="h-4 w-4 mr-2" />
                                     <span className="font-semibold">{getDaysLeft(project.endDate)}</span>
                                 </div>
-                                <div className="text-xs text-gray-500">일 남음</div>
+                                <div className="text-sm text-gray-500">일 남음</div>
                             </div>
                         </div>
 
-                        <div className="space-y-2 text-sm mt-3">
+                        <div className="space-y-2 text-sm mt-5">
                             <div className="flex justify-between">
                                 <span className="text-gray-500">펀딩 기간</span>
                                 <span>
@@ -313,44 +316,115 @@ export function ProjectDetails() {
                     </div>
 
                     {/* 좋아요/공유 + 후원하기 */}
-                    <div className="mt-4 flex items-center gap-2">
+                    <div className="mt-6 flex items-center gap-2 min-w-0">
                         <Button
                             variant="secondary"
-                            size="lg"
                             disabled={loadingLike || mutatingLike}
                             onClick={() =>
                                 isLiked ? dislikeProject(Number(projectId)) : likeProject(Number(projectId))
                             }
-                            className={isLiked ? 'text-red-500' : ''}
+                            className={`h-12 px-4 text-base shrink-0 ${isLiked ? 'text-red-500' : ''}`}
                         >
                             {loadingLike || mutatingLike ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <Loader2 className="h-5 w-5 animate-spin" />
                             ) : (
-                                <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
+                                <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
                             )}
-                            <span className="ml-1">{likeCnt}</span>
-                        </Button>
-                        <Button variant="secondary" size="lg" onClick={handleShare}>
-                            <Share2 className="h-4 w-4" />
+                            <span className="ml-2">{likeCnt}</span>
                         </Button>
                         <Button
-                            className="flex-1 min-w-0"
-                            size="lg"
+                            variant="secondary"
+                            size="icon"
+                            aria-label="공유"
+                            onClick={handleShare}
+                            className="h-12 w-12 shrink-0"
+                        >
+                            <Share2 className="h-5 w-5" />
+                        </Button>
+                        <Button
                             onClick={backThisProject}
                             disabled={cartSummary.totalQty === 0}
+                            className="
+                                flex-1 min-w-0 h-12 text-base rounded-lg
+                                bg-blue-600 text-white hover:bg-blue-700
+                                focus-visible:ring-2 focus-visible:ring-blue-600/30
+                                disabled:opacity-100 disabled:bg-blue-600 disabled:text-white disabled:hover:bg-blue-600
+                                disabled:cursor-not-allowed
+                            "
+                            title={cartSummary.totalQty === 0 ? '리워드를 선택하세요' : undefined}
                         >
                             후원하기
                         </Button>
+
                     </div>
+
+                    {/* 창작자 정보 카드 */}
+                    <Card className="mt-6">
+                        <CardContent>
+                            <div className="flex items-center gap-3">
+                                <Avatar>
+                                    <AvatarImage src={profileImgUrl} />
+                                    <AvatarFallback>{project.creatorName}</AvatarFallback>
+                                </Avatar>
+
+                                <div className="flex-1 min-w-0">
+                                    <div
+                                        className="w-fit cursor-pointer"
+                                        onClick={() => navigate(`/creator/${project.creatorId}`)}
+                                    >
+                                        <h4 className="font-semibold hover:underline truncate">{project.creatorName}</h4>
+                                        <p className="text-sm text-gray-600">
+                                            팔로워 {formatNumber(followerCnt)}명 · 프로젝트 {project.projectCnt}개
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {loginUser?.creatorId === project.creatorId ? null : isFollowed ? (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={loadingFollow || mutatingFollow}
+                                        onClick={() => unfollowCreator(project.creatorId)}
+                                        className="border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
+                                    >
+                                        {loadingFollow || mutatingFollow ? (
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                            <UserMinus className="h-4 w-4" />
+                                        )}
+                                        <span className="ml-1">언팔로우</span>
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={loadingFollow || mutatingFollow}
+                                        onClick={() => followCreator(project.creatorId)}
+                                        className="border-blue-500 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950"
+                                    >
+                                        <Users className="h-4 w-4" />
+                                        <span className="ml-1">팔로우</span>
+                                    </Button>
+                                )}
+                            </div>
+
+                            {/* 문의하기 버튼 */}
+                            {loginUser?.creatorId !== project.creatorId && (
+                                <div className="mt-3">
+                                    <QnaCreateModal />
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
 
             {/* ===== 전역 탭 + 본문/사이드 ===== */}
-            <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2">
+            <div className="mt-12 flex flex-col lg:flex-row gap-y-8 lg:gap-y-8 lg:gap-x-16">
+                <div className="lg:basis-[62%] lg:min-w-0">
                     <Tabs defaultValue="description" onValueChange={(v) => setTab(v as any)}>
                         <div>
-                            <TabsList className="w-full grid grid-cols-4 sm:w-auto sm:inline-grid sm:auto-cols-max sm:grid-flow-col gap-2 overflow-x-auto">
+                            <TabsList style={{ width: '100%' }} className="w-full grid grid-cols-4 sm:w-auto sm:inline-grid sm:auto-cols-max sm:grid-flow-col gap-2 overflow-x-auto">
                                 <TabsTrigger value="description">프로젝트 소개</TabsTrigger>
                                 <TabsTrigger value="news">
                                     새소식
@@ -376,7 +450,7 @@ export function ProjectDetails() {
                         {/* 탭 컨텐츠 */}
                         <div className="mt-6">
                             <TabsContent value="description" className="mt-0">
-                                <h2 className="text-xl sm:text-2xl font-semibold mb-4 flex items-center">
+                                <h2 className="text-xl sm:text-2xl font-semibold flex items-center mb-9">
                                     <span className="text-gray-600">|</span>
                                     <span className="ml-3">프로젝트 소개</span>
                                 </h2>
@@ -419,59 +493,9 @@ export function ProjectDetails() {
 
                 {/* 우측 사이드바 */}
                 <aside
-                    className="lg:col-span-1 lg:sticky lg:top-6 self-start space-y-6 flex flex-col"
+                    className="lg:basis-[38%] lg:min-w-0 lg:sticky lg:top-6 self-start space-y-6 flex flex-col"
                     style={thumbHeight ? { height: `${thumbHeight}px` } : undefined}
                 >
-                    <Card>
-                        <CardContent className="px-5">
-                            <div className="flex items-center gap-3 mb-5">
-                                <Avatar>
-                                    <AvatarImage src={profileImgUrl} />
-                                    <AvatarFallback>{project.creatorName}</AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1 min-w-0">
-                                    <div
-                                        className="w-fit cursor-pointer"
-                                        onClick={() => navigate(`/creator/${project.creatorId}`)}
-                                    >
-                                        <h4 className="font-semibold hover:underline truncate">{project.creatorName}</h4>
-                                        <p className="text-sm text-gray-600">
-                                            팔로워 {formatNumber(followerCnt)}명 · 프로젝트 {project.projectCnt}개
-                                        </p>
-                                    </div>
-                                </div>
-                                {loginUser?.creatorId === project.creatorId ? null : isFollowed ? (
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={loadingFollow || mutatingFollow}
-                                        onClick={() => unfollowCreator(project.creatorId)}
-                                        className="border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
-                                    >
-                                        {loadingFollow || mutatingFollow ? (
-                                            <Loader2 className="h-4 w-4 animate-spin" />
-                                        ) : (
-                                            <UserMinus className="h-4 w-4" />
-                                        )}
-                                        <span className="ml-1">언팔로우</span>
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={loadingFollow || mutatingFollow}
-                                        onClick={() => followCreator(project.creatorId)}
-                                        className="border-blue-500 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950"
-                                    >
-                                        <Users className="h-4 w-4" />
-                                        <span className="ml-1">팔로우</span>
-                                    </Button>
-                                )}
-                            </div>
-                            {loginUser?.creatorId !== project.creatorId && <QnaCreateModal />}
-                        </CardContent>
-                    </Card>
-
                     {/* 카트 */}
                     <Card
                         ref={cartRef}
@@ -531,7 +555,13 @@ export function ProjectDetails() {
                                     </div>
 
                                     <Button
-                                        className="w-full"
+                                        className="
+                                            w-full flex-1 min-w-0 h-12 text-base rounded-lg
+                                            bg-blue-600 text-white hover:bg-blue-700
+                                            focus-visible:ring-2 focus-visible:ring-blue-600/30
+                                            disabled:opacity-100 disabled:bg-blue-600 disabled:text-white disabled:hover:bg-blue-600
+                                            disabled:cursor-not-allowed
+                                        "
                                         size="lg"
                                         onClick={backThisProject}
                                         disabled={cartSummary.totalQty === 0}
@@ -540,6 +570,7 @@ export function ProjectDetails() {
                                             ? `${formatNumber(cartSummary.totalAmount)}원 후원하기`
                                             : '후원하기'}
                                     </Button>
+
                                 </>
                             )}
                         </CardContent>
@@ -613,18 +644,23 @@ export function ProjectDetails() {
 
                     {/* 하단 후원 버튼 */}
                     <Button
-                        className="w-full mb-6"
+                        className="
+                            w-full min-w-0 h-12 text-base rounded-lg
+                            bg-blue-600 text-white hover:bg-blue-700
+                            focus-visible:ring-2 focus-visible:ring-blue-600/30
+                            disabled:opacity-100 disabled:bg-blue-600 disabled:text-white disabled:hover:bg-blue-600
+                            disabled:cursor-not-allowed
+                        "
                         size="lg"
                         onClick={backThisProject}
                         disabled={cartSummary.totalQty === 0}
                     >
                         {cartSummary.totalQty > 0
                             ? `${formatNumber(cartSummary.totalAmount)}원 후원하기`
-                            : '리워드를 선택하세요'}
+                            : '후원하기'}
                     </Button>
                 </aside>
             </div>
         </div>
     );
-
 }
