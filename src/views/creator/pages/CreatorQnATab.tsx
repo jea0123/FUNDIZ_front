@@ -1,9 +1,7 @@
-import React, { useCallback, useMemo, useState, useEffect, useRef } from "react";
+import { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { endpoints, getData, postData } from "@/api/apis";
 import { formatDate } from '@/utils/utils';
@@ -11,7 +9,6 @@ import type { Qna, SearchQnaParams } from "@/types/qna";
 import type { QnaReplyDto } from "@/types/reply";
 import type { Cursor, CursorPage } from '@/types/community';
 import { useSearchParams } from "react-router-dom";
-import { useCreatorId } from "../../../types/useCreatorId";
 import { MessageCircle, SquareArrowOutUpRight, X } from "lucide-react";
 import { useCookies } from "react-cookie";
 
@@ -53,35 +50,29 @@ function useQueryState() {
 
 function useQna(params: SearchQnaParams) {
 
-    const { creatorId, loading: idLoading } = useCreatorId(179);
-    console.log(creatorId);
+    const [cookie] = useCookies();
     const { page, size, perGroup } = params;
     const [items, setItems] = useState<Qna[]>([]);
     const [total, setTotal] = useState(0);
 
     const url = useMemo(() => {
-        if (idLoading) return null;
-        if (creatorId != null) {
+        if (cookie.accessToken != null) {
             return endpoints.getQnAListOfCreator(params);
         }
-        console.log(creatorId);
         return null;
-    }, [creatorId, page, size, perGroup]);
+    }, [cookie.accessToken, page, size, perGroup]);
 
     useEffect(() => {
         (async () => {
-            const res = await getData(url);
+            if (!cookie.accessToken) return;
+            const res = await getData(url, cookie.accessToken);
             if (res.status === 200) {
                 setItems(res.data.items);
                 setTotal(res.data.totalElements);
             }
         })();
     }, [url]);
-
-    console.log(items);
-
     return { items, total };
-
 }
 
 
@@ -99,8 +90,6 @@ export function Pagination({ page, size, perGroup, total, onPage }: { page: numb
 
 
 export function CreatorQnATab() {
-
-    const creatorId = useCreatorId(179);
 
     const { page, size, perGroup, setPage } = useQueryState();
     const { items, total } = useQna({ page, size, perGroup });
@@ -132,7 +121,7 @@ export function CreatorQnATab() {
             params.set("size", "10");
 
             const url = `${endpoints.getQnaReplyList(qnaId)}?${params.toString()}`;
-            const { status, data } = await getData(url);
+            const { status, data } = await getData(url, cookie.accessToken);
 
             if (status !== 200 || !data) {
                 if (!cursor) setReply(prev => ({ ...prev, [qnaId]: [] }));
@@ -215,6 +204,11 @@ export function CreatorQnATab() {
                                 <div className="col-span-2">작성자</div>
                                 <div className="col-span-2">등록일</div>
                             </div>
+                            {items.length === 0 && (
+                                <div className="py-6 text-center text-sm text-gray-500">
+                                    등록된 Q&A가 없습니다.
+                                </div>
+                            )}
                             {items.map(q => (
                                 <AccordionItem key={q.qnaId} value={String(q.qnaId)}>
                                     <AccordionTrigger>

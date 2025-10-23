@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLoginUserStore } from '@/store/LoginUserStore.store';
-import defaultProfile from '@/lib/default-profile.png'
+import defaultProfile from '@/assets/images/default-profile.webp'
 
 export default function UserProfileCard() {
     const { loginUser } = useLoginUserStore();

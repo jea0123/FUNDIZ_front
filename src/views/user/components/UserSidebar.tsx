@@ -23,13 +23,7 @@ export function UserSidebar() {
             <NavLink to="/user/wishlist" className={({ isActive }) => linkCls(isActive || approvalsIsActive)}>
                 <Heart className="mr-2 h-4 w-4" />찜한 프로젝트
             </NavLink>
-            <SavedAddressModal
-                mode="mypage"
-                triggerText="배송지 관리"
-                onSelectAddress={(address) => {
-                    console.log('선택된 주소 : ', address);
-                }}
-            />
+            <SavedAddressModal mode="mypage" triggerText="배송지 관리" />
             <NavLink to="/user/payment" className={({ isActive }) => linkCls(isActive)}>
                 <CreditCard className="mr-2 h-4 w-4" />결제 수단 관리
             </NavLink>

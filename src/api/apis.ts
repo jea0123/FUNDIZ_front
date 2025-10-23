@@ -208,6 +208,7 @@ export const endpoints = {
 
   // ==================== QnaReply API ====================
   addQnaReply: (qnaId: number) => `qna/reply/${qnaId}`,
+  getQnaReplyList: (qnaId: number) => `qna/reply/${qnaId}`,
 
   // ==================== Shipping API ====================
   getAddressList: 'shipping/list',

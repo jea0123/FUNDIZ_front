@@ -5,7 +5,7 @@ import type { CreatorSummary } from "@/types/creator";
 import { formatNumber, toastSuccess } from "@/utils/utils";
 import { Share2, Plus, UserMinus, Loader2 } from "lucide-react";
 import { useMemo } from "react";
-import defaultProfile from '@/lib/default-profile.png'
+import defaultProfile from '@/assets/images/default-profile.webp'
 
 type CreatorCore = {
     creatorName: string;

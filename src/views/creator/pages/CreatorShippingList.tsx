@@ -5,19 +5,16 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { useNavigate } from 'react-router-dom';
-import { useCreatorId } from '../../../types/useCreatorId';
 import { getData, endpoints } from '@/api/apis';
 import FundingLoader from '@/components/FundingLoader';
 import type { CreaotrShippingProjectList } from '@/types/shipping';
-import { setDevCreatorIdHeader } from '@/api/apis';
-
-setDevCreatorIdHeader(2);
+import { useCookies } from 'react-cookie';
 
 export default function CreatorShippingList() {
   const navigate = useNavigate();
-  const { creatorId, loading: idLoading } = useCreatorId(2);
+  const [cookie] = useCookies();
   const [projects, setProjects] = useState<CreaotrShippingProjectList[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const fetched = useRef(false);
 
   const [searchInput, setSearchInput] = useState('');
@@ -27,16 +24,15 @@ export default function CreatorShippingList() {
   const [page, setPage] = useState(1);
   const itemsPerPage = 5; //한 페이지에서 보여줄 개수
 
-  const effectiveCreatorId = creatorId || Number(localStorage.getItem('DEV_CREATOR_ID')) || Number(import.meta.env.VITE_DEV_CREATOR_ID) || 1;
   // 배송 리스트 불러오기
   useEffect(() => {
-    if (idLoading || !effectiveCreatorId || fetched.current) return;
+    if (fetched.current) return;
     fetched.current = true;
 
     (async () => {
       try {
         setLoading(true);
-        const res = await getData(endpoints.creatorShippingList);
+        const res = await getData(endpoints.creatorShippingList, cookie.accessToken);
         if (res.status === 200 && Array.isArray(res.data)) {
           setProjects(res.data);
         } else {
@@ -49,7 +45,7 @@ export default function CreatorShippingList() {
         setLoading(false);
       }
     })();
-  }, [idLoading, effectiveCreatorId]);
+  }, [cookie.accessToken]);
 
   // 상태 계산
   const getStatus = (p: CreaotrShippingProjectList) => {
@@ -71,7 +67,7 @@ export default function CreatorShippingList() {
           case 'completed':
             return b.completedShippingCnt - a.completedShippingCnt; // 배송 완료 많은 순
           case 'status':
-            const order = { READY: 1, SHIPPING: 2, DONE: 3 };
+            const order = { READY: 1, SHIPPING: 2, DELIVERED: 3 };
             return order[getStatus(a)] - order[getStatus(b)];
           default:
             return 0;
@@ -99,7 +95,7 @@ export default function CreatorShippingList() {
   };
 
   // 로딩 중
-  if (loading || idLoading) return <FundingLoader />;
+  if (loading) return <FundingLoader />;
 
   // UI 동일 유지
   return (
