@@ -8,54 +8,11 @@ import ky from 'ky';
 import type { SearchSettlementParams } from '@/types/settlement';
 import type { SearchUserParams } from '@/types/users';
 import type { SearchReviewsParams } from '@/types/community';
-import PaymentRegisterPage from '@/views/user/tabs/PaymentRegisterPage';
-
-//TODO: 모듈 전역 오버라이드 값 (훅에서 주입)
-let _devCreatorIdOverride: string | null = null;
-
-//TODO: 컴포넌트/훅에서 호출해서 오버라이드 설정
-export const setDevCreatorIdHeader = (id: number | null | undefined) => {
-  _devCreatorIdOverride = id != null ? String(id) : null;
-};
 
 export const kyInstance = ky.create({
   prefixUrl: 'http://localhost:9099/api/v1',
   throwHttpErrors: false,
   hooks: {
-    //TODO: beforeRequest 추가 (X-Dev-Creator-Id)
-    beforeRequest: [
-      (req) => {
-        const isDev = import.meta.env?.DEV === true || import.meta.env?.MODE === 'development';
-        if (!isDev) return;
-
-        let url: URL | null = null;
-        try {
-          url = new URL(req.url);
-        } catch {
-          try {
-            url = new URL(String(req.url), 'http://dummy');
-          } catch {
-            url = null;
-          }
-        }
-        const pathname = url?.pathname ?? String(req.url);
-
-        if (pathname.includes('/api/v1/creator/')) {
-          // 우선순위: 훅 주입값 > URL 쿼리 > localStorage > (없으면 미부착)
-          const fromOverride = _devCreatorIdOverride;
-          const fromQuery = url?.searchParams.get('creatorId') || null;
-          const fromLocal = localStorage.getItem('DEV_CREATOR_ID');
-
-          const devId = fromOverride ?? fromQuery ?? fromLocal ?? null;
-
-          if (devId) {
-            req.headers.set('X-Dev-Creator-Id', devId);
-          } else {
-            req.headers.delete?.('X-Dev-Creator-Id');
-          }
-        }
-      },
-    ],
     afterResponse: [
       async (_req, _opts, res) => {
         if (res.status >= 400) {
