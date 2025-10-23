@@ -238,7 +238,9 @@ export function AdminProjectListPage() {
                         {projects.map(p => <ProjectCard key={p.projectId} p={p} onChanged={projectData} />)}
                         <Pagination
                             {...bindPagination(total, {
+                                variant: "admin",
                                 showSizeSelector: true,
+                                showRange: true,
                                 sizeOptions: [5, 10, 20, 30, 50],
                             })}
                         />
