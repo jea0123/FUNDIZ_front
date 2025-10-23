@@ -34,19 +34,18 @@ export default function CreatorProjects({ creatorId }: Props) {
         return () => { mounted = false; };
     }, [creatorId, sort, page]);
 
-    if (!items) return null;
-
+console.log(items);
     return (
         <>
             {loading ? (
                 <div className="flex items-center justify-center py-14 text-muted-foreground">
                     <Loader2 className="animate-spin mr-2" /> 불러오는 중…
                 </div>
-            ) : items.items.length === 0 ? (
+            ) : items?.items.length === 0 ? (
                 <div className="flex items-center justify-center py-14 text-muted-foreground">
                     등록된 프로젝트가 없어요.
                 </div>
-            ) : total > size && (
+            ) :  (
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <div className="text-sm text-muted-foreground">총 {total}개</div>
@@ -58,7 +57,7 @@ export default function CreatorProjects({ creatorId }: Props) {
                     </div>
                     <>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                            {items.items.map(p => (
+                            {items?.items.map(p => (
                                 <div key={p.projectId} className="overflow-hidden group cursor-pointer" onClick={() => navigate(`/project/${p.projectId}`)}>
                                     <div className="relative aspect-[1] w-full overflow-hidden rounded-sm group">
                                         <img src={p.thumbnail} alt={p.title} className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-110" />

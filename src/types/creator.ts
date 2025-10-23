@@ -196,4 +196,5 @@ export interface ProjectCard {
     projectStatus: "OPEN" | "SUCCESS" | "FAILED" | "SETTLED" | "CLOSED";
     createdAt: string;
     isSuccess?: boolean;
+    endDate?: Date;
 };
