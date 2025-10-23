@@ -1,3 +1,4 @@
+import type { SortKey } from "@/views/project/components/ProjectsSortBar";
 import { useSearchParams } from "react-router-dom";
 
 type PagingDefaults = {
@@ -36,21 +37,31 @@ export function usePagingQueryState(defaults: PagingDefaults = {}) {
     const bindPagination = (
         total: number,
         opts?: {
+            variant?: "admin" | "user";
             showSizeSelector?: boolean;
+            showRange?: boolean;
             sizeOptions?: number[];
             className?: string;
-        }) => ({
-            page,
-            size,
-            total,
-            onPage: setPage,
-            perGroup,
-            onSizeChange: setSize,
-            showSizeSelector: opts?.showSizeSelector ?? false,
-            sizeOptions: opts?.sizeOptions,
-            className: opts?.className,
         }
-    );
+    ) => ({
+        page,
+        size,
+        total,
+        onPage: setPage,
+        perGroup,
+        onSizeChange: (n: number) => setSize(n),
+        sizeOptions: opts?.sizeOptions ?? [10, 20, 30, 50],
+        className: opts?.className,
+        variant: opts?.variant ?? "admin",
+        showSizeSelector:
+            typeof opts?.showSizeSelector === "boolean"
+                ? opts.showSizeSelector
+                : (opts?.variant === "user" ? false : true),
+        showRange:
+            typeof opts?.showRange === "boolean"
+                ? opts.showRange
+                : (opts?.variant === "user" ? false : true),
+    });
 
     return {
         page, size, perGroup, setPage, setSize, setPerGroup,
@@ -65,6 +76,7 @@ export function useBrowseQueryState() {
     const { searchParams: sp, setSearchParams: setSP } = base;
 
     const keyword = sp.get("keyword") || "";
+    const sort = sp.get("sort") as SortKey || "recent";
 
     const setParam = (k: string, v?: string, resetPage = false) => {
         const next = new URLSearchParams(sp);
@@ -75,8 +87,16 @@ export function useBrowseQueryState() {
     };
 
     const setKeyword = (k: string) => setParam("keyword", k || undefined, true);
+    const setSort = (s: SortKey) => setParam("sort", s, true);
 
-    return { ...base, keyword, setKeyword };
+    const bindUserPagination = (total: number) =>
+        base.bindPagination(total, {
+            variant: "user",
+            showSizeSelector: false,
+            showRange: false,
+        });
+
+    return { ...base, keyword, setKeyword, sort, setSort, bindUserPagination };
 }
 
 // 창작자/관리자 목록용 : 조회기간/상태 추가
