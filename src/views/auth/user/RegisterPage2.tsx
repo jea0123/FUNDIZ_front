@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { toastSuccess } from "@/utils/utils";
 
 const RegisterSchema = z
     .object({
@@ -82,6 +83,7 @@ export default function RegisterPage2() {
             setEmailChecked(true);
             setCheckedEmailValue(email);
             clearErrors("email");
+            toastSuccess("이메일 사용이 가능합니다!");
         } else if (res?.status === 409) {
             setError("email", { type: "server", message: "이미 사용 중인 이메일입니다." });
         } else {
@@ -100,6 +102,7 @@ export default function RegisterPage2() {
             setNicknameChecked(true);
             setCheckedNicknameValue(nickname);
             clearErrors("nickname");
+            toastSuccess("닉네임 사용이 가능합니다!");
         } else if (res?.status === 409) {
             setError("nickname", { type: "server", message: "이미 사용 중인 닉네임입니다." });
         } else {
@@ -130,6 +133,7 @@ export default function RegisterPage2() {
         }
         const { status } = res;
         if (status === 200 || status === 201) {
+            alert("회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.");
             navigate("/auth/login", { replace: true });
             return;
         }
