@@ -110,7 +110,7 @@ export default function BackingDetailPage() {
         <CardHeader className="flex items-center gap-6">
           <ImageWithFallback src={backing.thumbnail} alt={backing.title} className="w-32 h-32 rounded-xl object-cover shadow-sm border border-gray-200" />
           <div>
-            <CardTitle className="text-xl font-bold text-blue-700 mb-2">{backing.title}</CardTitle>
+            <CardTitle className="text-xl font-bold text-black font-bold mb-2">{backing.title}</CardTitle>
             <p className="text-base text-gray-600 mb-1">
               <span className="font-medium text-gray-700">창작자:</span> {backing.creatorName ?? '-'}
             </p>
