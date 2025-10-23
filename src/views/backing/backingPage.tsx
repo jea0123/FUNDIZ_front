@@ -10,7 +10,6 @@ import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { SavedAddressModal } from './SavedAddressModal';
 import { endpoints, getData, postData } from '@/api/apis';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import type { BackingPrepare, BackingPagePayment } from '@/types/backing';
 import type { PaymentInfo } from '@/types/payment';
 import { useCookies } from 'react-cookie';
@@ -132,7 +131,7 @@ function CardSelectModal({ open, onClose, totalAmount, onConfirmPayment }: { ope
             {cards.map((card) => (
               <div key={card.payInfoId} onClick={() => setSelectedCard(card)} className={`cursor-pointer p-3 border rounded-lg flex justify-between items-center transition ${selectedCard?.payInfoId === card.payInfoId ? 'border-blue-500 bg-blue-50' : 'hover:bg-gray-50'}`}>
                 <div>
-                  <p className="font-semibold text-gray-800">{cardCompanyMap[card.cardCompany.toUpperCase()] ?? card.cardCompany}</p>
+                  <p className="font-semibold text-gray-800">{card.cardCompany? cardCompanyMap[card.cardCompany.toUpperCase()] ?? card.cardCompany: ''}</p>
                   <p className="text-gray-600 text-sm">{maskCardNum(card.cardNum)}</p>
                 </div>
                 {selectedCard?.payInfoId === card.payInfoId && <span className="text-blue-600 font-bold text-sm">✓ 선택됨</span>}
@@ -424,10 +423,10 @@ export function BackingPage() {
             <ArrowLeft className="w-4 h-4" />
             돌아가기
           </Button>
-          <h1 className="text-3xl font-bold text-blue-800 tracking-tight">프로젝트 후원하기</h1>
+          <h1 className="text-3xl font-bold text-black font-bold tracking-tight">프로젝트 후원하기</h1>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-co++++++++++++ls-[2fr_1fr] gap-8 items-start">
           <Card className="bg-white shadow-lg hover:shadow-xl rounded-2xl transition">
             <CardContent className="p-1 text-left space-y-8">
               <div className="w-full px-4">
