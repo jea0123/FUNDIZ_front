@@ -3,11 +3,11 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
-import { useCreatorId } from '../../../types/useCreatorId';
 import { getData, endpoints } from '@/api/apis';
 import type { BackingCreatorProjectList } from '@/types/backing';
 import FundingLoader from '@/components/FundingLoader';
 import { setDevCreatorIdHeader } from '@/api/apis';
+import { useCookies } from 'react-cookie';
 setDevCreatorIdHeader(2);
 
 
@@ -18,9 +18,9 @@ const paginate = <T,>(arr: T[], page: number, perPage: number): T[] => {
 };
 
 export default function CreatorBacking() {
-    const { creatorId, loading: idLoading } = useCreatorId(2);
+    const [cookie] = useCookies();
     const [projects, setProjects] = useState<BackingCreatorProjectList[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
 
     // 페이지네이션
     const [page, setPage] = useState(1);
@@ -35,17 +35,15 @@ export default function CreatorBacking() {
     const [backingPage, setBackingPage] = useState<Record<number, number>>({});
     const fetched = useRef(false);
 
-    const effectiveCreatorId = creatorId || Number(localStorage.getItem('DEV_CREATOR_ID')) || Number(import.meta.env.VITE_DEV_CREATOR_ID) || 4;
-
     // 데이터 불러오기
     useEffect(() => {
-        if (idLoading || !effectiveCreatorId || fetched.current) return;
+        if (fetched.current || loading) return;
         fetched.current = true;
 
         (async () => {
             try {
                 setLoading(true);
-                const res = await getData(endpoints.creatorBackingList);
+                const res = await getData(endpoints.creatorBackingList, cookie.accessToken);
                 if (res.status === 200 && Array.isArray(res.data)) setProjects(res.data);
                 else setProjects([]);
             } catch (err) {
@@ -55,7 +53,7 @@ export default function CreatorBacking() {
                 setLoading(false);
             }
         })();
-    }, [idLoading, effectiveCreatorId]);
+    }, [loading, fetched]);
 
     // 프로젝트 검색/정렬
     const filteredProjects = useMemo(() => {
@@ -93,7 +91,7 @@ export default function CreatorBacking() {
 
     return (
         <div className="space-y-6">
-            {loading || idLoading ? (
+            {loading ? (
                 <FundingLoader />
             ) : (
                 <>

@@ -28,8 +28,6 @@ export default function CreatorProfileCard() {
 
     if (!creatorInfo) return null;
 
-    console.log(creatorInfo);
-
     return (
         <div className="pb-6 text-center border-b border-gray-200">
             <div className="flex justify-center mb-4 space-x-2">
