@@ -69,11 +69,9 @@ export function Pagination({
 
             {/* 우측: 페이지 이동 */}
             <div className="flex items-center justify-center gap-1 sm:gap-2">
-                <Button variant="outline" size="sm" disabled={!canPrev} onClick={() => onPage(clampedPage - 1)}>이전</Button>
-
                 {/* 블록 이동 */}
                 <Button variant="outline" size="sm" disabled={!canPrevBlock} onClick={() => onPage(Math.max(1, startPage - perGroup))}>
-                    ...{/* 이전 블록 */}
+                    이전{/* 이전 블록 */}
                 </Button>
 
                 {/* 번호 버튼 */}
@@ -89,10 +87,8 @@ export function Pagination({
                 ))}
 
                 <Button variant="outline" size="sm" disabled={!canNextBlock} onClick={() => onPage(Math.min(lastPage, endPage + 1))}>
-                    ...{/* 다음 블록 */}
+                    다음{/* 다음 블록 */}
                 </Button>
-
-                <Button variant="outline" size="sm" disabled={!canNext} onClick={() => onPage(clampedPage + 1)}>다음</Button>
             </div>
         </div>
     );

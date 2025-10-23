@@ -640,7 +640,7 @@ export function CreatorProjectEditSteps(props: StepsProps) {
                 <Card>
                     <CardHeader><CardTitle>심사 안내</CardTitle></CardHeader>
                     <CardContent>
-                        <div className="space-y-2 text-xs">
+                        <div className="space-y-2 text-sm">
                             <p>• 프로젝트 심사는 영업일 기준 3-5일 소요됩니다.</p>
                             <p>• 심사 결과는 등록된 이메일로 안내드립니다.</p>
                             <p>• 심사 승인 후 펀딩 시작일에 자동으로 공개됩니다.</p>
@@ -656,7 +656,7 @@ export function CreatorProjectEditSteps(props: StepsProps) {
                         onCheckedChange={(v) => { const val = Boolean(v); setAgree?.(val); }}
                         aria-invalid={!!agreeError}
                     />
-                    <label htmlFor="agree" className="text-xs">프로젝트 등록 약관 및 정책에 동의합니다. *</label>
+                    <label htmlFor="agree" className="text-sm">프로젝트 등록 약관 및 정책에 동의합니다. *</label>
                 </div>
                 {agreeError && (<p className="text-xs text-red-500 mt-1">{agreeError}</p>)}
             </div>

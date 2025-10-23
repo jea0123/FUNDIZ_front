@@ -425,7 +425,7 @@ export default function CreatorProjectEditPage() {
 
                     setProject((prev) => {
                         const parsed = parseBlocks(draft.contentBlocks);
-                        
+
                         return {
                             ...prev,
                             projectId: draft.projectId,
@@ -591,20 +591,8 @@ export default function CreatorProjectEditPage() {
             }
 
             // 신규 작성 후 즉시 심사요청
-            const extractProjectId = (res: any): number | null => {
-                const data = res?.data?.data ?? res?.data ?? res;
-
-                if (typeof data === "number") return data;
-
-                if (data && typeof data === "object") {
-                    const id = (data as any).project ?? (data as any).id ?? null;
-                    return (typeof id === "number") ? id : null;
-                }
-                return null;
-            }
-
             const form = await postData(endpoints.createProject, formData, cookie.accessToken);
-            const newId = extractProjectId(form);
+            const newId = form.data;
 
             if (newId == null) {
                 throw new Error("생성은 되었지만 projectId를 확인할 수 없습니다. 서버 응답을 점검해 주세요.");
@@ -641,6 +629,42 @@ export default function CreatorProjectEditPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <CreatorProjectEditStepper steps={STEPS} currentStep={currentStep} progress={progress} title={isEdit ? "프로젝트 수정" : "프로젝트 만들기"} />
 
+            <div className="sticky top-0 left-0 right-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border rounded-xl p-3 shadow-sm">
+                <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center">
+                        {isEdit && currentStep === 1 ? (
+                            <Button variant="ghost" size="sm" className="leading-none min-w-0 w-auto" onClick={() => navigate(-1)}>
+                                <ArrowLeft className="h-4 w-4 mr-1" />
+                                뒤로
+                            </Button>
+                        ) : currentStep > 1 ? (
+                            <Button variant="outline" size="sm" onClick={() => setCurrentStep((s) => Math.max(1, s - 1))}>
+                                이전 단계
+                            </Button>
+                        ) : null}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        {currentStep < STEPS.length ? (
+                            <Button variant="default" size="sm" onClick={handleNextStep}>
+                                다음 단계
+                            </Button>
+                        ) : (
+                            <>
+                                <Button variant="outline" size="sm" onClick={handleSaveDraft}>
+                                    <Save className="h-4 w-4 mr-1" />
+                                    저장
+                                </Button>
+                                <Button size="sm" onClick={handleSubmit} disabled={!agree || loading || !canSubmit}>
+                                    <Send className="h-4 w-4 mr-1" />
+                                    심사요청
+                                </Button>
+                            </>
+                        )}
+                    </div>
+                </div>
+            </div>
+
             <Card className="mt-6">
                 <CardContent className="p-6">
                     <CreatorProjectEditSteps
@@ -667,37 +691,6 @@ export default function CreatorProjectEditPage() {
                     />
                 </CardContent>
             </Card>
-
-            <div className="flex justify-between mt-8">
-                <div className="flex items-center">
-                    {isEdit && currentStep === 1 ? (
-                        <Button variant="outline" onClick={() => navigate(-1)}>
-                            <ArrowLeft className="h-4 w-4 mr-2" /> 뒤로
-                        </Button>
-                    ) : currentStep > 1 ? (
-                        <Button variant="outline" onClick={() => setCurrentStep((s) => Math.max(1, s - 1))}>
-                            이전 단계
-                        </Button>
-                    ) : null}
-                </div>
-
-                <div className="flex space-x-2">
-                    {currentStep < STEPS.length ? (
-                        <Button variant="outline" onClick={handleNextStep}>
-                            다음 단계
-                        </Button>
-                    ) : (
-                        <>
-                            <Button variant="outline" onClick={handleSaveDraft}>
-                                <Save className="h-4 w-4 mr-2" /> 저장
-                            </Button>
-                            <Button onClick={handleSubmit} disabled={!agree || loading || !canSubmit}>
-                                <Send className="h-4 w-4 mr-2" /> 심사요청
-                            </Button>
-                        </>
-                    )}
-                </div>
-            </div>
         </div>
     );
 }
