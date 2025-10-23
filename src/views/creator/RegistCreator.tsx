@@ -21,7 +21,7 @@ const hintCls = "h-5 mt-1 text-xs leading-4";
 const schema = z.object({
     creatorName: z.string()
         .min(2, "닉네임은 2자 이상")
-        .max(10, "닉네임은 최대 10자"),
+        .max(30, "닉네임은 최대 30자"),
     creatorType: z.enum(["GENERAL", "INDIVIDUAL", "CORPORATION"] as const),
     email: z.string().email("유효한 이메일 형식이 아닙니다"),
     phone: z.string()
