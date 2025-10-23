@@ -160,7 +160,7 @@ export function ProjectDetailsPage() {
 
     const unfollowCreator = useCallback(async (creatorId: number) => {
         if (!creatorId) return;
-        if (creatorId !== loginUser?.creatorId) {
+        if (creatorId === loginUser?.creatorId) {
             toastError('본인 크리에이터는 언팔로우할 수 없습니다.');
             return;
         }
@@ -377,10 +377,12 @@ export function ProjectDetailsPage() {
                                 <AvatarFallback>{project.creatorName}</AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
-                                <h4 className="font-semibold">{project.creatorName}</h4>
-                                <p className="text-sm text-gray-600">
-                                    팔로워 {formatNumber(followerCnt)}명 · 프로젝트 {project.projectCnt}개
-                                </p>
+                                <div className='w-fit cursor-pointer' onClick={() => navigate(`/creator/${project.creatorId}`)}>
+                                    <h4 className="font-semibold cursor-pointer hover:underline">{project.creatorName}</h4>
+                                    <p className="text-sm text-gray-600">
+                                        팔로워 {formatNumber(followerCnt)}명 · 프로젝트 {project.projectCnt}개
+                                    </p>
+                                </div>
                             </div>
                             {loginUser?.creatorId === project.creatorId ? null : isFollowed ? (
                                 <Button variant="outline" size="sm" disabled={loadingFollow || mutatingFollow} onClick={() => unfollowCreator(project.creatorId)} className="border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-950">
