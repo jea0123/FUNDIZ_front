@@ -52,13 +52,24 @@ const schema = z.object({
         }
     );
 
-export type UpdateCreatorForm = z.input<typeof schema>;
+// export type UpdateCreatorForm = z.input<typeof schema>;
+
+export type UpdateCreatorForm = {
+    creatorName: string;
+    creatorType: CreatorType;
+    email: string;
+    phone: string;
+    bank: string;
+    account: string;
+    businessNum?: string;      // 빈문자열 사용
+    profileImg?: FileList;     // <- 문자열 아님
+    bio?: string;
+};
 
 export default function CreatorInfoUpdate() {
     const fileRef = useRef<HTMLInputElement>(null);
     const [preview, setPreview] = useState<string | null>(null);
     const [cookie] = useCookies();
-    const { creatorId } = useCreatorId(1);
 
     const form = useForm<UpdateCreatorForm>({
         resolver: zodResolver(schema),
@@ -70,7 +81,7 @@ export default function CreatorInfoUpdate() {
             bank: "",
             account: "",
             businessNum: "",
-            profileImg: "",
+            profileImg: undefined,
             bio: "",
         },
         mode: "onBlur",
@@ -80,26 +91,29 @@ export default function CreatorInfoUpdate() {
 
     // API에서 기존 데이터 가져오기
     useEffect(() => {
-        const fetchData = async () => {
+        (async () => {
             try {
-                const res = await getData(endpoints.getCreatorInfo, cookie.accessToken); // 기존 데이터를 가져오는 API
-                if (res.status === 200) {
-                    const data = res.data;
-                    form.reset(data);
-                    const profileImgUrl = toPublicUrl(data.profileImg); // 기존 데이터를 폼에 채움
-                    if (profileImgUrl) {
-                        setPreview(profileImgUrl); // 기존 프로필 이미지 미리보기
-                    }
-                } else {
-                    toastError("데이터를 불러오는 데 실패했습니다");
-                }
-            } catch (err) {
-                console.error(err);
-                toastError("데이터를 불러오는 데 실패했습니다");
-            }
-        };
+                const res = await getData(endpoints.getCreatorInfo, cookie.accessToken);
+                if (res.status !== 200) return toastError("데이터 로드 실패");
 
-        fetchData();
+                const d = res.data ?? {};
+                const safe: UpdateCreatorForm = {
+                    creatorName: d.creatorName ?? "",
+                    creatorType: (d.creatorType ?? "GENERAL") as CreatorType,
+                    email: d.email ?? "",
+                    phone: d.phone ?? "",
+                    bank: d.bank ?? "",
+                    account: d.account ?? "",
+                    businessNum: d.businessNum ?? "",
+                    profileImg: undefined,
+                    bio: d.bio ?? "",
+                };
+                form.reset(safe);
+
+                const url = toPublicUrl(d.profileImg);
+                if (url) setPreview(url);
+            } catch { toastError("데이터 로드 실패"); }
+        })();
     }, [cookie.accessToken, form]);
 
     const onFileChange = (file?: File) => {
@@ -147,7 +161,7 @@ export default function CreatorInfoUpdate() {
     const resetAll = () => {
         form.reset();
         form.setValue("bank", "");
-        form.setValue("profileImg", "");
+        form.setValue("profileImg", undefined);
         if (fileRef.current) fileRef.current.value = "";
         if (preview) URL.revokeObjectURL(preview);
         setPreview(null);
@@ -175,9 +189,9 @@ export default function CreatorInfoUpdate() {
                                                 type="file"
                                                 accept="image/*"
                                                 onChange={(e) => {
-                                                    const file = e.target.files?.[0];
-                                                    onFileChange(file);
-                                                    field.onChange(e.target.files);
+                                                    const files = e.target.files ?? undefined;
+                                                    onFileChange(files?.[0]);
+                                                    field.onChange(files);
                                                 }}
                                             />
                                         </FormControl>
@@ -197,7 +211,7 @@ export default function CreatorInfoUpdate() {
                                     <FormItem className="md:col-span-2 ml-30">
                                         <FormLabel>판매자 닉네임</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="최대 10자" {...field} />
+                                            <Input placeholder="최대 10자" {...field} value={field.value ?? ""} />
                                         </FormControl>
                                         <div className={hintCls}>
                                             {form.formState.errors.creatorName
@@ -224,7 +238,7 @@ export default function CreatorInfoUpdate() {
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>창작자 유형</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <Select value={field.value ?? undefined} onValueChange={field.onChange}>
                                             <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="선택" />
@@ -254,10 +268,8 @@ export default function CreatorInfoUpdate() {
                                     <FormItem className="md:col-span-2 ml-30">
                                         <FormLabel>사업자번호</FormLabel>
                                         <FormControl>
-                                            <Input
-                                                placeholder={type === "GENERAL" ? "일반 유형은 비워두세요" : "예) 123-45-67890"}
-                                                {...field}
-                                            />
+                                            <Input placeholder={type === "GENERAL" ? "일반 유형은 비워두세요" : "예) 123-45-67890"}
+                                                {...field} value={field.value ?? ""} />
                                         </FormControl>
                                         <div className={hintCls}>
                                             {form.formState.errors.businessNum
@@ -282,7 +294,7 @@ export default function CreatorInfoUpdate() {
                                     <FormItem>
                                         <FormLabel>이메일</FormLabel>
                                         <FormControl>
-                                            <Input type="email" placeholder="you@example.com" {...field} />
+                                            <Input type="email" placeholder="you@example.com" {...field} value={field.value ?? ""} />
                                         </FormControl>
                                         <div className={hintCls}>
                                             {form.formState.errors.email
@@ -300,7 +312,7 @@ export default function CreatorInfoUpdate() {
                                     <FormItem className="md:col-span-2 ml-30">
                                         <FormLabel>전화번호</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="010-1234-5678" {...field} />
+                                            <Input placeholder="010-1234-5678" {...field} value={field.value ?? ""} />
                                         </FormControl>
                                         <div className={hintCls}>
                                             {form.formState.errors.phone
@@ -319,7 +331,7 @@ export default function CreatorInfoUpdate() {
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>은행</FormLabel>
-                                        <Select value={field.value || undefined} onValueChange={(v) => field.onChange(v)}>
+                                        <Select value={field.value || undefined} onValueChange={field.onChange}>
                                             <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="선택" />
@@ -346,8 +358,8 @@ export default function CreatorInfoUpdate() {
                                                 <SelectItem value="selboxDirect">직접 입력</SelectItem>
                                             </SelectContent>
                                         </Select>
-                                        
-                                        <input type="text" id="selboxDirect" name="selboxDirect"/>
+
+                                        <input type="text" id="selboxDirect" name="selboxDirect" />
                                         <div className={hintCls}>
                                             {form.formState.errors.bank
                                                 ? <FormMessage />
@@ -364,7 +376,7 @@ export default function CreatorInfoUpdate() {
                                     <FormItem className="md:col-span-2 ml-30">
                                         <FormLabel>계좌번호 (정산용)</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="하이픈 없이 입력" {...field} />
+                                            <Input placeholder="하이픈 없이 입력" {...field} value={field.value ?? ""} />
                                         </FormControl>
                                         <div className={hintCls}>
                                             {form.formState.errors.account
