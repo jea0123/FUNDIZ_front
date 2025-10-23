@@ -140,7 +140,7 @@ function PopularSidebar() {
     return (
         <aside className="rounded-sm h-full flex flex-col lg:border-l border-border lg:pl-10">
             <div className="mb-2 flex items-center justify-between">
-                <h3 className="text-sm font-semibold">인기 프로젝트</h3>
+                <h3 className="text-lg font-semibold">인기 프로젝트</h3>
                 <Button variant="ghost" className="h-6 px-1 text-xs" onClick={() => navigate("/project")}>
                     전체보기
                 </Button>
@@ -281,8 +281,8 @@ export function ProjectCard({ items }: { items: any; }) {
     {
         return (
             <div className="overflow-hidden cursor-pointer">
-                <div className="relative aspect-[1] w-full overflow-hidden rounded-sm group" onClick={() => onClickCard(items.projectId)}>
-                    <img src={items.thumbnail} alt={items.title} className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-115" />
+                <div className="relative aspect-square w-full overflow-hidden rounded-sm group cursor-pointer" onClick={() => onClickCard(items.projectId)}>
+                    <img src={items.thumbnail} alt={items.title} className="w-full h-full object-cover object-center transition-transform duration-300 ease-in-out group-hover:scale-110" />
                 </div>
                 <div className="space-y-1 py-3">
                     <p className="text-[11px] text-muted-foreground m-0 z-100 hover:underline" onClick={(e) => { e.stopPropagation(); navigate(`/creator/${items.creatorId}`); }}>{items.creatorName}</p>
