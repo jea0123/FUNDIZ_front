@@ -41,7 +41,7 @@ export default function BackingTab() {
   const [backingProjects, setBackingProjects] = useState<MyPgaeBackingList[]>([]);
   const navigate = useNavigate();
   const [backingPage, setBackingPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 3;
   const [backingSearch, setBackingSearch] = useState('');
 
   // 마이페이지 후원 리스트 호출
@@ -137,7 +137,7 @@ export default function BackingTab() {
 
       {/* 리스트 */}
       <CardContent>
-        <div className="space-y-4">
+        <div className="space-y-6">
           {filteredBackings && filteredBackings.length > 0 ? (
             filteredBackings.slice((backingPage - 1) * itemsPerPage, backingPage * itemsPerPage).map((backingList, index) => {
               const completionRate = backingList.goalAmount && backingList.goalAmount > 0 ? (backingList.currAmount / backingList.goalAmount) * 100 : 0;
@@ -145,31 +145,48 @@ export default function BackingTab() {
               const isCompleted = backingList.backingStatus === 'COMPLETED';
               const statusText = isCompleted ? shippingLabel[backingList.shippingStatus] ?? '알 수 없음' : statusLabel[backingList.backingStatus] ?? '알 수 없음';
 
-              // mpBackingList 기준으로 리워드명 출력
               const rewardNames = backingList.mpBackingList
                 ?.map((r) => r.rewardName)
                 .filter(Boolean)
                 .join(', ');
 
-              return (
-                <div key={`${backingList.projectId}-${index}`} className="p-4 border rounded-lg space-y-2">
-                  {/* 상단 */}
-                  <div className="flex items-center space-x-4">
-                    <ImageWithFallback src={backingList.thumbnail} alt={backingList.title} className="w-20 h-20 object-cover rounded" />
+              //  달성률 색상 계산
+              const getRateColor = () => {
+                if (completionRate >= 100) return 'text-blue-600 font-semibold';
+                if (completionRate >= 75) return 'text-green-600 font-semibold';
+                if (completionRate >= 50) return 'text-yellow-600 font-semibold';
+                if (completionRate >= 25) return 'text-orange-600 font-semibold';
+                return 'text-red-600 font-semibold';
+              };
 
-                    <div className="flex-1">
-                      <div className="flex justify-between items-center">
-                        <h4 className="font-medium text-base">{backingList.title}</h4>
-                        <Badge variant="outline">{statusText}</Badge>
+              return (
+                <div key={`${backingList.projectId}-${index}`} className="p-6 bg-white/90 border border-gray-200 rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
+                  {/* 상단 */}
+                  <div className="flex items-start space-x-6">
+                    <ImageWithFallback src={backingList.thumbnail} alt={backingList.title} className="w-32 h-32 object-cover rounded-xl shadow-sm border border-gray-100" />
+
+                    <div className="flex-1 space-y-3">
+                      <div className="flex justify-between items-start">
+                        {/*  제목 강조 */}
+                        <h4 className="text-xl font-bold text-blue-700 leading-snug">{backingList.title}</h4>
+                        <Badge variant="outline" className="text-base px-3 py-1 font-medium text-gray-700">
+                          {statusText}
+                        </Badge>
                       </div>
 
-                      <p className="text-sm text-gray-600">창작자: {backingList.creatorName ?? '-'}</p>
-                      <p className="text-sm text-gray-600">후원 리워드: {rewardNames?.length ? rewardNames : '없음'}</p>
+                      {/* 정보 라벨 진하게 */}
+                      <div className="space-y-1 text-gray-700 text-base">
+                        <p>
+                          <span className="font-medium text-gray-800">창작자:</span> {backingList.creatorName ?? '-'}
+                        </p>
+                        <p>
+                          <span className="font-medium text-gray-800">후원 리워드:</span> {rewardNames?.length ? rewardNames : '없음'}
+                        </p>
+                      </div>
 
                       {/* 진행률 바 */}
-                      <div className="mt-2 bg-gray-200 h-3 rounded-full w-full overflow-hidden">
+                      <div className="mt-3 bg-gray-200 h-4 rounded-xl overflow-hidden">
                         {(() => {
-                          //  색상 계산 로직 (25% 단위)
                           let progressColor = 'bg-red-500';
                           if (completionRate >= 100) progressColor = 'bg-blue-500';
                           else if (completionRate >= 75) progressColor = 'bg-green-500';
@@ -178,25 +195,31 @@ export default function BackingTab() {
 
                           return (
                             <div
-                              className={`h-full ${progressColor} rounded-full transition-all duration-300`}
+                              className={`h-full ${progressColor} rounded-xl transition-all duration-500`}
                               style={{
-                                width: `${Math.min(completionRate, 300)}%`, // 최대 300% 시각적 한도
+                                width: `${Math.min(completionRate, 300)}%`,
                               }}
                             ></div>
                           );
                         })()}
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">
-                        달성률: {completionRate.toFixed(1)}% ({formatNumber(backingList.currAmount)}원 / {formatNumber(backingList.goalAmount)}원)
+
+                      {/* 달성률 숫자 색상 강조 */}
+                      <p className="text-sm text-gray-600 mt-1">
+                        <span className={getRateColor()}>달성률 {completionRate.toFixed(1)}%</span> ({formatNumber(backingList.currAmount)}원 / {formatNumber(backingList.goalAmount)}원)
                       </p>
                     </div>
                   </div>
 
                   {/* 하단 */}
-                  <div className="flex justify-between items-center text-sm text-gray-700 mt-2">
-                    <span>후원일: {safeDate(backingList.createdAt)}</span>
-                    <span>총 후원금액: {formatNumber(backingList.amount)}원</span>
-                    <Button variant="outline" size="sm" onClick={() => navigate(`/user/support/${backingList.backingId}`)}>
+                  <div className="flex justify-between items-center text-base text-gray-700 mt-4 pt-3 border-t border-gray-100">
+                    <span>
+                      <span className="font-medium text-gray-800">후원일:</span> {safeDate(backingList.createdAt)}
+                    </span>
+                    <span>
+                      <span className="font-medium text-gray-800">총 후원금액:</span> {formatNumber(backingList.amount)}원
+                    </span>
+                    <Button variant="outline" size="sm" className="hover:bg-blue-50 hover:text-blue-600" onClick={() => navigate(`/user/support/${backingList.backingId}`)}>
                       상세보기
                     </Button>
                   </div>
@@ -204,13 +227,13 @@ export default function BackingTab() {
               );
             })
           ) : (
-            <p className="text-center text-gray-500 py-8">후원한 프로젝트가 없습니다.</p>
+            <p className="text-center text-gray-500 py-8 text-base">후원한 프로젝트가 없습니다.</p>
           )}
         </div>
 
         {/* 페이지네이션 */}
         {backingProjects && backingProjects.length > 0 && (
-          <div className="flex justify-center items-center gap-2 mt-6">
+          <div className="flex justify-center items-center gap-2 mt-8">
             <Button size="sm" variant="outline" disabled={backingPage === 1} onClick={() => setBackingPage(backingPage - 1)}>
               이전
             </Button>

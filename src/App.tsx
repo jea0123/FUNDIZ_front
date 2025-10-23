@@ -58,6 +58,7 @@ import CreatorRewardAddPage from './views/creator/pages/CreatorRewardAddPage';
 import CreatorPage from './views/creator/pages/CreatorPage';
 import UserHomeTab from './views/user/UserHomeTab';
 import CreateCategory from './views/CreateCategory';
+import PaymentRegisterPage from './views/user/tabs/PaymentRegisterPage';
 
 const OverviewTab = lazy(() => import('./views/admin/pages/OverviewTab').then((module) => ({ default: module.OverviewTab })));
 const CreatorDashboard = lazy(() => import('./views/creator/pages/CreatorDashboard').then((module) => ({ default: module.default })));
@@ -117,17 +118,16 @@ export default function App() {
 
             <Route path="/user" element={<MyPageLayout />}>
               <Route index element={<UserHomeTab />} />
-              <Route path='main' element={<UserHomeTab />} />
+              <Route path="main" element={<UserHomeTab />} />
               <Route path="support" element={<BackingTab />} />
               <Route path="support/:backingId" element={<BackingDetailTab />} />
-              {/*<Route index element={<BackingTab />} />
-                                <Route path="support" element={<BackingTab />} />*/}
               <Route path="wishlist" element={<LikedProjectTab />} />
               <Route path="settings" element={<AccountSettingTab />} />
               <Route path="notifications" element={<NotificationTab />} />
               <Route path="myqna" element={<MyQnATab />} />
               <Route path="myinquiry" element={<MyInquiryTab />} />
               <Route path="myreports" element={<MyReportsTab />} />
+              <Route path="payment" element={<PaymentRegisterPage />} />
             </Route>
 
             <Route path="/creator/register" element={<RegisterCreator />} />

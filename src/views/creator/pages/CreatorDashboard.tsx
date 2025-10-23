@@ -233,20 +233,20 @@ export default function CreatorDashboard() {
                 <CardTitle className="text-lg font-semibold mb-2">내 프로젝트 성공률</CardTitle>
               </CardHeader>
               <CardContent>
-                {successRate === 0 && failRate === 0 ?(
-                  <div className="text-center text=gray-500 py-10">데이터가 없습니다.</div>
+                {data.projectTotal === 0 || (successRate === 0 && failRate === 0) ? (
+                  <div className="text-center text-gray-500 py-10">데이터가 없습니다.</div>
                 ) : (
-                <ResponsiveContainer width="100%" height={220}>
-                  <PieChart>
-                    <Pie data={successData} cx="50%" cy="50%" outerRadius={70} dataKey="value" label={({ name, value }) => `${name} ${value.toFixed(1)}%`} labelLine={false}>
-                      {successData.map((_, i) => (
-                        <Cell key={i} fill={['#22c55e', '#ef4444'][i]} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value: number) => `${value}%`} />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <PieChart>
+                      <Pie data={successData} cx="50%" cy="50%" outerRadius={70} dataKey="value" label={({ name, value }) => `${name} ${value.toFixed(1)}%`} labelLine={false}>
+                        {successData.map((_, i) => (
+                          <Cell key={i} fill={['#22c55e', '#ef4444'][i]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value: number) => `${value}%`} />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
                 )}
               </CardContent>
             </Card>
@@ -255,7 +255,7 @@ export default function CreatorDashboard() {
           {/* (2) 일간 후원수 */}
           <Card className="p-3 shadow-md mb-8">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold mb-2">일간 프로젝트 후원수 (최근 7일)</CardTitle>
+              <CardTitle className="text-lg font-semibold mb-2">일간 전체 프로젝트 후원수 (최근 7일)</CardTitle>
             </CardHeader>
             <CardContent>
               {formattedDaily.length > 0 ? (
@@ -284,7 +284,7 @@ export default function CreatorDashboard() {
           {/* (3) 월별 후원수 */}
           <Card className="p-3 shadow-md">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold mb-2">월별 프로젝트 후원수 (최근 12개월)</CardTitle>
+              <CardTitle className="text-lg font-semibold mb-2">월별 전체 프로젝트 후원수 (최근 12개월)</CardTitle>
             </CardHeader>
             <CardContent>
               {formattedMonthly.length > 0 ? (

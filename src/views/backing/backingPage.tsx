@@ -12,7 +12,17 @@ import { endpoints, getData, postData } from '@/api/apis';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import type { BackingPrepare, BackingPagePayment } from '@/types/backing';
+import type { PaymentInfo } from '@/types/payment';
 import { useCookies } from 'react-cookie';
+
+const cardCompanyMap: Record<string, string> = {
+  LOTTE: '롯데카드',
+  KB: '국민카드',
+  SAMSUNG: '삼성카드',
+  SHINHAN: '신한카드',
+  NH: '농협카드',
+  HYUNDAI: '현대카드',
+};
 
 const getProgressColor = (rate: number) => {
   if (rate < 34) return 'bg-red-500'; // 0~33%
@@ -33,7 +43,7 @@ function PaymentSuccessModal({ open, onClose, onGoMyPage, onGoBack }: { open: bo
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-sm flex flex-col items-center justify-center text-center py-10 space-y-6">
-        {/*  아이콘 */}
+        {/* 아이콘 */}
         <div className="w-20 h-20 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 text-4xl shadow-inner">🎉</div>
 
         {/* 타이틀 */}
@@ -64,71 +74,89 @@ function PaymentSuccessModal({ open, onClose, onGoMyPage, onGoBack }: { open: bo
   );
 }
 
-//결제 모달
+function CardSelectModal({ open, onClose, totalAmount, onConfirmPayment }: { open: boolean; onClose: () => void; totalAmount: number; onConfirmPayment: (payload: { cardCompany: string; cardNum: string }) => void }) {
+  const [cookie] = useCookies(['accessToken']);
+  const [cards, setCards] = useState<PaymentInfo[]>([]);
+  const [selectedCard, setSelectedCard] = useState<PaymentInfo | null>(null);
+  const [loading, setLoading] = useState(true);
 
-function PaymentModal({
-  open,
-  onClose,
-  totalAmount,
-  // paymentList, // 지금은 안 씀
-  onConfirmPayment,
-}: {
-  open: boolean;
-  onClose: () => void;
-  totalAmount: number;
-  paymentList: BackingPagePayment[];
-  onConfirmPayment: (payload: { method: string; cardCompany: string }) => void;
-}) {
-  const [method, setMethod] = useState('');
+  // 📋 카드 목록 불러오기
+  useEffect(() => {
+    if (!open) return;
+    const fetchCards = async () => {
+      try {
+        const res = await getData<PaymentInfo[]>(endpoints.getCardList, cookie.accessToken);
+        if (res.status === 200 && res.data) {
+          setCards(res.data);
+        }
+      } catch (err) {
+        console.error('카드 목록 불러오기 실패:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCards();
+  }, [open]);
 
+  // 카드번호 마스킹 함수
+  const maskCardNum = (num: string) => {
+    if (!num) return '';
+    const digits = num.replace(/\D/g, '');
+    if (digits.length <= 4) return digits;
+    const masked = '*'.repeat(digits.length - 4) + digits.slice(-4);
+    return masked.replace(/(.{4})/g, '$1-').replace(/-$/, '');
+  };
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>결제하기</DialogTitle>
+          <DialogTitle>💳 등록된 카드 선택</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
-          <p className="text-center text-lg font-semibold">총 금액: {totalAmount.toLocaleString()}원</p>
+        {/* 총 금액 */}
+        <p className="text-center text-lg font-semibold mb-4">
+          총 결제 금액: <span className="text-blue-600">{totalAmount.toLocaleString()}원</span>
+        </p>
 
-          <div className="space-y-3">
-            <p className="font-medium text-sm">결제수단을 선택해주세요</p>
-            <RadioGroup value={method} onValueChange={setMethod} className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="CARD" id="card" />
-                <Label htmlFor="card">💳 신용카드</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="BANK_TRANSFER" id="bank" />
-                <Label htmlFor="bank">🏦 계좌이체</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="EASY_PAY" id="easy" />
-                <Label htmlFor="easy">⚡ 간편결제 (카카오페이 / 네이버페이)</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="ETC" id="etc" />
-                <Label htmlFor="etc">💰 기타 결제수단</Label>
-              </div>
-            </RadioGroup>
+        {loading ? (
+          <p className="text-gray-500 text-center py-4">불러오는 중...</p>
+        ) : cards.length === 0 ? (
+          <div className="text-center py-4 space-y-2">
+            <p className="text-gray-500">등록된 카드가 없습니다.</p>
+            <Button onClick={() => (window.location.href = '/user/paymentRegister')} className="bg-blue-600 hover:bg-blue-700 text-white mt-2">
+              새 카드 등록하기
+            </Button>
           </div>
-        </div>
+        ) : (
+          <div className="space-y-2 max-h-60 overflow-y-auto border rounded-md p-2">
+            {cards.map((card) => (
+              <div key={card.payInfoId} onClick={() => setSelectedCard(card)} className={`cursor-pointer p-3 border rounded-lg flex justify-between items-center transition ${selectedCard?.payInfoId === card.payInfoId ? 'border-blue-500 bg-blue-50' : 'hover:bg-gray-50'}`}>
+                <div>
+                  <p className="font-semibold text-gray-800">{cardCompanyMap[card.cardCompany.toUpperCase()] ?? card.cardCompany}</p>
+                  <p className="text-gray-600 text-sm">{maskCardNum(card.cardNum)}</p>
+                </div>
+                {selectedCard?.payInfoId === card.payInfoId && <span className="text-blue-600 font-bold text-sm">✓ 선택됨</span>}
+              </div>
+            ))}
+          </div>
+        )}
 
-        <DialogFooter className="flex justify-between mt-6">
+        <DialogFooter className="flex justify-end mt-4">
           <Button variant="outline" onClick={onClose}>
             취소
           </Button>
           <Button
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+            disabled={!selectedCard}
             onClick={() => {
-              const payload = {
-                method: method || 'ETC',
-                cardCompany: '',
-              };
-              onConfirmPayment(payload);
-              onClose();
+              if (selectedCard) {
+                onConfirmPayment({
+                  cardCompany: selectedCard.cardCompany,
+                  cardNum: selectedCard.cardNum,
+                });
+                onClose();
+              }
             }}
-            disabled={!method}
           >
             결제하기
           </Button>
@@ -138,7 +166,68 @@ function PaymentModal({
   );
 }
 
-//BackingPage 본문
+// 결제 모달
+// function PaymentModal({ open, onClose, totalAmount, paymentList, onConfirmPayment }: { open: boolean; onClose: () => void; totalAmount: number; paymentList: BackingPagePayment[]; onConfirmPayment: (payload: { method: string; cardCompany: string }) => void }) {
+//   const [method, setMethod] = useState('');
+
+//   return (
+//     <Dialog open={open} onOpenChange={onClose}>
+//       <DialogContent className="max-w-md">
+//         <DialogHeader>
+//           <DialogTitle>결제하기</DialogTitle>
+//         </DialogHeader>
+
+//         <div className="space-y-6">
+//           <p className="text-center text-lg font-semibold">총 금액: {totalAmount.toLocaleString()}원</p>
+
+//           <div className="space-y-3">
+//             <p className="font-medium text-sm">결제수단을 선택해주세요</p>
+//             <RadioGroup value={method} onValueChange={setMethod} className="space-y-2">
+//               <div className="flex items-center space-x-2">
+//                 <RadioGroupItem value="CARD" id="card" />
+//                 <Label htmlFor="card">💳 신용카드</Label>
+//               </div>
+//               <div className="flex items-center space-x-2">
+//                 <RadioGroupItem value="BANK_TRANSFER" id="bank" />
+//                 <Label htmlFor="bank">🏦 계좌이체</Label>
+//               </div>
+//               <div className="flex items-center space-x-2">
+//                 <RadioGroupItem value="EASY_PAY" id="easy" />
+//                 <Label htmlFor="easy">⚡ 간편결제 (카카오페이 / 네이버페이)</Label>
+//               </div>
+//               <div className="flex items-center space-x-2">
+//                 <RadioGroupItem value="ETC" id="etc" />
+//                 <Label htmlFor="etc">💰 기타 결제수단</Label>
+//               </div>
+//             </RadioGroup>
+//           </div>
+//         </div>
+
+//         <DialogFooter className="flex justify-between mt-6">
+//           <Button variant="outline" onClick={onClose}>
+//             취소
+//           </Button>
+//           <Button
+//             className="bg-blue-600 hover:bg-blue-700"
+//             onClick={() => {
+//               const payload = {
+//                 method: method || 'ETC',
+//                 cardCompany: '',
+//               };
+//               onConfirmPayment(payload);
+//               onClose();
+//             }}
+//             disabled={!method}
+//           >
+//             결제하기
+//           </Button>
+//         </DialogFooter>
+//       </DialogContent>
+//     </Dialog>
+//   );
+// }
+
+// BackingPage 본문
 export function BackingPage() {
   const [cookie] = useCookies();
   const { projectId } = useParams<{ projectId: string }>();
@@ -236,8 +325,7 @@ export function BackingPage() {
     const additional = customAmount ? parseInt(customAmount) : 0;
     return rewardsTotal + additional;
   };
-  //모달 페이지에서 체이지넘어가는 부분
-  
+
   const handleOpenPayment = () => {
     if (rewardList.length === 0) {
       alert('리워드를 선택해주세요.');
@@ -245,20 +333,6 @@ export function BackingPage() {
     }
     setIsPaymentOpen(true);
   };
-
-  //모달없이 바로 결제
-  /*
-   const handleOpenPayment = async () => {
-    if (rewardList.length === 0) {
-      alert('리워드를 선택해주세요.');
-      return;
-    }
-
-    // 임시 동작: 모달 대신 바로 결제 로직 실행
-    const dummyPayment = { method: 'CARD', cardCompany: '임시결제' };
-    await handleConfirmPayment(dummyPayment);
-  };*/
-
 
   const handleConfirmPayment = async ({ method, cardCompany }: { method: string; cardCompany: string }) => {
     const rewardsTotal = rewardList.reduce((sum, r) => sum + (rewardQuantities[r.rewardId] ?? 1) * r.price, 0);
@@ -280,7 +354,7 @@ export function BackingPage() {
         createdAt: now,
         backingStatus: 'PENDING',
       },
-      payment: {
+      paymentInfo: {
         paymentId: 0,
         backingId: 0,
         orderId: '',
@@ -326,70 +400,72 @@ export function BackingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* 결제 완료 모달 */}
-      {successData && <PaymentSuccessModal open={isSuccessOpen} onClose={() => setIsSuccessOpen(false)} method={successData.method} cardCompany={successData.cardCompany} totalAmount={successData.totalAmount} onGoMyPage={() => navigate('/user')} onGoBack={() => navigate(-1)} />}
+    <div className="min-h-screen bg-white">
+      {/* <PaymentModal open={isPaymentOpen} onClose={() => setIsPaymentOpen(false)} totalAmount={getTotalAmount()} paymentList={paymentList} onConfirmPayment={handleConfirmPayment} /> */}
+      <CardSelectModal
+        open={isPaymentOpen}
+        onClose={() => setIsPaymentOpen(false)}
+        totalAmount={getTotalAmount()}
+        onConfirmPayment={async (payload) => {
+          console.log('📤 선택된 카드 정보:', payload);
+          // 기존 handleConfirmPayment 내부 로직 재활용
+          await handleConfirmPayment({
+            method: 'CARD',
+            cardCompany: payload.cardCompany,
+          });
+        }}
+      />
+      {successData && <PaymentSuccessModal open={isSuccessOpen} onClose={() => setIsSuccessOpen(false)} onGoMyPage={() => navigate('/user')} onGoBack={() => navigate(-1)} />}
 
-      <div className="max-w-5xl mx-auto px-4 py-8">
-        <div className="flex items-center gap-4 mb-8">
-          <Button variant="outline" size="sm" onClick={() => navigate(-1)} className="flex items-center gap-2">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-2">
+        {/* 상단 타이틀 */}
+        <div className="flex items-center gap-4 mb-10">
+          <Button variant="outline" size="sm" onClick={() => navigate(-1)} className="flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-100">
             <ArrowLeft className="w-4 h-4" />
             돌아가기
           </Button>
-          <h1 className="text-3xl font-bold">프로젝트 후원하기</h1>
+          <h1 className="text-3xl font-bold text-blue-800 tracking-tight">프로젝트 후원하기</h1>
         </div>
-  
-        
-        <PaymentModal open={isPaymentOpen} onClose={() => setIsPaymentOpen(false)} totalAmount={getTotalAmount()} paymentList={paymentList} onConfirmPayment={handleConfirmPayment} />
-        
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-6">
-            {/* 프로젝트 요약 */}
-            <Card>
-              <CardContent className="p-6 flex gap-6">
-                <div className="w-40 h-28 rounded bg-gray-200 overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-8 items-start">
+          <Card className="bg-white shadow-lg hover:shadow-xl rounded-2xl transition">
+            <CardContent className="p-1 text-left space-y-8">
+              <div className="w-full px-4">
+                <div className="w-full h-[360px] lg:h-[420px] rounded-2xl overflow-hidden border border-gray-200 shadow-sm mx-auto">
                   <ImageWithFallback src={thumbnail} alt={title} className="w-full h-full object-cover" />
                 </div>
-                <div>
-                  <h3 className="text-xl font-semibold">{title}</h3>
-                  <p className="text-sm text-muted-foreground">by {creatorName}</p>
+              </div>
+
+              <div className="space-y-4 px-4">
+                <h3 className="text-3xl font-bold text-gray-900">{title}</h3>
+                <p className="text-lg text-gray-600">by {creatorName}</p>
+
+                <div className="mt-4">
                   <ColoredProgress value={achievementRate} />
-                  <p className="text-sm mt-1">{achievementRate}% 달성</p>
+                  <p className="text-base mt-2 font-semibold text-indigo-600">🎯 {achievementRate}% 달성</p>
                 </div>
-              </CardContent>
-            </Card>
 
-            {/* 후원자 정보 */}
-            <Card>
-              <CardHeader>
-                <CardTitle>후원자 정보</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div>
-                  <Label>닉네임</Label>
-                  <Input value={nickname} readOnly className="bg-gray-100 cursor-not-allowed" />
+                <div className="text-sm text-gray-500 leading-relaxed mt-4">
+                  <p>목표 금액: {goalAmount.toLocaleString()}원</p>
+                  <p>현재 후원: {currAmount.toLocaleString()}원</p>
                 </div>
-                <div>
-                  <Label>이메일</Label>
-                  <Input value={email} readOnly className="bg-gray-100 cursor-not-allowed" />
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </CardContent>
+          </Card>
 
-            {/* 리워드 */}
-            <Card>
+          <div className="space-y-6">
+            {/* 선택한 리워드 */}
+            <Card className="bg-white shadow-md hover:shadow-lg rounded-2xl transition">
               <CardHeader>
-                <CardTitle>선택한 리워드</CardTitle>
+                <CardTitle className="text-lg font-semibold text-gray-900">🎁 선택한 리워드</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {rewardList.map((r) => (
-                  <div key={r.rewardId} className="p-3 border rounded-lg">
-                    <p className="font-medium">{r.rewardName}</p>
+                  <div key={r.rewardId} className="p-4 border border-indigo-100 bg-indigo-50/30 rounded-lg hover:bg-indigo-100/50 transition">
+                    <p className="font-semibold text-gray-900">{r.rewardName}</p>
                     <p className="text-gray-600 text-sm">가격: {r.price.toLocaleString()}원</p>
                     <div className="mt-2 flex items-center gap-3">
                       <Button
-                        type="button"
                         variant="outline"
                         size="sm"
                         onClick={() =>
@@ -398,13 +474,12 @@ export function BackingPage() {
                             [r.rewardId]: Math.max(1, (prev[r.rewardId] ?? 1) - 1),
                           }))
                         }
-                        className="w-8 h-8 p-0"
+                        className="w-8 h-8 p-0 border-gray-300 text-gray-700"
                       >
                         <Minus className="w-4 h-4" />
                       </Button>
-                      <span className="text-lg">{rewardQuantities[r.rewardId] ?? 1}</span>
+                      <span className="text-lg font-bold text-indigo-600">{rewardQuantities[r.rewardId] ?? 1}</span>
                       <Button
-                        type="button"
                         variant="outline"
                         size="sm"
                         onClick={() =>
@@ -413,7 +488,7 @@ export function BackingPage() {
                             [r.rewardId]: (prev[r.rewardId] ?? 1) + 1,
                           }))
                         }
-                        className="w-8 h-8 p-0"
+                        className="w-8 h-8 p-0 border-gray-300 text-gray-700"
                       >
                         <Plus className="w-4 h-4" />
                       </Button>
@@ -424,65 +499,122 @@ export function BackingPage() {
             </Card>
 
             {/* 추가 후원금 */}
-            <Card>
+            <Card className="bg-white shadow-md rounded-2xl hover:shadow-lg transition">
               <CardHeader>
-                <CardTitle>추가 후원금 (선택)</CardTitle>
+                <CardTitle className="text-lg font-semibold text-gray-900">💰 추가 후원금 (선택)</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className ="flex flex-col space-y-2">
-                <Input type="number" placeholder="0" value={customAmount} onChange={(e) => {const value = e.target. value; 
-                if(/^\d*$/.test(value)) {setCustomAmount(value);}}} min="0" step ="1"
-                className = "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
-                </div>
+                <Input
+                  type="number"
+                  placeholder="0"
+                  value={customAmount}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (/^\d*$/.test(value)) setCustomAmount(value);
+                  }}
+                  min="0"
+                  step="1"
+                  className="text-right bg-gray-50 font-semibold text-indigo-700"
+                />
               </CardContent>
             </Card>
 
-            {/* 배송지 선택 */}
-            <Card>
+            {/*  배송지 입력 (후원 요약 밑) */}
+            <Card className="bg-white shadow-md rounded-2xl hover:shadow-lg transition">
               <CardHeader>
-                <CardTitle>배송지 선택</CardTitle>
+                <CardTitle className="text-lg font-semibold text-gray-900">🚚 배송지 정보</CardTitle>
               </CardHeader>
+
               <CardContent className="space-y-4">
+                {/* 저장된 주소 선택 */}
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm text-gray-700">배송지 선택 방식</Label>
+                  <div className="flex gap-2">
+                    <Button variant={addressMode === 'select' ? 'default' : 'outline'} size="sm" onClick={() => setAddressMode('select')}>
+                      저장된 주소
+                    </Button>
+                    {/* <Button variant={addressMode === 'manual' ? 'default' : 'outline'} size="sm" onClick={() => setAddressMode('manual')}>
+                      직접 입력
+                    </Button> */}
+                  </div>
+                </div>
+
                 {addressMode === 'select' ? (
                   <>
-                    <SavedAddressModal mode="backing" onSelectAddress={setShippingAddress} triggerText='배송지를 선택해주세요'/>
+                    <SavedAddressModal mode="backing" onSelectAddress={setShippingAddress} triggerText="📦 배송지를 선택해주세요" />
                     {shippingAddress ? (
-                      <div className="text-sm p-3 border rounded-lg">
-                        <p>{shippingAddress.addrName}</p>
+                      <div className="mt-3 p-3 border border-gray-200 rounded-lg bg-gray-50 text-sm space-y-1">
+                        <p className="font-semibold">{shippingAddress.addrName}</p>
                         <p>
-                          {shippingAddress.roadAddr} {shippingAddress.detailAddr} ({shippingAddress.postalCode})
+                          {shippingAddress.roadAddr} {shippingAddress.detailAddr}
                         </p>
                         <p>
-                          {shippingAddress.recipient} ({shippingAddress.recipientPhone})
+                          ({shippingAddress.postalCode}) / {shippingAddress.recipient} ({shippingAddress.recipientPhone})
                         </p>
+                        <p className="text-xs text-gray-500">기본배송지: {shippingAddress.isDefault === 'Y' ? '✅ 예' : '❌ 아니오'}</p>
                       </div>
                     ) : (
-                      <p></p>
+                      <p className="text-gray-500 text-sm mt-1">아직 선택된 배송지가 없습니다.</p>
                     )}
                   </>
                 ) : (
-                  <div className="space-y-2">
-                    <Input placeholder="수령인" value={manualAddress.recipient} onChange={(e) => setManualAddress({ ...manualAddress, recipient: e.target.value })} />
-                    <Input placeholder="전화번호" value={manualAddress.recipientPhone} onChange={(e) => setManualAddress({ ...manualAddress, recipientPhone: e.target.value })} />
-                    <Input placeholder="우편번호" value={manualAddress.postalCode} onChange={(e) => setManualAddress({ ...manualAddress, postalCode: e.target.value })} />
+                  <div className="p-4 border border-gray-200 rounded-lg bg-gray-50 space-y-3">
+                    <Input placeholder="받는 사람 이름" value={manualAddress.recipient} onChange={(e) => setManualAddress({ ...manualAddress, recipient: e.target.value })} />
+                    <Input placeholder="연락처 (010-0000-0000)" value={manualAddress.recipientPhone} onChange={(e) => setManualAddress({ ...manualAddress, recipientPhone: e.target.value })} />
+                    <div className="flex gap-2">
+                      <Input placeholder="우편번호" value={manualAddress.postalCode} onChange={(e) => setManualAddress({ ...manualAddress, postalCode: e.target.value })} />
+                      <Button variant="outline" onClick={() => alert('우편번호 검색 기능은 추후 추가됩니다.')}>
+                        검색
+                      </Button>
+                    </div>
                     <Input placeholder="도로명 주소" value={manualAddress.roadAddr} onChange={(e) => setManualAddress({ ...manualAddress, roadAddr: e.target.value })} />
                     <Input placeholder="상세 주소" value={manualAddress.detailAddr} onChange={(e) => setManualAddress({ ...manualAddress, detailAddr: e.target.value })} />
+
+                    <div className="flex items-center gap-2 mt-2">
+                      <input
+                        type="checkbox"
+                        id="isDefault"
+                        checked={manualAddress.isDefault === 'Y'}
+                        onChange={(e) =>
+                          setManualAddress({
+                            ...manualAddress,
+                            isDefault: e.target.checked ? 'Y' : 'N',
+                          })
+                        }
+                      />
+                      <Label htmlFor="isDefault" className="text-sm">
+                        기본 배송지로 설정
+                      </Label>
+                    </div>
+
+                    <Button
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                      onClick={() => {
+                        if (!manualAddress.recipient || !manualAddress.roadAddr) {
+                          alert('배송 정보를 모두 입력해주세요.');
+                          return;
+                        }
+                        setShippingAddress({ ...manualAddress, addrId: null });
+                        setAddressMode('select');
+                        alert('입력한 배송지가 선택되었습니다.');
+                      }}
+                    >
+                      배송지 저장 및 사용하기
+                    </Button>
                   </div>
                 )}
               </CardContent>
             </Card>
-          </div>
 
-          {/* 후원 요약 */}
-          <div>
-            <Card className="sticky top-8">
+            {/* 후원 요약 */}
+            <Card className="bg-white shadow-lg rounded-2xl border border-gray-200">
               <CardHeader>
-                <CardTitle>후원 요약</CardTitle>
+                <CardTitle className="text-lg font-semibold text-gray-900">💎 후원 요약</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-5">
                 <div className="p-3 bg-gray-50 rounded-lg space-y-2">
                   {rewardList.map((r) => (
-                    <div key={r.rewardId} className="text-sm flex justify-between">
+                    <div key={r.rewardId} className="text-sm flex justify-between text-gray-700">
                       <span>{r.rewardName}</span>
                       <span>
                         {r.price.toLocaleString()}원 × {rewardQuantities[r.rewardId] ?? 1}
@@ -490,19 +622,19 @@ export function BackingPage() {
                     </div>
                   ))}
                   {customAmount && (
-                    <div className="text-sm flex justify-between">
+                    <div className="text-sm flex justify-between text-indigo-700 font-semibold">
                       <span>추가 후원금</span>
-                      <span>{parseInt(customAmount).toLocaleString()}원</span>
+                      <span>+{parseInt(customAmount).toLocaleString()}원</span>
                     </div>
                   )}
                 </div>
                 <Separator />
-                <div className="flex justify-between text-lg">
+                <div className="flex justify-between items-center text-lg font-bold">
                   <span>총 금액</span>
-                  <span className="text-blue-600">{getTotalAmount().toLocaleString()}원</span>
+                  <span className="text-indigo-700">{getTotalAmount().toLocaleString()}원</span>
                 </div>
-                <Button onClick={handleOpenPayment} className="w-full bg-blue-600 hover:bg-blue-700" disabled={rewardList.length === 0}>
-                  후원하기
+                <Button onClick={handleOpenPayment} className="w-full bg-blue-800 hover:bg-blue-900 text-white font-semibold shadow-md hover:shadow-lg" disabled={rewardList.length === 0}>
+                  🤍 후원하기
                 </Button>
               </CardContent>
             </Card>
