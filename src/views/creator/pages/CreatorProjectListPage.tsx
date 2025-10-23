@@ -216,8 +216,8 @@ export default function CreatorProjectListPage() {
     }
 
     return (
-        <Card>
-            <CardHeader className="gap-6">
+        <div className="space-y-3">
+            <div className="space-y-3">
                 <div className="flex items-center justify-between">
                     <CardTitle className="text-2xl">프로젝트 목록</CardTitle>
                 </div>
@@ -287,9 +287,9 @@ export default function CreatorProjectListPage() {
                 <div className="text-xs text-muted-foreground ml-2">
                     총 {total.toLocaleString()}건
                 </div>
-            </CardHeader>
+            </div>
 
-            <CardContent>
+            <div>
                 {projects.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
                         <p className="text-gray-600 mb-4">새 프로젝트를 준비해보세요.</p>
@@ -414,13 +414,8 @@ export default function CreatorProjectListPage() {
                     </ul>
                 )}
 
-                <Pagination
-                    {...bindPagination(total, {
-                        showSizeSelector: true,
-                        sizeOptions: [5, 10, 20, 30, 50],
-                    })}
-                />
-            </CardContent>
+                <Pagination { ...bindPagination(total, { variant: "user" }) }/>
+            </div>
 
             {/* === 새소식 등록 모달 === */}
             {activeProject && (
@@ -464,7 +459,7 @@ export default function CreatorProjectListPage() {
                     </SheetContent>
                 </Sheet>
             )}
-        </Card >
+        </div >
     );
 }
 

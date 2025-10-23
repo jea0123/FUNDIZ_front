@@ -6,10 +6,7 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@
 import { getData, endpoints } from '@/api/apis';
 import type { BackingCreatorProjectList } from '@/types/backing';
 import FundingLoader from '@/components/FundingLoader';
-import { setDevCreatorIdHeader } from '@/api/apis';
 import { useCookies } from 'react-cookie';
-setDevCreatorIdHeader(2);
-
 
 // 공통 페이지네이션 함수
 const paginate = <T,>(arr: T[], page: number, perPage: number): T[] => {
