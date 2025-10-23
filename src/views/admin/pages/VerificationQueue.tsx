@@ -5,14 +5,15 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ProjectVerifyList } from "@/types/admin";
 import { endpoints, getData, postData } from "@/api/apis";
 import { useLocation, useNavigate } from "react-router-dom";
-import { formatDate, formatPrice } from "@/utils/utils";
+import { formatDate, formatPrice, toPublicUrl } from "@/utils/utils";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import FundingLoader from "@/components/FundingLoader";
-import { Pagination } from "@/views/project/ProjectsBrowsePage";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useListQueryState } from "@/utils/usePagingQueryState";
 import { ProjectStatusChip, type ProjectStatus } from "../components/ProjectStatusChip";
+import { ProjectThumb } from "@/views/creator/pages/CreatorProjectListPage";
+import { Pagination } from "@/utils/pagination";
 
 type Stage = "verifying" | "completed";
 type CompletedResult = "ALL" | "UPCOMING" | "REJECTED";
@@ -233,20 +234,6 @@ export function VerificationQueue() {
 }
 
 /* ------------------------------- UI Bits ------------------------------- */
-
-function EmptyState({ message, onBack }: { message: string; onBack: () => void }) {
-    return (
-        <Card>
-            <CardContent className="p-8 text-center space-y-4">
-                <p className="text-sm text-muted-foreground">{message}</p>
-                <Button variant="outline" onClick={onBack}>
-                    <ArrowLeft className="h-4 w-4 mr-2" /> 뒤로가기
-                </Button>
-            </CardContent>
-        </Card>
-    );
-}
-
 function ProjectCard({ p, onChanged }: { p: ProjectVerifyList; onChanged: () => void }) {
     const navigate = useNavigate();
 
@@ -299,82 +286,90 @@ function ProjectCard({ p, onChanged }: { p: ProjectVerifyList; onChanged: () => 
 
     return (
         <li key={p.projectId}>
-            <Card>
-                <CardHeader className="space-y-3">
-                    <CardTitle className="flex flex-wrap items-center gap-3">
-                        <span className="truncate">{p.title}</span>
-                            <ProjectStatusChip status={st} />
-                    </CardTitle>
-                </CardHeader>
+            <Card className="group/card">
+                <div className="grid gap-0 md:grid-cols-[180px_1fr]">
+                    <div className="p-4 md:p-5 md:flex md:items-center md:justify-center">
+                        <ProjectThumb
+                            src={toPublicUrl(p.thumbnail)}
+                            alt={p.title}
+                            ratio="1/1"
+                            className="w-[120px] h-[120px] md:w-[120px] md:h-[120px]"
+                        />
+                    </div>
 
-                <CardContent>
-                    <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
-                        <div className="space-y-0.5">
-                            <dt className="text-xs text-muted-foreground">창작자명</dt>
-                            <dd className="font-medium text-foreground/90">
-                                {p.creatorName}
-                            </dd>
-                        </div>
+                    <div className="border-t md:border-t-0 md:border-l border-border">
+                        <CardHeader className="space-y-3">
+                            <CardTitle className="flex flex-wrap items-center gap-3">
+                                <span className="truncate">{p.title}</span>
+                                <ProjectStatusChip status={st} />
+                            </CardTitle>
+                        </CardHeader>
 
-                        <div className="space-y-0.5">
-                            <dt className="text-xs text-muted-foreground">카테고리</dt>
-                            <dd className="font-medium text-foreground/90">
-                                {p.ctgrName} <span className="mx-1 text-muted-foreground">›</span> {p.subctgrName}
-                            </dd>
-                        </div>
+                        <CardContent>
+                            <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                                <div className="space-y-0.5">
+                                    <dt className="text-xs text-muted-foreground">창작자명</dt>
+                                    <dd className="font-medium text-foreground/90">{p.creatorName}</dd>
+                                </div>
 
-                        <div className="space-y-0.5">
-                            <dt className="text-xs text-muted-foreground">기간</dt>
-                            <dd className="font-medium text-foreground/90">
-                                {formatDate(p.startDate)} <span className="mx-1 text-muted-foreground">~</span> {formatDate(p.endDate)}
-                            </dd>
-                        </div>
+                                <div className="space-y-0.5">
+                                    <dt className="text-xs text-muted-foreground">카테고리</dt>
+                                    <dd className="font-medium text-foreground/90">
+                                        {p.ctgrName} <span className="mx-1 text-muted-foreground">›</span> {p.subctgrName}
+                                    </dd>
+                                </div>
 
-                        <div className="space-y-0.5">
-                            <dt className="text-xs text-muted-foreground">목표 금액</dt>
-                            <dd className="font-medium text-foreground/90 tabular-nums">
-                                {formatPrice(p.goalAmount)}
-                            </dd>
-                        </div>
+                                <div className="space-y-0.5">
+                                    <dt className="text-xs text-muted-foreground">기간</dt>
+                                    <dd className="font-medium text-foreground/90">
+                                        {formatDate(p.startDate)} <span className="mx-1 text-muted-foreground">~</span> {formatDate(p.endDate)}
+                                    </dd>
+                                </div>
 
-                        <div className="space-y-0.5">
-                            <dt className="text-xs text-muted-foreground">심사요청일</dt>
-                            <dd className="text-foreground/90">
-                                {formatDate(p.requestedAt)}
-                            </dd>
-                        </div>
-                    </dl>
-                </CardContent>
+                                <div className="space-y-0.5">
+                                    <dt className="text-xs text-muted-foreground">목표 금액</dt>
+                                    <dd className="font-medium text-foreground/90 tabular-nums">{formatPrice(p.goalAmount)}</dd>
+                                </div>
 
-                <CardFooter className="justify-end gap-2">
-                    <Button variant="outline" size="sm" onClick={() => goDetail(p.projectId)}>
-                        <Eye className="h-4 w-4 mr-1" /> 상세보기
-                    </Button>
+                                <div className="space-y-0.5">
+                                    <dt className="text-xs text-muted-foreground">심사요청일</dt>
+                                    <dd className="text-foreground/90">{formatDate(p.requestedAt)}</dd>
+                                </div>
+                            </dl>
+                        </CardContent>
 
-                    {st === "VERIFYING" && (
-                        <>
-                            <Button
-                                variant="default"
-                                size="sm"
-                                onClick={() => handleApproveButton(p.projectId, p.title)}
-                                disabled={approvingId === p.projectId}
-                            >
-                                <CheckCircle className="h-4 w-4 mr-1" />{approvingId === p.projectId ? "승인중" : "승인"}
+                        <CardFooter className="justify-end gap-2">
+                            <Button variant="outline" size="sm" onClick={() => goDetail(p.projectId)}>
+                                <Eye className="h-4 w-4 mr-1" /> 상세보기
                             </Button>
-                            <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => {
-                                    setTargetProject({ id: p.projectId, title: p.title });
-                                    setReason("");
-                                    setOpenRejectModal(true);
-                                }}
-                            >
-                                <XCircle className="h-4 w-4 mr-1" /> 반려
-                            </Button>
-                        </>
-                    )}
-                </CardFooter>
+
+                            {st === "VERIFYING" && (
+                                <>
+                                    <Button
+                                        variant="default"
+                                        size="sm"
+                                        onClick={() => handleApproveButton(p.projectId, p.title)}
+                                        disabled={approvingId === p.projectId}
+                                    >
+                                        <CheckCircle className="h-4 w-4 mr-1" />
+                                        {approvingId === p.projectId ? "승인중" : "승인"}
+                                    </Button>
+                                    <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        onClick={() => {
+                                            setTargetProject({ id: p.projectId, title: p.title });
+                                            setReason("");
+                                            setOpenRejectModal(true);
+                                        }}
+                                    >
+                                        <XCircle className="h-4 w-4 mr-1" /> 반려
+                                    </Button>
+                                </>
+                            )}
+                        </CardFooter>
+                    </div>
+                </div>
             </Card>
 
             <Dialog open={openRejectModal} onOpenChange={setOpenRejectModal}>
@@ -399,5 +394,18 @@ function ProjectCard({ p, onChanged }: { p: ProjectVerifyList; onChanged: () => 
                 </DialogContent>
             </Dialog>
         </li>
+    );
+}
+
+function EmptyState({ message, onBack }: { message: string; onBack: () => void }) {
+    return (
+        <Card>
+            <CardContent className="p-8 text-center space-y-4">
+                <p className="text-sm text-muted-foreground">{message}</p>
+                <Button variant="outline" onClick={onBack}>
+                    <ArrowLeft className="h-4 w-4 mr-2" /> 뒤로가기
+                </Button>
+            </CardContent>
+        </Card>
     );
 }

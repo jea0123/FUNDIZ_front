@@ -54,6 +54,7 @@ export interface ProjectVerifyList {
     goalAmount: number;
     startDate: Date;
     endDate: Date;
+    thumbnail: string;
     projectStatus: string;
     requestedAt: Date;
 }
@@ -78,7 +79,7 @@ export interface ProjectVerifyDetail {
     endDate: Date;
     content: string;
     contentBlocks: ContentBlocks; // EditorJS JSON
-    thumbnail: string
+    thumbnail: string;
     businessDoc?: string;
     projectStatus: ProjectStatus;
     requestedAt: Date;
@@ -103,6 +104,7 @@ export interface AdminProjectList {
     endDate: Date;
     createdAt: Date;
     updatedAt: Date
+    thumbnail: string;
     projectStatus: ProjectStatus;
     backerCnt: number;
     likeCnt: number;
