@@ -46,6 +46,6 @@ export interface creatorShippingStataus {
   backingId: number;
   shippingStatus: string;
   trackingNum: string;
-  shippedAt: Date;
-  deliveredAt: Date;
+  shippedAt: Date | null;
+  deliveredAt: Date | null;
 }

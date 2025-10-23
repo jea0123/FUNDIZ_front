@@ -6,6 +6,7 @@ import { percent, toWon } from "@/utils/utils";
 import { endpoints, getData } from "@/api/apis";
 import type { PageResult } from "@/types/projects";
 import type { ProjectCard } from "@/types/creator";
+import { useNavigate } from "react-router-dom";
 
 type Props = { creatorId: number };
 
@@ -15,6 +16,7 @@ export default function CreatorProjects({ creatorId }: Props) {
     const [items, setItems] = useState<PageResult<ProjectCard> | null>(null);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
     const size = 8;
 
     useEffect(() => {
@@ -44,7 +46,7 @@ export default function CreatorProjects({ creatorId }: Props) {
                 <div className="flex items-center justify-center py-14 text-muted-foreground">
                     등록된 프로젝트가 없어요.
                 </div>
-            ) : total > size ? (
+            ) : total > size && (
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <div className="text-sm text-muted-foreground">총 {total}개</div>
@@ -57,19 +59,39 @@ export default function CreatorProjects({ creatorId }: Props) {
                     <>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                             {items.items.map(p => (
-                                <Card key={p.projectId} className="overflow-hidden group cursor-pointer">
-                                    <div className="aspect-[4/3] bg-muted/50">
-                                        <img src={p.thumbnail} alt={p.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]" />
+                                <div key={p.projectId} className="overflow-hidden group cursor-pointer" onClick={() => navigate(`/project/${p.projectId}`)}>
+                                    <div className="relative aspect-[1] w-full overflow-hidden rounded-sm group">
+                                        <img src={p.thumbnail} alt={p.title} className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-110" />
                                     </div>
                                     <CardContent className="p-4 space-y-2">
-                                        <h4 className="font-medium line-clamp-2">{p.title}</h4>
+                                        <h4 className="font-medium line-clamp-2 h-[48px]">{p.title}</h4>
                                         <div className="text-xs text-muted-foreground">후원 {toWon(p.backerCnt)}명</div>
+
                                         <div className="flex items-center justify-between text-sm">
-                                            <span className="font-semibold">{percent(p.currAmount, p.goalAmount)}%</span>
+                                            <span className="text-[14px] font-semibold text-red-600">{percent(p.currAmount, p.goalAmount)}%</span>
                                             <span className="text-muted-foreground">{toWon(p.currAmount)}</span>
                                         </div>
+
+                                        <div className="mt-1 h-1.5 w-full rounded-full bg-slate-200">
+                                            <div
+                                                className="h-1.5 rounded-full bg-red-500 transition-all"
+                                                style={{ width: `${percent(p.currAmount, p.goalAmount)}%` }}
+                                            />
+                                        </div>
+
+                                        {p.isSuccess && (
+                                            <div className="mt-2 inline-flex items-center rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-[11px] font-medium text-green-700">
+                                                프로젝트 성공
+                                            </div>
+                                        )}
+                                        {(!p.isSuccess && p.projectStatus === "FAILED") && (
+                                            <div className="mt-2 inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                                                목표 미달
+                                            </div>
+                                        )}
                                     </CardContent>
-                                </Card>
+                                </div>
+
                             ))}
                         </div>
                         {total > size && (
@@ -81,26 +103,7 @@ export default function CreatorProjects({ creatorId }: Props) {
                         )}
                     </>
                 </div>
-            ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {items.items.map(p => (
-                        <Card key={p.projectId} className="overflow-hidden group cursor-pointer">
-                            <div className="aspect-[4/3] bg-muted/50">
-                                <img src={p.thumbnail} alt={p.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]" />
-                            </div>
-                            <CardContent className="p-4 space-y-2">
-                                <h4 className="font-medium line-clamp-2">{p.title}</h4>
-                                <div className="text-xs text-muted-foreground">후원 {toWon(p.backerCnt)}명</div>
-                                <div className="flex items-center justify-between text-sm">
-                                    <span className="font-semibold">{percent(p.currAmount, p.goalAmount)}%</span>
-                                    <span className="text-muted-foreground">{toWon(p.currAmount)}</span>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-            )
-            }
+            )}
         </>
     );
 }
