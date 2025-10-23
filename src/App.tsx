@@ -1,7 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { Route, Routes, useNavigate } from 'react-router-dom';
-import { LoginPage } from './views/auth/user/LoginPage';
-import { RegisterPage } from './views/auth/user/RegisterPage';
 import { useLoginUserStore } from './store/LoginUserStore.store';
 import { useCookies } from 'react-cookie';
 import { endpoints, getData } from './api/apis';
@@ -59,7 +57,8 @@ import CreatorPage from './views/creator/pages/CreatorPage';
 import UserHomeTab from './views/user/UserHomeTab';
 import CreateCategory from './views/CreateCategory';
 import PaymentRegisterPage from './views/user/tabs/PaymentRegisterPage';
-import LoginPage2 from './views/auth/user/LoginPage2';
+import LoginPage from './views/auth/user/LoginPage';
+import RegisterPage2 from './views/auth/user/RegisterPage2';
 
 const OverviewTab = lazy(() => import('./views/admin/pages/OverviewTab').then((module) => ({ default: module.OverviewTab })));
 const CreatorDashboard = lazy(() => import('./views/creator/pages/CreatorDashboard').then((module) => ({ default: module.default })));
@@ -104,7 +103,7 @@ export default function App() {
             <Route path="/" element={<MainPage />} />
 
             <Route path="/auth">
-              <Route path="register" element={<RegisterPage />} />
+              <Route path="register" element={<RegisterPage2 />} />
               <Route path="login" element={<LoginPage />} />
             </Route>
 
