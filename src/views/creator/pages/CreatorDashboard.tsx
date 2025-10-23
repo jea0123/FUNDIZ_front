@@ -155,7 +155,7 @@ export default function CreatorDashboard() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {[
               ['총 프로젝트', data.projectTotal],
-              ['총 후원금', `₩${data.totalAmount?.toLocaleString()}`],
+              ['총 수익', `₩${data.totalAmount?.toLocaleString()}`],
               ['총 후원 수', data.totalBackingCnt?.toLocaleString()],
               ['승인 대기', data.totalVerifyingCnt],
             ].map(([label, value], i) => (
@@ -233,12 +233,13 @@ export default function CreatorDashboard() {
                 <CardTitle className="text-lg font-semibold mb-2">내 프로젝트 성공률</CardTitle>
               </CardHeader>
               <CardContent>
+              
                 {data.projectTotal === 0 || (successRate === 0 && failRate === 0) ? (
                   <div className="text-center text-gray-500 py-10">데이터가 없습니다.</div>
                 ) : (
                   <ResponsiveContainer width="100%" height={220}>
                     <PieChart>
-                      <Pie data={successData} cx="50%" cy="50%" outerRadius={70} dataKey="value" label={({ name, value }) => `${name} ${value.toFixed(1)}%`} labelLine={false}>
+                      <Pie data={successData} cx="50%" cy="50%" outerRadius={70} dataKey="value" label={({ value }) => `${value.toFixed(1)}%`} labelLine={false}>
                         {successData.map((_, i) => (
                           <Cell key={i} fill={['#22c55e', '#ef4444'][i]} />
                         ))}
