@@ -8,6 +8,10 @@ import type { Featured, RecentTop10, RecentView } from "@/types/projects";
 import { toWonPlus, getDaysLeft } from "@/utils/utils";
 import { useCookies } from "react-cookie";
 import { useNavigate } from "react-router-dom";
+import banner1 from "@/assets/images/banner1.webp";
+import banner2 from "@/assets/images/banner2.webp";
+import banner3 from "@/assets/images/banner3.webp";
+
 
 export default function Main() {
     const [cookie] = useCookies();
@@ -37,10 +41,9 @@ export default function Main() {
                     <Hero />
                     <section className="space-y-4 pt-8">
                         <div className="border-b pb-3">
-                            <div className="flex items-end justify-between pt-10">
+                            <div className="flex items-end justify-between">
                                 <div>
                                     <h3 className="text-lg font-semibold md:text-xl">주목할 만한 프로젝트</h3>
-                                    <p className="text-sm text-muted-foreground">오늘 뜨는 프로젝트를 만나보세요.</p>
                                 </div>
                                 <Button variant="ghost" className="h-8 px-2 text-xs" onClick={() => navigate("/project")}>
                                     전체보기 <ChevronRight className="ml-1 h-4 w-4" />
@@ -64,19 +67,40 @@ export default function Main() {
 }
 
 function Hero() {
+    const banners = [banner1, banner2, banner3];
+    const [idx, setIdx] = useState(0);
+
+    const next = useCallback(() => setIdx(i => (i + 1) % banners.length), [banners.length]);
+    const prev = useCallback(() => setIdx(i => (i - 1 + banners.length) % banners.length), [banners.length]);
+
+    useEffect(() => {
+        // const t = setInterval(next, 5000); // 5초 자동 슬라이드
+        // return () => clearInterval(t);
+    }, [next]);
+
+
     return (
-        <div className="rounded-sm border bg-card text-card-foreground shadow-sm h-[450px]">
-            <div className="relative h-[350px] rounded-sm bg-zinc-200 dark:bg-zinc-800" />
-            <div className="flex items-center justify-between px-5 py-4">
-                <div>
-                    <h2 className="text-xl md:text-2xl font-semibold leading-tight">메인메인 메인 메인메인 메인메인</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">소제목 소제목 소제목 소제목</p>
-                </div>
-                <div className="flex items-center gap-2 text-xs">
-                    <span className="px-2 py-1 rounded-full border bg-background">1 / 5</span>
-                    <Button size="icon" variant="secondary" className="h-7 w-7"><ChevronLeft className="h-4 w-4" /></Button>
-                    <Button size="icon" variant="secondary" className="h-7 w-7"><ChevronRight className="h-4 w-4" /></Button>
-                </div>
+        <div className="relative h-[340px] overflow-hidden rounded-sm border bg-card shadow-sm">
+            <div
+                className="flex h-full w-full transition-transform duration-500 ease-in-out"
+                style={{ transform: `translateX(-${idx * 100}%)` }}
+            >
+                {banners.map((src, i) => (
+                    <img key={i} src={src} className="h-[340px] w-full shrink-0 object-cover" alt={`banner-${i + 1}`} draggable={false} />
+                ))}
+            </div>
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-between px-2">
+                <Button size="icon" variant="secondary" className="pointer-events-auto h-8 w-8 opacity-90" onClick={prev} aria-label="이전">
+                    <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button size="icon" variant="secondary" className="pointer-events-auto h-8 w-8 opacity-90" onClick={next} aria-label="다음">
+                    <ChevronRight className="h-4 w-4" />
+                </Button>
+            </div>
+            <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2">
+                {banners.map((_, i) => (
+                    <button key={i} onClick={() => setIdx(i)} aria-label={`배너 ${i + 1}`} className={`h-2 w-2 rounded-full ${i === idx ? "bg-white" : "bg-white/50"}`} />
+                ))}
             </div>
         </div>
     );

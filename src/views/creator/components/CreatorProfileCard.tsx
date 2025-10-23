@@ -6,7 +6,7 @@ import type { CreatorInfo } from "@/types/creator";
 import { useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 import { useNavigate } from "react-router-dom";
-import defaultProfile from '@/lib/default-profile.png'
+import defaultProfile from '@/assets/images/default-profile.webp'
 import { toPublicUrl } from "@/utils/utils";
 
 export default function CreatorProfileCard() {
