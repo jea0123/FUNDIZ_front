@@ -5,7 +5,7 @@ import { deleteData, endpoints, getData } from "@/api/apis";
 import FundingLoader from "@/components/FundingLoader";
 import type { CreatorProjectListDto } from "@/types/creator";
 import { useLocation, useNavigate } from "react-router-dom";
-import { formatDate, formatPrice } from "@/utils/utils";
+import { formatDate, formatPrice, toPublicUrl } from "@/utils/utils";
 import CreatorProjectRowActions from "../components/CreatorProjectRowActions";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -302,122 +302,111 @@ export default function CreatorProjectListPage() {
 
                             return (
                                 <li key={p.projectId}>
-                                    <Card>
-                                        <CardHeader className="space-y-3">
-                                            <CardTitle className="flex flex-wrap items-center gap-3">
-                                                <span className="truncate">{p.title}</span>
-                                                <ProjectStatusChip status={st} />
-                                            </CardTitle>
-                                            <div className="flex flex-wrap items-center gap-2">
-                                                <StatPill
-                                                    icon={Users}
-                                                    label=""
-                                                    value={p.backerCnt?.toLocaleString?.() ?? 0}
-                                                    tooltip="후원자수"
-                                                    emphasize
+                                    <Card className="group/card">
+                                        <div className="grid gap-0 md:grid-cols-[180px_1fr]">
+                                            <div className="p-4 md:p-5">
+                                                <ProjectThumb
+                                                    src={p.thumbnailUrl as any}
+                                                    alt={p.title}
+                                                    className="md:w-[180px]"
                                                 />
-                                                <StatPill
-                                                    icon={Heart}
-                                                    label=""
-                                                    value={p.likeCnt?.toLocaleString?.() ?? 0}
-                                                    tooltip="좋아요수"
-                                                    emphasize
-                                                />
-                                                <StatPill
-                                                    icon={Eye}
-                                                    label=""
-                                                    value={p.viewCnt?.toLocaleString?.() ?? 0}
-                                                    tooltip="조회수"
-                                                    emphasize
-                                                />
-
-                                                {!HIDE_BADGE_STATUSES.includes(st) && (
-                                                    <>
-                                                        <div className="h-3 w-px bg-border mx-1 hidden sm:block" aria-hidden="true"></div>
-                                                        <StatPill
-                                                            label="새소식"
-                                                            value={(p.newsCount ?? 0).toLocaleString?.()}
-                                                            tooltip={
-                                                                <span>최근 : {p.lastNewsAt ? formatDate(p.lastNewsAt) : "없음"}</span>
-                                                            }
-                                                            emphasize
-                                                        />
-                                                        <StatPill
-                                                            label="후기"
-                                                            value={`${p.reviewPendingCount ?? 0} / ${(p.reviewNewCount ?? 0)}`}
-                                                            tooltip={
-                                                                <span>최근 : {p.lastReviewAt ? formatDate(p.lastReviewAt) : "없음"}</span>
-                                                            }
-                                                            emphasize
-                                                        />
-                                                    </>
-                                                )}
                                             </div>
-                                        </CardHeader>
 
-                                        <CardContent>
-                                            <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
-                                                <div className="space-y-0.5">
-                                                    <dt className="text-xs text-muted-foreground">카테고리</dt>
-                                                    <dd className="font-medium text-foreground/90">
-                                                        {p.ctgrName} <span className="mx-1 text-muted-foreground">›</span> {p.subctgrName}
-                                                    </dd>
-                                                </div>
+                                            <div className="border-t md:border-t-0 md:border-l border-border">
+                                                <CardHeader className="space-y-3">
+                                                    <CardTitle className="flex flex-wrap items-center gap-3">
+                                                        <span className="truncate">{p.title}</span>
+                                                        <ProjectStatusChip status={st} />
+                                                    </CardTitle>
 
-                                                <div className="space-y-0.5">
-                                                    <dt className="text-xs text-muted-foreground">기간</dt>
-                                                    <dd className="font-medium text-foreground/90">
-                                                        {formatDate(p.startDate)} <span className="mx-1 text-muted-foreground">~</span> {formatDate(p.endDate)}
-                                                    </dd>
-                                                </div>
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <StatPill icon={Users} label="" value={p.backerCnt?.toLocaleString?.() ?? 0} tooltip="후원자수" emphasize />
+                                                        <StatPill icon={Heart} label="" value={p.likeCnt?.toLocaleString?.() ?? 0} tooltip="좋아요수" emphasize />
+                                                        <StatPill icon={Eye} label="" value={p.viewCnt?.toLocaleString?.() ?? 0} tooltip="조회수" emphasize />
 
-                                                <div className="space-y-0.5">
-                                                    <dt className="text-xs text-muted-foreground">현재/목표 금액</dt>
-                                                    <dd className="font-semibold text-foreground tabular-nums">
-                                                        {formatPrice(p.currAmount)}
-                                                        <span className="mx-1 text-muted-foreground">/</span>
-                                                        {formatPrice(p.goalAmount)}
-                                                        <span className="ml-1 text-emerald-600">({p.percentNow}%)</span>
-                                                    </dd>
-                                                </div>
-
-                                                <div className="space-y-0.5">
-                                                    <dt className="text-xs text-muted-foreground">작성일 · 수정일</dt>
-                                                    <dd className="text-foreground/90">
-                                                        {formatDate(p.createdAt)}
-                                                        <span className="mx-1 text-muted-foreground">·</span>
-                                                        {formatDate(p.updatedAt)}
-                                                    </dd>
-                                                </div>
-
-                                                {st === "VERIFYING" && p.requestedAt && (
-                                                    <div className="space-y-0.5 md:col-span-2">
-                                                        <dt className="text-xs text-muted-foreground">심사요청일</dt>
-                                                        <dd className="text-foreground/90">{formatDate(p.requestedAt)}</dd>
+                                                        {!HIDE_BADGE_STATUSES.includes(st) && (
+                                                            <>
+                                                                <div className="h-3 w-px bg-border mx-1 hidden sm:block" aria-hidden="true" />
+                                                                <StatPill
+                                                                    label="새소식"
+                                                                    value={(p.newsCount ?? 0).toLocaleString?.()}
+                                                                    tooltip={<span>최근 : {p.lastNewsAt ? formatDate(p.lastNewsAt) : "없음"}</span>}
+                                                                    emphasize
+                                                                />
+                                                                <StatPill
+                                                                    label="후기"
+                                                                    value={`${p.reviewPendingCount ?? 0} / ${(p.reviewNewCount ?? 0)}`}
+                                                                    tooltip={<span>최근 : {p.lastReviewAt ? formatDate(p.lastReviewAt) : "없음"}</span>}
+                                                                    emphasize
+                                                                />
+                                                            </>
+                                                        )}
                                                     </div>
-                                                )}
+                                                </CardHeader>
 
-                                                {st === "REJECTED" && p.rejectedReason && (
-                                                    <div className="space-y-0.5 md:col-span-2">
-                                                        <dt className="text-xs text-muted-foreground">반려 사유</dt>
-                                                        <dd className="text-foreground/90">{p.rejectedReason}</dd>
-                                                    </div>
-                                                )}
-                                            </dl>
-                                        </CardContent>
+                                                <CardContent>
+                                                    <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                                                        <div className="space-y-0.5">
+                                                            <dt className="text-xs text-muted-foreground">카테고리</dt>
+                                                            <dd className="font-medium text-foreground/90">
+                                                                {p.ctgrName} <span className="mx-1 text-muted-foreground">›</span> {p.subctgrName}
+                                                            </dd>
+                                                        </div>
 
-                                        <CardFooter className="justify-end gap-2">
-                                            <CreatorProjectRowActions
-                                                project={p}
-                                                deletingId={deletingId}
-                                                onDetail={goDetail}
-                                                onEdit={goEdit}
-                                                onDelete={deleteProject}
-                                                onAddReward={goAddReward}
-                                                onWriteNews={openNewsById}
-                                                onManageReviews={openReviewsById}
-                                            />
-                                        </CardFooter>
+                                                        <div className="space-y-0.5">
+                                                            <dt className="text-xs text-muted-foreground">기간</dt>
+                                                            <dd className="font-medium text-foreground/90">
+                                                                {formatDate(p.startDate)} <span className="mx-1 text-muted-foreground">~</span> {formatDate(p.endDate)}
+                                                            </dd>
+                                                        </div>
+
+                                                        <div className="space-y-0.5">
+                                                            <dt className="text-xs text-muted-foreground">현재/목표 금액</dt>
+                                                            <dd className="font-semibold text-foreground tabular-nums">
+                                                                {formatPrice(p.currAmount)}
+                                                                <span className="mx-1 text-muted-foreground">/</span>
+                                                                {formatPrice(p.goalAmount)}
+                                                                <span className="ml-1 text-emerald-600">({p.percentNow}%)</span>
+                                                            </dd>
+                                                        </div>
+
+                                                        <div className="space-y-0.5">
+                                                            <dt className="text-xs text-muted-foreground">작성일 · 수정일</dt>
+                                                            <dd className="text-foreground/90">
+                                                                {formatDate(p.createdAt)}<span className="mx-1 text-muted-foreground">·</span>{formatDate(p.updatedAt)}
+                                                            </dd>
+                                                        </div>
+
+                                                        {st === "VERIFYING" && p.requestedAt && (
+                                                            <div className="space-y-0.5 md:col-span-2">
+                                                                <dt className="text-xs text-muted-foreground">심사요청일</dt>
+                                                                <dd className="text-foreground/90">{formatDate(p.requestedAt)}</dd>
+                                                            </div>
+                                                        )}
+
+                                                        {st === "REJECTED" && p.rejectedReason && (
+                                                            <div className="space-y-0.5 md:col-span-2">
+                                                                <dt className="text-xs text-muted-foreground">반려 사유</dt>
+                                                                <dd className="text-foreground/90">{p.rejectedReason}</dd>
+                                                            </div>
+                                                        )}
+                                                    </dl>
+                                                </CardContent>
+
+                                                <CardFooter className="justify-end gap-2">
+                                                    <CreatorProjectRowActions
+                                                        project={p}
+                                                        deletingId={deletingId}
+                                                        onDetail={goDetail}
+                                                        onEdit={goEdit}
+                                                        onDelete={deleteProject}
+                                                        onAddReward={goAddReward}
+                                                        onWriteNews={openNewsById}
+                                                        onManageReviews={openReviewsById}
+                                                    />
+                                                </CardFooter>
+                                            </div>
+                                        </div>
                                     </Card>
                                 </li>
                             );
@@ -538,5 +527,36 @@ export function StatPill({
             <TooltipTrigger asChild>{Pill}</TooltipTrigger>
             <TooltipContent>{tooltip}</TooltipContent>
         </Tooltip>
+    );
+}
+
+function ProjectThumb({
+    src,
+    alt,
+    className = "",
+}: { src?: string | null; alt: string; className?: string }) {
+    const fallback =
+        'data:image/svg+xml;utf8,' +
+        encodeURIComponent(
+            `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300">
+                <rect width="100%" height="100%" fill="#f1f5f9"/>
+                <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#94a3b8" font-family="sans-serif" font-size="14">No Image</text>
+            </svg>`
+        );
+
+    const url = src ? toPublicUrl(src) : fallback;
+
+    return (
+        <div className={`relative w-full aspect-[4/3] overflow-hidden rounded-md bg-muted ${className}`}>
+            <img
+                src={url}
+                alt={alt}
+                loading="lazy"
+                className="h-full w-full object-cover transition-transform duration-300 group-hover/card:scale-[1.02]"
+                onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src = fallback;
+                }}
+            />
+        </div>
     );
 }
