@@ -59,6 +59,7 @@ import CreatorPage from './views/creator/pages/CreatorPage';
 import UserHomeTab from './views/user/UserHomeTab';
 import CreateCategory from './views/CreateCategory';
 import PaymentRegisterPage from './views/user/tabs/PaymentRegisterPage';
+import LoginPage2 from './views/auth/user/LoginPage2';
 
 const OverviewTab = lazy(() => import('./views/admin/pages/OverviewTab').then((module) => ({ default: module.OverviewTab })));
 const CreatorDashboard = lazy(() => import('./views/creator/pages/CreatorDashboard').then((module) => ({ default: module.default })));
@@ -104,7 +105,7 @@ export default function App() {
 
             <Route path="/auth">
               <Route path="register" element={<RegisterPage />} />
-              <Route path="login" element={<LoginPage />} />
+              <Route path="login" element={<LoginPage2 />} />
             </Route>
 
             <Route path="/project">
