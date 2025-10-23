@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useLoginUserStore } from "@/store/LoginUserStore.store";
 import { useCookies } from "react-cookie";
 
-type Stat = { label: string; value: number | string; icon: ReactNode };
+type Stat = { label: string; value: number | string; href: string | null; icon: ReactNode };
 
 export default function UserHomeTab() {
     const { loginUser, resetLoginUser } = useLoginUserStore();
@@ -40,6 +40,8 @@ export default function UserHomeTab() {
     const rvNext = useCallback(() => rvCanNext && setRvPage((p) => p + 1), [rvCanNext]);
     const recPrev = useCallback(() => recCanPrev && setRecPage((p) => p - 1), [recCanPrev]);
     const recNext = useCallback(() => recCanNext && setRecPage((p) => p + 1), [recCanNext]);
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         const keyHandler = (e: KeyboardEvent) => {
@@ -94,10 +96,10 @@ export default function UserHomeTab() {
 
     const quickStats: Stat[] = useMemo(
         () => [
-            { label: "펀딩+", value: stats.backingCnt, icon: <Wallet className="h-4 w-4" /> },
-            { label: "좋아요", value: stats.likeCnt, icon: <Heart className="h-4 w-4" /> },
-            { label: "팔로우", value: stats.followCnt, icon: <Users className="h-4 w-4" /> },
-            { label: "알림", value: stats.notiCnt, icon: <Bell className="h-4 w-4" /> },
+            { label: "펀딩+", value: stats.backingCnt, href: "/user/support", icon: <Wallet className="h-4 w-4"/> },
+            { label: "좋아요", value: stats.likeCnt, href: "/user/wishlist", icon: <Heart className="h-4 w-4" /> },
+            { label: "팔로우", value: stats.followCnt, href: null, icon: <Users className="h-4 w-4" /> },
+            { label: "알림", value: stats.notiCnt, href: "/user/notifications", icon: <Bell className="h-4 w-4" /> },
         ],
         [stats]
     );
@@ -121,7 +123,7 @@ export default function UserHomeTab() {
                                         {s.icon}
                                         <span>{s.label}</span>
                                     </div>
-                                    <div className="mt-1 text-xl font-semibold">{s.value}</div>
+                                    <div className="mt-1 text-xl font-semibold cursor-pointer hover:underline w-max" onClick={() => s.href && navigate(s.href)}>{s.value}</div>
                                 </CardContent>
                             </Card>
                         ))}

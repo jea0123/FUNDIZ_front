@@ -8,7 +8,7 @@ import { deleteData, endpoints, getData, postData } from "@/api/apis";
 import { toastError, toastSuccess } from "@/utils/utils";
 import type { FollowerItem } from "@/types/creator";
 import { useCookies } from "react-cookie";
-import defaultProfile from '@/lib/default-profile.png'
+import defaultProfile from '@/assets/images/default-profile.webp'
 
 type Props = { creatorId: number };
 
