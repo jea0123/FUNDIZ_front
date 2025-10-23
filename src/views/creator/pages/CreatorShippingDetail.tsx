@@ -1,16 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getData, postData, endpoints } from '@/api/apis';
-import { useCreatorId } from '../../../types/useCreatorId';
-import type { creatorShippingBackerList, creatorShippingStatus } from '@/types/shipping';
+import type { creatorShippingBackerList, creatorShippingStataus } from '@/types/shipping';
 import FundingLoader from '@/components/FundingLoader';
-
-import { setDevCreatorIdHeader } from '@/api/apis';
-setDevCreatorIdHeader(2);
+import { useCookies } from 'react-cookie';
 
 export default function CreatorShippingDetail() {
+  const [cookie] = useCookies();
   const { projectId } = useParams<{ projectId: string }>();
-  const { creatorId, loading: idLoading } = useCreatorId();
   const navigate = useNavigate();
 
   const fetched = useRef(false);
@@ -26,14 +23,14 @@ export default function CreatorShippingDetail() {
 
   // 데이터 로드
   useEffect(() => {
-    if (idLoading || !projectId) return;
+    if (!projectId) return;
     if (fetched.current) return;
 
     fetched.current = true;
     (async () => {
       try {
         setLoading(true);
-        const res = await getData(endpoints.creatorShippingBackerList(Number(projectId)));
+        const res = await getData(endpoints.creatorShippingBackerList(Number(projectId)), cookie.accessToken);
         if (res?.status === 200 && Array.isArray(res.data)) {
           setShippingList(res.data);
         } else {
@@ -46,7 +43,7 @@ export default function CreatorShippingDetail() {
         setLoading(false);
       }
     })();
-  }, [idLoading, projectId]);
+  }, [projectId, cookie.accessToken]);
 
   // 상태 전환 허용 규칙 (취소 확장)
   const allowedTransitions: Record<string, string[]> = {
@@ -87,14 +84,14 @@ export default function CreatorShippingDetail() {
       let successCount = 0;
 
       for (const item of groupItems) {
-        const updateDto: creatorShippingStatus = {
+        const updateDto: creatorShippingStataus = {
           backingId: item.backingId,
           shippingStatus: newStatus,
           trackingNum: item.trackingNum || '',
           shippedAt: newStatus === 'SHIPPED' ? new Date() : null,
           deliveredAt: newStatus === 'DELIVERED' ? new Date() : null,
         };
-        const res = await postData(endpoints.creatorShippingBackerList(Number(projectId)), updateDto);
+        const res = await postData(endpoints.creatorShippingBackerList(Number(projectId)), updateDto, cookie.accessToken);
         if (res.status === 200) successCount++;
       }
 
@@ -124,8 +121,8 @@ export default function CreatorShippingDetail() {
       if (sortBy === 'recent') return new Date(b.shippedAt || '').getTime() - new Date(a.shippedAt || '').getTime();
       if (sortBy === 'oldest') return new Date(a.shippedAt || '').getTime() - new Date(b.shippedAt || '').getTime();
       if (sortBy === 'status') {
-        const order = { READY: 1, SHIPPED: 2, DELIVERED: 3 };
-        return order[a.shippingStatus] - order[b.shippingStatus];
+        const order: Record<'READY' | 'SHIPPED' | 'DELIVERED', number> = { READY: 1, SHIPPED: 2, DELIVERED: 3 };
+        return order[a.shippingStatus as 'READY' | 'SHIPPED' | 'DELIVERED'] - order[b.shippingStatus as 'READY' | 'SHIPPED' | 'DELIVERED'];
       }
       return 0;
     });
@@ -147,7 +144,7 @@ export default function CreatorShippingDetail() {
     return <span className={`${base} ${colors[status] || ''}`}>{statusLabel[status] || status}</span>;
   };
 
-  if (loading || idLoading) return <FundingLoader />;
+  if (loading) return <FundingLoader />;
   if (error)
     return (
       <div className="p-6 text-red-600">

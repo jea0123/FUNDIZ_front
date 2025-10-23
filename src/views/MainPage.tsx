@@ -140,7 +140,7 @@ function PopularSidebar() {
     return (
         <aside className="rounded-sm h-full flex flex-col lg:border-l border-border lg:pl-10">
             <div className="mb-2 flex items-center justify-between">
-                <h3 className="text-sm font-semibold">인기 프로젝트</h3>
+                <h3 className="text-lg font-semibold">인기 프로젝트</h3>
                 <Button variant="ghost" className="h-6 px-1 text-xs" onClick={() => navigate("/project")}>
                     전체보기
                 </Button>

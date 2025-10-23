@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { endpoints, getData, postData } from "@/api/apis";
 import { useLocation, useNavigate } from "react-router-dom";
 import FundingLoader from "@/components/FundingLoader";
-import { formatDate, formatPrice } from "@/utils/utils";
+import { formatDate, formatPrice, toPublicUrl } from "@/utils/utils";
 import type { AdminProjectList } from "@/types/admin";
 import { ProjectStatusChip, type ProjectStatus } from "../components/ProjectStatusChip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,6 +13,7 @@ import clsx from "clsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useListQueryState } from "@/utils/usePagingQueryState";
 import { Pagination } from "@/utils/pagination";
+import { ProjectThumb } from "@/views/creator/pages/CreatorProjectListPage";
 
 type Stage = keyof typeof STAGE_STATUS_MAP;
 type ClosedResult = "ALL" | "SUCCESS" | "FAILED" | "CANCELED";
@@ -276,96 +277,107 @@ function ProjectCard({ p, onChanged }: { p: AdminProjectList; onChanged: () => v
 
     return (
         <li key={p.projectId}>
-            <Card>
-                <CardHeader className="space-y-3">
-                    <CardTitle className="flex flex-wrap items-center gap-3">
-                        <span className="truncate">{p.title}</span>
-                        <ProjectStatusChip status={st} />
-                    </CardTitle>
-                    <div className="flex flex-wrap items-center gap-2">
-                        <StatPill
-                            icon={Users}
-                            label=""
-                            value={p.backerCnt?.toLocaleString?.() ?? 0}
-                            tooltip="후원자수"
-                            emphasize
-                        />
-                        <StatPill
-                            icon={Heart}
-                            label=""
-                            value={p.likeCnt?.toLocaleString?.() ?? 0}
-                            tooltip="좋아요수"
-                            emphasize
-                        />
-                        <StatPill
-                            icon={Eye}
-                            label=""
-                            value={p.viewCnt?.toLocaleString?.() ?? 0}
-                            tooltip="조회수"
-                            emphasize
+            <Card className="group/card">
+                <div className="grid gap-0 md:grid-cols-[180px_1fr]">
+                    <div className="p-4 md:p-5 md:flex md:items-center md:justify-center">
+                        <ProjectThumb
+                            src={toPublicUrl(p.thumbnail)}
+                            alt={p.title}
+                            ratio="1/1"
+                            className="w-[120px] h-[120px] md:w-[120px] md:h-[120px]"
                         />
                     </div>
-                </CardHeader>
 
-                <CardContent>
-                    <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
-                        <div className="space-y-0.5">
-                            <dt className="text-xs text-muted-foreground">창작자명</dt>
-                            <dd className="font-medium text-foreground/90">
-                                {p.creatorName}
-                            </dd>
-                        </div>
+                    <div className="border-t md:border-t-0 md:border-l border-border">
+                        <CardHeader className="space-y-3">
+                            <CardTitle className="flex flex-wrap items-center gap-3">
+                                <span className="truncate">{p.title}</span>
+                                <ProjectStatusChip status={st} />
+                            </CardTitle>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <StatPill
+                                    icon={Users}
+                                    label=""
+                                    value={p.backerCnt?.toLocaleString?.() ?? 0}
+                                    tooltip="후원자수"
+                                    emphasize
+                                />
+                                <StatPill
+                                    icon={Heart}
+                                    label=""
+                                    value={p.likeCnt?.toLocaleString?.() ?? 0}
+                                    tooltip="좋아요수"
+                                    emphasize
+                                />
+                                <StatPill
+                                    icon={Eye}
+                                    label=""
+                                    value={p.viewCnt?.toLocaleString?.() ?? 0}
+                                    tooltip="조회수"
+                                    emphasize
+                                />
+                            </div>
+                        </CardHeader>
 
-                        <div className="space-y-0.5">
-                            <dt className="text-xs text-muted-foreground">카테고리</dt>
-                            <dd className="font-medium text-foreground/90">
-                                {p.ctgrName} <span className="mx-1 text-muted-foreground">›</span> {p.subctgrName}
-                            </dd>
-                        </div>
+                        <CardContent>
+                            <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm mt-3">
+                                <div className="space-y-0.5">
+                                    <dt className="text-xs text-muted-foreground">창작자명</dt>
+                                    <dd className="font-medium text-foreground/90">{p.creatorName}</dd>
+                                </div>
 
-                        <div className="space-y-0.5">
-                            <dt className="text-xs text-muted-foreground">기간</dt>
-                            <dd className="font-medium text-foreground/90">
-                                {formatDate(p.startDate)} <span className="mx-1 text-muted-foreground">~</span> {formatDate(p.endDate)}
-                            </dd>
-                        </div>
+                                <div className="space-y-0.5">
+                                    <dt className="text-xs text-muted-foreground">카테고리</dt>
+                                    <dd className="font-medium text-foreground/90">
+                                        {p.ctgrName} <span className="mx-1 text-muted-foreground">›</span> {p.subctgrName}
+                                    </dd>
+                                </div>
 
-                        <div className="space-y-0.5">
-                            <dt className="text-xs text-muted-foreground">현재/목표 금액</dt>
-                            <dd className="font-semibold text-foreground tabular-nums">
-                                {formatPrice(p.currAmount)}
-                                <span className="mx-1 text-muted-foreground">/</span>
-                                {formatPrice(p.goalAmount)}
-                                <span className="ml-1 text-emerald-600">({p.percentNow}%)</span>
-                            </dd>
-                        </div>
+                                <div className="space-y-0.5">
+                                    <dt className="text-xs text-muted-foreground">기간</dt>
+                                    <dd className="font-medium text-foreground/90">
+                                        {formatDate(p.startDate)} <span className="mx-1 text-muted-foreground">~</span> {formatDate(p.endDate)}
+                                    </dd>
+                                </div>
 
-                        <div className="space-y-0.5">
-                            <dt className="text-xs text-muted-foreground">작성일 · 수정일</dt>
-                            <dd className="text-foreground/90">
-                                {formatDate(p.createdAt)}
-                                <span className="mx-1 text-muted-foreground">·</span>
-                                {formatDate(p.updatedAt)}
-                            </dd>
-                        </div>
-                    </dl>
-                </CardContent>
+                                <div className="space-y-0.5">
+                                    <dt className="text-xs text-muted-foreground">현재/목표 금액</dt>
+                                    <dd className="font-semibold text-foreground tabular-nums">
+                                        {formatPrice(p.currAmount)}
+                                        <span className="mx-1 text-muted-foreground">/</span>
+                                        {formatPrice(p.goalAmount)}
+                                        <span className="ml-1 text-emerald-600">({p.percentNow}%)</span>
+                                    </dd>
+                                </div>
 
-                <CardFooter className="justify-end gap-2">
-                    <Button variant="outline" size="sm" onClick={() => goDetail(p.projectId)}>
-                        <Eye className="h-4 w-4 mr-1" /> 상세보기
-                    </Button>
-                    {canEdit && (
-                        <Button variant="outline" size="sm" onClick={goEdit}>
-                            <Pencil className="h-4 w-4 mr-1" /> 수정
-                        </Button>
-                    )}
-                    {canCancel && (
-                        <Button variant="destructive" size="sm" onClick={goCancel} disabled={cancel}>
-                            <XCircle className="h-4 w-4 mr-1" /> {cancel ? "취소중" : "취소"}
-                        </Button>
-                    )}
-                </CardFooter>
+                                <div className="space-y-0.5">
+                                    <dt className="text-xs text-muted-foreground">작성일 · 수정일</dt>
+                                    <dd className="text-foreground/90">
+                                        {formatDate(p.createdAt)}
+                                        <span className="mx-1 text-muted-foreground">·</span>
+                                        {formatDate(p.updatedAt)}
+                                    </dd>
+                                </div>
+                            </dl>
+                        </CardContent>
+
+                        <CardFooter className="justify-end gap-2">
+                            <Button variant="outline" size="sm" onClick={() => goDetail(p.projectId)}>
+                                <Eye className="h-4 w-4 mr-1" /> 상세보기
+                            </Button>
+                            {canEdit && (
+                                <Button variant="outline" size="sm" onClick={goEdit}>
+                                    <Pencil className="h-4 w-4 mr-1" /> 수정
+                                </Button>
+                            )}
+                            {canCancel && (
+                                <Button variant="destructive" size="sm" onClick={goCancel} disabled={cancel}>
+                                    <XCircle className="h-4 w-4 mr-1" /> {cancel ? "취소중" : "취소"}
+                                </Button>
+                            )}
+                        </CardFooter>
+                    </div>
+                </div>
             </Card>
         </li>
     );
