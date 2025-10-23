@@ -145,6 +145,10 @@ export function ProjectDetailsPage() {
             toastError('본인 크리에이터는 팔로우할 수 없습니다.');
             return;
         }
+        if (!loginUser) {
+            toastError('로그인 후 사용해주세요.');
+            return;
+        }
         setMutatingFollow(true);
         try {
             const res = await postData(endpoints.followCreator(creatorId), {}, cookie.accessToken);
@@ -162,6 +166,10 @@ export function ProjectDetailsPage() {
         if (!creatorId) return;
         if (creatorId === loginUser?.creatorId) {
             toastError('본인 크리에이터는 언팔로우할 수 없습니다.');
+            return;
+        }
+        if (!loginUser) {
+            toastError('로그인 후 사용해주세요.');
             return;
         }
         setMutatingFollow(true);
