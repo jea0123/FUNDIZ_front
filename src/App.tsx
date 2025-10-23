@@ -51,7 +51,6 @@ import SettlementTab from './views/admin/pages/SettlementTab';
 import CreatorProjectEditPage from './views/creator/pages/CreatorProjectEditPage';
 import BackingDetailTab from './views/user/tabs/BackingDetailTab';
 import ProjectsBrowsePage, { ProjectsByCategoryPage, ProjectsBySubcategoryPage, ProjectsSearchPage } from './views/project/ProjectsBrowsePage';
-import { ProjectDetailsPage } from './views/project/ProjectDetailsPage';
 import CreatorRewardAddPage from './views/creator/pages/CreatorRewardAddPage';
 import CreatorPage from './views/creator/pages/CreatorPage';
 import UserHomeTab from './views/user/UserHomeTab';
@@ -59,6 +58,7 @@ import CreateCategory from './views/CreateCategory';
 import PaymentRegisterPage from './views/user/tabs/PaymentRegisterPage';
 import LoginPage from './views/auth/user/LoginPage';
 import RegisterPage2 from './views/auth/user/RegisterPage2';
+import { ProjectDetails } from './views/project/ProjectDetails';
 
 const OverviewTab = lazy(() => import('./views/admin/pages/OverviewTab').then((module) => ({ default: module.OverviewTab })));
 const CreatorDashboard = lazy(() => import('./views/creator/pages/CreatorDashboard').then((module) => ({ default: module.default })));
@@ -112,7 +112,7 @@ export default function App() {
               <Route path="search" element={<ProjectsSearchPage />} />
               <Route path="category/:ctgrId" element={<ProjectsByCategoryPage />} />
               <Route path="category/:ctgrId/subcategory/:subctgrId" element={<ProjectsBySubcategoryPage />} />
-              <Route path=":projectId" element={<ProjectDetailsPage />} />
+              <Route path=":projectId" element={<ProjectDetails />} />
               <Route path=":projectId/backing" element={<BackingPage />} />
             </Route>
 

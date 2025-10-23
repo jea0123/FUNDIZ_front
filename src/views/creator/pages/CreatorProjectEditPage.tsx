@@ -626,10 +626,10 @@ export default function CreatorProjectEditPage() {
     const progress = (currentStep / STEPS.length) * 100;
 
     return (
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="">
             <CreatorProjectEditStepper steps={STEPS} currentStep={currentStep} progress={progress} title={isEdit ? "프로젝트 수정" : "프로젝트 만들기"} />
 
-            <div className="sticky top-0 left-0 right-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border rounded-xl p-3 shadow-sm">
+            <div className="sticky top-0 left-0 right-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border rounded-xl p-3 shadow-sm mt-3">
                 <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center">
                         {isEdit && currentStep === 1 ? (

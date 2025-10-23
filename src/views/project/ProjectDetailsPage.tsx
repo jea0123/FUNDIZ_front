@@ -20,7 +20,6 @@ import ProjectReviewsTab from './components/ProjectReviewsTab';
 import { ProjectDetailViewer } from '../creator/components/ProjectDetailViewer';
 import { useCookies } from 'react-cookie';
 import { useLoginUserStore } from '@/store/LoginUserStore.store';
-//import { log } from 'console';
 
 export function ProjectDetailsPage() {
     /* ----------------------------- Router helpers ----------------------------- */
@@ -28,11 +27,9 @@ export function ProjectDetailsPage() {
     const { projectId } = useParams();
 
     /* --------------------------------- Refs ---------------------------------- */
-
     const cartRef = useRef<HTMLDivElement>(null);
 
     /* --------------------------------- States --------------------------------- */
-
     const [cookie] = useCookies();
     const [project, setProject] = useState<ProjectDetail>();
     const [loadingProject, setLoadingProject] = useState(false);
@@ -60,7 +57,6 @@ export function ProjectDetailsPage() {
     const { loginUser } = useLoginUserStore();
 
     /* ------------------------------- Derived ---------------------------------- */
-
     const cartSummary = useMemo(() => {
         if (!project) return { totalQty: 0, totalAmount: 0 };
         let totalQty = 0,
@@ -202,7 +198,6 @@ export function ProjectDetailsPage() {
     };
 
     /* ------------------------------- UI handlers ---------------------------------- */
-
     /* START 리워드 카트 */
     const getRemain = useCallback((r: Reward) => (r.rewardCnt > 0 ? Math.max(0, r.remain) : 99), []);
 
@@ -283,7 +278,6 @@ export function ProjectDetailsPage() {
     const incCommunity = useCallback((d: number) => setCommunityCnt((v) => Math.max(0, v + d)), []);
 
     /* -------------------------------- Effects -------------------------------- */
-
     useEffect(() => {
         projectData();
     }, [projectId, projectData]);
@@ -345,7 +339,6 @@ export function ProjectDetailsPage() {
     }, [projectId]);
 
     /* --------------------------------- Render --------------------------------- */
-
     if (!projectId || !project || loadingProject) {
         return <FundingLoader />;
     }

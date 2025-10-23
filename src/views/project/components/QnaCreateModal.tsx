@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import type { QnaAddRequest } from "@/types/qna";
+import { MessageSquareMore } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useCookies } from "react-cookie";
 import { useNavigate, useParams } from "react-router-dom";
@@ -40,7 +41,9 @@ export function QnaCreateModal() {
         <div>
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogTrigger asChild>
-                    <Button variant="outline" size="sm">문의하기</Button>
+                    <Button variant="outline" size="sm" className="w-full">
+                        <MessageSquareMore className="w-4 h-4 mr-1" /> 문의하기
+                        </Button>
                 </DialogTrigger>
                 <DialogContent>
                     <DialogHeader>
