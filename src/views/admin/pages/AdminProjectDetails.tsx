@@ -129,8 +129,8 @@ export function AdminProjectDetails() {
                     <CardContent className="space-y-4">
                         <>
                             <div className="text-sm text-muted-foreground">대표 이미지</div>
-                            <div className="mb-6 overflow-hidden rounded-xl border bg-background">
-                                <img src={thumbnailUrl} alt={project.title} className="w-full max-h-[420px] object-cover" />
+                            <div className="mb-6 overflow-hidden rounded-xl bg-background">
+                                <img src={thumbnailUrl} alt={project.title} className="rounded-lg max-h-[560px] w-auto object-contain" />
                             </div>
                         </>
                         <KV label="카테고리" value={`${project.ctgrName} > ${project.subctgrName}`} />

@@ -15,9 +15,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Eye, Heart, Users, type LucideIcon } from "lucide-react";
 import { ProjectStatusChip, type ProjectStatus } from "@/views/admin/components/ProjectStatusChip";
 import clsx from "clsx";
-import { Pagination } from "@/views/project/ProjectsBrowsePage";
 import { useListQueryState } from "@/utils/usePagingQueryState";
 import { useCookies } from "react-cookie";
+import { Pagination } from "@/utils/pagination";
 
 /* --------------------------------- Status --------------------------------- */
 type Stage = keyof typeof STAGE_STATUS_MAP;
@@ -296,7 +296,7 @@ export default function CreatorProjectListPage() {
                         <Button onClick={goCreate}>프로젝트 만들기</Button>
                     </div>
                 ) : (
-                    <ul className="space-y-4">
+                    <ul className="space-y-6">
                         {projects.map((p) => {
                             const st = p.projectStatus as ProjectStatus;
 
@@ -304,22 +304,22 @@ export default function CreatorProjectListPage() {
                                 <li key={p.projectId}>
                                     <Card className="group/card">
                                         <div className="grid gap-0 md:grid-cols-[180px_1fr]">
-                                            <div className="p-4 md:p-5">
+                                            <div className="p-4 md:p-5 md:flex md:items-center md:justify-center">
                                                 <ProjectThumb
-                                                    src={p.thumbnailUrl as any}
+                                                    src={toPublicUrl(p.thumbnail)}
                                                     alt={p.title}
-                                                    className="md:w-[180px]"
+                                                    className="w-[120px] h-[120px] md:w-[120px] md:h-[120px]"
                                                 />
                                             </div>
 
                                             <div className="border-t md:border-t-0 md:border-l border-border">
-                                                <CardHeader className="space-y-3">
+                                                <CardHeader>
                                                     <CardTitle className="flex flex-wrap items-center gap-3">
                                                         <span className="truncate">{p.title}</span>
                                                         <ProjectStatusChip status={st} />
                                                     </CardTitle>
 
-                                                    <div className="flex flex-wrap items-center gap-2">
+                                                    <div className="flex flex-wrap items-center gap-2 mt-2 mb-2">
                                                         <StatPill icon={Users} label="" value={p.backerCnt?.toLocaleString?.() ?? 0} tooltip="후원자수" emphasize />
                                                         <StatPill icon={Heart} label="" value={p.likeCnt?.toLocaleString?.() ?? 0} tooltip="좋아요수" emphasize />
                                                         <StatPill icon={Eye} label="" value={p.viewCnt?.toLocaleString?.() ?? 0} tooltip="조회수" emphasize />
@@ -393,7 +393,7 @@ export default function CreatorProjectListPage() {
                                                     </dl>
                                                 </CardContent>
 
-                                                <CardFooter className="justify-end gap-2">
+                                                <CardFooter className="justify-end gap-2 mt-6">
                                                     <CreatorProjectRowActions
                                                         project={p}
                                                         deletingId={deletingId}
@@ -530,29 +530,41 @@ export function StatPill({
     );
 }
 
-function ProjectThumb({
+export function ProjectThumb({
     src,
     alt,
     className = "",
-}: { src?: string | null; alt: string; className?: string }) {
+    ratio = "1/1",
+}: {
+    src?: string | null;
+    alt: string;
+    className?: string;
+    ratio?: "1/1";
+}) {
     const fallback =
-        'data:image/svg+xml;utf8,' +
+        "data:image/svg+xml;utf8," +
         encodeURIComponent(
-            `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300">
+            `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300">
                 <rect width="100%" height="100%" fill="#f1f5f9"/>
-                <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#94a3b8" font-family="sans-serif" font-size="14">No Image</text>
+                <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+                    fill="#94a3b8" font-family="sans-serif" font-size="14">No Image</text>
             </svg>`
         );
-
-    const url = src ? toPublicUrl(src) : fallback;
+    const url = src || fallback;
 
     return (
-        <div className={`relative w-full aspect-[4/3] overflow-hidden rounded-md bg-muted ${className}`}>
+        <div
+            className={[
+                "relative w-full overflow-hidden rounded-md bg-muted",
+                ratio === "1/1" ? "aspect-square" : "aspect-[4/3]",
+                className,
+            ].join(" ")}
+        >
             <img
                 src={url}
                 alt={alt}
                 loading="lazy"
-                className="h-full w-full object-cover transition-transform duration-300 group-hover/card:scale-[1.02]"
+                className="h-full w-full object-cover object-center transition-transform duration-300 group-hover/card:scale-[1.02]"
                 onError={(e) => {
                     (e.currentTarget as HTMLImageElement).src = fallback;
                 }}

@@ -10,6 +10,7 @@ export interface CreatorProjectListDto {
     endDate: Date;
     createdAt: Date;
     updatedAt: Date;
+    thumbnail: string;
     projectStatus: string;
     backerCnt: number;
     likeCnt: number;
