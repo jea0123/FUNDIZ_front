@@ -54,7 +54,7 @@ export default function CreateCategory() {
         try {
             const res = await postData(endpoints.createSubcategory, {
                 ctgrId: selectedCategory,
-                subCtgrName: name, // 백엔드 JSON 키와 일치
+                subctgrName: name, // 백엔드 JSON 키와 일치
             });
             if (res.status === 200 || res.status === 201) {
                 toastSuccess(`서브카테고리가 생성되었습니다. (${name})`);

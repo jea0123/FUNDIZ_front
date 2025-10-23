@@ -5,7 +5,7 @@ import { FileText, RefreshCw, Trash2, Upload } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const MAX_SIZE = 4 * 1024 * 1024 * 1024; // 4GB
-const IMAGE_ACCEPT = ["image/jpeg", "image/png"];
+const IMAGE_ACCEPT = ["image/jpeg", "image/png", "image/webp"];
 const DOC_ACCEPT = ["application/pdf", "image/jpeg", "image/png"];
 
 interface Props {
@@ -69,7 +69,7 @@ export function ThumbnailUploader({
             throw new Error("JPEG 또는 PNG 이미지만 업로드할 수 있습니다.");
         }
         const kind = await sniffMime(f);
-        if (kind !== "jpeg" && kind !== "png") {
+        if (kind !== "jpeg" && kind !== "png" && kind !== "webp") {
             throw new Error("파일 형식이 손상되었거나 지원되지 않습니다.");
         }
         if (f.size <= 0 || f.size > MAX_SIZE) {
