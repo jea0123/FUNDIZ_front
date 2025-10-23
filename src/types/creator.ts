@@ -126,6 +126,7 @@ export interface CreatorDashboard {
 
     totalProjectCnt: number;
     projectFailedCnt: number;
+    projectSuccessCnt: number;
     projectFailedPercentage: number;
     projectSuccessPercentage: number;
 

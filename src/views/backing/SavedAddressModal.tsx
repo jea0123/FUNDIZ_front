@@ -146,9 +146,9 @@ export function SavedAddressModal({ mode, onSelectAddress, triggerText = '배송
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto rounded-2xl shadow-lg border border-gray-200 bg-white/95 backdrop-blur-sm">
         <DialogHeader>
-          <DialogTitle>배송지 관리</DialogTitle>
+          <DialogTitle>📦 배송지 관리</DialogTitle>
           <DialogDescription>저장된 배송지를 관리하세요.</DialogDescription>
         </DialogHeader>
 
@@ -159,7 +159,7 @@ export function SavedAddressModal({ mode, onSelectAddress, triggerText = '배송
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>새 배송지 추가</DialogTitle>
+              <DialogTitle>📦 새 배송지 추가</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               {[
@@ -195,7 +195,7 @@ export function SavedAddressModal({ mode, onSelectAddress, triggerText = '배송
         <div className="mt-4 max-h-[400px] overflow-y-scroll space-y-3">
           {addrList.length > 0 ? (
             addrList.map((addr) => (
-              <div key={addr.addrId} className="p-4 border rounded-lg flex justify-between">
+              <div key={addr.addrId} className="p-4 border border-gray-200 bg-white rounded-xl flex justify-between shadow-sm hover:shadow-md hover:border-blue-300 transition-all duration-200">
                 <div>
                   <h4 className="font-medium">{addr.addrName}</h4>
                   <p className="text-sm text-gray-500">
