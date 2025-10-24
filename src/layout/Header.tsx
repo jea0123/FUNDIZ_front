@@ -141,169 +141,175 @@ export function Header() {
     };
 
     return (
-        <nav className="bg-white shadow-sm border-b">
-            <div className="max-w-7xl mx-auto px-6">
-                <div className="h-14 flex items-center justify-between">
-                    <button
-                        onClick={() => navigate('/')}
-                        className="text-2xl font-bold text-blue-600 cursor-pointer"
-                    >
-                        CrowdFund
-                    </button>
-                    <div className="flex items-center gap-3 min-w-[260px] justify-end">
-                        <Button variant="ghost" size="sm" onClick={() => navigate('/')}>오픈 예정</Button>
-                        {loginUser ? (
-                            <>
-                                {loginUser.role === 'admin' && (
-                                    <Button variant="ghost" size="sm" onClick={() => navigate('/admin')}>관리자</Button>
-                                )}
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="relative">
-                                            <Bell className="h-4 w-4" />
-                                            {unreadCount > 0 && (
-                                                <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-[4px] rounded-full bg-red-500 text-[10px] leading-[16px] font-bold text-white">
-                                                    {unreadCount}
-                                                </span>
-                                            )}
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-96 p-0 rounded-lg shadow-lg border bg-white">
-                                        <div className="px-4 py-2 border-b flex items-center justify-between">
-                                            <span className="font-semibold">알림</span>
-                                            <button
-                                                onClick={markAllRead}
-                                                className="text-xs text-blue-600 hover:underline disabled:text-gray-300"
-                                                disabled={unreadCount === 0}
-                                            >
-                                                모두 읽음 처리
-                                            </button>
-                                        </div>
-                                        <div className="max-h-96 overflow-y-auto">
-                                            {notifications.length > 0 ? (
-                                                notifications.map((n) => (
-                                                    <div
-                                                        key={n.notificationId}
-                                                        onClick={() => navigateDetail(n)}
-                                                        className={`px-4 py-3 flex items-start gap-3 hover:bg-gray-50 relative group ${n.isRead === 'N' ? 'font-medium' : 'text-gray-600'
-                                                            }`}
-                                                    >
-                                                        <div className="pt-0.5">
-                                                            {TypeIcon[n.type] ?? <Bell className="h-4 w-4 text-gray-400" />}
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="flex items-center gap-2">
-                                                                {n.isRead === 'N' && <span className="inline-block w-2 h-2 rounded-full bg-blue-500" />}
-                                                                <span className="text-sm truncate">{n.message}</span>
+        <>
+            <div className="bg-white shadow-sm">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="h-14 flex items-center justify-between">
+                        <button
+                            onClick={() => navigate('/')}
+                            className="text-2xl font-bold text-blue-600 cursor-pointer"
+                        >
+                            CrowdFund
+                        </button>
+                        <div className="flex items-center gap-3 min-w-[260px] justify-end">
+                            <Button variant="ghost" size="sm" onClick={() => navigate('/')}>오픈 예정</Button>
+                            {loginUser ? (
+                                <>
+                                    {loginUser.role === 'admin' && (
+                                        <Button variant="ghost" size="sm" onClick={() => navigate('/admin')}>관리자</Button>
+                                    )}
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="sm" className="relative">
+                                                <Bell className="h-4 w-4" />
+                                                {unreadCount > 0 && (
+                                                    <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-[4px] rounded-full bg-red-500 text-[10px] leading-[16px] font-bold text-white">
+                                                        {unreadCount}
+                                                    </span>
+                                                )}
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="w-96 p-0 rounded-lg shadow-lg border bg-white">
+                                            <div className="px-4 py-2 border-b flex items-center justify-between">
+                                                <span className="font-semibold">알림</span>
+                                                <button
+                                                    onClick={markAllRead}
+                                                    className="text-xs text-blue-600 hover:underline disabled:text-gray-300"
+                                                    disabled={unreadCount === 0}
+                                                >
+                                                    모두 읽음 처리
+                                                </button>
+                                            </div>
+                                            <div className="max-h-96 overflow-y-auto">
+                                                {notifications.length > 0 ? (
+                                                    notifications.map((n) => (
+                                                        <div
+                                                            key={n.notificationId}
+                                                            onClick={() => navigateDetail(n)}
+                                                            className={`px-4 py-3 flex items-start gap-3 hover:bg-gray-50 relative group ${n.isRead === 'N' ? 'font-medium' : 'text-gray-600'
+                                                                }`}
+                                                        >
+                                                            <div className="pt-0.5">
+                                                                {TypeIcon[n.type] ?? <Bell className="h-4 w-4 text-gray-400" />}
                                                             </div>
-                                                            <span className="text-xs text-gray-400">{getElapsedTime(n.createdAt)}</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            {n.isRead === 'N' && (
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="flex items-center gap-2">
+                                                                    {n.isRead === 'N' && <span className="inline-block w-2 h-2 rounded-full bg-blue-500" />}
+                                                                    <span className="text-sm truncate">{n.message}</span>
+                                                                </div>
+                                                                <span className="text-xs text-gray-400">{getElapsedTime(n.createdAt)}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                {n.isRead === 'N' && (
+                                                                    <button
+                                                                        className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-green-600 transition"
+                                                                        onClick={(e) => { e.stopPropagation(); markRead(n.notificationId); }}
+                                                                        aria-label="읽음 처리"
+                                                                        title="읽음 처리"
+                                                                    >
+                                                                        <CheckCircle2 className="h-4 w-4" />
+                                                                    </button>
+                                                                )}
                                                                 <button
-                                                                    className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-green-600 transition"
-                                                                    onClick={(e) => { e.stopPropagation(); markRead(n.notificationId); }}
-                                                                    aria-label="읽음 처리"
-                                                                    title="읽음 처리"
+                                                                    className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition"
+                                                                    onClick={(e) => { e.stopPropagation(); deleteNoti(n.notificationId); }}
+                                                                    aria-label="알림 삭제"
+                                                                    title="삭제"
                                                                 >
-                                                                    <CheckCircle2 className="h-4 w-4" />
+                                                                    <X className="h-4 w-4" />
                                                                 </button>
-                                                            )}
-                                                            <button
-                                                                className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition"
-                                                                onClick={(e) => { e.stopPropagation(); deleteNoti(n.notificationId); }}
-                                                                aria-label="알림 삭제"
-                                                                title="삭제"
-                                                            >
-                                                                <X className="h-4 w-4" />
-                                                            </button>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                ))
-                                            ) : (
-                                                <div className="p-4 text-sm text-gray-500">새 알림이 없습니다</div>
-                                            )}
-                                        </div>
-                                        <div className="border-t">
-                                            <button
-                                                onClick={() => navigate('/notifications')}
-                                                className="w-full px-4 py-2 text-sm text-blue-600 font-medium hover:bg-gray-50"
-                                            >
-                                                모두 보기
-                                            </button>
-                                        </div>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="rounded-full">
-                                            <User className="h-4 w-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onClick={() => navigate('/user')}>마이페이지</DropdownMenuItem>
-                                        <DropdownMenuItem onClick={logoutHandler}>로그아웃</DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </>
-                        ) : (
-                            <>
-                                <Button variant="ghost" size="sm" onClick={() => navigate('/auth/login')}>
-                                    로그인
-                                </Button>
-                                <Button size="sm" onClick={() => navigate('/auth/register')}>
-                                    회원가입
-                                </Button>
-                            </>
-                        )}
-                    </div>
-                </div>
-
-                <div className="h-12 flex items-center justify-between relative">
-                    <div className='flex items-center justify-between gap-8'>
-                        <div className="flex items-center gap-3" onPointerEnter={openNow} onPointerLeave={closeSoon} onFocusCapture={openNow} onBlurCapture={closeSoon}>
-                            <button
-                                type="button"
-                                className="flex items-center gap-2 text-gray-900 hover:text-blue-600 mb-[14px]"
-                                aria-expanded={open}
-                                aria-haspopup="dialog"
-                            >
-                                <Menu className="w-5 h-5" />
-                                <span className="text-sm font-medium">카테고리</span>
-                            </button>
-                            <CategoryDropdown open={open} onClose={() => setOpen(false)} />
-                        </div>
-
-                        <nav className="hidden md:flex items-end gap-8 whitespace-nowrap">
-                            {navItems.map((item) => (
-                                <NavLink
-                                    key={item.to}
-                                    to={item.to}
-                                    end={item.to === "/"}
-                                    className={({ isActive }) =>
-                                        clsx("px-1 pb-3 text-sm font-medium border-b-2 transition-colors",
-                                            isActive
-                                                ? "text-gray-900 border-blue-600"
-                                                : "text-gray-700 hover:text-blue-600 border-transparent"
-                                        )
-                                    }
-                                >
-                                    {item.label}
-                                </NavLink>
-                            ))}
-                        </nav>
-                    </div>
-                    <div className="hidden md:block w-[300px] max-w-[50vw]">
-                        <div className="relative w-full bg-gray-100 rounded-md mb-4">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-                            <Input placeholder="검색어를 입력해주세요." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                                onKeyDown={searchKeyHandler} className="pl-10 h-9"
-                            />
+                                                    ))
+                                                ) : (
+                                                    <div className="p-4 text-sm text-gray-500">새 알림이 없습니다</div>
+                                                )}
+                                            </div>
+                                            <div className="border-t">
+                                                <button
+                                                    onClick={() => navigate('/notifications')}
+                                                    className="w-full px-4 py-2 text-sm text-blue-600 font-medium hover:bg-gray-50"
+                                                >
+                                                    모두 보기
+                                                </button>
+                                            </div>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="sm" className="rounded-full">
+                                                <User className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem onClick={() => navigate('/user')}>마이페이지</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={logoutHandler}>로그아웃</DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </>
+                            ) : (
+                                <>
+                                    <Button variant="ghost" size="sm" onClick={() => navigate('/auth/login')}>
+                                        로그인
+                                    </Button>
+                                    <Button size="sm" onClick={() => navigate('/auth/register')}>
+                                        회원가입
+                                    </Button>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
-        </nav>
+
+            <div className="sticky top-0 z-500 bg-white border-b">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="h-12 flex items-center justify-between relative">
+                        <div className='flex items-center justify-between gap-8'>
+                            <div className="flex items-center gap-3" onPointerEnter={openNow} onPointerLeave={closeSoon} onFocusCapture={openNow} onBlurCapture={closeSoon}>
+                                <button
+                                    type="button"
+                                    className="flex items-center gap-2 text-gray-900 hover:text-blue-600 mb-[14px]"
+                                    aria-expanded={open}
+                                    aria-haspopup="dialog"
+                                >
+                                    <Menu className="w-5 h-5" />
+                                    <span className="text-sm font-medium">카테고리</span>
+                                </button>
+                                <CategoryDropdown open={open} onClose={() => setOpen(false)} />
+                            </div>
+
+                            <nav className="hidden md:flex items-end gap-8 whitespace-nowrap">
+                                {navItems.map((item) => (
+                                    <NavLink
+                                        key={item.to}
+                                        to={item.to}
+                                        end={item.to === "/"}
+                                        className={({ isActive }) =>
+                                            clsx("px-1 pb-3 text-sm font-medium border-b-2 transition-colors",
+                                                isActive
+                                                    ? "text-gray-900 border-blue-600"
+                                                    : "text-gray-700 hover:text-blue-600 border-transparent"
+                                            )
+                                        }
+                                    >
+                                        {item.label}
+                                    </NavLink>
+                                ))}
+                            </nav>
+                        </div>
+                        <div className="hidden md:block w-[300px] max-w-[50vw]">
+                            <div className="relative w-full bg-gray-100 rounded-md mb-4">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+                                <Input placeholder="검색어를 입력해주세요." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+                                    onKeyDown={searchKeyHandler} className="pl-10 h-9"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </>
     );
 
 }
