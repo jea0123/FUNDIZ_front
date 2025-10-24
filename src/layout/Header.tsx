@@ -21,7 +21,7 @@ export function Header() {
         { label: "홈", to: "/" },
         { label: "인기", to: "/project/popular" },
         { label: "신규", to: "/project/new" },
-        { label: "공개예정", to: "/project/coming-soon" },
+        { label: "공개예정", to: "/project/upcoming" },
         { label: "마감임박", to: "/project/closing" },
     ];
 

@@ -80,6 +80,7 @@ export interface Featured {
     creatorId: number;
     creatorName: string;
     thumbnail: string;
+    startDate: Date;
     endDate: Date;
     percentNow: number;
     currAmount: number;

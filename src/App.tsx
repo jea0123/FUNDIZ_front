@@ -59,6 +59,7 @@ import PaymentRegisterPage from './views/user/tabs/PaymentRegisterPage';
 import LoginPage from './views/auth/user/LoginPage';
 import RegisterPage2 from './views/auth/user/RegisterPage2';
 import { ProjectDetails } from './views/project/ProjectDetails';
+import { UpcomingBrowsePage, UpcomingByCategoryPage, UpcomingBySubcategoryPage, UpcomingSearchPage } from './views/project/UpComingProjects';
 
 const OverviewTab = lazy(() => import('./views/admin/pages/OverviewTab').then((module) => ({ default: module.OverviewTab })));
 const CreatorDashboard = lazy(() => import('./views/creator/pages/CreatorDashboard').then((module) => ({ default: module.default })));
@@ -112,6 +113,10 @@ export default function App() {
               <Route path="search" element={<ProjectsSearchPage />} />
               <Route path="category/:ctgrId" element={<ProjectsByCategoryPage />} />
               <Route path="category/:ctgrId/subcategory/:subctgrId" element={<ProjectsBySubcategoryPage />} />
+              <Route path="upcoming" element={<UpcomingBrowsePage />} />
+              <Route path="upcoming/search" element={<UpcomingSearchPage />} />
+              <Route path="upcoming/category/:ctgrId" element={<UpcomingByCategoryPage />} />
+              <Route path="upcoming/category/:ctgrId/subcategory/:subctgrId" element={<UpcomingBySubcategoryPage />} />
               <Route path=":projectId" element={<ProjectDetails />} />
               <Route path=":projectId/backing" element={<BackingPage />} />
             </Route>
