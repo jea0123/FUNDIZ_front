@@ -629,7 +629,7 @@ export default function CreatorProjectEditPage() {
         <div className="">
             <CreatorProjectEditStepper steps={STEPS} currentStep={currentStep} progress={progress} title={isEdit ? "프로젝트 수정" : "프로젝트 만들기"} />
 
-            <div className="sticky top-0 left-0 right-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border rounded-xl p-3 shadow-sm mt-3">
+            <div className="sticky top-12 left-0 right-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border rounded-xl p-3 shadow-sm mt-3">
                 <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center">
                         {isEdit && currentStep === 1 ? (

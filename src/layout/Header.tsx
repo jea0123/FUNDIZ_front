@@ -169,7 +169,7 @@ export function Header() {
                                                 )}
                                             </Button>
                                         </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="w-96 p-0 rounded-lg shadow-lg border bg-white">
+                                        <DropdownMenuContent align="end" className="w-96 p-0 rounded-lg shadow-lg border bg-white z-2000">
                                             <div className="px-4 py-2 border-b flex items-center justify-between">
                                                 <span className="font-semibold">알림</span>
                                                 <button
