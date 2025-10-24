@@ -63,7 +63,7 @@ export default function CategoryDropdown({ open, onClose }: Props) {
                         className="flex items-center gap-3 text-gray-700 hover:text-blue-600 transition-colors group cursor-pointer"
                     >
                         <span className="text-gray-500 group-hover:text-blue-600">{cat.icon}</span>
-                        <span className="text-sm font-medium">{cat.ctgrName}</span>
+                        <span className="font-medium">{cat.ctgrName}</span>
                     </button>
                 )) : (
                     <div>카테고리가 없습니다.</div>

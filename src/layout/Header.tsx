@@ -273,8 +273,8 @@ export function Header() {
                                     aria-expanded={open}
                                     aria-haspopup="dialog"
                                 >
-                                    <Menu className="w-5 h-5" />
-                                    <span className="text-sm font-medium">카테고리</span>
+                                    <Menu className="w-5 h-5 mr-2" />
+                                    <span className="font-medium">카테고리</span>
                                 </button>
                                 <CategoryDropdown open={open} onClose={() => setOpen(false)} />
                             </div>
@@ -286,7 +286,7 @@ export function Header() {
                                         to={item.to}
                                         end={item.to === "/"}
                                         className={({ isActive }) =>
-                                            clsx("px-1 pb-3 text-sm font-medium border-b-2 transition-colors",
+                                            clsx("px-1 pb-3 font-medium border-b-2 transition-colors",
                                                 isActive
                                                     ? "text-gray-900 border-blue-600"
                                                     : "text-gray-700 hover:text-blue-600 border-transparent"
