@@ -58,8 +58,8 @@ import CreateCategory from './views/CreateCategory';
 import PaymentRegisterPage from './views/user/tabs/PaymentRegisterPage';
 import LoginPage from './views/auth/user/LoginPage';
 import RegisterPage2 from './views/auth/user/RegisterPage2';
-import { ProjectDetails } from './views/project/ProjectDetails';
 import { UpcomingBrowsePage, UpcomingByCategoryPage, UpcomingBySubcategoryPage, UpcomingSearchPage } from './views/project/UpComingProjects';
+import { ProjectDetailsPage } from './views/project/ProjectDetailsPage';
 
 const OverviewTab = lazy(() => import('./views/admin/pages/OverviewTab').then((module) => ({ default: module.OverviewTab })));
 const CreatorDashboard = lazy(() => import('./views/creator/pages/CreatorDashboard').then((module) => ({ default: module.default })));
@@ -117,10 +117,10 @@ export default function App() {
               <Route path="upcoming/search" element={<UpcomingSearchPage />} />
               <Route path="upcoming/category/:ctgrId" element={<UpcomingByCategoryPage />} />
               <Route path="upcoming/category/:ctgrId/subcategory/:subctgrId" element={<UpcomingBySubcategoryPage />} />
-              <Route path=":projectId" element={<ProjectDetails />} />
+              <Route path=":projectId" element={<ProjectDetailsPage />} />
               <Route path=":projectId/backing" element={<BackingPage />} />
             </Route>
-
+            
             <Route path="/user" element={<MyPageLayout />}>
               <Route index element={<UserHomeTab />} />
               <Route path="main" element={<UserHomeTab />} />
