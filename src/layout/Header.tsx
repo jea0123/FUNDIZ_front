@@ -155,7 +155,7 @@ export function Header() {
                             <Button variant="ghost" size="sm" onClick={() => navigate('/')}>오픈 예정</Button>
                             {loginUser ? (
                                 <>
-                                    {loginUser.role === 'admin' && (
+                                    {loginUser.role === 'ADMIN' && (
                                         <Button variant="ghost" size="sm" onClick={() => navigate('/admin')}>관리자</Button>
                                     )}
                                     <DropdownMenu>
