@@ -241,7 +241,7 @@ export function Header() {
                                                 <User className="h-4 w-4" />
                                             </Button>
                                         </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
+                                        <DropdownMenuContent align="end" className="w-40 rounded-lg shadow-lg border bg-white z-2000">
                                             <DropdownMenuItem onClick={() => navigate('/user')}>마이페이지</DropdownMenuItem>
                                             <DropdownMenuItem onClick={logoutHandler}>로그아웃</DropdownMenuItem>
                                         </DropdownMenuContent>
