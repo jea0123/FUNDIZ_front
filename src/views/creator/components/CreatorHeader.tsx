@@ -81,7 +81,7 @@ export default function CreatorHeader({ data, onFollow, onUnfollow, followLoadin
                     </Button>
 
                     {!data.isFollowed ? (
-                        <Button onClick={onFollow} disabled={!!followLoading} className="h-11 px-6" variant="default">
+                        <Button onClick={onFollow} disabled={!!followLoading} className="h-10 px-6" variant="default">
                             {followLoading ? (
                                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                             ) : (
@@ -90,7 +90,7 @@ export default function CreatorHeader({ data, onFollow, onUnfollow, followLoadin
                             팔로우
                         </Button>
                     ) : (
-                        <Button onClick={onUnfollow} disabled={!!unfollowLoading} className="h-11 px-6 border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-950" variant="outline">
+                        <Button onClick={onUnfollow} disabled={!!unfollowLoading} className="h-10 px-6 border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-950" variant="outline">
                             {unfollowLoading ? (
                                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                             ) : (
