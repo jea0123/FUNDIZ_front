@@ -119,6 +119,7 @@ export function MyReportsTab() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
+                                {items.length === 0 && <TableRow><TableCell colSpan={5} className="h-24 text-center">신고 내역이 없습니다.</TableCell></TableRow>}
                                 {items.map(r => (
                                     <TableRow key={r.reportId}>
                                         <TableCell className="py-3">{statusBadge(r.reportStatus as ReportStatus)}</TableCell>
