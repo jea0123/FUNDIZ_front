@@ -141,3 +141,19 @@ main {
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  /* 제목/본문 트래킹 & 라인하이트 */
+  .type-title { letter-spacing: -0.01em; line-height: 1.25; }
+  .type-body  { letter-spacing: -0.005em; line-height: 1.6; }
+
+  /* 폼 라벨 톤(작게, 살짝 타이트) */
+  .label-tone { font-size: 13px; line-height: 1.45; letter-spacing: -0.01em; }
+
+  /* 폼 컨트롤 기본 라인하이트 보정 */
+  .control-tone { line-height: 1.55; letter-spacing: -0.005em; }
+
+  /* 세로 리듬: 20px / 24px */
+  .stack-5 > * + * { margin-top: 1.25rem; } /* 20px */
+  .stack-6 > * + * { margin-top: 1.5rem;  } /* 24px */
+}

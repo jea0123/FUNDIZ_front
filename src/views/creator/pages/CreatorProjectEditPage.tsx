@@ -37,12 +37,12 @@ export type ProjectFieldErrors = Partial<{
 /* ------------------------------ Constants ------------------------------ */
 
 const STEPS = [
-    { id: 1, title: "프로젝트 정보", description: "기본 정보 입력" },
-    { id: 2, title: "프로젝트 설정", description: '목표 금액 및 기간 설정' },
-    { id: 3, title: "프로젝트 소개", description: "프로젝트 본문 입력" },
-    { id: 4, title: "리워드 설계", description: "후원자 리워드 구성" },
-    { id: 5, title: "창작자 정보", description: "창작자 기본 정보" },
-    { id: 6, title: "검토 및 제출", description: "프로젝트 요약 및 심사 안내" },
+    { id: 1, title: "프로젝트 정보", description: "기본 정보" },
+    { id: 2, title: "프로젝트 설정", description: "목표·기간" },
+    { id: 3, title: "프로젝트 소개", description: "스토리·콘텐츠" },
+    { id: 4, title: "리워드 설계", description: "구성·수량" },
+    { id: 5, title: "창작자 정보", description: "정산·서류" },
+    { id: 6, title: "검토 및 제출", description: "요약·동의" },
 ];
 
 export const PROJECT_RULES = {
@@ -627,9 +627,12 @@ export default function CreatorProjectEditPage() {
 
     return (
         <div className="">
-            <CreatorProjectEditStepper steps={STEPS} currentStep={currentStep} progress={progress} title={isEdit ? "프로젝트 수정" : "프로젝트 만들기"} />
+            <CreatorProjectEditStepper steps={STEPS} currentStep={currentStep} progress={progress} title={isEdit ? "프로젝트 수정" : "프로젝트 만들기"} size="sm" colorClass="blue" />
 
-            <div className="sticky top-12 left-0 right-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border rounded-xl p-3 shadow-sm mt-3">
+            <div className="sticky top-12 inset-x-0 z-20
+                bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60
+                border border-border rounded-lg p-3 shadow mt-3"
+            >
                 <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center">
                         {isEdit && currentStep === 1 ? (
@@ -732,7 +735,7 @@ export function TagEditor({
 
     return (
         <div>
-            <Label htmlFor={inputId}>검색 태그 (최대 {MAX_TAGS}개)</Label>
+            <Label htmlFor={inputId} className="label-tone mb-1.5 block">검색 태그 (최대 {MAX_TAGS}개)</Label>
             <div className="flex space-x-2 mb-2 mt-1">
                 <Input
                     id={inputId}
@@ -749,6 +752,7 @@ export function TagEditor({
                         }
                     }}
                     disabled={limitReached}
+                    className="control-tone"
                 />
                 <Button type="button" variant="outline" onClick={add} disabled={limitReached}>추가</Button>
             </div>
