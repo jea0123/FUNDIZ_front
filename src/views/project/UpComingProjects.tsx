@@ -1,54 +1,19 @@
-import { useState, useEffect, useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import type { Category } from "@/types/admin";
-import type { Featured, SearchProjectParams, Subcategory } from "@/types/projects";
+import { useEffect, useMemo, useState } from "react";
 import { endpoints, getData } from "@/api/apis";
-import { ProjectCard } from "../MainPage";
-import ProjectsCrumbs from "./components/ProjectsCrumbs";
-import ProjectsCategoryChips from "./components/ProjectsCategoryChips";
+import type { Featured, SearchProjectParams } from "@/types/projects";
+import { ProjectGrid, useCatalogData } from "./ProjectsBrowsePage";
 import ProjectsSortBar from "./components/ProjectsSortBar";
+import ProjectsCategoryChips from "./components/ProjectsCategoryChips";
+import ProjectsCrumbs from "./components/ProjectsCrumbs";
 import ProjectsSubcategoryTabs from "./components/ProjectsSubcategoryTabs";
 import FundingLoader from "@/components/FundingLoader";
 import { Pagination } from "@/utils/pagination";
+import { useNavigate, useParams } from "react-router-dom";
 import { useBrowseQueryState } from "@/utils/usePagingQueryState";
+import { Button } from "@/components/ui/button";
+import { getDday } from "@/utils/utils";
 
-/* ------------------------------ Common hook ------------------------------ */
-export function useCatalogData() {
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
-
-    useEffect(() => {
-        let alive = true;
-        (async () => {
-            try {
-                const [catRes, subRes] = await Promise.all([
-                    getData(endpoints.getCategories),
-                    getData(endpoints.getSubcategories)
-                ]);
-
-                const catData = catRes?.data;
-                const subData = subRes?.data;
-
-                const cats = Array.isArray(catData) ? catData : [];
-                const subs = Array.isArray(subData) ? subData : [];
-
-                if (!alive) return;
-                setCategories(cats);
-                setSubcategories(subs);
-            } catch {
-                // 상단 필터 UI만 비어보이게 두기
-            }
-        })();
-        return () => {
-            alive = false;
-        };
-    }, []);
-
-    return { categories, subcategories };
-}
-
-export function useProject(params: SearchProjectParams) {
+export function useUpcomingProjects(params: SearchProjectParams) {
     const { page, size, keyword, sort, ctgrId, subctgrId } = params;
     const [items, setItems] = useState<Featured[]>([]);
     const [total, setTotal] = useState(0);
@@ -56,27 +21,22 @@ export function useProject(params: SearchProjectParams) {
     const [error, setError] = useState<boolean>(false);
 
     const url = useMemo(() => {
-        return endpoints.searchProject({ page, size, keyword, sort, ctgrId, subctgrId });
+        return endpoints.searchUpComingProjects({ page, size, keyword, sort, ctgrId, subctgrId });
     }, [page, size, keyword, sort, ctgrId, subctgrId]);
 
     useEffect(() => {
         let cancel = false;
-
         (async () => {
             try {
                 setLoading(true);
                 setError(false);
-
                 const { status, data } = await getData(url);
-
                 if (cancel) return;
                 if (status !== 200) throw new Error("조회 실패");
-
                 setItems(Array.isArray(data.items) ? data.items : []);
                 setTotal(typeof data.totalElements === "number" ? data.totalElements : 0);
             } catch (err: any) {
-                if (cancel) return;
-                setError(err);
+                if (!cancel) setError(err);
             } finally {
                 if (!cancel) setLoading(false);
             }
@@ -87,54 +47,30 @@ export function useProject(params: SearchProjectParams) {
     return { items, total, loading, error };
 }
 
-/* ------------------------------ UI component ------------------------------ */
-export function ProjectGrid({ items }: { items: Featured[] }) {
-    if (!items.length) {
-        return (
-            <p className="py-10 text-center text-sm text-muted-foreground">검색된 프로젝트가 없습니다.</p>
-        );
-    }
-    return (
-        <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-5">
-            {items.map((it) => (
-                <ProjectCard key={it.projectId} items={it} />
-            ))}
-        </div>
-    );
-}
-
-/* --------------------------------- Pages --------------------------------- */
-
-export default function ProjectsBrowsePage() {
+export function UpcomingBrowsePage() {
     const { categories, subcategories } = useCatalogData();
     const { sort, page, size, keyword, setSort, bindUserPagination } = useBrowseQueryState();
-    const { items, total, loading, error } = useProject({ page, size, keyword, sort });
+    const { items, total, loading, error } = useUpcomingProjects({ page, size, keyword, sort });
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <ProjectsCrumbs categories={categories} subcategories={subcategories} />
+            <ProjectsCrumbs categories={categories} subcategories={subcategories} label="오픈예정" />
             <ProjectsCategoryChips categories={categories} activeCatId="all" />
             <ProjectsSortBar value={sort} onChange={setSort} total={total} />
-
             {loading && <FundingLoader />}
             {error && <p className="text-red-600">목록을 불러오지 못했습니다.</p>}
-            {!loading && !error && <ProjectGrid items={items} />}
-
+            {!loading && !error && <UpcomingProjectGrid items={items} />}
             <Pagination {...bindUserPagination(total)} />
         </div>
     );
 }
 
-export function ProjectsSearchPage() {
+export function UpcomingSearchPage() {
     const { sort, page, size, keyword, setSort, setKeyword, bindUserPagination } = useBrowseQueryState();
-    const { items, total, loading, error } = useProject({ page, size, keyword, sort });
-
+    const { items, total, loading, error } = useUpcomingProjects({ page, size, keyword, sort });
     const navigate = useNavigate();
 
-    useEffect(() => {
-        if (!keyword.length) navigate("/project");
-    }, [keyword, navigate]);
-
+    useEffect(() => { if (!keyword.length) navigate("/project/upcoming"); }, [keyword, navigate]);
     if (!keyword.length) return null;
 
     return (
@@ -146,62 +82,99 @@ export function ProjectsSearchPage() {
             <ProjectsSortBar value={sort} onChange={setSort} total={total} />
             {loading && <FundingLoader />}
             {error && <p className="text-red-600">목록을 불러오지 못했습니다.</p>}
-            {!loading && !error && <ProjectGrid items={items} />}
-
+            {!loading && !error && <UpcomingProjectGrid items={items} />}
             <Pagination {...bindUserPagination(total)} />
         </div>
     );
 }
 
-export function ProjectsByCategoryPage() {
+export function UpcomingByCategoryPage() {
     const { ctgrId: catParam } = useParams();
     const ctgrId = catParam ? Number(catParam) : undefined;
 
     const { categories, subcategories } = useCatalogData();
     const { sort, page, size, keyword, setSort, bindUserPagination } = useBrowseQueryState();
-    const { items, total, loading, error } = useProject({ page, size, keyword, sort, ctgrId });
-
+    const { items, total, loading, error } = useUpcomingProjects({ page, size, keyword, sort, ctgrId });
     if (!ctgrId) return null;
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <ProjectsCrumbs categories={categories} subcategories={subcategories} ctgrId={ctgrId} />
+            <ProjectsCrumbs categories={categories} subcategories={subcategories} ctgrId={ctgrId} label="오픈예정" />
             <ProjectsCategoryChips categories={categories} activeCatId={ctgrId} />
             <ProjectsSubcategoryTabs ctgrId={ctgrId} subcategories={subcategories} activeSubId="all" />
             <ProjectsSortBar value={sort} onChange={setSort} total={total} />
-
             {loading && <FundingLoader />}
             {error && <p className="text-red-600">목록을 불러오지 못했습니다.</p>}
-            {!loading && !error && <ProjectGrid items={items} />}
-
+            {!loading && !error && <UpcomingProjectGrid items={items} />}
             <Pagination {...bindUserPagination(total)} />
         </div>
     );
 }
 
-export function ProjectsBySubcategoryPage() {
+export function UpcomingBySubcategoryPage() {
     const { ctgrId: catParam, subctgrId: subParam } = useParams();
     const ctgrId = catParam ? Number(catParam) : undefined;
     const subctgrId = subParam ? Number(subParam) : undefined;
 
     const { categories, subcategories } = useCatalogData();
     const { sort, page, size, keyword, setSort, bindUserPagination } = useBrowseQueryState();
-    const { items, total, loading, error } = useProject({ page, size, keyword, sort, ctgrId, subctgrId });
-
+    const { items, total, loading, error } = useUpcomingProjects({ page, size, keyword, sort, ctgrId, subctgrId });
     if (!ctgrId || !subctgrId) return null;
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <ProjectsCrumbs categories={categories} subcategories={subcategories} ctgrId={ctgrId} subctgrId={subctgrId} />
+            <ProjectsCrumbs categories={categories} subcategories={subcategories} ctgrId={ctgrId} subctgrId={subctgrId} label="오픈예정" />
             <ProjectsCategoryChips categories={categories} activeCatId={ctgrId} />
             <ProjectsSubcategoryTabs ctgrId={ctgrId} subcategories={subcategories} activeSubId={subctgrId} />
             <ProjectsSortBar value={sort} onChange={setSort} total={total} />
-
             {loading && <FundingLoader />}
             {error && <p className="text-red-600">목록을 불러오지 못했습니다.</p>}
-            {!loading && !error && <ProjectGrid items={items} />}
-
+            {!loading && !error && <UpcomingProjectGrid items={items} />}
             <Pagination {...bindUserPagination(total)} />
+        </div>
+    );
+}
+
+export function UpcomingProjectGrid({ items }: { items: Featured[] }) {
+    if (!items?.length) {
+        return <p className="py-10 text-center text-sm text-muted-foreground">공개예정 프로젝트가 없습니다.</p>;
+    }
+    return (
+        <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-5">
+            {items.map((it) => (
+                <UpcomingProjectCard key={it.projectId} item={it} />
+            ))}
+        </div>
+    );
+}
+
+export function UpcomingProjectCard({ item }: { item: Featured }) {
+    const navigate = useNavigate();
+    if (!item) return null;
+
+    return (
+        <div className="overflow-hidden cursor-pointer" onClick={() => navigate(`/project/${item.projectId}`)}>
+            <div className="relative aspect-[1] w-full overflow-hidden rounded-sm group">
+                <img
+                    src={item.thumbnail}
+                    alt={item.title}
+                    className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-115"
+                />
+
+            </div>
+
+            <div className="space-y-1 py-3">
+                <p
+                    className="text-[11px] text-muted-foreground m-0 hover:underline"
+                    onClick={(e) => { e.stopPropagation(); navigate(`/creator/${item.creatorId}`); }}
+                >
+                    {item.creatorName}
+                </p>
+                <p className="line-clamp-1 text-sm leading-snug m-0">{item.title}</p>
+                <span className="rounded-sm bg-red-600 px-2 py-0.5 text-[12px] font-bold text-white">
+                    {getDday(item.startDate)}
+                </span>
+            </div>
         </div>
     );
 }

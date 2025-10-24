@@ -162,6 +162,7 @@ export const endpoints = {
   addQuestion: (projectId: number) => `project/${projectId}/qna/add`,
   getLikeCnt: (projectId: number) => `project/${projectId}/likeCnt`,
   getCounts: (projectId: number) => `project/${projectId}/counts`,
+  searchUpComingProjects: (p: SearchProjectParams) => `project/search/upcoming?${toQueryString({ page: p.page, size: p.size, keyword: p.keyword, ctgrId: p.ctgrId, subctgrId: p.subctgrId, sort: p.sort })}`,
 
   // ==================== QnaReply API ====================
   addQnaReply: (qnaId: number) => `qna/reply/${qnaId}`,

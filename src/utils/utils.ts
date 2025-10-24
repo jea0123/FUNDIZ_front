@@ -19,6 +19,24 @@ dayjs.locale("ko");
 export const getElapsedTime = (createdAt: Date): string => dayjs(createdAt).fromNow();
 
 /**
+ * @description 특정 날짜까지 남은 D-day를 계산하여 문자열로 반환
+ * @param {string | Date} startDate 날짜 문자열 또는 Date 객체
+ * @return {string} D-day를 나타내는 문자열 (예: "D-5", "D-DAY", "D+3")
+ */
+export function getDday(startDate: string | Date) {
+    const s = new Date(startDate);
+    const today = new Date();
+    // 날짜만 비교
+    s.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+
+    const diff = Math.round((s.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    if (diff > 0) return `D-${diff}`;
+    if (diff === 0) return "D-DAY";
+    return `D+${Math.abs(diff)}`; // 이미 공개된 경우
+}
+
+/**
  * @description 숫자를 한국 원화(KRW) 단위로 변환
  * @param {number} amount 변환할 금액
  * @returns {string} 원화 단위로 변환
@@ -72,7 +90,7 @@ export function getDaysLeft(date: string | Date): string {
         return "-";
     }
 
-    if(diffDays == 0) return "오늘 마감";
+    if (diffDays == 0) return "오늘 마감";
 
     return `${diffDays}`;
 }
@@ -237,7 +255,7 @@ export function toKRWCompact(n: number): string {
 // 문자길이 byte로
 export const getByteLen = (s: string) => new TextEncoder().encode(s).length;
 
-export const formatBytes = (n: number) => (n < 1024 ? `${n} B` : n < 1048576 ? `${(n/1024).toFixed(1)} KB` : `${(n/1048576).toFixed(1)} MB`);
+export const formatBytes = (n: number) => (n < 1024 ? `${n} B` : n < 1048576 ? `${(n / 1024).toFixed(1)} KB` : `${(n / 1048576).toFixed(1)} MB`);
 
 /**
  * @description 파일 경로를 공개 URL로 변환
