@@ -73,7 +73,17 @@ function PaymentSuccessModal({ open, onClose, onGoMyPage, onGoBack }: { open: bo
   );
 }
 
-function CardSelectModal({ open, onClose, totalAmount, onConfirmPayment }: { open: boolean; onClose: () => void; totalAmount: number; onConfirmPayment: (payload: { cardCompany: string; cardNum: string }) => void }) {
+function CardSelectModal({
+  open,
+  onClose,
+  totalAmount,
+  onConfirmPayment,
+}: {
+  open: boolean;
+  onClose: () => void;
+  totalAmount: number;
+  onConfirmPayment: (payload: { payInfoId: number; cardCompany: string; cardNum: string }) => void; // ✅ 수정
+}) {
   const [cookie] = useCookies(['accessToken']);
   const [cards, setCards] = useState<PaymentInfo[]>([]);
   const [selectedCard, setSelectedCard] = useState<PaymentInfo | null>(null);
@@ -150,6 +160,7 @@ function CardSelectModal({ open, onClose, totalAmount, onConfirmPayment }: { ope
             onClick={() => {
               if (selectedCard) {
                 onConfirmPayment({
+                  payInfoId: selectedCard.payInfoId,
                   cardCompany: selectedCard.cardCompany,
                   cardNum: selectedCard.cardNum,
                 });
@@ -333,7 +344,7 @@ export function BackingPage() {
     setIsPaymentOpen(true);
   };
 
-  const handleConfirmPayment = async ({ method, cardCompany }: { method: string; cardCompany: string }) => {
+  const handleConfirmPayment = async ({ method, cardCompany, payInfoId }: { method: string; cardCompany: string; payInfoId: number }) => {
     const rewardsTotal = rewardList.reduce((sum, r) => sum + (rewardQuantities[r.rewardId] ?? 1) * r.price, 0);
     const additional = customAmount ? parseInt(customAmount) : 0;
     const totalAmount = rewardsTotal + additional;
@@ -349,6 +360,7 @@ export function BackingPage() {
       backingId: 0,
       backing: {
         backingId: 0,
+        payInfoId,
         amount: totalAmount,
         createdAt: now,
         backingStatus: 'PENDING',
@@ -407,13 +419,14 @@ export function BackingPage() {
         totalAmount={getTotalAmount()}
         onConfirmPayment={async (payload) => {
           console.log('📤 선택된 카드 정보:', payload);
-          // 기존 handleConfirmPayment 내부 로직 재활용
           await handleConfirmPayment({
             method: 'CARD',
             cardCompany: payload.cardCompany,
+            payInfoId: payload.payInfoId,
           });
         }}
       />
+
       {successData && <PaymentSuccessModal open={isSuccessOpen} onClose={() => setIsSuccessOpen(false)} onGoMyPage={() => navigate('/user/support')} onGoBack={() => navigate(-1)} />}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-2">
