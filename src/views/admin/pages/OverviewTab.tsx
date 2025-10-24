@@ -19,11 +19,11 @@ const mockChartData = [
 ];
 
 const mockCategoryData = [
-    { name: "테크/가전", value: 35, color: "#1e90ff" },
-    { name: "패션/뷰티", value: 25, color: "#3cb371" },
-    { name: "캐릭터/굿즈", value: 20, color: "#ffc658" },
-    { name: "푸드", value: 12, color: "#ff7300" },
-    { name: "문화/예술", value: 8, color: "#dc143c" },
+    { name: "축제·행사", value: 35, color: "#1e90ff" },
+    { name: "체험", value: 25, color: "#3cb371" },
+    { name: "굿즈", value: 20, color: "#ffc658" },
+    { name: "지역살리기", value: 12, color: "#ff7300" },
+    { name: "문화·예술", value: 8, color: "#dc143c" },
 ];
 
 const formatCurrency = (amount: number) =>
