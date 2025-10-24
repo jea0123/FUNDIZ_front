@@ -11,11 +11,14 @@ import type { ProjectCreateRequestDto } from "@/types/creator";
 import type { Subcategory } from "@/types/projects";
 import type { RewardDraft, RewardForm } from "@/types/reward";
 import { formatDate, formatPrice, toKRWCompact } from "@/utils/utils";
-import { Plus, Truck, X } from "lucide-react";
+import { AlertCircle, CalendarDays, Info, PackageSearch, Plus, TagIcon, Truck, Wallet, X } from "lucide-react";
 import { BusinessDocUploader, ThumbnailUploader } from "./CreatorUploaders";
 import ProjectDetailEditor from "./ProjectDetailEditor";
 import { PROJECT_RULES, TagEditor, type ProjectFieldErrors } from "../pages/CreatorProjectEditPage";
 import { REWARD_RULES, type RewardFieldErrors } from "@/types/reward-validator";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { AnimatePresence, motion } from "framer-motion";
+import { Progress } from "@/components/ui/progress";
 
 /* -------------------------------- Type -------------------------------- */
 
@@ -78,114 +81,123 @@ export function CreatorProjectEditSteps(props: StepsProps) {
 
     if (step === 1) {
         return (
-            <div className="space-y-6">
-                <RequiredLegend />
-                <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-x-2 gap-y-2">
-                    <div className="min-w-0">
-                        <LabelRequired htmlFor="category">카테고리</LabelRequired>
-                        <Select
-                            value={project.ctgrId ? String(project.ctgrId) : undefined}
-                            onValueChange={(value) => {
-                                setProject(prev => ({ ...prev, ctgrId: Number(value), subctgrId: 0 }))
-                                clearProjectError?.("ctgrId");
-                            }}
-                        >
-                            <SelectTrigger id="category" className="w-full">
-                                <SelectValue placeholder="카테고리 선택" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {categories.map(c =>
-                                    <SelectItem key={c.ctgrId} value={String(c.ctgrId)}>{c.ctgrName}</SelectItem>
-                                )}
-                            </SelectContent>
-                        </Select>
-                        {projectErrors?.ctgrId && <p className="mt-1 text-xs text-red-600">{projectErrors.ctgrId}</p>}
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={step}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.18, ease: "easeOut" }}
+                    className="stack-5 md:stack-6"
+                >
+                    <RequiredLegend />
+                    <SectionTitle
+                        icon={TagIcon}
+                        title="기본 정보"
+                        desc="카테고리와 제목, 대표 이미지를 입력하면 탐색/검색 노출 품질이 올라가요."
+                    />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                        <div className="min-w-0">
+                            <LabelRequired htmlFor="category">카테고리</LabelRequired>
+                            <Select
+                                value={project.ctgrId ? String(project.ctgrId) : undefined}
+                                onValueChange={(value) => {
+                                    setProject(prev => ({ ...prev, ctgrId: Number(value), subctgrId: 0 }))
+                                    clearProjectError?.("ctgrId");
+                                }}
+                            >
+                                <SelectTrigger id="category" className="w-full control-tone">
+                                    <SelectValue placeholder="카테고리 선택" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {categories.map(c =>
+                                        <SelectItem key={c.ctgrId} value={String(c.ctgrId)}>{c.ctgrName}</SelectItem>
+                                    )}
+                                </SelectContent>
+                            </Select>
+                            {projectErrors?.ctgrId && <FieldError>{projectErrors.ctgrId}</FieldError>}
+                        </div>
+
+                        <div className="min-w-0">
+                            <LabelRequired htmlFor="subcategory">세부카테고리</LabelRequired>
+                            <Select
+                                value={project.subctgrId ? String(project.subctgrId) : undefined}
+                                onValueChange={(value) => {
+                                    setProject(prev => ({ ...prev, subctgrId: Number(value) }));
+                                    clearProjectError?.("subctgrId");
+                                }}
+                                disabled={!project.ctgrId}
+                            >
+                                <SelectTrigger id="subcategory" className="w-full">
+                                    <SelectValue placeholder="세부카테고리 선택" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {subcategories.length > 0 ? (
+                                        subcategories.map(sc => (
+                                            <SelectItem key={sc.subctgrId} value={String(sc.subctgrId)}>
+                                                {sc.subctgrName}
+                                            </SelectItem>
+                                        ))
+                                    ) : (
+                                        <SelectItem value="__none" disabled>선택한 카테고리에 해당 세부카테고리가 없습니다</SelectItem>
+                                    )}
+                                </SelectContent>
+                            </Select>
+                            {projectErrors?.subctgrId && <FieldError>{projectErrors.subctgrId}</FieldError>}
+                        </div>
                     </div>
 
-                    <div className="min-w-0">
-                        <LabelRequired htmlFor="subcategory">세부카테고리</LabelRequired>
-                        <Select
-                            value={project.subctgrId ? String(project.subctgrId) : undefined}
-                            onValueChange={(value) => {
-                                setProject(prev => ({ ...prev, subctgrId: Number(value) }));
-                                clearProjectError?.("subctgrId");
+                    <div>
+                        <LabelRequired htmlFor="title">프로젝트 제목</LabelRequired>
+                        <Input
+                            id="title"
+                            className="control-tone"
+                            placeholder={`제목은 ${P.MIN_TITLE_LEN}~ ${P.MAX_TITLE_LEN}자 이내로 입력해주세요.`}
+                            value={project.title}
+                            onChange={(e) => {
+                                setProject(prev => ({ ...prev, title: e.target.value }));
+                                clearProjectError?.("title");
                             }}
-                            disabled={!project.ctgrId}
-                        >
-                            <SelectTrigger id="subcategory" className="w-full">
-                                <SelectValue placeholder="세부카테고리 선택" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {subcategories.length > 0 ? (
-                                    subcategories.map(sc => (
-                                        <SelectItem key={sc.subctgrId} value={String(sc.subctgrId)}>
-                                            {sc.subctgrName}
-                                        </SelectItem>
-                                    ))
-                                ) : (
-                                    <SelectItem value="__none" disabled>선택한 카테고리에 해당 세부카테고리가 없습니다</SelectItem>
-                                )}
-                            </SelectContent>
-                        </Select>
-                        {projectErrors?.subctgrId && <p className="mt-1 text-xs text-red-600">{projectErrors.subctgrId}</p>}
+                            maxLength={50}
+                            required
+                        />
+                        {projectErrors.title && <FieldError>{projectErrors.title}</FieldError>}
                     </div>
-                </div>
 
-                <div>
-                    <LabelRequired htmlFor="title">프로젝트 제목</LabelRequired>
-                    <Input
-                        id="title"
-                        placeholder={`제목은 ${P.MIN_TITLE_LEN}~ ${P.MAX_TITLE_LEN}자 이내로 입력해주세요.`}
-                        value={project.title}
-                        onChange={(e) => {
-                            setProject(prev => ({ ...prev, title: e.target.value }));
-                            clearProjectError?.("title");
-                        }}
-                        maxLength={50}
-                        required
+                    <div>
+                        <LabelRequired htmlFor="thumbnail">대표 이미지</LabelRequired>
+                        <ThumbnailUploader
+                            id="thumbnail"
+                            file={project.thumbnail}
+                            previewUrl={project.thumbnailPreviewUrl}
+                            onSelect={(f) => {
+                                setProject(prev => ({
+                                    ...prev,
+                                    thumbnail: f,
+                                    thumbnailPreviewUrl: f ? undefined : prev.thumbnailPreviewUrl,
+                                }));
+                                clearProjectError?.("thumbnail");
+                            }}
+                            onCleared={() => setProject(prev => ({ ...prev, thumbnail: null, thumbnailPreviewUrl: undefined }))}
+                            required
+                        />
+                        {projectErrors.thumbnail && <FieldError>{projectErrors.thumbnail}</FieldError>}
+                    </div>
+
+                    <TagEditor
+                        tags={project.tagList}
+                        onAdd={(tag) => setProject(prev => ({
+                            ...prev,
+                            tagList: [...(prev.tagList || []), tag.trim()],
+                        }))}
+                        onRemove={(tag) => setProject(prev => ({
+                            ...prev,
+                            tagList: (prev.tagList || []).filter(t => t !== tag),
+                        }))}
                     />
-                    {projectErrors.title && <p className="mt-1 text-xs text-red-600">{projectErrors.title}</p>}
-                </div>
-
-                <div>
-                    <LabelRequired htmlFor="thumbnail">대표 이미지</LabelRequired>
-                    <ThumbnailUploader
-                        id="thumbnail"
-                        file={project.thumbnail}
-                        previewUrl={project.thumbnailPreviewUrl}
-                        onSelect={(f) => {
-                            setProject(prev => ({
-                                ...prev,
-                                thumbnail: f,
-                                thumbnailPreviewUrl: f ? undefined : prev.thumbnailPreviewUrl,
-                            }));
-                            clearProjectError?.("thumbnail");
-                        }}
-                        onCleared={() => setProject(prev => ({ ...prev, thumbnail: null, thumbnailPreviewUrl: undefined }))}
-                        required
-                    />
-                    {projectErrors.thumbnail && (
-                        <p id="thumbnail-field-error" className="mt-1 text-xs text-red-600">
-                            {projectErrors.thumbnail}
-                        </p>
-                    )}
-                </div>
-
-                <TagEditor
-                    tags={project.tagList}
-                    onAdd={(tag) => setProject(prev => ({
-                        ...prev,
-                        tagList: [...(prev.tagList || []), tag.trim()],
-                    }))}
-                    onRemove={(tag) => setProject(prev => ({
-                        ...prev,
-                        tagList: (prev.tagList || []).filter(t => t !== tag),
-                    }))}
-                />
-                {projectErrors.tagList && (
-                    <p className="mt-1 text-xs text-red-600">{projectErrors.tagList}</p>
-                )}
-            </div>
+                    {projectErrors.tagList && <FieldError>{projectErrors.tagList}</FieldError>}
+                </motion.div>
+            </AnimatePresence>
         );
     }
 
@@ -245,17 +257,18 @@ export function CreatorProjectEditSteps(props: StepsProps) {
         };
 
         return (
-            <div className="space-y-6">
+            <div className="stack-5 md:stack-6">
                 <RequiredLegend />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-3 gap-y-3 md:gap-4">
                     <div>
-                        <Label htmlFor="startDate">펀딩 시작일 *</Label>
+                        <Label htmlFor="startDate" className="label-tone mb-1.5 block">펀딩 시작일 *</Label>
                         <Input
                             id="startDate"
                             type="date"
                             min={isEditMode ? undefined : minStartLeadStr}
                             value={project.startDate ? formatDate(project.startDate) : ""}
                             onChange={handleStartDateChange}
+                            className="control-tone"
                         />
                         {projectErrors.startDate && <p className="mt-1 text-xs text-red-600">{projectErrors.startDate}</p>}
 
@@ -266,7 +279,7 @@ export function CreatorProjectEditSteps(props: StepsProps) {
                         )}
                     </div>
                     <div>
-                        <Label htmlFor="endDate">펀딩 종료일 *</Label>
+                        <Label htmlFor="endDate" className="label-tone mb-1.5 block">펀딩 종료일 *</Label>
                         <Input
                             id="endDate"
                             type="date"
@@ -274,22 +287,27 @@ export function CreatorProjectEditSteps(props: StepsProps) {
                             max={project.startDate ? formatDate(addDays(project.startDate, END_MAX_OFFSET)) : undefined}
                             value={project.endDate ? formatDate(project.endDate) : ""}
                             onChange={handleEndDateChange}
+                            className="control-tone"
                         />
                         {projectErrors.endDate && <p className="mt-1 text-xs text-red-600">{projectErrors.endDate}</p>}
                     </div>
                 </div>
 
                 {/* 기간 가이드 + 현재 선택한 기간 */}
-                <div className="mt-1 space-y-1">
-                    <p className={`text-xs ${isDurationInvalid ? "text-red-600" : "text-muted-foreground"}`}>
-                        시작일은 오늘 기준 {P.MIN_START_LEAD_DAYS}일 이후로 설정하고,
-                        전체 기간은 {P.MIN_DAYS}–{P.MAX_DAYS}일 범위에서 선택해주세요.
-                        {duration !== null && <> <span className="ml-2 font-medium text-green-600">(현재 {duration}일)</span></>}
-                    </p>
+                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+                    <span className="text-muted-foreground">
+                        시작일은 오늘 기준 {P.MIN_START_LEAD_DAYS}일 이후, 전체 기간은 {P.MIN_DAYS}–{P.MAX_DAYS}일.
+                    </span>
+                    {duration !== null && (
+                        <Pill intent={isDurationInvalid ? "bad" : "good"}>
+                            현재 {duration}일
+                        </Pill>
+                    )}
+                    <InfoTip tip="심사 승인 후 지정한 시작일에 자동 공개됩니다." />
                 </div>
 
                 <div>
-                    <Label htmlFor="goalAmount">목표 금액 *</Label>
+                    <Label htmlFor="goalAmount" className="label-tone mb-1.5 block">목표 금액 *</Label>
                     <Input
                         placeholder="목표 금액을 입력하세요"
                         value={project.goalAmount}
@@ -297,13 +315,15 @@ export function CreatorProjectEditSteps(props: StepsProps) {
                             setProject(prev => ({ ...prev, goalAmount: Number(e.target.value.replace(/[^0-9]/g, "")) }));
                             clearProjectError?.("goalAmount");
                         }}
+                        className="control-tone"
                     />
                     <p className="mt-2 text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded-md inline-block">
                         {project.goalAmount ? `${formatPrice(project.goalAmount)}원` : ""}
                     </p>
-                    <p className={`mt-1 text-xs ${projectErrors.goalAmount ? "text-red-600" : "text-muted-foreground"}`}>
-                        최소 {toKRWCompact(P.MIN_GOAL_AMOUNT)}원 · 최대 {toKRWCompact(P.MAX_GOAL_AMOUNT)}원
-                    </p>
+                    <FieldHelp>
+                        최소 {toKRWCompact(P.MIN_GOAL_AMOUNT)} · 최대 {toKRWCompact(P.MAX_GOAL_AMOUNT)}
+                    </FieldHelp>
+                    {projectErrors.goalAmount && <FieldError>{projectErrors.goalAmount}</FieldError>}
                 </div>
                 <FeesCard goalAmount={project.goalAmount} />
             </div>
@@ -313,26 +333,33 @@ export function CreatorProjectEditSteps(props: StepsProps) {
 
     if (step === 3) {
         return (
-            <div className="space-y-6">
+            <div className="stack-5 md:stack-6">
                 <RequiredLegend />
                 <div>
-                    <Label htmlFor="projectContent">프로젝트 설명 *</Label>
+                    <SectionTitle
+                        icon={CalendarDays}
+                        title="프로젝트 설명"
+                        desc="스토리·제작 배경·혜택·일정·유의사항 등을 자세히 적어주세요."
+                        className="mb-2 md:mb-5"
+                    />
                     <Textarea
                         placeholder={`프로젝트 스토리, 제작 배경, 리워드 구성/혜택, 제작·배송 일정, 유의사항을 적어주세요.\n예) 왜 시작했는지 / 사용 계획 / 일정 / 환불·AS 안내`}
                         rows={12}
                         value={project.content ?? ""}
                         maxLength={P.MAX_CONTENT_LEN}
                         onChange={e => setProject(p => ({ ...p, content: e.target.value.slice(0, P.MAX_CONTENT_LEN) }))}
-                        className="mt-1 min-h-[100px] placeholder:text-xs placeholder:leading-5 placeholder:text-muted-foreground/80"
+                        className="control-tone mt-1 min-h-[100px] placeholder:text-xs placeholder:leading-5 placeholder:text-muted-foreground/80"
                     />
-                    {projectErrors.content && <p className="mt-1 text-xs text-red-600">{projectErrors.content}</p>}
-                    <span className={"text-xs text-muted-foreground"}>
-                        {project.content.length} / {P.MAX_CONTENT_LEN}자
-                    </span>
+                    {projectErrors.content && <FieldError>{projectErrors.content}</FieldError>}
+                    <div className="mt-1 text-right">
+                        <span className="type-body text-xs text-muted-foreground">
+                            {project.content.length} / {P.MAX_CONTENT_LEN}자
+                        </span>
+                    </div>
                 </div>
 
                 <div className="space-y-4">
-                    <Label>프로젝트 소개 (이미지 + 텍스트) *</Label>
+                    <Label className="label-tone !text-sm mb-2.5 block">프로젝트 소개 (이미지 + 텍스트) *</Label>
                     <p className="text-xs text-muted-foreground">
                         쇼핑몰 상세 페이지처럼 이미지를 추가하고 소개글을 작성하세요.
                     </p>
@@ -344,7 +371,7 @@ export function CreatorProjectEditSteps(props: StepsProps) {
                             clearProjectError?.("contentBlocks");
                         }}
                     />
-                    {projectErrors.contentBlocks && <p className="mt-1 text-xs text-red-600">{projectErrors.contentBlocks}</p>}
+                    {projectErrors.contentBlocks && <FieldError>{projectErrors.contentBlocks}</FieldError>}
                 </div>
             </div>
         );
@@ -352,21 +379,22 @@ export function CreatorProjectEditSteps(props: StepsProps) {
 
     if (step === 4) {
         return (
-            <div className="space-y-6">
+            <div className="stack-5 md:stack-6">
                 <RequiredLegend />
                 <div>
                     <h3 className="text-lg font-semibold mb-4">리워드 추가</h3>
                     <Card>
-                        <CardContent className="p-4 space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <CardContent className="p-4 md:p-5 space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-3 gap-y-3 md:gap-4">
                                 <div>
-                                    <Label htmlFor="price">리워드 가격 *</Label>
+                                    <Label htmlFor="price" className="label-tone mb-1.5 block">리워드 가격 *</Label>
                                     <Input
                                         value={newReward.price ?? ""}
                                         onChange={(e) => {
                                             setNewReward({ ...newReward, price: Number(e.target.value.replace(/[^0-9]/g, "")) })
                                             clearRewardError?.("price");
                                         }}
+                                        className="control-tone"
                                     />
 
                                     {newReward.price ? (
@@ -380,7 +408,7 @@ export function CreatorProjectEditSteps(props: StepsProps) {
                                 </div>
 
                                 <div>
-                                    <Label htmlFor="rewardQuantity">제한 수량 (선택)</Label>
+                                    <Label htmlFor="rewardQuantity" className="label-tone mb-1.5 block">제한 수량 (선택)</Label>
                                     <Input
                                         id="rewardQuantity"
                                         placeholder="비워두면 무제한"
@@ -390,13 +418,14 @@ export function CreatorProjectEditSteps(props: StepsProps) {
                                             setNewReward({ ...newReward, rewardCnt: raw === "" ? null : Number(raw) });
                                             clearRewardError?.("rewardCnt");
                                         }}
+                                        className="control-tone"
                                     />
                                     {rewardErrors.rewardCnt && <p className="mt-1 text-xs text-red-500">{rewardErrors.rewardCnt}</p>}
                                 </div>
                             </div>
 
                             <div>
-                                <Label htmlFor="rewardTitle">리워드명 *</Label>
+                                <Label htmlFor="rewardTitle" className="label-tone mb-1.5 block">리워드명 *</Label>
                                 <Input
                                     id="rewardTitle"
                                     placeholder="얼리버드 패키지"
@@ -405,12 +434,13 @@ export function CreatorProjectEditSteps(props: StepsProps) {
                                         setNewReward({ ...newReward, rewardName: e.target.value })
                                         clearRewardError?.("rewardName");
                                     }}
+                                    className="control-tone"
                                 />
                                 {rewardErrors.rewardName && <p className="mt-1 text-xs text-red-500">{rewardErrors.rewardName}</p>}
                             </div>
 
                             <div>
-                                <Label htmlFor="rewardDescription">리워드 설명 *</Label>
+                                <Label htmlFor="rewardDescription" className="label-tone mb-1.5 block">리워드 설명 *</Label>
                                 <Textarea
                                     id="rewardDescription"
                                     rows={3}
@@ -420,12 +450,15 @@ export function CreatorProjectEditSteps(props: StepsProps) {
                                         setNewReward({ ...newReward, rewardContent: e.target.value })
                                         clearRewardError?.("rewardContent");
                                     }}
+                                    className="control-tone"
                                 />
                                 {rewardErrors.rewardContent && <p className="mt-1 text-xs text-red-500">{rewardErrors.rewardContent}</p>}
                             </div>
 
                             <div>
-                                <Label htmlFor="deliveryDate">{newReward.isPosting === "Y" ? "배송 예정일 *" : "제공 예정일 *"}</Label>
+                                <Label htmlFor="deliveryDate" className="label-tone mb-1.5 block">
+                                    {newReward.isPosting === "Y" ? "배송 예정일 *" : "제공 예정일 *"}
+                                </Label>
                                 <Input
                                     type="date"
                                     value={formatDate(newReward.deliveryDate)}
@@ -434,27 +467,23 @@ export function CreatorProjectEditSteps(props: StepsProps) {
                                         clearRewardError?.("deliveryDate");
                                     }}
                                     className={((newReward as any)._submittedOnce && rewardErrors.deliveryDate)
-                                        ? "border-red-500 focus-visible:ring-red-500"
+                                        ? "border-red-500 focus-visible:ring-red-500 control-tone"
                                         : undefined}
                                 />
-                                {((newReward as any)._submittedOnce && rewardErrors.deliveryDate) ? (
-                                    <p className="mt-1 text-xs text-red-500">{rewardErrors.deliveryDate}</p>
-                                ) : (
-                                    <p className="mt-1 text-xs text-muted-foreground">
-                                        펀딩 종료일 다음날(
-                                        {project.endDate ? formatDate(addDays(project.endDate, 1)) : "종료일 미설정"}
-                                        ) 이후로 설정하세요.
-                                    </p>
-                                )}
+                                {((newReward as any)._submittedOnce && rewardErrors.deliveryDate)
+                                    ? <FieldError>{rewardErrors.deliveryDate}</FieldError>
+                                    : <FieldHelp>
+                                        펀딩 종료일 다음날({project.endDate ? formatDate(addDays(project.endDate, 1)) : "종료일 미설정"}) 이후로 설정하세요.
+                                    </FieldHelp>}
                             </div>
 
                             <div>
-                                <Label htmlFor="isPosting">배송 필요 여부 *</Label>
+                                <Label htmlFor="isPosting" className="label-tone mb-1.5 block">배송 필요 여부 *</Label>
                                 <Select
                                     value={newReward.isPosting}
                                     onValueChange={(v) => setNewReward({ ...newReward, isPosting: v as "Y" | "N" })}
                                 >
-                                    <SelectTrigger id="isPosting" className="w-full">
+                                    <SelectTrigger id="isPosting" className="w-full control-tone">
                                         <SelectValue placeholder="배송 필요 여부 선택" />
                                     </SelectTrigger>
 
@@ -484,7 +513,7 @@ export function CreatorProjectEditSteps(props: StepsProps) {
                     <h3 className="text-lg font-semibold mb-4">추가된 리워드</h3>
                     <div className="space-y-2">
                         {rewardList.map((r) => (
-                            <Card key={r.tempId}>
+                            <Card key={r.tempId} className="rounded-2xl border border-muted/60">
                                 <CardContent>
                                     <div className="flex justify-between items-start">
                                         <div className="flex-1">
@@ -507,7 +536,13 @@ export function CreatorProjectEditSteps(props: StepsProps) {
                                                 </div>
                                             </div>
                                         </div>
-                                        <Button variant="ghost" size="sm" onClick={() => removeReward(r.tempId)}>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="text-muted-foreground hover:text-red-600 hover:bg-red-50"
+                                            onClick={() => removeReward(r.tempId)}
+                                            aria-label="리워드 삭제"
+                                        >
                                             <X className="h-4 w-4" />
                                         </Button>
                                     </div>
@@ -515,7 +550,10 @@ export function CreatorProjectEditSteps(props: StepsProps) {
                             </Card>
                         ))}
                         {rewardList.length === 0 && (
-                            <p className="text-center text-gray-500 py-8">아직 추가된 리워드가 없습니다.</p>
+                            <div className="text-center text-muted-foreground py-10">
+                                <PackageSearch className="h-6 w-6 mx-auto mb-2 opacity-60" />
+                                아직 추가된 리워드가 없어요. 첫 리워드를 만들어볼까요?
+                            </div>
                         )}
                     </div>
                 </div>
@@ -528,31 +566,41 @@ export function CreatorProjectEditSteps(props: StepsProps) {
         const hasBizDoc = (project.businessDoc instanceof File) || !!project.businessDocPreviewUrl;
 
         return (
-            <div className="space-y-6">
+            <div className="stack-5 md:stack-6">
                 <RequiredLegend />
+                <SectionTitle
+                    icon={Wallet}
+                    title="창작자 정보"
+                    desc="정산 및 심사에 필요한 기본 정보를 확인하세요."
+                />
                 <Card>
-                    <CardHeader>
-                        <CardTitle>창작자 정보</CardTitle>
-                    </CardHeader>
                     <CardContent className="space-y-4">
                         <div>
-                            <Label>창작자명</Label>
-                            <Input value={project.creatorName ?? ''} readOnly disabled />
+                            <Label className="label-tone mb-1.5 block">창작자명</Label>
+                            <Input value={project.creatorName ?? ''} disabled />
                         </div>
                         <div>
-                            <Label>사업자등록번호</Label>
-                            <Input value={project.businessNum ?? ''} readOnly disabled />
+                            <Label className="label-tone mb-1.5 block">사업자등록번호</Label>
+                            <Input value={project.businessNum ?? ''} disabled />
                         </div>
                         <div>
                             <BusinessDocUploader
                                 file={project.businessDoc ?? null}
                                 previewUrl={project.businessDocPreviewUrl}
                                 onSelect={(f) => {
-                                    setProject(prev => ({ ...prev, businessDoc: f, businessDocPreviewUrl: f ? undefined : prev.businessDocPreviewUrl, }));
+                                    setProject(prev => ({
+                                        ...prev,
+                                        businessDoc: f,
+                                        businessDocPreviewUrl: f ? undefined : prev.businessDocPreviewUrl,
+                                    }));
                                     clearProjectError?.("businessDoc");
                                 }}
                                 onCleared={() =>
-                                    setProject(prev => ({ ...prev, businessDoc: null, businessDocPreviewUrl: undefined, }))}
+                                    setProject(prev => ({
+                                        ...prev,
+                                        businessDoc: null,
+                                        businessDocPreviewUrl: undefined,
+                                    }))}
                             />
                             {projectErrors.businessDoc && (
                                 <p className="mt-1 text-xs text-red-600" role="alert">
@@ -573,17 +621,15 @@ export function CreatorProjectEditSteps(props: StepsProps) {
                             )}
                         </div>
                         <div>
-                            <Label>이메일</Label>
-                            <Input value={project.email ?? ''} readOnly disabled />
+                            <Label className="label-tone mb-1.5 block">이메일</Label>
+                            <Input value={project.email ?? ''} disabled />
                         </div>
                         <div>
-                            <Label>전화번호</Label>
-                            <Input value={project.phone ?? ''} readOnly disabled />
+                            <Label className="label-tone mb-1.5 block">전화번호</Label>
+                            <Input value={project.phone ?? ''} disabled />
                         </div>
 
-                        <div className="md:col-span-2">
-                            <Badge variant="secondary">변경사항은 &quot;창작자 정보 수정&quot; 화면에서 진행해주세요.</Badge>
-                        </div>
+                        <Badge variant="secondary">변경사항은 &quot;창작자 정보 수정&quot; 화면에서 진행해주세요.</Badge>
                     </CardContent>
                 </Card>
             </div>
@@ -592,53 +638,67 @@ export function CreatorProjectEditSteps(props: StepsProps) {
 
     if (step === 6) {
         return (
-            <div className="space-y-6">
+            <div className="space-y-5 md:space-y-6">
                 <RequiredLegend />
+                <SectionTitle
+                    icon={TagIcon}
+                    title="최종 확인"
+                    desc="요약 정보를 확인하고 약관에 동의해 제출하세요."
+                />
                 <Card>
-                    <CardHeader><CardTitle>프로젝트 요약</CardTitle></CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <CardContent className="p-2 md:p-6 space-y-4">
+                        <dl className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                             <div>
-                                <h4 className="font-medium text-gray-700">카테고리</h4>
-                                <p>
+                                <dt className="text-xs md:text-sm text-muted-foreground">카테고리</dt>
+                                <dd className="text-sm md:text-base font-medium text-foreground mt-0.5">
                                     {(() => {
                                         const sub = (subcategories as Subcategory[]).find(sc => sc.subctgrId === project.subctgrId);
                                         if (!sub) return "-";
                                         const ctgName = (categories as Category[]).find(c => c.ctgrId === sub.ctgrId)?.ctgrName ?? "기타";
                                         return `${ctgName} > ${sub.subctgrName}`;
                                     })()}
-                                </p>
+                                </dd>
                             </div>
                             <div>
-                                <h4 className="font-medium text-gray-700">목표 금액</h4>
-                                <p>{project.goalAmount ? `${formatPrice(project.goalAmount)}원` : "-"}</p>
+                                <dt className="text-xs md:text-sm text-muted-foreground">목표 금액</dt>
+                                <dd className="text-sm md:text-base font-medium text-foreground mt-0.5">
+                                    {project.goalAmount ? `${formatPrice(project.goalAmount)}원` : "-"}
+                                </dd>
                             </div>
                             <div>
-                                <h4 className="font-medium text-gray-700">펀딩 기간</h4>
-                                <p>
+                                <dt className="text-xs md:text-sm text-muted-foreground">펀딩 기간</dt>
+                                <dd className="text-sm md:text-base font-medium text-foreground mt-0.5">
                                     {project.startDate && project.endDate
                                         ? `${formatDate(project.startDate)} ~ ${formatDate(project.endDate)}`
                                         : "-"}
-                                </p>
+                                </dd>
                             </div>
                             <div>
-                                <h4 className="font-medium text-gray-700">리워드 개수</h4>
-                                <p>{rewardList.length}개</p>
+                                <dt className="text-xs md:text-sm text-muted-foreground">리워드 개수</dt>
+                                <dd className="text-sm md:text-base font-medium text-foreground mt-0.5">
+                                    {rewardList.length}개
+                                </dd>
                             </div>
+                        </dl>
+                        <div className="pt-2">
+                            <h4 className="text-xs md:text-sm text-muted-foreground">프로젝트 제목</h4>
+                            <p className="text-sm md:text-base font-medium text-foreground mt-0.5">
+                                {project.title || "-"}
+                            </p>
                         </div>
                         <div>
-                            <h4 className="font-medium text-gray-700">프로젝트 제목</h4>
-                            <p>{project.title || "-"}</p>
-                        </div>
-                        <div>
-                            <h4 className="font-medium text-gray-700">창작자</h4>
-                            <p>{project.creatorName || "-"}</p>
+                            <h4 className="text-xs md:text-sm text-muted-foreground">창작자</h4>
+                            <p className="text-sm md:text-base font-medium text-foreground mt-0.5">
+                                {project.creatorName || "-"}
+                            </p>
                         </div>
                     </CardContent>
                 </Card>
 
                 <Card>
-                    <CardHeader><CardTitle>심사 안내</CardTitle></CardHeader>
+                    <CardHeader>
+                        <CardTitle>심사 안내</CardTitle>
+                    </CardHeader>
                     <CardContent>
                         <div className="space-y-2 text-sm">
                             <p>• 프로젝트 심사는 영업일 기준 3-5일 소요됩니다.</p>
@@ -649,14 +709,16 @@ export function CreatorProjectEditSteps(props: StepsProps) {
                     </CardContent>
                 </Card>
 
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-2">
                     <Checkbox
                         id="agree"
                         checked={agree}
                         onCheckedChange={(v) => { const val = Boolean(v); setAgree?.(val); }}
                         aria-invalid={!!agreeError}
                     />
-                    <label htmlFor="agree" className="text-sm">프로젝트 등록 약관 및 정책에 동의합니다. *</label>
+                    <label htmlFor="agree" className="text-sm">
+                        프로젝트 등록 약관 및 정책에 동의합니다. *
+                    </label>
                 </div>
                 {agreeError && (<p className="text-xs text-red-500 mt-1">{agreeError}</p>)}
             </div>
@@ -665,24 +727,52 @@ export function CreatorProjectEditSteps(props: StepsProps) {
 }
 
 function FeesCard({ goalAmount }: { goalAmount: number }) {
-    const collectedAmount = goalAmount ? Math.round(goalAmount * 0.92) : 0;
+    const platformRate = 0.05;
+    const paymentRate = 0.03;
+    const totalRate = platformRate + paymentRate;
+
+    const fees = Math.round((goalAmount || 0) * totalRate);
+    const net = Math.max(0, (goalAmount || 0) - fees);
+    const pct = goalAmount > 0 ? Math.min(100, Math.round((net / goalAmount) * 100)) : 0;
 
     return (
-        <Card>
-            <CardHeader><CardTitle className="text-lg">펀딩 수수료 안내</CardTitle></CardHeader>
-            <CardContent>
-                <div className="space-y-2 text-sm">
-                    <div className="flex justify-between"><span>플랫폼 수수료</span><span>5%</span></div>
-                    <div className="flex justify-between"><span>결제 수수료</span><span>3%</span></div>
-                    <div className="border-t pt-2 flex justify-between font-semibold">
-                        <span>총 수수료</span><span>8%</span>
+        <Card className="border border-muted/50 shadow-sm rounded-2xl">
+            <CardHeader>
+                <CardTitle className="type-title text-lg flex items-center gap-2">
+                    <Wallet className="h-5 w-5 text-primary" />
+                    펀딩 수수료 안내
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 p-5 md:p-6">
+                <div className="grid grid-cols-3 gap-3 text-sm type-body">
+                    <div className="rounded-xl bg-slate-50 p-4">
+                        <div className="text-xs text-muted-foreground">플랫폼 수수료</div>
+                        <div className="font-semibold mt-0.5">{Math.round(platformRate * 100)}%</div>
                     </div>
-                    {goalAmount > 0 && (
-                        <div className="mt-2 p-2 bg-blue-50 rounded">
-                            <p>목표금액 기준 예상 정산액: {new Intl.NumberFormat("ko-KR").format(collectedAmount)}원</p>
-                        </div>
-                    )}
+                    <div className="rounded-xl bg-slate-50 p-4">
+                        <div className="text-xs text-muted-foreground">결제 수수료</div>
+                        <div className="font-semibold mt-0.5">{Math.round(paymentRate * 100)}%</div>
+                    </div>
+                    <div className="rounded-xl bg-slate-50 p-4">
+                        <div className="text-xs text-muted-foreground">총 수수료</div>
+                        <div className="font-semibold mt-0.5">{Math.round(totalRate * 100)}%</div>
+                    </div>
                 </div>
+
+                {goalAmount > 0 && (
+                    <div className="mt-1 space-y-2">
+                        <div className="flex justify-between text-xs">
+                            <span>정산 예상액</span>
+                            <span className="font-medium">{new Intl.NumberFormat("ko-KR").format(net)}원</span>
+                        </div>
+                        <Progress value={pct} />
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>목표금액 {new Intl.NumberFormat("ko-KR").format(goalAmount)}원 기준</span>
+                            <span>수수료 {new Intl.NumberFormat("ko-KR").format(fees)}원</span>
+                        </div>
+                    </div>
+                )}
+                <FieldHelp>카드 수수료는 결제/취소율에 따라 변동될 수 있습니다.</FieldHelp>
             </CardContent>
         </Card>
     );
@@ -699,13 +789,78 @@ function RequiredLegend() {
 
 function LabelRequired({
     children,
+    className,
     ...rest
 }: React.ComponentProps<typeof Label>) {
     return (
-        <Label {...rest}>
+        <Label {...rest} className={`label-tone mb-1.5 block ${className ?? ""}`}>
             {children}
             <span className="text-red-600 ml-0.5" aria-hidden="true">*</span>
             <span className="sr-only"> (필수)</span>
         </Label>
+    );
+}
+
+function SectionTitle({
+    icon: Icon,
+    title,
+    desc,
+    className,
+}: { icon: React.ComponentType<any>, title: string, desc?: string, className?: string }) {
+    return (
+        <div className={`flex items-start gap-2.5 ${className ?? ""}`}>
+            <div className="rounded-xl bg-primary/10 text-primary p-2.5">
+                <Icon className="h-5 w-5" />
+            </div>
+            <div>
+                <h3 className="type-title text-lg font-semibold">{title}</h3>
+                {desc && <p className="type-body text-sm text-muted-foreground mt-0.5">{desc}</p>}
+            </div>
+        </div>
+    );
+}
+
+function FieldHelp({ children }: { children: React.ReactNode }) {
+    return <p className="type-body mt-1.5 text-xs text-muted-foreground">{children}</p>;
+}
+
+function FieldError({ children }: { children: React.ReactNode }) {
+    return (
+        <p className="mt-1.5 text-xs text-red-600 flex items-center gap-1.5">
+            <AlertCircle className="h-3.5 w-3.5" />
+            <span className="type-body">{children}</span>
+        </p>
+    );
+}
+
+function InfoTip({ tip }: { tip: string }) {
+    return (
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <button type="button" className="inline-flex items-center">
+                    <Info className="h-4 w-4 text-muted-foreground" />
+                </button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs max-w-[260px] leading-5">
+                {tip}
+            </TooltipContent>
+        </Tooltip>
+    );
+}
+
+function Pill({
+    children,
+    intent = "neutral",
+}: { children: React.ReactNode, intent?: "neutral" | "good" | "bad" }) {
+    const tone = intent === "good"
+        ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
+        : intent === "bad"
+            ? "bg-red-50 text-red-700 ring-red-200"
+            : "bg-slate-50 text-slate-700 ring-slate-200";
+
+    return (
+        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ring-1 ${tone}`}>
+            {children}
+        </span>
     );
 }
