@@ -14,6 +14,7 @@ import type { LoginUser } from "@/types";
 import { useCookies } from "react-cookie";
 import { deleteData, endpoints, postData } from "@/api/apis";
 import { useLoginUserStore } from "@/store/LoginUserStore.store";
+import defaultProfileImg from "@/assets/images/default-profile.webp";
 
 const profileSchema = z.object({
     email: z.string().email(),
@@ -116,10 +117,11 @@ const AccountSettingTab: React.FC = () => {
         try {
             const res = await postData(endpoints.updateNickname, { nickname: values.nickname }, cookie.accessToken);
             if (res.status === 200) {
-                console.log(res.data);
                 setLoginUser({ ...(loginUser as LoginUser), nickname: res.data });
                 setValue("nickname", res.data, { shouldDirty: false, shouldValidate: true });
                 toastSuccess("닉네임이 수정되었어요.");
+            } else if (res.status === 409) {
+                toastError("이미 사용 중인 닉네임이에요.");
             } else {
                 toastError("닉네임 수정에 실패했어요.");
             }
@@ -204,7 +206,7 @@ const AccountSettingTab: React.FC = () => {
                 <div className="flex items-start gap-6">
                     <div className="flex flex-col items-center gap-3">
                         <Avatar className="h-24 w-24 ring-1 ring-border">
-                            <AvatarImage src={(avatarPreview ?? toPublicUrl(loginUser.profileImg)) ?? undefined} alt="avatar" />
+                            <AvatarImage src={(avatarPreview ?? toPublicUrl(loginUser.profileImg)) ?? defaultProfileImg} alt="avatar" />
                             <AvatarFallback>{avatarFallback}</AvatarFallback>
                         </Avatar>
                         <div className="flex gap-2">
@@ -260,11 +262,11 @@ const AccountSettingTab: React.FC = () => {
                             });
                             onResetAvatar();
                         }}
-                        disabled={!isDirty && !hasAvatarChange}
+                        disabled={isSubmitting}
                     >
                         변경 취소
                     </Button>
-                    <Button type="submit" disabled={isSubmitting || (!isDirty && !hasAvatarChange)}>
+                    <Button type="submit" disabled={isSubmitting}>
                         {isSubmitting ? "저장 중..." : "저장"}
                     </Button>
                 </div>

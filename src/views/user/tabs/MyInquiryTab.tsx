@@ -166,6 +166,7 @@ export function MyInquiryTab() {
                                 <div className="col-span-3">유형</div>
                                 <div className="col-span-2">등록일</div>
                             </div>
+                            {items.length === 0 && <div className="py-10 text-center text-zinc-500">문의 내역이 없습니다</div>}
                             {items.map(inq => (
                                 <AccordionItem key={inq.inqId} value={String(inq.inqId)}>
                                     <AccordionTrigger>

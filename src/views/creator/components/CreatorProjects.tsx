@@ -34,7 +34,6 @@ export default function CreatorProjects({ creatorId }: Props) {
         return () => { mounted = false; };
     }, [creatorId, sort, page]);
 
-console.log(items);
     return (
         <>
             {loading ? (
