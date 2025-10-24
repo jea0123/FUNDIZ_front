@@ -18,6 +18,7 @@ import { ProjectDetailViewer } from '../creator/components/ProjectDetailViewer';
 import { useCookies } from 'react-cookie';
 import { useLoginUserStore } from '@/store/LoginUserStore.store';
 import { ProjectThumb } from '../creator/pages/CreatorProjectListPage';
+import { is } from 'date-fns/locale';
 
 export function ProjectDetails() {
     const { loginUser } = useLoginUserStore();
@@ -235,6 +236,10 @@ export function ProjectDetails() {
 
     if (!projectId || !project || loadingProject) return <FundingLoader />;
 
+    const isOpen = project.projectStatus === 'OPEN';
+    const toKDate = (d: string | Date) =>
+        new Date(d).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+
     return (
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
             {/* ===== 헤더: 좌 썸네일 / 우 정보 ===== */}
@@ -271,49 +276,59 @@ export function ProjectDetails() {
 
                     <h1 className="text-2xl font-semibold leading-tight mt-6">{project.title}</h1>
 
+                    {/* OPEN 아닐 때: 오픈 예정 배너 */}
+                    {!isOpen && (
+                        <div className="mt-4 rounded-md bg-blue-50 text-blue-700 px-3 py-2 text-sm font-medium">
+                            {toKDate(project.startDate)} 오픈 예정
+                        </div>
+                    )}
+
                     {/* 금액/달성률 */}
-                    <div className="mt-5 flex items-baseline gap-3 whitespace-nowrap">
-                        <span className="text-[24px] font-semibold">
-                            {formatNumber(project.currAmount)}
-                            <span className="ml-1">원</span>
-                        </span>
-                        <span className="text-[22px] text-blue-600 font-bold">{project.percentNow}%</span>
-                    </div>
+                    {isOpen && (
+                        <div className="mt-5 flex items-baseline gap-3 whitespace-nowrap">
+                            <span className="text-[24px] font-semibold">
+                                {formatNumber(project.currAmount)}<span className="ml-1">원</span>
+                            </span>
+                            <span className="text-[22px] text-blue-600 font-bold">{project.percentNow}%</span>
+                        </div>
+                    )}
 
                     {/* 메트릭 */}
-                    <div className="mt-1">
-                        <div className="text-sm text-gray-500 mb-6">목표 금액 {formatNumber(project.goalAmount)}원</div>
-
-                        <div className="grid grid-cols-2 gap-4 py-4 border-y mt-3">
-                            <div className="text-center">
-                                <div className="flex items-center justify-center mb-1">
-                                    <Users className="h-4 w-4 mr-2" />
-                                    <span className="font-semibold">{project.backerCnt}</span>
-                                </div>
-                                <div className="text-sm text-gray-500">후원자</div>
+                    {isOpen && (
+                        <div className="mt-1">
+                            <div className="text-sm text-gray-500 mb-6">
+                                목표 금액 {formatNumber(project.goalAmount)}원
                             </div>
-                            <div className="text-center">
-                                <div className="flex items-center justify-center mb-1">
-                                    <Calendar className="h-4 w-4 mr-2" />
-                                    <span className="font-semibold">{getDaysLeft(project.endDate)}</span>
+
+                            <div className="grid grid-cols-2 gap-4 py-4 border-y mt-3">
+                                <div className="text-center">
+                                    <div className="flex items-center justify-center mb-1">
+                                        <Users className="h-4 w-4 mr-2" />
+                                        <span className="font-semibold">{project.backerCnt}</span>
+                                    </div>
+                                    <div className="text-sm text-gray-500">후원자</div>
                                 </div>
-                                <div className="text-sm text-gray-500">일 남음</div>
+                                <div className="text-center">
+                                    <div className="flex items-center justify-center mb-1">
+                                        <Calendar className="h-4 w-4 mr-2" />
+                                        <span className="font-semibold">{getDaysLeft(project.endDate)}</span>
+                                    </div>
+                                    <div className="text-sm text-gray-500">일 남음</div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2 text-sm mt-5">
+                                <div className="flex justify-between">
+                                    <span className="text-gray-500">펀딩 기간</span>
+                                    <span>{formatDate(project.startDate)} ~ {formatDate(project.endDate)}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-500">결제일</span>
+                                    <span>{formatDate(project.paymentDate)}</span>
+                                </div>
                             </div>
                         </div>
-
-                        <div className="space-y-2 text-sm mt-5">
-                            <div className="flex justify-between">
-                                <span className="text-gray-500">펀딩 기간</span>
-                                <span>
-                                    {formatDate(project.startDate)} ~ {formatDate(project.endDate)}
-                                </span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-500">결제일</span>
-                                <span>{formatDate(project.paymentDate)}</span>
-                            </div>
-                        </div>
-                    </div>
+                    )}
 
                     {/* 좋아요/공유 + 후원하기 */}
                     <div className="mt-6 flex items-center gap-2 min-w-0">
@@ -343,14 +358,17 @@ export function ProjectDetails() {
                         </Button>
                         <Button
                             onClick={backThisProject}
-                            disabled={cartSummary.totalQty === 0}
-                            className="
-                                flex-1 min-w-0 h-12 text-base rounded-lg
+                            disabled={cartSummary.totalQty === 0 || project.projectStatus !== 'OPEN'}
+                            className={isOpen ? `flex-1 min-w-0 h-12 text-base rounded-lg
                                 bg-blue-600 text-white hover:bg-blue-700
                                 focus-visible:ring-2 focus-visible:ring-blue-600/30
                                 disabled:opacity-100 disabled:bg-blue-600 disabled:text-white disabled:hover:bg-blue-600
                                 disabled:cursor-not-allowed
-                            "
+                            ` : `flex-1 min-w-0 h-12 text-base rounded-lg
+                                bg-gray-400 text-white hover:bg-gray-500
+                                disabled:opacity-100 disabled:bg-gray-400 disabled:text-white disabled:hover:bg-gray-400
+                                disabled:cursor-not-allowed
+                            `}
                             title={cartSummary.totalQty === 0 ? '리워드를 선택하세요' : undefined}
                         >
                             후원하기
@@ -359,7 +377,7 @@ export function ProjectDetails() {
                     </div>
 
                     {/* 창작자 정보 카드 */}
-                    <Card className="mt-6">
+                    <Card className={isOpen ? 'mt-6' : 'mt-70'}>
                         <CardContent>
                             <div className="flex items-center gap-3">
                                 <Avatar>
@@ -564,11 +582,13 @@ export function ProjectDetails() {
                                         "
                                         size="lg"
                                         onClick={backThisProject}
-                                        disabled={cartSummary.totalQty === 0}
+                                        disabled={cartSummary.totalQty === 0 || project.projectStatus !== 'OPEN'}
                                     >
-                                        {cartSummary.totalQty > 0
-                                            ? `${formatNumber(cartSummary.totalAmount)}원 후원하기`
-                                            : '후원하기'}
+                                        {project.projectStatus !== 'OPEN'
+                                            ? '오픈 예정'
+                                            : cartSummary.totalQty > 0
+                                                ? `${formatNumber(cartSummary.totalAmount)}원 후원하기`
+                                                : '후원하기'}
                                     </Button>
 
                                 </>
@@ -630,7 +650,7 @@ export function ProjectDetails() {
                                                             +
                                                         </Button>
                                                     </div>
-                                                    <Button size="sm" onClick={() => addToCart(reward, safeQty)} disabled={soldOut}>
+                                                    <Button size="sm" onClick={() => addToCart(reward, safeQty)} disabled={soldOut || project.projectStatus !== 'OPEN'}>
                                                         담기
                                                     </Button>
                                                 </div>
@@ -653,11 +673,13 @@ export function ProjectDetails() {
                         "
                         size="lg"
                         onClick={backThisProject}
-                        disabled={cartSummary.totalQty === 0}
+                        disabled={cartSummary.totalQty === 0 || project.projectStatus !== 'OPEN'}
                     >
-                        {cartSummary.totalQty > 0
-                            ? `${formatNumber(cartSummary.totalAmount)}원 후원하기`
-                            : '후원하기'}
+                        {project.projectStatus !== 'OPEN'
+                            ? '오픈 예정'
+                            : cartSummary.totalQty > 0
+                                ? `${formatNumber(cartSummary.totalAmount)}원 후원하기`
+                                : '후원하기'}
                     </Button>
                 </aside>
             </div>
