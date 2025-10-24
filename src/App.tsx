@@ -58,136 +58,136 @@ import CreateCategory from './views/CreateCategory';
 import PaymentRegisterPage from './views/user/tabs/PaymentRegisterPage';
 import LoginPage from './views/auth/user/LoginPage';
 import RegisterPage2 from './views/auth/user/RegisterPage2';
-import { ProjectDetails } from './views/project/ProjectDetails';
+import { ProjectDetailsPage } from './views/project/ProjectDetailsPage';
 
 const OverviewTab = lazy(() => import('./views/admin/pages/OverviewTab').then((module) => ({ default: module.OverviewTab })));
 const CreatorDashboard = lazy(() => import('./views/creator/pages/CreatorDashboard').then((module) => ({ default: module.default })));
 
 export default function App() {
-  const { setLoginUser, resetLoginUser } = useLoginUserStore();
-  const [cookie] = useCookies();
+    const { setLoginUser, resetLoginUser } = useLoginUserStore();
+    const [cookie] = useCookies();
 
-  /**
-   * @description Navigator를 전역 상태로 설정
-   * @returns {null} 렌더링 없음
-   */
-  function NavigatorRegistrar() {
-    const navigate = useNavigate();
-    useEffect(() => setNavigator(navigate), [navigate]);
-    return null; // 렌더링 없음
-  }
-
-  useEffect(() => {
-    const getLoginUserResponse = (response: any) => {
-      if (response.status === 200) {
-        setLoginUser(response.data);
-      } else {
-        resetLoginUser();
-      }
-    };
-
-    if (cookie.accessToken) {
-      getData(endpoints.getLoginUser, cookie.accessToken).then(getLoginUserResponse);
-    } else {
-      resetLoginUser();
+    /**
+     * @description Navigator를 전역 상태로 설정
+     * @returns {null} 렌더링 없음
+     */
+    function NavigatorRegistrar() {
+        const navigate = useNavigate();
+        useEffect(() => setNavigator(navigate), [navigate]);
+        return null; // 렌더링 없음
     }
-  }, [cookie.accessToken]);
 
-  return (
-    <Suspense fallback={<FundingLoader />}>
-      <div className="min-h-screen bg-gray-50">
-        <NavigatorRegistrar />
-        {/* <Layout /> */}
-        <Routes>
-          <Route element={<Layout />}>
-            <Route path="/" element={<MainPage />} />
+    useEffect(() => {
+        const getLoginUserResponse = (response: any) => {
+            if (response.status === 200) {
+                setLoginUser(response.data);
+            } else {
+                resetLoginUser();
+            }
+        };
 
-            <Route path="/auth">
-              <Route path="register" element={<RegisterPage2 />} />
-              <Route path="login" element={<LoginPage />} />
-            </Route>
+        if (cookie.accessToken) {
+            getData(endpoints.getLoginUser, cookie.accessToken).then(getLoginUserResponse);
+        } else {
+            resetLoginUser();
+        }
+    }, [cookie.accessToken]);
 
-            <Route path="/project">
-              <Route index element={<ProjectsBrowsePage />} />
-              <Route path="search" element={<ProjectsSearchPage />} />
-              <Route path="category/:ctgrId" element={<ProjectsByCategoryPage />} />
-              <Route path="category/:ctgrId/subcategory/:subctgrId" element={<ProjectsBySubcategoryPage />} />
-              <Route path=":projectId" element={<ProjectDetails />} />
-              <Route path=":projectId/backing" element={<BackingPage />} />
-            </Route>
+    return (
+        <Suspense fallback={<FundingLoader />}>
+            <div className="min-h-screen bg-gray-50">
+                <NavigatorRegistrar />
+                {/* <Layout /> */}
+                <Routes>
+                    <Route element={<Layout />}>
+                        <Route path="/" element={<MainPage />} />
 
-            <Route path="/user" element={<MyPageLayout />}>
-              <Route index element={<UserHomeTab />} />
-              <Route path="main" element={<UserHomeTab />} />
-              <Route path="support" element={<BackingTab />} />
-              <Route path="support/:backingId" element={<BackingDetailTab />} />
-              <Route path="wishlist" element={<LikedProjectTab />} />
-              <Route path="settings" element={<AccountSettingTab />} />
-              <Route path="notifications" element={<NotificationTab />} />
-              <Route path="myqna" element={<MyQnATab />} />
-              <Route path="myinquiry" element={<MyInquiryTab />} />
-              <Route path="myreports" element={<MyReportsTab />} />
-              <Route path="payment" element={<PaymentRegisterPage />} />
-            </Route>
+                        <Route path="/auth">
+                            <Route path="register" element={<RegisterPage2 />} />
+                            <Route path="login" element={<LoginPage />} />
+                        </Route>
 
-            <Route path="/creator/register" element={<RegisterCreator />} />
-            <Route path="/creator/:creatorId" element={<CreatorPage />} />
-            <Route path="/creator" element={<CreatorLayout />}>
-              <Route index element={<CreatorDashboard />} />
-              <Route path="dashboard" element={<CreatorDashboard />} />
-              <Route path="settings" element={<CreatorInfoUpdate />} />
-              <Route path="project/new" element={<CreatorProjectEditPage key="new" />} />
-              <Route path="project/:projectId" element={<CreatorProjectEditPage key="edit" />} />
-              <Route path="projects">
-                <Route index element={<CreatorProjectListPage />} />
-                <Route path=":projectId" element={<CreatorProjectDetailsPage />} />
-                <Route path=":projectId/reward" element={<CreatorRewardAddPage />} />
-              </Route>
-              <Route path="backings" element={<CreatorBacking />} />
-              <Route path="shipping" element={<CreatorShippingList />} />
-              <Route path="shipping/:projectId" element={<CreatorShippingDetail />} />
-              <Route path="qna" element={<CreatorQnATab />} />
-              <Route path="settlement" element={<CreatorSettlementPage />} />
-            </Route>
+                        <Route path="/project">
+                            <Route index element={<ProjectsBrowsePage />} />
+                            <Route path="search" element={<ProjectsSearchPage />} />
+                            <Route path="category/:ctgrId" element={<ProjectsByCategoryPage />} />
+                            <Route path="category/:ctgrId/subcategory/:subctgrId" element={<ProjectsBySubcategoryPage />} />
+                            <Route path=":projectId" element={<ProjectDetailsPage />} />
+                            <Route path=":projectId/backing" element={<BackingPage />} />
+                        </Route>
 
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<OverviewTab />} />
-              <Route path="overview" element={<OverviewTab />} />
-              <Route path="approvals" element={<VerificationQueue />} />
-              <Route path="verify/:projectId" element={<AdminProjectDetails />} />
-              <Route path="projects" element={<AdminProjectListPage />} />
-              <Route path="projects/:projectId" element={<AdminProjectDetails />} />
-              <Route path="project/:projectId" element={<AdminProjectEditPage />} />
-              <Route path="reports" element={<ReportsAdminTab />} />
-              <Route path="users" element={<UsersTab />} />
-              <Route path="analytics" element={<AnalyticsTab />} />
-              <Route path="inquiry" element={<InquiryAdminTab />} />
-              <Route path="notice" element={<NoticeAdminTab />} />
-              <Route path="noticeadd" element={<NoticeAddTab />} />
-              <Route path="noticeupdate" element={<NoticeUpdtTab />} />
-              <Route path="settlement" element={<SettlementTab />} />
-            </Route>
+                        <Route path="/user" element={<MyPageLayout />}>
+                            <Route index element={<UserHomeTab />} />
+                            <Route path="main" element={<UserHomeTab />} />
+                            <Route path="support" element={<BackingTab />} />
+                            <Route path="support/:backingId" element={<BackingDetailTab />} />
+                            <Route path="wishlist" element={<LikedProjectTab />} />
+                            <Route path="settings" element={<AccountSettingTab />} />
+                            <Route path="notifications" element={<NotificationTab />} />
+                            <Route path="myqna" element={<MyQnATab />} />
+                            <Route path="myinquiry" element={<MyInquiryTab />} />
+                            <Route path="myreports" element={<MyReportsTab />} />
+                            <Route path="payment" element={<PaymentRegisterPage />} />
+                        </Route>
 
-            <Route path="/admin">
-              <Route path="register" element={<AdminRegisterPage />} />
-              <Route path="login" element={<AdminLoginPage />} />
-            </Route>
+                        <Route path="/creator/register" element={<RegisterCreator />} />
+                        <Route path="/creator/:creatorId" element={<CreatorPage />} />
+                        <Route path="/creator" element={<CreatorLayout />}>
+                            <Route index element={<CreatorDashboard />} />
+                            <Route path="dashboard" element={<CreatorDashboard />} />
+                            <Route path="settings" element={<CreatorInfoUpdate />} />
+                            <Route path="project/new" element={<CreatorProjectEditPage key="new" />} />
+                            <Route path="project/:projectId" element={<CreatorProjectEditPage key="edit" />} />
+                            <Route path="projects">
+                                <Route index element={<CreatorProjectListPage />} />
+                                <Route path=":projectId" element={<CreatorProjectDetailsPage />} />
+                                <Route path=":projectId/reward" element={<CreatorRewardAddPage />} />
+                            </Route>
+                            <Route path="backings" element={<CreatorBacking />} />
+                            <Route path="shipping" element={<CreatorShippingList />} />
+                            <Route path="shipping/:projectId" element={<CreatorShippingDetail />} />
+                            <Route path="qna" element={<CreatorQnATab />} />
+                            <Route path="settlement" element={<CreatorSettlementPage />} />
+                        </Route>
 
-            <Route path="/cs" element={<CSLayout />}>
-              <Route index element={<NoticeTab />} />
-              <Route path="notice" element={<NoticeTab />} />
-              <Route path="notice/:noticeId" element={<NoticeDetailPage />} />
-              <Route path="inquiry" element={<InquiryTab />} />
-              <Route path="report" element={<ReportTab />} />
-            </Route>
+                        <Route path="/admin" element={<AdminLayout />}>
+                            <Route index element={<OverviewTab />} />
+                            <Route path="overview" element={<OverviewTab />} />
+                            <Route path="approvals" element={<VerificationQueue />} />
+                            <Route path="verify/:projectId" element={<AdminProjectDetails />} />
+                            <Route path="projects" element={<AdminProjectListPage />} />
+                            <Route path="projects/:projectId" element={<AdminProjectDetails />} />
+                            <Route path="project/:projectId" element={<AdminProjectEditPage />} />
+                            <Route path="reports" element={<ReportsAdminTab />} />
+                            <Route path="users" element={<UsersTab />} />
+                            <Route path="analytics" element={<AnalyticsTab />} />
+                            <Route path="inquiry" element={<InquiryAdminTab />} />
+                            <Route path="notice" element={<NoticeAdminTab />} />
+                            <Route path="noticeadd" element={<NoticeAddTab />} />
+                            <Route path="noticeupdate" element={<NoticeUpdtTab />} />
+                            <Route path="settlement" element={<SettlementTab />} />
+                        </Route>
 
-            <Route path="/error" element={<ErrorPage />} />
-            <Route path="*" element={<ErrorPage />} />
-            <Route path="/notifications" element={<NotificationsPage />} />
-            <Route path="/category" element={<CreateCategory />} />
-          </Route>
-        </Routes>
-      </div>
-    </Suspense>
-  );
+                        <Route path="/admin">
+                            <Route path="register" element={<AdminRegisterPage />} />
+                            <Route path="login" element={<AdminLoginPage />} />
+                        </Route>
+
+                        <Route path="/cs" element={<CSLayout />}>
+                            <Route index element={<NoticeTab />} />
+                            <Route path="notice" element={<NoticeTab />} />
+                            <Route path="notice/:noticeId" element={<NoticeDetailPage />} />
+                            <Route path="inquiry" element={<InquiryTab />} />
+                            <Route path="report" element={<ReportTab />} />
+                        </Route>
+
+                        <Route path="/error" element={<ErrorPage />} />
+                        <Route path="*" element={<ErrorPage />} />
+                        <Route path="/notifications" element={<NotificationsPage />} />
+                        <Route path="/category" element={<CreateCategory />} />
+                    </Route>
+                </Routes>
+            </div>
+        </Suspense>
+    );
 }
