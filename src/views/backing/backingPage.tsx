@@ -6,13 +6,13 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Separator } from '../../components/ui/separator';
 import { ArrowLeft, Minus, Plus } from 'lucide-react';
-import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { SavedAddressModal } from './SavedAddressModal';
 import { endpoints, getData, postData, deleteData } from '@/api/apis';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import type { BackingPrepare, BackingPagePayment } from '@/types/backing';
 import type { PaymentInfo } from '@/types/payment';
 import { useCookies } from 'react-cookie';
+import { ProjectThumb } from '../creator/pages/CreatorProjectListPage';
 
 const cardCompanyMap: Record<string, string> = {
   LOTTE: '롯데카드',
@@ -276,7 +276,9 @@ function CardSelectModal({ open, onClose, totalAmount, onConfirmPayment }: { ope
                 {cards.map((card) => (
                   <div key={card.payInfoId} className={`flex justify-between items-center p-3 cursor-pointer transition ${selectedCard?.payInfoId === card.payInfoId ? 'bg-blue-50 border-l-4 border-blue-500' : 'hover:bg-gray-50'}`}>
                     <div className="flex-1" onClick={() => setSelectedCard(card)}>
-                      <p className="font-semibold text-gray-800">{card.method === 'CARD' ? `${cardCompanyMap[card.cardCompany.toUpperCase()] ?? card.cardCompany}` : card.method === 'EASY_PAY' ? `간편결제 (${card.cardCompany})` : `${card.cardCompany}`}</p>
+                      <p className="font-semibold text-gray-800">{card.method === 'CARD' ? `${cardCompanyMap[card.cardCompany?.toUpperCase?.()] ?? card.cardCompany ?? '-'}` : card.method === 'EASY_PAY' ? (card.cardCompany === 'KAKAO' ? '카카오페이' : card.cardCompany === 'NAVER' ? '네이버페이' : '간편결제') : card.method === 'BANK_TRANSFER' ? '무통장입금' : card.method === 'ETC' ? card.cardCompany || '기타 결제수단' : '-'}</p>
+
+                      {/* 카드번호 마스킹 표시 */}
                       {card.method === 'CARD' && <p className="text-gray-600 text-sm">{maskCardNumber(card.cardNum)}</p>}
                     </div>
                     <Button variant="destructive" size="sm" disabled={deletingId === card.payInfoId} onClick={() => handleDelete(card.payInfoId)}>
@@ -305,9 +307,11 @@ function CardSelectModal({ open, onClose, totalAmount, onConfirmPayment }: { ope
               disabled={!selectedCard}
               onClick={() => {
                 if (selectedCard) {
+                  const selectedMethod = selectedCard.method === 'CARD' ? 'CARD' : selectedCard.method === 'EASY_PAY' ? 'EASY_PAY' : selectedCard.method === 'ETC' ? 'ETC' : 'BANK_TRANSFER'; // 혹시 추가 시 대비
+
                   onConfirmPayment({
                     payInfoId: selectedCard.payInfoId,
-                    method: selectedCard.method,
+                    method: selectedMethod,
                     cardCompany: selectedCard.cardCompany,
                     cardNum: selectedCard.cardNum,
                   });
@@ -414,6 +418,7 @@ export function BackingPage() {
     roadAddr: '',
     detailAddr: '',
     postalCode: '',
+    isDefault: 'N',
   });
   const [addressMode, setAddressMode] = useState<'select' | 'manual'>('select');
   const [loading, setLoading] = useState(true);
@@ -568,8 +573,8 @@ export function BackingPage() {
         onConfirmPayment={async (payload) => {
           console.log('📤 선택된 카드 정보:', payload);
           await handleConfirmPayment({
-            method: 'CARD',
-            cardCompany: payload.cardCompany,
+            method: payload.method,
+            cardCompany: payload.cardCompany ?? '',
             payInfoId: payload.payInfoId,
           });
         }}
@@ -590,15 +595,15 @@ export function BackingPage() {
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-8 items-start">
           <Card className="bg-white shadow-lg hover:shadow-xl rounded-2xl transition">
             <CardContent className="p-1 text-left space-y-8">
-              <div className="w-full px-4">
-                <div className="w-full h-[360px] lg:h-[420px] rounded-2xl overflow-hidden border border-gray-200 shadow-sm mx-auto">
-                  <ImageWithFallback src={thumbnail} alt={title} className="w-full h-full object-cover" />
+              <div className="mx-auto w-full max-w-md">
+                <div className="aspect-square rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
+                  <ProjectThumb src={thumbnail} alt={title} className="h-full w-full" mode="cover" rounded={false} />
                 </div>
               </div>
 
               <div className="space-y-4 px-4">
-                <h3 className="text-3xl font-bold text-gray-900">{title}</h3>
-                <p className="text-lg text-gray-600">by {creatorName}</p>
+                <h3 className="text-2xl font-bold text-gray-900">{title}</h3>
+                <p className="text-md text-gray-600">by {creatorName}</p>
 
                 <div className="mt-4">
                   <ColoredProgress value={achievementRate} />

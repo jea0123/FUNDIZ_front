@@ -90,7 +90,7 @@ export default function BackingDetailPage() {
     if (!confirmCancel) return;
 
     try {
-      const res = await postData(endpoints.cancelBacking(Number(backingId)),null, cookie.accessToken);
+      const res = await postData(endpoints.cancelBacking(Number(backingId)), null, cookie.accessToken);
       if (res.status === 200) {
         alert('후원이 성공적으로 취소되었습니다.');
         navigate('/user');
@@ -166,27 +166,35 @@ export default function BackingDetailPage() {
         <CardHeader>
           <CardTitle className="text-lg font-semibold text-gray-800">💳 결제 정보</CardTitle>
         </CardHeader>
+
         <CardContent className="grid grid-cols-2 gap-4 text-base text-gray-700">
           <div>
             <p className="text-gray-500">결제 수단</p>
-            <p>{methodMap[backing.method] ?? '-'}</p>
+            <p>{backing.method === 'EASY_PAY' ? (backing.cardCompany === 'KAKAO' ? '카카오페이' : backing.cardCompany === 'NAVER' ? '네이버페이' : '간편결제') : methodMap[backing.method] ?? '-'}</p>
           </div>
-          <div>
-            <p className="text-gray-500">카드사</p>
-            <p>{cardCompanyMap[backing.cardCompany] ?? '-'}</p>
-          </div>
+
+          {backing.method !== 'EASY_PAY' && backing.method !== 'BANK_TRANSFER' && (
+            <div>
+              <p className="text-gray-500">카드사</p>
+              <p>{cardCompanyMap[backing.cardCompany] ?? '-'}</p>
+            </div>
+          )}
+
           <div>
             <p className="text-gray-500">리워드 총 금액</p>
             <p>{formatNumber(totalRewardAmount)}원</p>
           </div>
+
           <div>
             <p className="text-gray-500">추가 후원금</p>
             <p className="font-semibold text-emerald-600">+{formatNumber(extraBacking)}원</p>
           </div>
+
           <div className="col-span-2 border-t pt-3 mt-1">
             <p className="text-gray-500">총 결제 금액</p>
             <p className="font-bold text-xl text-blue-600">{formatNumber(backing.amount)}원</p>
           </div>
+
           <div>
             <p className="text-gray-500">결제 상태</p>
             <p>{paymentLabel[backing.backingStatus] ?? '-'}</p>
@@ -241,31 +249,23 @@ export default function BackingDetailPage() {
 
       {/* 하단 버튼 */}
       <div className="flex justify-end gap-4">
-  <Button variant="outline" onClick={() => navigate(-1)}>
-    뒤로가기
-  </Button>
+        <Button variant="outline" onClick={() => navigate(-1)}>
+          뒤로가기
+        </Button>
 
-  {/* PENDING일 때 → 후원 취소 / COMPLETED일 때 → 환불하기 */}
-  {backing.backingStatus === 'PENDING' && (
-    <Button
-      variant="destructive"
-      className="hover:bg-red-600 hover:text-white transition"
-      onClick={cancelBacking}
-    >
-      후원 취소
-    </Button>
-  )}
+        {/* PENDING일 때 → 후원 취소 / COMPLETED일 때 → 환불하기 */}
+        {backing.backingStatus === 'PENDING' && (
+          <Button variant="destructive" className="hover:bg-red-600 hover:text-white transition" onClick={cancelBacking}>
+            후원 취소
+          </Button>
+        )}
 
-  {backing.backingStatus === 'COMPLETED' && (
-    <Button
-      variant="destructive"
-      className="hover:bg-orange-600 hover:text-white transition"
-      onClick={cancelBacking}
-    >
-      환불하기
-    </Button>
-  )}
-</div>
+        {backing.backingStatus === 'COMPLETED' && (
+          <Button variant="destructive" className="hover:bg-orange-600 hover:text-white transition" onClick={cancelBacking}>
+            환불하기
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
