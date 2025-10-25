@@ -530,11 +530,15 @@ export function ProjectThumb({
     alt,
     className = "",
     ratio = "1/1",
+    mode = "cover",
+    rounded = true,
 }: {
     src?: string | null;
     alt: string;
     className?: string;
     ratio?: "1/1";
+    mode?: "cover" | "contain";
+    rounded?: boolean;
 }) {
     const fallback =
         "data:image/svg+xml;utf8," +
@@ -550,7 +554,8 @@ export function ProjectThumb({
     return (
         <div
             className={[
-                "relative w-full overflow-hidden rounded-md bg-muted",
+                "relative w-full overflow-hidden bg-muted",
+                rounded ? "rounded-md" : "",
                 ratio === "1/1" ? "aspect-square" : "aspect-[4/3]",
                 className,
             ].join(" ")}
@@ -559,7 +564,12 @@ export function ProjectThumb({
                 src={url}
                 alt={alt}
                 loading="lazy"
-                className="h-full w-full object-cover object-center transition-transform duration-300 group-hover/card:scale-[1.02]"
+                className={[
+                    "h-full w-full object-center transition-transform duration-300",
+                    mode === "contain" ? "object-contain" : "object-cover",
+                    "max-h-full max-w-full",
+                    mode === "cover" ? "group-hover/card:scale-[1.02]" : "",
+                ].join(" ")}
                 onError={(e) => {
                     (e.currentTarget as HTMLImageElement).src = fallback;
                 }}
