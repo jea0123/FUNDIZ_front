@@ -732,7 +732,7 @@ export function BackingPage() {
                         <p>
                           ({shippingAddress.postalCode}) / {shippingAddress.recipient} ({shippingAddress.recipientPhone})
                         </p>
-                        <p className="text-xs text-gray-500">기본배송지: {shippingAddress.isDefault === 'Y' ? '✅ 예' : '❌ 아니오'}</p>
+                        <p className="text-xs text-gray-500">{shippingAddress.isDefault === 'Y' ? '기본배송지' : ''}</p>
                       </div>
                     ) : (
                       <p className="text-gray-500 text-sm mt-1">아직 선택된 배송지가 없습니다.</p>
