@@ -594,7 +594,7 @@ export function BackingPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-8 items-start pb-10">
           <div className="space-y-6">
-          <Card className="bg-white shadow-lg hover:shadow-xl rounded-2xl transition">
+          <Card className="bg-white shadow-md hover:shadow-lg rounded-2xl transition">
             <CardContent className="pl-4 text-left space-y-4 flex items-start gap-4">
               <div className="h-50 w-50 flex-shrink-0">
                 <div className="aspect-square rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
