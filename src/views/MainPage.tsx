@@ -39,7 +39,7 @@ export default function Main() {
             <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1fr_320px] lg:items-start">
                 <div className="divide-y divide-border">
                     <Hero />
-                    <section className="space-y-4 pt-8">
+                    <section className="space-y-6 pt-8">
                         <div className="border-b pb-3">
                             <div className="flex items-end justify-between">
                                 <div>
@@ -139,13 +139,13 @@ function PopularSidebar() {
 
     return (
         <aside className="rounded-sm h-full flex flex-col lg:border-l border-border lg:pl-10">
-            <div className="mb-2 flex items-center justify-between">
+            <div className="mb-1 flex items-center justify-between">
                 <h3 className="text-lg font-semibold">인기 프로젝트</h3>
                 <Button variant="ghost" className="h-6 px-1 text-xs" onClick={() => navigate("/project")}>
                     전체보기
                 </Button>
             </div>
-            <p className="mb-3 text-[11px] text-muted-foreground">{new Date().toLocaleString()} 기준</p>
+            <p className="mb-3 text-[12px] text-muted-foreground">{new Date().toLocaleString()} 기준</p>
 
             <div className="rounded-sm">
                 {recentProjects.length === 0 && (
@@ -234,10 +234,10 @@ export function RecentView({ title, perRow = 5, }: { title?: string; perRow?: nu
     if (!recentView || recentView.length === 0) return <></>;
 
     return (
-        <section className="space-y-4" ref={wrapRef} tabIndex={0}>
+        <section className="space-y-6" ref={wrapRef} tabIndex={0}>
             <Separator />
             <div className="flex items-center justify-between">
-                <h4 className="text-base font-semibold">{title}</h4>
+                <h4 className="text-lg font-semibold">{title}</h4>
                 {pages.length > 1 && (
                     <div className="flex items-center gap-2">
                         <span className="text-xs text-muted-foreground">

@@ -147,9 +147,11 @@ export function Header() {
                     <div className="h-14 flex items-center justify-between">
                         <button
                             onClick={() => navigate('/')}
-                            className="text-2xl font-bold text-blue-600 cursor-pointer"
+                            className="text-2xl font-bold text-blue-600 cursor-pointer leading-none [font-kerning:normal]"
                         >
-                            CrowdFund
+                            <span className="tracking-[-0.02em]">FUN</span>
+                            <span className="tracking-[-0.03em]">D</span>
+                            <span className="tracking-[0.005em]">IZ</span>
                         </button>
                         <div className="flex items-center gap-3 min-w-[260px] justify-end">
                             <Button variant="ghost" size="sm" onClick={() => navigate('/')}>오픈 예정</Button>
