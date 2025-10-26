@@ -1,52 +1,16 @@
 import React, { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import {
-    Tabs,
-    TabsList,
-    TabsTrigger,
-    TabsContent
-} from "@/components/ui/tabs";
-import {
-    Card,
-    CardHeader,
-    CardTitle,
-    CardContent
-} from "@/components/ui/card";
-import {
-    Table,
-    TableHeader,
-    TableRow,
-    TableHead,
-    TableBody,
-    TableCell
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import {
-    Select,
-    SelectTrigger,
-    SelectContent,
-    SelectItem,
-    SelectValue
-} from "@/components/ui/select";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter
-} from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
+import {Card,CardHeader,CardTitle,CardContent} from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { endpoints, getData, postData } from "@/api/apis";
 import { formatDate } from '@/utils/utils';
 import type { Inquiry, SearchIqrParams } from "@/types/inquiry";
 import type { InquiryReplyDto } from '@/types/reply';
 import type { Cursor, CursorPage } from '@/types/community';
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { MessageCircle, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 // ========= 공용 타입 (DB 스키마 기반) =========
 
@@ -287,7 +251,7 @@ export function InquiryAdminTab() {
                                                                                             <span className="text-sm font-medium truncate">관리자</span>
                                                                                             <span className="text-[11px] text-gray-500">{formatDate(rp.createdAt)}</span>
                                                                                         </div>
-                                                                                        <p className="text-sm whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+                                                                                        <p className="text-sm whitespace-pre-wrap break-words">
                                                                                             {rp.content}
                                                                                         </p>
                                                                                     </div>

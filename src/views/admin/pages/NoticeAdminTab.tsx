@@ -1,19 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import {
-    Card,
-    CardHeader,
-    CardTitle,
-    CardContent
-} from "@/components/ui/card";
-import {
-    Table,
-    TableHeader,
-    TableRow,
-    TableHead,
-    TableBody,
-    TableCell
-} from "@/components/ui/table";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { endpoints, getData, deleteData } from "@/api/apis";
 import type { Notice, SearchNoticeParams } from '@/types/notice';
 import { formatDate } from '@/utils/utils';
@@ -53,14 +41,15 @@ function useNotice(params: SearchNoticeParams) {
         return endpoints.getNotices(params);
     }, [page, size, perGroup, keyword]);
 
-    useEffect(() => {( async () => {
-                const {status, data} = await getData(url);
-                if (status === 200) {
-                    setItems(data.items);
-                    setTotal(data.totalElements);
-                }
-            })();
-        }, [url]);
+    useEffect(() => {
+        (async () => {
+            const { status, data } = await getData(url);
+            if (status === 200) {
+                setItems(data.items);
+                setTotal(data.totalElements);
+            }
+        })();
+    }, [url]);
 
     console.log(items);
 
@@ -72,9 +61,9 @@ export function Pagination({ page, size, perGroup, total, onPage }: { page: numb
 
     return (
         <div className="flex items-center justify-center gap-2 mt-6">
-        <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onPage(page - 1)}>이전</Button>
-        <span className="text-sm text-gray-600">{page} / {lastPage}</span>
-        <Button variant="outline" size="sm" disabled={page >= lastPage} onClick={() => onPage(page + 1)}>다음</Button>
+            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onPage(page - 1)}>이전</Button>
+            <span className="text-sm text-gray-600">{page} / {lastPage}</span>
+            <Button variant="outline" size="sm" disabled={page >= lastPage} onClick={() => onPage(page + 1)}>다음</Button>
         </div>
     );
 }
@@ -88,64 +77,64 @@ export function NoticeAdminTab() {
     const noticeDelete = async (noticeId: number) => {
         const response = await deleteData(endpoints.deleteNotice(noticeId));
         if (response.status === 200) {
-          alert("공지사항이 삭제되었습니다.");
-          setNotices((prev) => prev.filter((ntc) => ntc.noticeId !== noticeId));
+            alert("공지사항이 삭제되었습니다.");
+            setNotices((prev) => prev.filter((ntc) => ntc.noticeId !== noticeId));
         } else {
-          alert("공지사항 삭제 실패");
+            alert("공지사항 삭제 실패");
         }
 
         window.location.reload();
-      };
+    };
 
-      const navigate = useNavigate();
-      const noticeAddNavigate = () => {
+    const navigate = useNavigate();
+    const noticeAddNavigate = () => {
         navigate('../noticeadd');
-      };
-      
+    };
+
     return (
         <div>
             <div>
-                        <Card>
-                            <CardHeader className="flex items-center justify-between">
-                                <CardTitle className="text-2xl">공지사항 관리</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>제목</TableHead>
-                                            <TableHead className="w-30">조회수</TableHead>
-                                            <TableHead className="w-45">작성일</TableHead>
-                                            <TableHead className="w-45">작업</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {items.map(n => (
-                                            <TableRow key={n.noticeId}>
-                                                <TableCell className="font-medium">
-                                                    <a href={`/cs/notice/${n.noticeId}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer">{n.title}</a></TableCell>
-                                                <TableCell className="font-medium">{n.viewCnt}</TableCell>
-                                                <TableCell className="text-zinc-500">{formatDate(n.createdAt)}</TableCell>
-                                                <TableCell>
-                                                    <div className="flex gap-2">
-                                                        <Button size="sm" variant="outline" onClick={() => navigate(`../noticeupdate?id=${n.noticeId}`)}>수정</Button>
-                                                        <Button size="sm" variant="destructive" onClick={() => noticeDelete(n.noticeId)}>삭제</Button>
-                                                    </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                                <div className="mt-4 flex items-center justify-between">
-                                    <Pagination page={page} size={size} perGroup={perGroup} total={total} onPage={setPage} />
-                                    <div className="flex items-center justify-center gap-2 mt-6">
-                                        <Button variant="outline" size="sm" onClick={noticeAddNavigate}>글쓰기</Button>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                <Card>
+                    <CardHeader className="flex items-center justify-between">
+                        <CardTitle className="text-2xl">공지사항 관리</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>제목</TableHead>
+                                    <TableHead className="w-30">조회수</TableHead>
+                                    <TableHead className="w-45">작성일</TableHead>
+                                    <TableHead className="w-45">작업</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {items.map(n => (
+                                    <TableRow key={n.noticeId}>
+                                        <TableCell className="font-medium">
+                                            <a href={`/cs/notice/${n.noticeId}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer">{n.title}</a></TableCell>
+                                        <TableCell className="font-medium">{n.viewCnt}</TableCell>
+                                        <TableCell className="text-zinc-500">{formatDate(n.createdAt)}</TableCell>
+                                        <TableCell>
+                                            <div className="flex gap-2">
+                                                <Button size="sm" variant="outline" onClick={() => navigate(`../noticeupdate?id=${n.noticeId}`)}>수정</Button>
+                                                <Button size="sm" variant="destructive" onClick={() => noticeDelete(n.noticeId)}>삭제</Button>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                        <div className="mt-4 flex items-center justify-between">
+                            <Pagination page={page} size={size} perGroup={perGroup} total={total} onPage={setPage} />
+                            <div className="flex items-center justify-center gap-2 mt-6">
+                                <Button variant="outline" size="sm" onClick={noticeAddNavigate}>글쓰기</Button>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );

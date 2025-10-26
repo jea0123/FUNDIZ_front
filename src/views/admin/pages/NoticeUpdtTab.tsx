@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { endpoints, getData, postData } from "@/api/apis";
 import type { NoticeUpdateRequest } from "@/types/notice";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const useQuery = () => {
     return new URLSearchParams(useLocation().search);
