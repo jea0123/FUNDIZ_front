@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { postData, endpoints } from "@/api/apis";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader } from "@/components/ui/dialog";
 import { DialogTitle } from "@radix-ui/react-dialog";
+import { useCookies } from "react-cookie";
 
 type Props = {
     open: boolean;
@@ -15,6 +16,7 @@ type Props = {
 };
 
 export default function CreatorCreateNewsModal({ open, projectId, projectTitle, onClose, onPosted }: Props) {
+    const [cookie] = useCookies(['accessToken']);
     const [content, setContent] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -27,7 +29,7 @@ export default function CreatorCreateNewsModal({ open, projectId, projectTitle, 
         setError(null);
         try {
             const payload = { content: content.trim() };
-            await postData(endpoints.postCreatorNews(projectId), payload);
+            await postData(endpoints.postCreatorNews(projectId), payload, cookie.accessToken);
 
             onPosted?.(); // 목록/배지 갱신 필요 시
             onClose();
