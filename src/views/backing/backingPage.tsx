@@ -593,13 +593,14 @@ export function BackingPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-8 items-start">
+          <div className="space-y-6 pb-10">
           <Card className="bg-white shadow-lg hover:shadow-xl rounded-2xl transition">
-            <CardContent className="p-1 text-left space-y-8">
-              <div className="mx-auto w-full max-w-md">
+            <CardContent className="p-1 text-left space-y-8 flex items-center gap-4">
+              <div className="h-50 w-50 flex-shrink-0">
                 <div className="aspect-square rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
                   <ProjectThumb src={thumbnail} alt={title} className="h-full w-full" mode="cover" rounded={false} />
                 </div>
-              </div>
+              </div>  
 
               <div className="space-y-4 px-4">
                 <h3 className="text-2xl font-bold text-gray-900">{title}</h3>
@@ -618,7 +619,6 @@ export function BackingPage() {
             </CardContent>
           </Card>
 
-          <div className="space-y-6">
             {/* 선택한 리워드 */}
             <Card className="bg-white shadow-md hover:shadow-lg rounded-2xl transition">
               <CardHeader>
@@ -770,7 +770,9 @@ export function BackingPage() {
                 )}
               </CardContent>
             </Card>
+            </div>
 
+            <div className="sticky top-6 self-start pb-10">
             {/* 후원 요약 */}
             <Card className="bg-white shadow-lg rounded-2xl border border-gray-200">
               <CardHeader>
