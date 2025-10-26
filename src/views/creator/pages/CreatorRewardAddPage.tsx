@@ -14,13 +14,15 @@ import type { Reward, RewardCreateRequestDto } from "@/types/reward";
 import FundingLoader from "@/components/FundingLoader";
 import { formatDate } from "@/utils/utils";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useCreatorId } from "../../../types/useCreatorId";
 import { Checkbox } from "@/components/ui/checkbox";
 import { validateReward } from "@/types/reward-validator";
+import { useCookies } from "react-cookie";
 
 const numberKR = (n?: number | null) => new Intl.NumberFormat("ko-KR").format(n || 0);
 
 export default function CreatorRewardAddPage() {
+    const [cookie] = useCookies(['accessToken']);
+
     // 신규 리워드 폼
     const defaultForm = (pid: number): RewardCreateRequestDto => ({
         projectId: pid,
@@ -39,9 +41,6 @@ export default function CreatorRewardAddPage() {
         const num = Number(projectIdParam);
         return Number.isFinite(num) && num > 0 ? num : null;
     }, [projectIdParam]);
-
-    //TODO: 임시용 id (나중에 삭제하기)
-    const { loading: idLoading } = useCreatorId(2);
 
     const [loading, setLoading] = useState(true);
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -66,14 +65,14 @@ export default function CreatorRewardAddPage() {
     // 초기 데이터 로드: 프로젝트 요약 + 기존 리워드
     useEffect(() => {
         let alive = true;
-        if (!projectId || idLoading) return;
+        if (!projectId) return;
 
         (async () => {
             try {
                 setLoading(true);
                 const [projectRes, rewardRes] = await Promise.all([
-                    getData(endpoints.getCreatorProjectSummary(projectId)),
-                    getData(endpoints.getCreatorRewardList(projectId)),
+                    getData(endpoints.getCreatorProjectSummary(projectId), cookie.accessToken),
+                    getData(endpoints.getCreatorRewardList(projectId), cookie.accessToken),
                 ]);
                 if (!alive) return;
                 setProject(projectRes.data);
@@ -86,7 +85,7 @@ export default function CreatorRewardAddPage() {
             }
         })();
         return () => { alive = false; };
-    }, [projectId, idLoading]);
+    }, [projectId]);
 
     // 모달 닫힐 때마다 체크박스 초기화
     useEffect(() => {
@@ -116,12 +115,12 @@ export default function CreatorRewardAddPage() {
                 isPosting: form.isPosting
             };
 
-            const res = await postData(endpoints.addReward(project.projectId), payload);
+            const res = await postData(endpoints.addReward(project.projectId), payload, cookie.accessToken);
             if (res?.status === 200) {
                 alert("리워드를 추가했습니다.");
                 setForm(defaultForm(form.projectId)); // 폼 초기화
 
-                const refresh = await getData(endpoints.getCreatorRewardList(project.projectId));
+                const refresh = await getData(endpoints.getCreatorRewardList(project.projectId), cookie.accessToken);
                 setRewards(refresh.data || []);
             } else {
                 alert(res?.data?.message || "추가에 실패했습니다.");
