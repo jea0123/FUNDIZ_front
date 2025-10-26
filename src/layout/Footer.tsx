@@ -63,13 +63,14 @@ export default function SiteFooter() {
                             <div className="flex items-center gap-3 pb-3">
                                 <div className="size-10 rounded-2xl bg-gradient-to-br from-blue-400 to-sky-400 shadow" />
                                 <div>
-                                    <p className="text-lg font-semibold text-neutral-900 tracking-tight">FUNDING</p>
+                                    <p className="text-lg font-semibold text-neutral-900 tracking-tight">FUNDIZ</p>
                                     <p className="text-xs text-neutral-500">Crowdfunding Platform</p>
                                 </div>
                             </div>
                         </motion.div>
-                        <p className="max-w-prose text-sm leading-6 text-neutral-500 pb-3">
-                            아이디어가 현실이 되도록 돕습니다. FUNDING은 창작자와 후원자가 투명하게 연결되는 공간을 지향합니다.
+                        <p className="max-w-prose text-sm text-neutral-500 pb-3 whitespace-pre-line leading-4">
+                            아이디어가 현실이 되도록 돕습니다.<br /><br />
+                            창작자와 후원자가 투명하게 연결되는 공간을 지향합니다.
                         </p>
                         <div className="flex items-center gap-3">
                             {socials.map(({ label, href, icon: Icon }) => (
@@ -95,9 +96,9 @@ export default function SiteFooter() {
                 <Separator className="my-8 bg-neutral-200" />
 
                 <div className="flex flex-col gap-2 text-xs text-neutral-500 md:flex-row md:items-center md:justify-between">
-                    <p>© {year} FUNDING. All rights reserved.</p>
+                    <p>© {year} FUNDIZ. All rights reserved.</p>
                     <p>
-                        대표자:  · 사업자번호: 123-45-67890 · 이메일: contact@funding.com · 통신판매업 신고번호: 2025-서울강남-00000
+                        대표자:  · 사업자번호: 123-45-67890 · 이메일: contact@fundiz.com · 통신판매업 신고번호: 2025-서울강남-00000
                     </p>
                 </div>
 
