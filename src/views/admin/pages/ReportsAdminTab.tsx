@@ -1,40 +1,14 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import {
-    Tabs,
-    TabsList,
-    TabsTrigger,
-    TabsContent
-} from "@/components/ui/tabs";
-import {
-    Card,
-    CardHeader,
-    CardTitle,
-    CardContent
-} from "@/components/ui/card";
-import {
-    Table,
-    TableHeader,
-    TableRow,
-    TableHead,
-    TableBody,
-    TableCell
-} from "@/components/ui/table";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogClose } from '@/components/ui/dialog';
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogClose } from '@/components/ui/dialog';
 import { Badge } from "@/components/ui/badge";
-import {
-    Select,
-    SelectTrigger,
-    SelectContent,
-    SelectItem,
-    SelectValue
-} from "@/components/ui/select";
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { endpoints, getData, postData } from "@/api/apis";
 import type { Report, ReportStatusUpdateRequest, SearchRptParams } from "@/types/report";
-import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { formatDate } from '@/utils/utils';
 
 
@@ -49,13 +23,13 @@ export type ReportStatus = "RECEIVED" | "UNDER_REVIEW" | "COMPLETED";
 const typeBadge = (t: ReportType) => (
     <Badge variant="outline" className="rounded-full px-3">
         {t === "FRAUD" ? "사기/허위정보"
-        : (t === "COPYRIGHT" ? "지식재산권 침해"
-        : (t === "ILLEGAL" ? "불법/금지된 상품"
-        : (t === "OBSCENE" ? "음란/선정적/폭력적 컨텐츠"
-        : (t === "PRIVACY" ? "개인정보 침해"
-        : (t === "DUPLICATE" ? "타 플랫폼 동시 판매"
-        : (t === "UNCONTACTABLE" ? "연락 두절"
-        : (t === "POLICY" ? "정책 위반" : "기타")))))))}
+            : (t === "COPYRIGHT" ? "지식재산권 침해"
+                : (t === "ILLEGAL" ? "불법/금지된 상품"
+                    : (t === "OBSCENE" ? "음란/선정적/폭력적 컨텐츠"
+                        : (t === "PRIVACY" ? "개인정보 침해"
+                            : (t === "DUPLICATE" ? "타 플랫폼 동시 판매"
+                                : (t === "UNCONTACTABLE" ? "연락 두절"
+                                    : (t === "POLICY" ? "정책 위반" : "기타")))))))}
     </Badge>
 );
 
@@ -99,14 +73,15 @@ function useReport(params: SearchRptParams) {
         return endpoints.getReports(params);
     }, [page, size, perGroup, keyword]);
 
-    useEffect(() => {( async () => {
-                const {status, data} = await getData(url);
-                if (status === 200) {
-                    setItems(data.items);
-                    setTotal(data.totalElements);
-                }
-            })();
-        }, [url]);
+    useEffect(() => {
+        (async () => {
+            const { status, data } = await getData(url);
+            if (status === 200) {
+                setItems(data.items);
+                setTotal(data.totalElements);
+            }
+        })();
+    }, [url]);
 
     console.log(items);
 
@@ -118,9 +93,9 @@ export function Pagination({ page, size, perGroup, total, onPage }: { page: numb
 
     return (
         <div className="flex items-center justify-center gap-2 mt-6">
-        <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onPage(page - 1)}>이전</Button>
-        <span className="text-sm text-gray-600">{page} / {lastPage}</span>
-        <Button variant="outline" size="sm" disabled={page >= lastPage} onClick={() => onPage(page + 1)}>다음</Button>
+            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onPage(page - 1)}>이전</Button>
+            <span className="text-sm text-gray-600">{page} / {lastPage}</span>
+            <Button variant="outline" size="sm" disabled={page >= lastPage} onClick={() => onPage(page + 1)}>다음</Button>
         </div>
     );
 }
@@ -129,7 +104,7 @@ export function ReportsAdminTab() {
 
     const { page, size, perGroup, keyword, setPage } = useQueryState();
     const { items, total, setItems } = useReport({ page, size, perGroup, keyword });
-    
+
     return (
         <div>
             <div>
@@ -185,14 +160,14 @@ interface ReportStatusEditModalProps {
 }
 
 export function ReportStatusEditModal({ reportId }: ReportStatusEditModalProps) {
-    
+
     const [isOpen, setIsOpen] = useState(false);
     const [rptStatusUpdt, setRptStatusUpdt] = useState<ReportStatusUpdateRequest>({
-            reportId: Number(reportId),
-            reason: "",
-            reportStatus: "", 
+        reportId: Number(reportId),
+        reason: "",
+        reportStatus: "",
     });
-    
+
     const fetchRptStatus = async () => {
         const response = await getData(endpoints.getReportDetail(Number(reportId)));
         if (response.status === 200) {
@@ -200,7 +175,7 @@ export function ReportStatusEditModal({ reportId }: ReportStatusEditModalProps) 
         }
         console.log(response.data);
     };
-    
+
     useEffect(() => {
         fetchRptStatus();
     }, [reportId]);
@@ -215,7 +190,7 @@ export function ReportStatusEditModal({ reportId }: ReportStatusEditModalProps) 
         } else {
             alert("신고 내역 상태 수정 실패");
             return false;
-    }
+        }
     };
 
 
@@ -237,13 +212,13 @@ export function ReportStatusEditModal({ reportId }: ReportStatusEditModalProps) 
                         <div>{rptStatusUpdt.reason}</div>
                         <Label className="mb-1 block">접수 상태</Label>
                         <Select value={rptStatusUpdt.reportStatus} onValueChange={e => setRptStatusUpdt({ ...rptStatusUpdt, reportStatus: e })}>
-                                <SelectTrigger><SelectValue placeholder="분류 선택" /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="RECEIVED">접수</SelectItem>
-                                    <SelectItem value="UNDER_REVIEW">검토중</SelectItem>
-                                    <SelectItem value="COMPLETED">완료</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <SelectTrigger><SelectValue placeholder="분류 선택" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="RECEIVED">접수</SelectItem>
+                                <SelectItem value="UNDER_REVIEW">검토중</SelectItem>
+                                <SelectItem value="COMPLETED">완료</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                     <div className="mt-4 flex justify-end gap-2">
                         <DialogClose asChild>

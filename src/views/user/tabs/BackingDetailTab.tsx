@@ -84,6 +84,8 @@ export default function BackingDetailPage() {
 
   const extraBacking = Math.max(backing.amount - totalRewardAmount, 0);
 
+  console.log('📦 후원 상세 데이터:', backing);
+
   const cancelBacking = async () => {
     if (!backingId) return;
     const confirmCancel = window.confirm('정말로 이 후원을 취소하시겠습니까?\n결제가 완료된 경우 환불 절차가 진행됩니다.');

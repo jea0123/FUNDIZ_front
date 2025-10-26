@@ -1,13 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import {
-    Card,
-    CardHeader,
-    CardTitle,
-    CardContent
-} from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogClose } from '@/components/ui/dialog';
 import { Input } from "../../../components/ui/input";
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from "@/components/ui/label";
@@ -15,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { endpoints, getData, postData } from "@/api/apis";
 import type { Users, UsersUpdateRequest, SearchUserParams } from '@/types/users';
 import { formatDate } from '@/utils/utils';
-import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 
 export type Role = "USER" | "CREATOR";
