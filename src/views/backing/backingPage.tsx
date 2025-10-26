@@ -47,7 +47,7 @@ function PaymentSuccessModal({ open, onClose, onGoMyPage, onGoBack }: { open: bo
 
         {/* 타이틀 */}
         <DialogHeader className="text-center">
-          <DialogTitle className="text-2xl font-bold text-blue-700">후원이 성공적으로 완료되었습니다!</DialogTitle>
+          <DialogTitle className="text-2xl font-bold text-blue-600">후원이 성공적으로 완료되었습니다!</DialogTitle>
         </DialogHeader>
 
         {/* 설명문 */}
@@ -440,9 +440,9 @@ export function BackingPage() {
 
           const rewardEntries = itemsParam
             ? itemsParam.split(',').map((item) => {
-              const [idStr, qtyStr] = item.split('x');
-              return { rewardId: Number(idStr), qty: Number(qtyStr) };
-            })
+                const [idStr, qtyStr] = item.split('x');
+                return { rewardId: Number(idStr), qty: Number(qtyStr) };
+              })
             : [];
 
           let rewards = data.rewardList;
@@ -472,7 +472,22 @@ export function BackingPage() {
         setLoading(false);
       }
     };
+    // 기본 배송지 자동 로드
+    const fetchDefaultAddress = async () => {
+      try {
+        const res = await getData(endpoints.getAddressList, cookie.accessToken);
+        if (res.status === 200 && Array.isArray(res.data)) {
+          const defaultAddr = res.data.find((a: any) => a.isDefault === 'Y');
+          if (defaultAddr) {
+            setShippingAddress(defaultAddr);
+          }
+        }
+      } catch (err) {
+        console.error('기본 배송지 불러오기 실패:', err);
+      }
+    };
 
+    fetchDefaultAddress();
     fetchPrepareData();
   }, [projectId]);
 
@@ -610,7 +625,7 @@ export function BackingPage() {
 
                   <div className="mt-4">
                     <ColoredProgress value={achievementRate} />
-                    <p className="text-base mt-2 font-semibold text-indigo-600">🎯 {achievementRate}% 달성</p>
+                    <p className="text-base mt-2 font-semibold text-blue-600">🎯 {achievementRate}% 달성</p>
                   </div>
 
                   <div className="text-sm text-gray-500 leading-relaxed mt-4">
@@ -628,7 +643,7 @@ export function BackingPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {rewardList.map((r) => (
-                  <div key={r.rewardId} className="p-4 border border-indigo-100 bg-indigo-50/30 rounded-lg hover:bg-indigo-100/50 transition">
+                  <div key={r.rewardId} className="p-4 border border-blue-100 bg-blue-50/30 rounded-lg hover:bg-blue-100/50 transition">
                     <p className="font-semibold text-gray-900">{r.rewardName}</p>
                     <p className="text-gray-600 text-sm">가격: {r.price.toLocaleString()}원</p>
                     <div className="mt-2 flex items-center gap-3">
@@ -645,7 +660,7 @@ export function BackingPage() {
                       >
                         <Minus className="w-4 h-4" />
                       </Button>
-                      <span className="text-lg font-bold text-indigo-600">{rewardQuantities[r.rewardId] ?? 1}</span>
+                      <span className="text-lg font-bold text-blue-600">{rewardQuantities[r.rewardId] ?? 1}</span>
                       <Button
                         variant="outline"
                         size="sm"
@@ -668,12 +683,14 @@ export function BackingPage() {
             {/* 추가 후원금 */}
             <Card className="bg-white shadow-md rounded-2xl hover:shadow-lg transition">
               <CardHeader>
-                <CardTitle className="text-lg font-semibold text-gray-900">💰 추가 후원금 <span className='text-gray-400'>(선택)</span></CardTitle>
-                <p className='text-sm text-gray-500'>후원금을 더하여 참여할 수 있어요.</p>
+                <CardTitle className="text-lg font-semibold text-gray-900">
+                  💰 추가 후원금 <span className="text-gray-400">(선택)</span>
+                </CardTitle>
+                <p className="text-sm text-gray-500">후원금을 더하여 참여할 수 있어요.</p>
               </CardHeader>
               <CardContent>
-                <div className='flex flex-row gap-20'>
-                  <span className='font-medium'>후원금</span>
+                <div className="flex flex-row gap-20">
+                  <span className="font-medium">후원금</span>
                   <div className="space-y-2">
                     <div className="flex items-center border rounded-md overflow-hidden bg-gray-50">
                       <Input
@@ -686,19 +703,20 @@ export function BackingPage() {
                         }}
                         min="0"
                         step="1"
-                        className="border-0 focus-visible:ring-0 text-right font-semibold text-indigo-700 flex-1 bg-gray-50"
+                        className="border-0 focus-visible:ring-0 text-right font-semibold text-blue-600 flex-1 bg-gray-50"
                       />
                       <div className="px-3 py-2 text-gray-600 text-sm bg-white border-l">원</div>
                     </div>
                     <p className="text-sm text-gray-600 flex items-center gap-1 pl-1">
-                      <span role="img" aria-label="heart">💖</span>
+                      <span role="img" aria-label="heart">
+                        💖
+                      </span>
                       추가 후원으로 프로젝트를 더 응원할 수 있어요!
                     </p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-
 
             {/*  배송지 입력 (후원 요약 밑) */}
             <Card className="bg-white shadow-md rounded-2xl hover:shadow-lg transition">
@@ -722,17 +740,17 @@ export function BackingPage() {
 
                 {addressMode === 'select' ? (
                   <>
-                    <SavedAddressModal mode="backing" onSelectAddress={setShippingAddress} triggerText="📦 배송지를 선택해주세요" />
+                    <SavedAddressModal mode="backing" onSelectAddress={(addr) => setShippingAddress(addr)} triggerText="📦 배송지를 선택해주세요" />
                     {shippingAddress ? (
-                      <div className="mt-3 p-3 border border-gray-200 rounded-lg bg-gray-50 text-sm space-y-1">
-                        <p className="font-semibold">{shippingAddress.addrName}</p>
-                        <p>
-                          {shippingAddress.roadAddr} {shippingAddress.detailAddr}
-                        </p>
-                        <p>
+                      <div className="mt-3 p-4 rounded-xl border border-[#e5e9ff] bg-[#f9fbff] shadow-sm transition-all duration-300">
+                        <p className="font-semibold text-gray-900 mb-1">{shippingAddress.addrName}</p>
+                        <p className="text-gray-700 text-sm mb-1">
                           ({shippingAddress.postalCode}) / {shippingAddress.recipient} ({shippingAddress.recipientPhone})
                         </p>
-                        <p className="text-xs text-gray-500">{shippingAddress.isDefault === 'Y' ? '기본배송지' : ''}</p>
+                        <p className="text-gray-700 text-sm mb-2">
+                          {shippingAddress.roadAddr} {shippingAddress.detailAddr}
+                        </p>
+                        <p className="text-xs text-gray-500">기본배송지: {shippingAddress.isDefault === 'Y' ? <span className="text-green-600 font-medium">기본 배송지</span> : ''}</p>
                       </div>
                     ) : (
                       <p className="text-gray-500 text-sm mt-1">아직 선택된 배송지가 없습니다.</p>
@@ -805,7 +823,7 @@ export function BackingPage() {
                     </div>
                   ))}
                   {customAmount && (
-                    <div className="text-sm flex justify-between text-indigo-700 font-semibold">
+                    <div className="text-sm flex justify-between text-blue-600 font-semibold">
                       <span>추가 후원금</span>
                       <span>+{parseInt(customAmount).toLocaleString()}원</span>
                     </div>
@@ -814,16 +832,16 @@ export function BackingPage() {
                 <Separator />
                 <div className="flex justify-between items-center text-lg font-bold">
                   <span>총 금액</span>
-                  <span className="text-indigo-700">{getTotalAmount().toLocaleString()}원</span>
+                  <span className="text-blue-600">{getTotalAmount().toLocaleString()}원</span>
                 </div>
-                <Button onClick={handleOpenPayment} className="w-full bg-blue-800 hover:bg-blue-900 text-white font-semibold shadow-md hover:shadow-lg" disabled={rewardList.length === 0}>
+                <Button onClick={handleOpenPayment} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md hover:shadow-lg" disabled={rewardList.length === 0}>
                   🤍 후원하기
                 </Button>
               </CardContent>
             </Card>
           </div>
         </div>
-      </div >
-    </div >
+      </div>
+    </div>
   );
 }
