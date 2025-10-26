@@ -440,9 +440,9 @@ export function BackingPage() {
 
           const rewardEntries = itemsParam
             ? itemsParam.split(',').map((item) => {
-                const [idStr, qtyStr] = item.split('x');
-                return { rewardId: Number(idStr), qty: Number(qtyStr) };
-              })
+              const [idStr, qtyStr] = item.split('x');
+              return { rewardId: Number(idStr), qty: Number(qtyStr) };
+            })
             : [];
 
           let rewards = data.rewardList;
@@ -594,30 +594,30 @@ export function BackingPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-8 items-start">
           <div className="space-y-6 pb-10">
-          <Card className="bg-white shadow-lg hover:shadow-xl rounded-2xl transition">
-            <CardContent className="p-1 text-left space-y-8 flex items-center gap-4">
-              <div className="h-50 w-50 flex-shrink-0">
-                <div className="aspect-square rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
-                  <ProjectThumb src={thumbnail} alt={title} className="h-full w-full" mode="cover" rounded={false} />
-                </div>
-              </div>  
-
-              <div className="space-y-4 px-4">
-                <h3 className="text-2xl font-bold text-gray-900">{title}</h3>
-                <p className="text-md text-gray-600">by {creatorName}</p>
-
-                <div className="mt-4">
-                  <ColoredProgress value={achievementRate} />
-                  <p className="text-base mt-2 font-semibold text-indigo-600">🎯 {achievementRate}% 달성</p>
+            <Card className="bg-white shadow-lg hover:shadow-xl rounded-2xl transition">
+              <CardContent className="p-1 text-left space-y-8 flex items-center gap-4">
+                <div className="h-50 w-50 flex-shrink-0">
+                  <div className="aspect-square rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
+                    <ProjectThumb src={thumbnail} alt={title} className="h-full w-full" mode="cover" rounded={false} />
+                  </div>
                 </div>
 
-                <div className="text-sm text-gray-500 leading-relaxed mt-4">
-                  <p>목표 금액: {goalAmount.toLocaleString()}원</p>
-                  <p>현재 후원: {currAmount.toLocaleString()}원</p>
+                <div className="space-y-4 px-4">
+                  <h3 className="text-2xl font-bold text-gray-900">{title}</h3>
+                  <p className="text-md text-gray-600">by {creatorName}</p>
+
+                  <div className="mt-4">
+                    <ColoredProgress value={achievementRate} />
+                    <p className="text-base mt-2 font-semibold text-indigo-600">🎯 {achievementRate}% 달성</p>
+                  </div>
+
+                  <div className="text-sm text-gray-500 leading-relaxed mt-4">
+                    <p>목표 금액: {goalAmount.toLocaleString()}원</p>
+                    <p>현재 후원: {currAmount.toLocaleString()}원</p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
             {/* 선택한 리워드 */}
             <Card className="bg-white shadow-md hover:shadow-lg rounded-2xl transition">
@@ -666,23 +666,37 @@ export function BackingPage() {
             {/* 추가 후원금 */}
             <Card className="bg-white shadow-md rounded-2xl hover:shadow-lg transition">
               <CardHeader>
-                <CardTitle className="text-lg font-semibold text-gray-900">💰 추가 후원금 (선택)</CardTitle>
+                <CardTitle className="text-lg font-semibold text-gray-900">💰 추가 후원금 <span className='text-gray-400'>(선택)</span></CardTitle>
+                <p className='text-sm text-gray-500'>후원금을 더하여 참여할 수 있어요.</p>
               </CardHeader>
               <CardContent>
-                <Input
-                  type="number"
-                  placeholder="0"
-                  value={customAmount}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (/^\d*$/.test(value)) setCustomAmount(value);
-                  }}
-                  min="0"
-                  step="1"
-                  className="text-right bg-gray-50 font-semibold text-indigo-700"
-                />
+                <div className='flex flex-row gap-20'>
+                  <span className='font-medium'>후원금</span>
+                  <div className="space-y-2">
+                    <div className="flex items-center border rounded-md overflow-hidden bg-gray-50">
+                      <Input
+                        inputMode="numeric"
+                        placeholder="0"
+                        value={customAmount}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^0-9]/g, '');
+                          setCustomAmount(value);
+                        }}
+                        min="0"
+                        step="1"
+                        className="border-0 focus-visible:ring-0 text-right font-semibold text-indigo-700 flex-1 bg-gray-50"
+                      />
+                      <div className="px-3 py-2 text-gray-600 text-sm bg-white border-l">원</div>
+                    </div>
+                    <p className="text-sm text-gray-600 flex items-center gap-1 pl-1">
+                      <span role="img" aria-label="heart">💖</span>
+                      추가 후원으로 프로젝트를 더 응원할 수 있어요!
+                    </p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
+
 
             {/*  배송지 입력 (후원 요약 밑) */}
             <Card className="bg-white shadow-md rounded-2xl hover:shadow-lg transition">
@@ -770,9 +784,9 @@ export function BackingPage() {
                 )}
               </CardContent>
             </Card>
-            </div>
+          </div>
 
-            <div className="sticky top-6 self-start pb-10">
+          <div className="sticky top-6 self-start pb-10">
             {/* 후원 요약 */}
             <Card className="bg-white shadow-lg rounded-2xl border border-gray-200">
               <CardHeader>
