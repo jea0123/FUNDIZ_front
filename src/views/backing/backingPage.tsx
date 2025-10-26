@@ -750,7 +750,7 @@ export function BackingPage() {
                         <p className="text-gray-700 text-sm mb-2">
                           {shippingAddress.roadAddr} {shippingAddress.detailAddr}
                         </p>
-                        <p className="text-xs text-gray-500">기본배송지: {shippingAddress.isDefault === 'Y' ? <span className="text-green-600 font-medium">기본 배송지</span> : ''}</p>
+                        <p className="text-xs text-gray-500">{shippingAddress.isDefault === 'Y' ? <span className="text-green-600 font-medium">기본 배송지</span> : ''}</p>
                       </div>
                     ) : (
                       <p className="text-gray-500 text-sm mt-1">아직 선택된 배송지가 없습니다.</p>
