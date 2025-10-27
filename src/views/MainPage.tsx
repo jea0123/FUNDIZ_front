@@ -169,7 +169,7 @@ function PopularSidebar() {
                                     <span className="truncate text-[10px] z-100 hover:underline" onClick={() => navigate(`/creator/${it.creatorId}`)}>{it.creatorName ?? "크리에이터"}</span>
                                 </div>
 
-                                <p className="line-clamp-2 text-base text-[14px] font-normal leading-relaxed">
+                                <p className="line-clamp-2 text-base text-[14px] font-normal leading-relaxed" onClick={() => onClickCard(it.projectId)}>
                                     {it.title}
                                 </p>
                                 <div className="mt-1 font-medium text-red-600 text-sm">{it.percentNow}% 달성</div>
@@ -286,7 +286,7 @@ export function ProjectCard({ items }: { items: any; }) {
                 </div>
                 <div className="space-y-1 py-3">
                     <p className="text-[11px] text-muted-foreground m-0 z-100 hover:underline" onClick={(e) => { e.stopPropagation(); navigate(`/creator/${items.creatorId}`); }}>{items.creatorName}</p>
-                    <p className="line-clamp-1 text-sm leading-snug text-ellipsis m-0">{items.title}</p>
+                    <p className="line-clamp-1 text-sm leading-snug text-ellipsis m-0" onClick={() => onClickCard(items.projectId)}>{items.title}</p>
                     <div className="flex items-center justify-between pt-1 text-xs">
                         <div className="text-[14px] font-medium text-red-600 bg-none">{items.percentNow}% 달성</div>
                     </div>
