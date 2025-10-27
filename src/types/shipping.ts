@@ -40,6 +40,7 @@ export interface creatorShippingBackerList {
   title: string;
 
   backingId: number;
+  createdAt: Date;
 }
 
 export interface creatorShippingStataus {

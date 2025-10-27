@@ -116,16 +116,32 @@ export default function CreatorShippingDetail() {
 
   // 검색 + 정렬
   const filtered = shippingList
-    .filter((i) => i.nickname.toLowerCase().includes(search.toLowerCase()) || i.rewardName.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => {
-      if (sortBy === 'recent') return new Date(b.shippedAt || '').getTime() - new Date(a.shippedAt || '').getTime();
-      if (sortBy === 'oldest') return new Date(a.shippedAt || '').getTime() - new Date(b.shippedAt || '').getTime();
-      if (sortBy === 'status') {
-        const order: Record<'READY' | 'SHIPPED' | 'DELIVERED', number> = { READY: 1, SHIPPED: 2, DELIVERED: 3 };
-        return order[a.shippingStatus as 'READY' | 'SHIPPED' | 'DELIVERED'] - order[b.shippingStatus as 'READY' | 'SHIPPED' | 'DELIVERED'];
-      }
-      return 0;
-    });
+  .filter(
+    (i) =>
+      i.nickname.toLowerCase().includes(search.toLowerCase()) ||
+      i.rewardName.toLowerCase().includes(search.toLowerCase())
+  )
+  .sort((a, b) => {
+    const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+
+    if (sortBy === 'recent') return dateB - dateA; // 최신순
+    if (sortBy === 'oldest') return dateA - dateB; // 오래된순
+
+    if (sortBy === 'status') {
+      const order: Record<string, number> = {
+        PENDING: 1,
+        READY: 2,
+        SHIPPED: 3,
+        DELIVERED: 4,
+        FAILED: 5,
+        CANCELED: 6,
+      };
+      return (order[a.shippingStatus] || 999) - (order[b.shippingStatus] || 999);
+    }
+
+    return 0;
+  });
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const start = (page - 1) * itemsPerPage;
@@ -157,7 +173,7 @@ export default function CreatorShippingDetail() {
   return (
     <div>
       <div className="flex justify-between mb-4">
-        <h2 className="text-2xl font-bold">프로젝트 {projectId} 배송 내역</h2>
+        <h2 className="text-2xl font-bold">배송 내역</h2>
         <button onClick={() => navigate(-1)} className="border px-3 py-1 rounded bg-gray-100">
           ← 목록으로
         </button>
@@ -242,6 +258,28 @@ export default function CreatorShippingDetail() {
           })}
         </tbody>
       </table>
+     {/*  페이지네이션 영역  */}
+      <div className="flex justify-center items-center gap-2 mt-4">
+        <button
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          disabled={page === 1}
+          className="border px-3 py-1 rounded disabled:opacity-50"
+        >
+          이전
+        </button>
+
+        <span>
+          {page} / {totalPages}
+        </span>
+
+        <button
+          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+          disabled={page === totalPages}
+          className="border px-3 py-1 rounded disabled:opacity-50"
+        >
+          다음
+        </button>
+      </div>
     </div>
   );
 }
