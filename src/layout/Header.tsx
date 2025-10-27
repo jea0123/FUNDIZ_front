@@ -19,6 +19,7 @@ import clsx from 'clsx';
 export function Header() {
     const navItems = [
         { label: "홈", to: "/" },
+        { label: "전체", to: "/project" },
         { label: "인기", to: "/project/popular" },
         { label: "신규", to: "/project/new" },
         { label: "공개예정", to: "/project/upcoming" },

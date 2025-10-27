@@ -240,6 +240,10 @@ export function ProjectDetailsPage() {
     const toKDate = (d: string | Date) =>
         new Date(d).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
 
+    const alertClick = () => {
+        alert('리워드를 먼저 선택해주세요.')
+    };
+
     return (
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
             {/* ===== 헤더: 좌 썸네일 / 우 정보 ===== */}
@@ -364,8 +368,8 @@ export function ProjectDetailsPage() {
                             <Share2 className="h-5 w-5" />
                         </Button>
                         <Button
-                            onClick={backThisProject}
-                            disabled={cartSummary.totalQty === 0 || isUpComing || isClosed}
+                            onClick={cartSummary.totalQty === 0 ? alertClick : backThisProject}
+                            disabled={isUpComing || isClosed}
                             className={!isClosed ? `flex-1 min-w-0 h-12 text-base rounded-lg
                                 bg-blue-600 text-white hover:bg-blue-700
                                 focus-visible:ring-2 focus-visible:ring-blue-600/30
@@ -634,8 +638,8 @@ export function ProjectDetailsPage() {
                                                             </Badge>
                                                         )}
                                                     </div>
-                                                    <h4 className="font-medium mt-1 truncate">{reward.rewardName}</h4>
-                                                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                                                    <h4 className="font-medium mt-1">{reward.rewardName}</h4>
+                                                    <p className="text-sm text-gray-600 mt-1 whitespace-pre-line break-words line-clamp-10">
                                                         {reward.rewardContent}
                                                     </p>
                                                     <p className="text-xs text-gray-500 mt-2">
