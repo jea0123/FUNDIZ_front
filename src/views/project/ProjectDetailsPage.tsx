@@ -638,8 +638,8 @@ export function ProjectDetailsPage() {
                                                             </Badge>
                                                         )}
                                                     </div>
-                                                    <h4 className="font-medium mt-1 truncate">{reward.rewardName}</h4>
-                                                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                                                    <h4 className="font-medium mt-1">{reward.rewardName}</h4>
+                                                    <p className="text-sm text-gray-600 mt-1 whitespace-pre-line break-words line-clamp-10">
                                                         {reward.rewardContent}
                                                     </p>
                                                     <p className="text-xs text-gray-500 mt-2">
