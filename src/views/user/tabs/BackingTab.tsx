@@ -171,7 +171,7 @@ export default function BackingTab() {
                         >
                           {backingList.title}
                         </h4>
-                        <Badge variant="outline" className="text-base px-3 py-1 font-medium text-gray-700">
+                        <Badge variant="outline" className="text-sm px-3 py-1 font-medium text-gray-700">
                           {statusText}
                         </Badge>
                       </div>
