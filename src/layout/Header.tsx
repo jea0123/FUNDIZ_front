@@ -287,7 +287,7 @@ export function Header() {
                                     <NavLink
                                         key={item.to}
                                         to={item.to}
-                                        end={item.to === "/"}
+                                        end={item.to === "/" || item.to === "/project"}
                                         className={({ isActive }) =>
                                             clsx("px-1 pb-3 font-medium border-b-2 transition-colors",
                                                 isActive
