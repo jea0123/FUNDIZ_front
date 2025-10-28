@@ -183,7 +183,7 @@ export default function CreatorProjectListPage() {
         if (!confirm("이 프로젝트를 삭제하시겠습니까? 삭제 후에는 되돌릴 수 없습니다.")) return;
         try {
             setDeletingId(projectId);
-            await deleteData(endpoints.deleteProject(projectId));
+            await deleteData(endpoints.deleteProject(projectId), cookie.accessToken);
             await projectsData();
             alert("프로젝트가 삭제되었습니다.");
         } catch (e: any) {
