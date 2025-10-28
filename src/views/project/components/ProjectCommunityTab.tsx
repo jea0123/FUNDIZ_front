@@ -4,11 +4,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageCircle, MessageSquarePlus, Siren, X } from "lucide-react";
-import { endpoints, getData, postData } from "@/api/apis";
-import { getByteLen, getDaysBefore, getElapsedTime, toastSuccess, toPublicUrl } from "@/utils/utils";
+import { MessageCircle, MessageSquarePlus, Siren, Trash2, X } from "lucide-react";
+import { deleteData, endpoints, getData, postData } from "@/api/apis";
+import { getByteLen, getElapsedTime, toastSuccess, toPublicUrl } from "@/utils/utils";
 import type { CommunityDto, Cursor, CursorPage } from "@/types/community";
 import type { ReplyDto } from "@/types/reply";
+import { useCookies } from "react-cookie";
+import defaultProfile from '@/assets/images/default-profile.webp'
+import { useLoginUserStore } from "@/store/LoginUserStore.store";
 
 type Props = {
     projectId: number;
@@ -19,6 +22,9 @@ type Props = {
 const CM_MAX = 1000;
 
 export default function ProjectCommunityTab({ projectId, active = false, onCreated }: Props) {
+    const [cookie] = useCookies();
+    const { loginUser } = useLoginUserStore();
+
     /* ----------------------------- Refs ----------------------------- */
     const communitySentinelRef = useRef<HTMLDivElement | null>(null);
     const replySentinelRef = useRef<Record<number, HTMLDivElement | null>>({});
@@ -40,6 +46,7 @@ export default function ProjectCommunityTab({ projectId, active = false, onCreat
     const [postingReply, setPostingReply] = useState<Record<number, boolean>>({});
     const [replyInput, setReplyInput] = useState<Record<number, string>>({});
     const [replySecret, setReplySecret] = useState<Record<number, boolean>>({});
+    const [deleteReply, setDeleteReply] = useState<Record<number, boolean>>({});
 
     // 글쓰기 모달
     const [openCm, setOpenCm] = useState(false);
@@ -158,7 +165,7 @@ export default function ProjectCommunityTab({ projectId, active = false, onCreat
         try {
             const url = endpoints.postCommunity(projectId);
             const body = { cmContent: content };
-            const response = await postData(url, body);
+            const response = await postData(url, body, cookie.accessToken);
             if (response.status === 200) {
                 setOpenCm(false);
                 setCmContent("");
@@ -202,7 +209,7 @@ export default function ProjectCommunityTab({ projectId, active = false, onCreat
             setPostingReply((prev) => ({ ...prev, [cmId]: true }));
             try {
                 const body = { content, isSecret: replySecret[cmId] ? "Y" : "N" };
-                const response = await postData(endpoints.postReply(cmId), body);
+                const response = await postData(endpoints.postReply(cmId), body, cookie.accessToken);
                 if (response.status === 200) {
                     const posted = response.data as ReplyDto;
                     if (posted) {
@@ -227,6 +234,38 @@ export default function ProjectCommunityTab({ projectId, active = false, onCreat
             }
         },
         [replyInput, replySecret, replyData]
+    );
+
+    const handleDeleteReply = useCallback(
+        async (cmId: number, replyId: number) => {
+            const ok = confirm("이 댓글을 삭제하시겠습니까?");
+            if (!ok) return;
+
+            setDeleteReply(prev => ({ ...prev, [replyId]: true }));
+            try {
+                const response = await deleteData(endpoints.deleteReply(replyId), cookie.accessToken);
+                if (response.status === 200) {
+                    setReply(prev => ({
+                        ...prev,
+                        [cmId]: prev[cmId]?.filter(reply => reply.replyId !== replyId),
+                    }));
+                    setCommunity(prev =>
+                        prev.map(item =>
+                            item.cmId === cmId ? { ...item, replyCnt: (item.replyCnt ?? 0) - 1 } : item
+                        )
+                    );
+                    toastSuccess("삭제되었습니다.");
+                } else {
+                    alert("삭제 실패했습니다. 잠시 후 다시 시도해주세요.");
+                }
+            } catch (e) {
+                console.error(e);
+                alert("네트워크 오류가 발생했습니다.");
+            } finally {
+                setDeleteReply(prev => ({ ...prev, [replyId]: false }));
+            }
+        },
+        [cookie.accessToken]
     );
 
     /* ---------------------------- Effects --------------------------- */
@@ -294,6 +333,8 @@ export default function ProjectCommunityTab({ projectId, active = false, onCreat
     }, [active, replyCursor, loadingReply, replyData]);
 
     /* ---------------------------- Render ---------------------------- */
+    console.log(community);
+
     return (
         <>
             {/* 글쓰기 모달 */}
@@ -348,7 +389,7 @@ export default function ProjectCommunityTab({ projectId, active = false, onCreat
                 </div>
             ) : (
                 <>
-                    <div className="mt-4 flex justify-end">
+                    <div className="flex justify-end">
                         <Button size="sm" onClick={openCommunityModal} className="ml-auto">
                             <MessageSquarePlus className="h-4 w-4 mr-1" />
                             글쓰기
@@ -358,17 +399,17 @@ export default function ProjectCommunityTab({ projectId, active = false, onCreat
                     {community.map((cm) => (
                         <div key={cm.cmId} className="space-y-4 mt-6">
                             <Card>
-                                <CardContent className="pt-6">
+                                <CardContent>
                                     <div className="flex items-start space-x-3">
                                         <Avatar className="w-8 h-8">
-                                            <AvatarImage src={toPublicUrl(cm.profileImg)} />
+                                            <AvatarImage src={toPublicUrl(cm.profileImg) || defaultProfile} />
                                             <AvatarFallback>{(cm.nickname ?? "U").slice(0, 2)}</AvatarFallback>
                                         </Avatar>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center space-x-2 mb-1">
                                                 <span className="font-medium truncate">{cm.nickname}</span>
-                                                <a href="/cs/report"><Siren className="w-4 h-4" /></a>
                                                 <span className="text-sm text-gray-500">{getElapsedTime(cm.createdAt)}</span>
+                                                <a href="/cs/report"><Siren className="w-4 h-4" /></a>
                                             </div>
                                             <p className="text-sm w-full max-w-full whitespace-pre-wrap [overflow-wrap:anywhere]">
                                                 {cm.cmContent}
@@ -390,40 +431,42 @@ export default function ProjectCommunityTab({ projectId, active = false, onCreat
                                             {/* 댓글 패널 */}
                                             {openReply[cm.cmId] && (
                                                 <div className="mt-3 relative rounded-lg border bg-gray-50/70 p-3">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="absolute right-2 top-2 h-7 w-7 text-gray-500 hover:text-gray-700"
-                                                        onClick={() => {
-                                                            setOpenReply((prev) => ({ ...prev, [cm.cmId]: false }));
-                                                            setReplyInput((prev) => ({ ...prev, [cm.cmId]: "" }));
-                                                        }}
-                                                    >
-                                                        <X className="h-4 w-4" />
-                                                    </Button>
-
-                                                    {/* 목록 렌더 */}
                                                     {!loadingReply?.[cm.cmId] && (!Array.isArray(reply?.[cm.cmId]) || reply[cm.cmId].length === 0) ? (
-                                                        <div className="text-xs text-muted-foreground pr-8">아직 댓글이 없습니다. 첫 댓글을 남겨보세요.</div>
+                                                        <div className="text-xs text-muted-foreground">아직 댓글이 없습니다. 첫 댓글을 남겨보세요.</div>
                                                     ) : (
                                                         <div className="space-y-3">
                                                             {(reply?.[cm.cmId] ?? [])
                                                                 .filter(Boolean)
                                                                 .map((rp) => (
                                                                     <div key={rp.replyId} className="flex items-start gap-2">
-                                                                        <Avatar className="w-7 h-7">
-                                                                            <AvatarImage src={toPublicUrl(rp.profileImg)} />
+                                                                        <Avatar className="w-7 h-7 mr-1">
+                                                                            <AvatarImage src={toPublicUrl(rp.profileImg) || defaultProfile} />
                                                                             <AvatarFallback>{(rp.nickname ?? "U").slice(0, 2)}</AvatarFallback>
                                                                         </Avatar>
+
                                                                         <div className="flex-1 min-w-0">
-                                                                            <div className="flex items-center gap-2">
+                                                                            <div className="flex items-center gap-2 mb-1">
                                                                                 <span className="text-sm font-medium truncate">{rp.nickname}</span>
-                                                                                <span className="text-[11px] text-gray-500">{getDaysBefore(rp.createdAt)} 전</span>
+                                                                                <span className="text-[11px] text-gray-500">{getElapsedTime(rp.createdAt)}</span>
                                                                             </div>
                                                                             <p className="text-sm whitespace-pre-wrap [overflow-wrap:anywhere]">{rp.content}</p>
                                                                         </div>
+
+                                                                        {rp.userId === loginUser?.userId && (
+                                                                            <Button
+                                                                                variant="ghost"
+                                                                                size="icon"
+                                                                                className="shrink-0 self-start h-7 w-7 text-gray-500 hover:text-red-600"
+                                                                                onClick={() => handleDeleteReply(cm.cmId, rp.replyId)}
+                                                                                disabled={!!deleteReply[rp.replyId]}
+                                                                                title="댓글 삭제"
+                                                                            >
+                                                                                <Trash2 className="h-4 w-4" />
+                                                                            </Button>
+                                                                        )}
                                                                     </div>
                                                                 ))}
+
 
                                                             {loadingReply?.[cm.cmId] && (
                                                                 <div className="space-y-2">

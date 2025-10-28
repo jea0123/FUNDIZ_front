@@ -240,6 +240,9 @@ export const endpoints = {
   getCardList: 'payment/cardList',
   addCard: 'payment/addCardList',
   deleteCard: (paymentId: number) => `payment/deleteCard/${paymentId}`,
+
+  //==================== Payment API ====================
+  deleteReply: (replyId: number) => `reply/${replyId}`,
 };
 
 /**

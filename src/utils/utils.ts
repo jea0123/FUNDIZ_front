@@ -262,7 +262,7 @@ export const formatBytes = (n: number) => (n < 1024 ? `${n} B` : n < 1048576 ? `
  * @param p {string | null | undefined} p 파일 경로
  * @returns {string | null} 공개 URL 또는 null
  */
-export const toPublicUrl = (p?: string | null): string => {
+export const toPublicUrl = (p?: string): string => {
     if (!p) return "";
     if (/^https?:\/\//i.test(p)) return p;
 

@@ -20,7 +20,7 @@ export interface ReplyDto {
     createdAt: Date;
 
     nickname: string;
-    profileImg: string | null;
+    profileImg: string;
 }
 
 export interface InquiryReplyDto {

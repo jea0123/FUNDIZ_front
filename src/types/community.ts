@@ -4,7 +4,7 @@ export interface CommunityDto {
     createdAt: Date;
     code: "CM";
     nickname: string;
-    profileImg: string | null;
+    profileImg: string;
     replyCnt: number;
 }
 

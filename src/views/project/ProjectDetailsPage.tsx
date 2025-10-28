@@ -67,8 +67,8 @@ export function ProjectDetailsPage() {
         return { totalQty, totalAmount };
     }, [project, cart]);
 
-    const thumbnailUrl = useMemo(() => toPublicUrl(project?.thumbnail ?? null), [project?.thumbnail]);
-    const profileImgUrl = useMemo(() => toPublicUrl(project?.profileImg ?? null), [project?.profileImg]);
+    const thumbnailUrl = useMemo(() => toPublicUrl(project?.thumbnail), [project?.thumbnail]);
+    const profileImgUrl = useMemo(() => toPublicUrl(project?.profileImg), [project?.profileImg]);
 
     const projectData = useCallback(async () => {
         if (!projectId) return;
@@ -87,6 +87,7 @@ export function ProjectDetailsPage() {
             if (res.status === 200) { setIsLiked(true); await getLikeCnt(pid); toastSuccess('프로젝트를 좋아합니다.'); }
         } finally { setMutatingLike(false); }
     }, []);
+
     const dislikeProject = useCallback(async (pid: number) => {
         if (!pid) return;
         setMutatingLike(true);
@@ -95,11 +96,13 @@ export function ProjectDetailsPage() {
             if (res.status === 200) { setIsLiked(false); await getLikeCnt(pid); toastSuccess('프로젝트 좋아요를 취소합니다.'); }
         } finally { setMutatingLike(false); }
     }, []);
+
     const checkLiked = async (pid: number) => {
         if (!pid) return;
         const res = await getData(endpoints.checkLiked(pid), cookie.accessToken);
         if (res.status === 200) setIsLiked(res.data);
     };
+
     const getLikeCnt = async (pid: number) => {
         if (!pid) return;
         const res = await getData(endpoints.getLikeCnt(pid));
@@ -116,6 +119,7 @@ export function ProjectDetailsPage() {
             if (res.status === 200) { setIsFollowed(true); await getFollowerCnt(cid); toastSuccess('크리에이터를 팔로우합니다.'); }
         } finally { setMutatingFollow(false); }
     }, []);
+
     const unfollowCreator = useCallback(async (cid: number) => {
         if (!cid) return;
         if (cid === loginUser?.creatorId) return toastError('본인 크리에이터는 언팔로우할 수 없습니다.');
@@ -126,11 +130,13 @@ export function ProjectDetailsPage() {
             if (res.status === 200) { setIsFollowed(false); await getFollowerCnt(cid); toastSuccess('크리에이터 팔로우를 취소합니다.'); }
         } finally { setMutatingFollow(false); }
     }, []);
+
     const checkFollowed = async (cid: number) => {
         if (!cid) return;
         const res = await getData(endpoints.checkFollowed(cid), cookie.accessToken);
         if (res.status === 200) setIsFollowed(res.data);
     };
+
     const getFollowerCnt = async (cid: number) => {
         if (!cid) return;
         const res = await getData(endpoints.getFollowerCnt(cid));
@@ -154,6 +160,7 @@ export function ProjectDetailsPage() {
         });
         setQtyByReward((p) => ({ ...p, [reward.rewardId]: 1 }));
     }, [getRemain]);
+
     const setCartQty = useCallback((rid: number, next: number) => {
         setCart((prev) => {
             if (next <= 0) { const { [rid]: _, ...rest } = prev; return rest; }
@@ -162,6 +169,7 @@ export function ProjectDetailsPage() {
             return { ...prev, [rid]: Math.min(remain, next) };
         });
     }, [project, getRemain]);
+
     const removeFromCart = useCallback((rid: number) => setCart((prev) => { const { [rid]: _, ...rest } = prev; return rest; }), []);
 
     const backThisProject = useCallback(() => {
