@@ -457,7 +457,7 @@ export function CreatorProjectEditSteps(props: StepsProps) {
 
                             <div>
                                 <Label htmlFor="deliveryDate" className="label-tone mb-1.5 block">
-                                    {newReward.isPosting === "Y" ? "배송 예정일 *" : "제공 예정일 *"}
+                                    배송(제공) 예정일 *
                                 </Label>
                                 <Input
                                     type="date"

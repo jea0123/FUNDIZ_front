@@ -104,18 +104,17 @@ export function validateReward(
     }
 
     // 배송 예정일
-    const label = isPosting === "Y" ? "배송 예정일" : "제공 예정일";
     const del = toDate(input.deliveryDate);
     const end = toDate(opts?.fundingEndDate);
     if (!del) {
-        errors.deliveryDate = `${label}은 필수입니다.`;
+        errors.deliveryDate = "배송(제공) 예정일은 필수입니다.";
     } else if (!end){
         errors.deliveryDate = "펀딩 종료일을 먼저 설정하세요.";
     } else {
         const d = stripTime(del);
         const e = stripTime(end);
         if (d <= e) {
-            errors.deliveryDate = `${label}은 펀딩 종료일(${formatDate(e)}) 이후여야 합니다.`;
+            errors.deliveryDate = `배송(제공) 예정일 펀딩 종료일(${formatDate(e)}) 이후여야 합니다.`;
         }
     }
 
