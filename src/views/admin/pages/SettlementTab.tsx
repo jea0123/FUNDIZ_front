@@ -19,7 +19,7 @@ export type SettlementStatus = "WAITING" | "PAID";
 
 const statusBadge = (s: SettlementStatus) => (
     <Badge variant={s === "PAID" ? "default" : "secondary"} className="rounded-full px-3">
-        {s === "PAID" ? "지급완료" : "지급대기"}
+        {s === "PAID" ? "완료" : "대기"}
     </Badge>
 );
 
@@ -142,18 +142,18 @@ const SettlementTab: React.FC = () => {
             <Card className="shadow-sm">
                 <CardHeader><CardTitle className="text-base">정산 목록</CardTitle></CardHeader>
                 <CardContent>
-                    <div className="rounded-md border">
-                        <Table>
+                    <div className="rounded-md border overflow-x-hidden">
+                        <Table className="w-full table-fixed">
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-[110px]">정산일</TableHead>
-                                    <TableHead>프로젝트</TableHead>
-                                    <TableHead>창작자</TableHead>
+                                    <TableHead className="w-[80px]">정산일</TableHead>
+                                    <TableHead className="w-[200px]">프로젝트</TableHead>
+                                    <TableHead className="w-[100px]">창작자</TableHead>
                                     <TableHead className="text-right">총 금액</TableHead>
                                     <TableHead className="text-right">수수료</TableHead>
                                     <TableHead className="text-right">정산액</TableHead>
-                                    <TableHead className="text-center">상태</TableHead>
-                                    <TableHead className="text-center">보기</TableHead>
+                                    <TableHead className="w-[80px] text-center">상태</TableHead>
+                                    <TableHead className="w-[50px] text-center">보기</TableHead>
                                     <TableHead className="text-center">처리</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -167,7 +167,7 @@ const SettlementTab: React.FC = () => {
                                                 s.settlementStatus === "PAID" && "bg-emerald-50/60 dark:bg-emerald-950/20"
                                             )}
                                         >
-                                            <TableCell>{formatDate(s.settlementDate as any)}</TableCell>
+                                            <TableCell className="text-xs">{formatDate(s.settlementDate as any)}</TableCell>
                                             <TableCell className="max-w-[240px] truncate" title={s.projectTitle ?? String(s.projectId)}>
                                                 {s.projectTitle ?? `#${s.projectId}`}
                                             </TableCell>
@@ -177,7 +177,7 @@ const SettlementTab: React.FC = () => {
 
                                             {/* 금액 부분: 총금액 + 수수료 + 정산액 */}
                                             <TableCell className="text-right">
-                                                <span className="text-sm text-muted-foreground">
+                                                <span className="text-xs text-muted-foreground">
                                                     {formatPrice(s.totalAmount)}
                                                 </span>
                                             </TableCell>
@@ -188,11 +188,11 @@ const SettlementTab: React.FC = () => {
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 {s.settlementStatus === "PAID" ? (
-                                                    <span className="text-base font-semibold text-emerald-500">
+                                                    <span className="text-xs font-semibold text-emerald-500">
                                                         {formatPrice(s.settlementAmount)}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-base font-semibold text-red-500 dark:text-red-500">
+                                                    <span className="text-xs font-semibold text-red-500 dark:text-red-500">
                                                         {formatPrice(s.settlementAmount)}
                                                     </span>
                                                 )}
@@ -216,7 +216,7 @@ const SettlementTab: React.FC = () => {
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
                                                         <Button variant="secondary" size="sm" className="inline-flex items-center">
-                                                            상태 변경
+                                                            변경
                                                             <ChevronsUpDown className="ml-1 h-3 w-3 opacity-60" />
                                                         </Button>
                                                     </DropdownMenuTrigger>

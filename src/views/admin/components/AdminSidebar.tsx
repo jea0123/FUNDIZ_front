@@ -22,14 +22,14 @@ export function AdminSidebar() {
                     <NavLink to="/admin/projects" className={({ isActive }) => linkCls(isActive)}>
                         <LayoutList className="mr-2 h-4 w-4" /> 프로젝트 목록
                     </NavLink>
-                    <NavLink to="/admin/reports" className={({ isActive }) => linkCls(isActive)}>
-                        <Siren className="mr-2 h-4 w-4" /> 신고 관리
+                    <NavLink to="/admin/settlement" className={({ isActive }) => linkCls(isActive)}>
+                        <Receipt className="mr-2 h-4 w-4" /> 정산 관리
                     </NavLink>
                     <NavLink to="/admin/users" className={({ isActive }) => linkCls(isActive)}>
                         <Users className="mr-2 h-4 w-4" /> 회원 관리
                     </NavLink>
-                    <NavLink to="/admin/analytics" className={({ isActive }) => linkCls(isActive)}>
-                        <ChartColumnBig className="mr-2 h-4 w-4" /> 통계 분석
+                    <NavLink to="/admin/reports" className={({ isActive }) => linkCls(isActive)}>
+                        <Siren className="mr-2 h-4 w-4" /> 신고 관리
                     </NavLink>
                     <NavLink to="/admin/inquiry" className={({ isActive }) => linkCls(isActive)}>
                         <MessagesSquare className="mr-2 h-4 w-4" /> 문의 내역
@@ -37,8 +37,8 @@ export function AdminSidebar() {
                     <NavLink to="/admin/notice" className={({ isActive }) => linkCls(isActive)}>
                         <Megaphone className="mr-2 h-4 w-4" /> 공지사항 관리
                     </NavLink>
-                    <NavLink to="/admin/settlement" className={({ isActive }) => linkCls(isActive)}>
-                        <Receipt className="mr-2 h-4 w-4" /> 정산 관리
+                    <NavLink to="/admin/analytics" className={({ isActive }) => linkCls(isActive)}>
+                        <ChartColumnBig className="mr-2 h-4 w-4" /> 통계 분석
                     </NavLink>
             </nav>
         )

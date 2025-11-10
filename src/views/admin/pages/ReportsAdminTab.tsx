@@ -110,7 +110,7 @@ export function ReportsAdminTab() {
             <div>
                 <Card>
                     <CardHeader className="flex items-center justify-between">
-                        <CardTitle className="text-2xl">신고 내역</CardTitle>
+                        <CardTitle className="text-2xl">신고 관리</CardTitle>
                         <div className="flex items-center gap-2">
                         </div>
                     </CardHeader>

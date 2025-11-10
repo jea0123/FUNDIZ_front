@@ -3,6 +3,7 @@ import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { LikedDetail } from '@/types/liked';
+import { getDaysLeft } from '@/utils/utils';
 import { useEffect, useState } from 'react';
 import { useCookies } from 'react-cookie';
 import { useNavigate } from 'react-router-dom';
@@ -21,7 +22,7 @@ export default function LikedProjectTab() {
 
   const MypageLikedList = async () => {
     const response = await getData(endpoints.getLikedList, cookie.accessToken);
-    console.log('찜 목록 응답:', response);
+    console.log('좋아요 목록 응답:', response);
     if (response.status === 200) {
       setLikedProjects(response.data);
     }
@@ -42,7 +43,7 @@ export default function LikedProjectTab() {
   return (
     <Card>
       <CardHeader className="flex justify-between items-center flex-wrap gap-2 text-2xl">
-        <CardTitle className="flex items-center">찜한 프로젝트 ({likedProjects?.length}개)</CardTitle>
+        <CardTitle className="flex items-center">좋아요한 프로젝트 ({likedProjects?.length}개)</CardTitle>
 
         <div className="flex items-center gap-2">
           {/* 정렬 옵션 */}
@@ -82,7 +83,7 @@ export default function LikedProjectTab() {
                   <p className="text-sm text-gray-600 mb-2">by {likedList.creatorName}</p>
                   <div className="flex items-center space-x-4 text-sm">
                     <span>달성률: {((likedList.currAmount / likedList.goalAmount) * 100).toFixed(2)}%</span>
-                    <span className="text-gray-500">{3}일 남음</span>
+                    <span className="text-gray-500">{getDaysLeft(likedList.endDate)}일 남음</span>
                   </div>
                 </div>
                 <div className="flex space-x-2">

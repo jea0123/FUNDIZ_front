@@ -138,7 +138,7 @@ export function MyQnATab() {
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center text-2xl">
-                            내 Q&A 내역
+                            내 QnA 내역
                         </CardTitle>
                     </CardHeader>
                     <CardContent>

@@ -21,7 +21,7 @@ export function UserSidebar() {
                 <Package className="mr-2 h-4 w-4" />후원한 프로젝트
             </NavLink>
             <NavLink to="/user/wishlist" className={({ isActive }) => linkCls(isActive || approvalsIsActive)}>
-                <Heart className="mr-2 h-4 w-4" />찜한 프로젝트
+                <Heart className="mr-2 h-4 w-4" />좋아요한 프로젝트
             </NavLink>
             <SavedAddressModal mode="mypage" triggerText="배송지 관리" />
             <NavLink to="/user/payment" className={({ isActive }) => linkCls(isActive)}>
@@ -34,7 +34,7 @@ export function UserSidebar() {
                 <Bell className="mr-2 h-4 w-4" />알림
             </NavLink>
             <NavLink to="/user/myqna" className={({ isActive }) => linkCls(isActive)}>
-                <MessagesSquare className="mr-2 h-4 w-4" />내 Q&A 내역
+                <MessagesSquare className="mr-2 h-4 w-4" />내 QnA 내역
             </NavLink>
             <NavLink to="/user/myinquiry" className={({ isActive }) => linkCls(isActive)}>
                 <MessagesSquare className="mr-2 h-4 w-4" />내 문의 내역
